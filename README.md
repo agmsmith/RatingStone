@@ -1,9 +1,9 @@
 # The Rating Stone Project
 
-This is a reputation system layered on top of the sample application for
-[*Ruby on Rails Tutorial: Learn Web Development with Rails*]
-(https://www.railstutorial.org/) (6th Edition) by
-[Michael Hartl](https://www.michaelhartl.com/).
+This is a reputation system layered on top of the sample application from
+[*Ruby on Rails Tutorial:
+Learn Web Development with Rails*](https://www.railstutorial.org/)
+(6th Edition) by [Michael Hartl](https://www.michaelhartl.com/).
 
 ## License
 
@@ -13,7 +13,8 @@ should contribute your changes back to the public.  See [LICENSE.md](LICENSE.md)
 for details.
 
 All source code in the [Ruby on Rails Tutorial](https://www.railstutorial.org/)
-is available jointly under the MIT License and the Beerware License.
+is available jointly under the MIT License and the Beerware License.  See
+[LICENSE.Hartl.md](LICENSE.Hartl.md) for details.
 
 ## Getting started
 
