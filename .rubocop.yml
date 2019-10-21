@@ -1,2 +1,12 @@
 inherit_from:
   - https://shopify.github.io/ruby-style-guide/rubocop.yml
+
+AllCops:
+  Exclude:
+  - 'bin/**/*'
+  - 'config/**/*'
+  - 'db/**/*'
+  - 'node_modules/**/*'
+  - 'config.ru'
+  - 'Gemfile'
+  - 'Rakefile'
