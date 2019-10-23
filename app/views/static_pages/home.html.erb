@@ -16,10 +16,15 @@
   <%= link_to "Sign up now!", '#', class: "btn btn-lg btn-primary" %>
 </div>
 
-<%= link_to image_tag("rails.svg", alt: "Rails logo", width: "200px"),
-                      "https://rubyonrails.org/" %>
+<%= link_to image_tag("RatingStoneIcon_00000_16x9.jpeg",
+  alt: "Rating Stone Logo, which casts a long shadow", width: "200px",
+  class: "pull-left"), image_url("RatingStoneIcon_00000_16x9.jpeg") %>
 
-<h2>Request Environment</H2>
+<%= link_to image_tag("rails.svg", alt: "Rails Logo", width: "200px",
+  class: "pull-right"), "https://rubyonrails.org/" %>
+
+<h2 style="clear: both">Request Environment</H2>
+
 <table>
 <% request.env.each do | key, item |
      value = item.inspect
