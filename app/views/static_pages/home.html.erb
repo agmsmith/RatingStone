@@ -25,13 +25,14 @@
 
 <h2 style="clear: both">Request Environment</H2>
 
-<table>
+<table class="table-striped">
 <% request.env.each do | key, item |
      value = item.inspect
-     if value.length > 80
-       value = value.slice(0, 60) + "... and #{value.length} more letters."
+     if value.length > 120
+       value = value.slice(0, 100) + "... and #{value.length} more letters."
      end
 %>
   <tr><td><%= key.inspect %></td><td><%= value %></td></tr>
 <% end %>
 </table>
+
