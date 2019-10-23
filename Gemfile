@@ -17,6 +17,8 @@ gem 'turbolinks', '~> 5.2'
 gem 'jbuilder', '~> 2.9'
 # Reduces boot times through caching; required in config/boot.rb
 gem 'bootsnap', '>= 1.4', require: false
+# CSS3 styles and javascript to build responsive, mobile-first web pages.
+gem 'bootstrap-sass', '~> 3'
 
 group :development, :test do
   # Use sqlite3 as the database for Active Record
