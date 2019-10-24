@@ -31,6 +31,13 @@ Next, migrate the database:
 $ rails db:migrate
 ```
 
+Then compile the assets (CSS style sheets, pictures and other data).
+
+```
+$ rails assets:clobber
+$ rails assets:precompile
+```
+
 Finally, run the test suite to verify that everything is working correctly:
 
 ```
