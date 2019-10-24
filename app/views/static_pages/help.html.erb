@@ -14,3 +14,17 @@
   <a href="https://www.railstutorial.org/book"><em>Ruby on Rails Tutorial</em>
   book</a>.
 </p>
+
+<h2 style="clear: both">Debugging - Your Web Page Request Environment</h2>
+
+<table class="table-striped">
+<% request.env.each do | key, item |
+     value = item.inspect
+     if value.length > 120
+       value = value.slice(0, 100) + "... and #{value.length} more letters."
+     end
+%>
+  <tr><td><%= key.inspect %></td><td><%= value %></td></tr>
+<% end %>
+</table>
+

@@ -8,7 +8,7 @@ Learn Web Development with Rails*](https://www.railstutorial.org/)
 ## License
 
 The public version of the reputation system is licensed under the GNU General
-Public License version 3.  The general idea is that if you use the code, you
+Public License version 3.  The general idea is that if you improve the code, you
 should contribute your changes back to the public.  See [LICENSE.md](LICENSE.md)
 for details.
 
