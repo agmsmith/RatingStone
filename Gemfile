@@ -19,6 +19,8 @@ gem 'jbuilder', '~> 2.9'
 gem 'bootsnap', '>= 1.4', require: false
 # CSS3 styles and javascript to build responsive, mobile-first web pages.
 gem 'bootstrap-sass', '~> 3'
+# For password hashing.
+gem 'bcrypt', '~> 3'
 
 group :development, :test do
   # Use sqlite3 as the database for Active Record
