@@ -5,6 +5,12 @@
 
 $gray-medium-light: #eaeaea; /* Rather than using Bootstrap's $gray-light etc. */
 
+@mixin box_sizing {
+  -moz-box-sizing:    border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing:         border-box;
+}
+
 /* universal */
 
 body {
@@ -95,3 +101,12 @@ footer {
     }
   }
 }
+
+/* miscellaneous */
+
+.debug_dump {
+  clear: both;
+  width: 100%;
+  @include box_sizing;
+}
+
