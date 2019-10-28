@@ -12,9 +12,10 @@ class UsersController < ApplicationController
   def create
     @user = User.new(user_params)
     if @user.save
-      # Handle a successful save.
-    else # Bad inputs, ask the user to redo the form.
-      render('new')
+      flash[:success] = 'Welcome new user, to the Rating Stone Reputation System.'
+      redirect_to @user # Show their profile page.
+    else # Bad inputs.
+      render('new') # Ask the user to redo the form.
     end
   end
 
