@@ -23,3 +23,18 @@
   </div>
 </div>
 
+<% if request.env['HTTPS'] != 'on' # Apache web server HTTPS detection. %>
+  <div class="row center extra_space_at_top">
+    <div class="col-md-6 col-md-offset-3">
+      <div class="alert alert-warning" role="alert">
+        You are accessing this web page without using encryption.
+        If your web browser supports it, you may wish to switch to
+        the encrypted page.
+      </div>
+
+      <a href="<%= signup_url.sub(/http:/, 'https:') %>"
+       class="btn btn-lg btn-primary">Switch to <strong>secure</strong> Sign Up</a>
+    </div>
+  </div>
+<% end %>
+

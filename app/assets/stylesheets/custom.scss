@@ -14,7 +14,7 @@ $gray-medium-light: #eaeaea; /* Rather than using Bootstrap's $gray-light etc. *
 /* universal */
 
 body {
-  padding-top: 60px;
+  /* padding-top: 60px; - makes navbar cover text in small screen sizes */
 }
 
 section {
@@ -139,14 +139,6 @@ aside {
   margin-top: 15px;
 }
 
-/* miscellaneous */
-
-.debug_dump {
-  clear: both;
-  width: 100%;
-  @include box_sizing;
-}
-
 /* forms */
 
 input, textarea, select, .uneditable-input {
@@ -173,5 +165,17 @@ input {
   .form-control {
     color: $state-danger-text;
   }
+}
+
+/* miscellaneous */
+
+.debug_dump {
+  clear: both;
+  width: 100%;
+  @include box_sizing;
+}
+
+.extra_space_at_top {
+  margin-top: 45px;
 }
 

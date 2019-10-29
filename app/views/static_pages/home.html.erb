@@ -13,15 +13,7 @@
     sample application.
   </p>
 
-  <% if request.env['HTTPS'] != 'on' # Apache web server HTTPS detection. %>
-    <a href="<%= signup_url.sub(/http:/, 'https:') %>"
-     class="btn btn-lg btn-primary">Sign up <strong>securely</strong> now!</a>
-    <%= link_to "Sign up (unencrypted)", signup_path,
-      class: "btn btn-lg btn-primary" %>
-  <% else %>
-    <%= link_to "Sign up now!", signup_path, class: "btn btn-lg btn-primary" %>
-  <% end %>
-
+  <%= link_to "Sign up now!", signup_path, class: "btn btn-lg btn-primary" %>
 </div>
 
 <%= link_to image_tag("RatingStoneIcon_00000_16x9.jpg",
