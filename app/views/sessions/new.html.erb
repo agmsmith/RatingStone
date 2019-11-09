@@ -1,2 +1,36 @@
-<h1>Sessions#new</h1>
-<p>Find me in app/views/sessions/new.html.erb</p>
+<% provide(:page_title, "Log In") %>
+<h1>Log In</h1>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <%= form_with(url: login_path, scope: :session, local: true) do |f| %>
+      <%= f.label :email %>
+      <%= f.email_field :email, class: 'form-control' %>
+
+      <%= f.label :password %>
+      <%= f.password_field :password, class: 'form-control' %>
+
+      <%= f.submit "Log In", class: "btn btn-primary" %>
+    <% end %>
+
+    <p>New user?  <%= link_to "Sign up now!", signup_path %></p>
+  </div>
+</div>
+
+<% if request.env['HTTPS'] != 'on' # Apache web server HTTPS detection. %>
+  <div class="row center extra_space_at_top">
+    <div class="col-md-6 col-md-offset-3">
+      <div class="alert alert-warning" role="alert">
+        You are accessing this web page without using encryption.
+        That means someone could more easily spy on your Internet
+        connection, see your password, and then pretend to be
+        you.  If your web browser is new enough, you may wish to
+        switch to the encrypted page.
+      </div>
+
+      <a href="<%= login_url.sub(/http:/, 'https:') %>"
+       class="btn btn-lg btn-primary">Switch to <strong>secure</strong> Log In</a>
+    </div>
+  </div>
+<% end %>
+

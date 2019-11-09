@@ -13,7 +13,7 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
     if @user.save
       flash[:success] = 'Welcome new user, to the Rating Stone Reputation System.'
-      redirect_to @user # Show their profile page.
+      redirect_to(@user) # Show their profile page.
     else # Bad inputs.
       render('new') # Ask the user to redo the form.
     end

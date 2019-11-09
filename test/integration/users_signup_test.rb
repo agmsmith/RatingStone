@@ -15,7 +15,7 @@ class UsersSignupTest < ActionDispatch::IntegrationTest
       } }
     end
     assert_template 'users/new' # Ask user for new page again if errors.
-    assert_select 'div#error_explanation' do | divexpl |
+    assert_select 'div#error_explanation' do |divexpl|
       assert_select divexpl, 'li', 4, "Should be 4 errors in our bad signup."
     end
   end
