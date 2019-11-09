@@ -20,6 +20,18 @@
 <%= yield %>
     </div>
     <%= render 'layouts/footer' %>
-    <%= debug(params) if Rails.env.development? %>
+    <% if Rails.env.development? %>
+      <div class="container-fluid" id="DebugStuffInFooter">
+        <p><%= userid = session[:user_id]
+          if userid.nil?
+            "Not logged in."
+          else
+            user = User.find_by(id: userid)
+            "Logged in as ID ##{userid} (#{user.name})."
+          end %></p>
+
+        <%= debug(params) %>
+      </div>
+    <% end %>
   </body>
 </html>
