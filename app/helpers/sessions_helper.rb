@@ -49,9 +49,9 @@ module SessionsHelper
     cookies.delete(:remember_token)
   end
 
-  # Logs out the current user.
+  # Logs out the current user, if any.
   def log_out
-    forget(current_user)
+    forget(current_user) if current_user
     session.delete(:user_id)
     @current_user = nil
   end

@@ -36,7 +36,24 @@ class UsersLoginTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", login_path, count: 0
     assert_select "a[href=?]", logout_path
     assert_select "a[href=?]", user_path(@user)
-    delete logout_path # Test logging out, send a DELETE command rather than POST etc.
+    # Test logging out using the normal Rails way (requires browser Javascript).
+    delete logout_path
+    assert_not tested_user_logged_in?
+    assert_redirected_to root_url
+    # Simulate a user clicking logout in a second window while being logged out.
+    delete logout_path
+    follow_redirect!
+    assert_select "a[href=?]", login_path
+    assert_select "a[href=?]", logout_path,      count: 0
+    assert_select "a[href=?]", user_path(@user), count: 0
+  end
+
+  test "logout using GET /logout for non-javascript browsers" do
+    get login_path
+    post login_path, params: { session: { email: @user.email, password: 'password' } }
+    follow_redirect!
+    assert tested_user_logged_in?
+    get logout_path
     assert_not tested_user_logged_in?
     assert_redirected_to root_url
     follow_redirect!
