@@ -34,6 +34,6 @@ class UsersSignupTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_template 'users/show'
     assert_select 'div#error_explanation', false, "Should not be any error messages."
-    assert is_logged_in?, "New users should automatically log in."
+    assert tested_user_logged_in?, "New users should automatically log in."
   end
 end
