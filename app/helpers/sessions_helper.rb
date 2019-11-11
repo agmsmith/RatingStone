@@ -6,6 +6,7 @@ module SessionsHelper
   # a permanent cookie and database digest field, see current_user().
   def log_in(user)
     session[:user_id] = user.id
+    @current_user = user
   end
 
   # Remembers a user in a persistent cookie.
@@ -15,9 +16,9 @@ module SessionsHelper
     cookies.permanent[:remember_token] = user.remember_token
   end
 
-  # Returns and caches the current logged-in User object (if any).  Both a
-  # temporary session cookie or permanent cookie holding the User ID count,
-  # with priority given to the session cookie.
+  # Returns and caches the current logged-in User object, returns nil if not
+  # logged in.  Looks at both a temporary session cookie or permanent cookie
+  # holding the User ID, with priority given to the session cookie.
   def current_user
     if @current_user.nil?
       if (user_id = session[:user_id])
@@ -30,7 +31,6 @@ module SessionsHelper
           # subsequent page lookups don't have to go through the authentication
           # mechanism again.
           log_in(user)
-          @current_user = user
         end
       end
     end
