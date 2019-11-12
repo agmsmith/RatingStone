@@ -10,7 +10,7 @@ class User < ApplicationRecord
   validates :email, presence: true, length: { maximum: 255 },
     format: { with: VALID_EMAIL_REGEX },
     uniqueness: { case_sensitive: false }
-  validates :password, presence: true, length: { minimum: 6 }
+  validates :password, presence: true, length: { minimum: 6 }, allow_nil: true
 
   # Use password_digest field, defines password & password_confirmation attr.
   has_secure_password
@@ -30,7 +30,7 @@ class User < ApplicationRecord
     SecureRandom.urlsafe_base64
   end
 
-  # Remember logins using a persistent cookie value, we just store a digest of it.
+  # Remember logins using a persistent cookie value, we just store a digest.
   def remember
     self.remember_token = User.new_token
     update_attribute(:remember_digest, User.digest(remember_token))

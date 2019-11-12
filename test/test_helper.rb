@@ -33,6 +33,7 @@ end
 module ActionDispatch
   class IntegrationTest
     # Log in as a particular user via login page, for integration tests.
+    # Fortunately the fixture users use 'password' as their password.
     def log_in_as(user, password: 'password', remember_me: '1')
       post(login_path, params: { session: {
         email: user.email,
