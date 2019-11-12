@@ -47,6 +47,7 @@ class UsersController < ApplicationController
   # Confirms a logged-in user.
   def logged_in_user
     unless logged_in?
+      store_location # Come back here (if this is a GET) after login done.
       flash[:danger] = "Please log in."
       redirect_to(login_url)
     end
@@ -55,6 +56,9 @@ class UsersController < ApplicationController
   # Confirms we are editing the correct user.  Sets @user as a side effect.
   def correct_user
     @user = User.find(params[:id])
-    redirect_to(root_url) unless current_user?(@user)
+    if !current_user?(@user)
+      flash[:danger] = "You were trying to edit a different user!  Start over."
+      redirect_to(root_url)
+    end
   end
 end
