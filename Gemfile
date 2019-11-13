@@ -21,6 +21,11 @@ gem 'bootsnap', '>= 1.4', require: false
 gem 'bootstrap-sass', '~> 3'
 # For password hashing.
 gem 'bcrypt', '~> 3'
+# For generating fake names for making test users.
+gem 'faker', '~> 2'
+# For paginating long lists of things.
+gem 'will_paginate', '~> 3'
+gem 'bootstrap-will_paginate', '~> 1'
 
 group :development, :test do
   # Use sqlite3 as the database for Active Record

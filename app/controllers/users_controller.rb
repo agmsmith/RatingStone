@@ -27,7 +27,7 @@ class UsersController < ApplicationController
   end
 
   def index
-    @users = User.all
+    @users = User.paginate(page: params[:page])
   end
 
   def update
@@ -60,7 +60,7 @@ class UsersController < ApplicationController
   # Confirms we are editing the correct user.  Sets @user as a side effect.
   def correct_user
     @user = User.find(params[:id])
-    if !current_user?(@user)
+    unless current_user?(@user)
       flash[:danger] = "You were trying to edit a different user!  Start over."
       redirect_to(root_url)
     end
