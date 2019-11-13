@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
-  before_action :logged_in_user, only: [:edit, :update]
+  before_action :logged_in_user, only: [:edit, :index, :update]
   before_action :correct_user, only: [:edit, :update]
 
   def show
@@ -24,6 +24,10 @@ class UsersController < ApplicationController
   end
 
   def edit
+  end
+
+  def index
+    @users = User.all
   end
 
   def update
