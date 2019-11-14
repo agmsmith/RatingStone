@@ -31,7 +31,7 @@ class UsersController < ApplicationController
     else
       flash[:warning] = "No user #{params[:id].inspect} to be deleted."
     end
-    redirect_to users_url
+    redirect_to(users_url)
   end
 
   def edit
