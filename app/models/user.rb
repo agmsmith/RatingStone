@@ -52,7 +52,7 @@ class User < ApplicationRecord
 
   # Change email to all lower-case, because database index is case sensitive.
   def downcase_email
-    self.email.downcase!
+    email.downcase!
   end
 
   # Creates and assigns the activation token and digest.
