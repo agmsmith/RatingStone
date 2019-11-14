@@ -26,7 +26,7 @@ module SessionsHelper
       end
       if @current_user.nil? && (user_id = cookies.signed[:user_id])
         user = User.find_by(id: user_id)
-        if user&.authenticated?(cookies[:remember_token])
+        if user&.authenticated?(:remember, cookies[:remember_token])
           # Also set the lighter weight session cookie to the same user so that
           # subsequent page lookups don't have to go through the authentication
           # mechanism again.
