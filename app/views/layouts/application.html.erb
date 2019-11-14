@@ -23,10 +23,10 @@
     <% if Rails.env.development? %>
       <div class="container-fluid" id="DebugStuffInFooter">
         <p><%= userid = session[:user_id]
-          if userid.nil?
-            "Not logged in."
+          user = User.find_by(id: userid) if userid
+          if user.nil?
+            "Not logged in, userid #{userid.inspect}."
           else
-            user = User.find_by(id: userid)
             "Logged in as ID ##{userid} (#{user.name})."
           end %></p>
 

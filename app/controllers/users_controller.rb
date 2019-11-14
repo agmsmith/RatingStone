@@ -3,6 +3,7 @@
 class UsersController < ApplicationController
   before_action :logged_in_user, only: [:edit, :index, :update]
   before_action :correct_user, only: [:edit, :update]
+  before_action :admin_user, only: :destroy
 
   def show
     @user = User.find(params[:id])
@@ -21,6 +22,16 @@ class UsersController < ApplicationController
     else # Bad inputs.
       render('new') # Ask the user to redo the form.
     end
+  end
+
+  def destroy
+    @user = User.find_by(id: params[:id])
+    if @user&.destroy
+      flash[:success] = "User ##{@user.id} \"#{@user.name}\" deleted."
+    else
+      flash[:warning] = "No user #{params[:id].inspect} to be deleted."
+    end
+    redirect_to users_url
   end
 
   def edit
@@ -64,5 +75,10 @@ class UsersController < ApplicationController
       flash[:danger] = "You were trying to edit a different user!  Start over."
       redirect_to(root_url)
     end
+  end
+
+  # Confirms an admin user.
+  def admin_user
+    redirect_to(root_url) unless current_user.admin?
   end
 end
