@@ -63,12 +63,27 @@ Rails.application.configure do
 
   config.action_mailer.perform_caching = false
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
-
   host = 'ratingstone.agmsmith.ca'
   config.action_mailer.default_url_options = { host: host, protocol: 'http' }
+#bleeble - what if no protocol, will it inherit from web page used?
+
+  # False to ignore bad email addresses and do not raise email delivery errors.
+  # Set this to true and configure the email server for immediate delivery to
+  # raise delivery errors.
+  config.action_mailer.raise_delivery_errors = true
+
+  # Use :test for internal testing, :smtp for normal mail server.
+  config.action_mailer.delivery_method = :smtp
+
+  ActionMailer::Base.smtp_settings = {
+    :address => 'smtp.gmail.com',
+    :port => '587',
+    :authentication => :plain,
+    :user_name => 'agmsrepsys@gmail.com',
+    :password => 'SomePassword',
+    :enable_starttls_auto => true,
+    :domain => host
+  }
 
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
