@@ -15,8 +15,8 @@ class PasswordResetsController < ApplicationController
     if @user&.activated?
       @user.create_reset_digest
       @user.send_password_reset_email
-      flash[:info] = "Email sent (#{@user.email}) with password reset " \
-        "instructions"
+      flash[:info] = "Reset email sent to #{@user.email.inspect}.  " \
+        "Look for one with the subject \"Rating Stone Password Reset\"."
       redirect_to(root_url)
     else
       flash.now[:danger] = "Invalid or unknown email #{email.inspect} or " \

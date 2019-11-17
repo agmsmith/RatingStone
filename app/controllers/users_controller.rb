@@ -18,8 +18,8 @@ class UsersController < ApplicationController
     @user = User.new(user_params)
     if @user.save
       @user.send_activation_email
-      flash[:info] = "Please check your email #{@user.email.inspect} to activate " \
-        "your account."
+      flash[:info] = "Activation email sent to #{@user.email.inspect}.  " \
+        "Look for one with the subject \"Rating Stone Account Activation\"."
       redirect_to(root_url)
     else # Bad inputs.
       render('new') # Ask the user to redo the form.
