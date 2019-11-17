@@ -57,6 +57,7 @@ class PasswordResetsTest < ActionDispatch::IntegrationTest
         password_confirmation: "",
       } }
     assert_select 'div#error_explanation'
+    assert_not_nil user.reload.reset_digest
     # Valid password & confirmation
     patch password_reset_path(user.reset_token),
       params: { email: user.email, user: {
@@ -66,5 +67,27 @@ class PasswordResetsTest < ActionDispatch::IntegrationTest
     assert tested_user_logged_in?
     assert_not flash.empty?
     assert_redirected_to user
+    # Reset should only be useable one time; digest should be wiped out.
+    get edit_password_reset_path(user.reset_token, email: user.email)
+    assert_redirected_to root_url
+    follow_redirect!
+    assert_match /password reset ignored/i, response.body
+    assert_nil user.reload.reset_digest
+  end
+
+  test "expired token" do
+    get new_password_reset_path
+    post password_resets_path,
+      params: { password_reset: { email: @user.email } }
+    @user = assigns(:user)
+    @user.update_attribute(:reset_sent_at, 3.hours.ago)
+    patch password_reset_path(@user.reset_token),
+      params: { email: @user.email, user: {
+        password: "foobar",
+        password_confirmation: "foobar",
+      } }
+    assert_response :redirect
+    follow_redirect!
+    assert_match /reset has expired/i, response.body
   end
 end

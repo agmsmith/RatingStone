@@ -65,7 +65,6 @@ Rails.application.configure do
 
   host = 'ratingstone.agmsmith.ca'
   config.action_mailer.default_url_options = { host: host, protocol: 'http' }
-#bleeble - what if no protocol, will it inherit from web page used?
 
   # False to ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to
