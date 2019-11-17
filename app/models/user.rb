@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+  has_many :microposts, dependent: :destroy
+
   attr_accessor :activation_token, :remember_token, :reset_token
 
   before_save :downcase_email

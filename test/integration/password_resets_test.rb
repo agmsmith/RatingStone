@@ -71,7 +71,7 @@ class PasswordResetsTest < ActionDispatch::IntegrationTest
     get edit_password_reset_path(user.reset_token, email: user.email)
     assert_redirected_to root_url
     follow_redirect!
-    assert_match /password reset ignored/i, response.body
+    assert_match(/password reset ignored/i, response.body)
     assert_nil user.reload.reset_digest
   end
 
@@ -88,6 +88,6 @@ class PasswordResetsTest < ActionDispatch::IntegrationTest
       } }
     assert_response :redirect
     follow_redirect!
-    assert_match /reset has expired/i, response.body
+    assert_match(/reset has expired/i, response.body)
   end
 end
