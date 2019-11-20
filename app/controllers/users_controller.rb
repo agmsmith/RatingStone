@@ -62,15 +62,6 @@ class UsersController < ApplicationController
 
   # Before filters
 
-  # Confirms a logged-in user.
-  def logged_in_user
-    unless logged_in?
-      store_location # Come back here (if this is a GET) after login done.
-      flash[:danger] = "Please log in."
-      redirect_to(login_url)
-    end
-  end
-
   # Confirms we are editing the correct user.  Sets @user as a side effect.
   def correct_user
     @user = User.find(params[:id])

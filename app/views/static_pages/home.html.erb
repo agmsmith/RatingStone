@@ -1,21 +1,8 @@
-<div class="center jumbotron">
-  <h1>Welcome to the Rating Stone Reputation System</h1>
-
-  <h2>
-    This is the home page for
-    <!-- Absolute URL here so that in localhost test mode we can visit the real site -->
-    <a href="https://ratingstone.agmsmith.ca/">Rating Stone</a>,
-    the slightly less evil reputation system.
-  </h2>
-
-  <p>
-    By the way, it started as the home page for the
-    <a href="https://www.railstutorial.org/">Ruby on Rails Tutorial</a>
-    sample application.
-  </p>
-
-  <%= link_to "Sign up now!", signup_path, class: "btn btn-lg btn-primary" %>
-</div>
+<% if logged_in? %>
+  <%= render 'home_logged_in' %>
+<% else %>
+  <%= render 'home_logged_out' %>
+<% end %>
 
 <%= link_to image_tag("RatingStoneIcon_00000_16x9.jpg",
   alt: "Rating Stone Logo, which casts a long shadow", width: "200px",
