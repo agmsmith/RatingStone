@@ -4,13 +4,14 @@ class MicropostsController < ApplicationController
   before_action :logged_in_user, only: [:create, :destroy]
 
   def create
-    @micropost = current_user.microposts.build(micropost_params)
-    if @micropost.save
+    @new_micropost = current_user.microposts.build(micropost_params)
+    if @new_micropost.save
       flash[:success] = "Micropost created!"
-      redirect_to root_url
-    else
-      render 'static_pages/home'
-    end
+      redirect_to(root_url)
+    else # Show error messages with wrong controller, fake static_pages one.
+      @feed_items = current_user.feed.paginate(page: params[:page])
+      render('static_pages/home')
+   end
   end
 
   def destroy

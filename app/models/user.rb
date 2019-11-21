@@ -47,7 +47,7 @@ class User < ApplicationRecord
     BCrypt::Password.new(digest).is_password?(token)
   end
 
-  # Forgets a user.
+  # Forgets a user.  Saved cookie will no longer log them in.
   def forget
     update_attribute(:remember_digest, nil)
   end
@@ -77,6 +77,12 @@ class User < ApplicationRecord
   # Returns true if a password reset has expired.
   def password_reset_expired?
     reset_sent_at < 2.hours.ago
+  end
+
+  # Defines a proto-feed.
+  # See "Following users" for the full implementation.
+  def feed
+    Micropost.where("user_id = ?", id)
   end
 
   private
