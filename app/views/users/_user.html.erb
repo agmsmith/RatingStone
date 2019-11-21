@@ -4,8 +4,7 @@
   <% if current_user.admin? && !current_user?(user) %>
     <%= button_to "Delete", user, method: :delete,
       data: { confirm: "You sure?" },
-      form_class: 'form-inline col-xs-6 col-sm-3 col-md-2 col-lg-1',
-      class: 'btn btn-danger'
+      form_class: 'deletebutton', class: 'btn btn-danger'
     %>
   <% end %>
 </li>

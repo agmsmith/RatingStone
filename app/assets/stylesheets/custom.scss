@@ -148,6 +148,10 @@ aside {
     overflow: auto;
     padding: 10px 0;
     border-bottom: 1px solid $gray-lighter;
+    .deletebutton {
+      display: block;
+      float: right;
+    }
   }
 }
 
@@ -180,7 +184,12 @@ aside {
   .gravatar {
     float: left;
     margin-right: 10px;
-    margin-top: 5px;
+    margin-top: 0.5em;
+  }
+  .deletebutton {
+    display: block;
+    float: right;
+    margin-top: 2em;
   }
 }
 
