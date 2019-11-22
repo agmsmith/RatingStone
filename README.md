@@ -10,7 +10,8 @@ Learn Web Development with Rails*](https://www.railstutorial.org/)
 The public version of the reputation system is licensed under the GNU General
 Public License version 3.  The general idea is that if you improve the code, you
 should contribute your changes back to the public.  See [LICENSE.md](LICENSE.md)
-for details.
+for details.  Only changes made after the completion of the tutorial are GPLv3
+licensed, the earlier ones are MIT/Beerware licensed.
 
 All source code in the [Ruby on Rails Tutorial](https://www.railstutorial.org/)
 is available jointly under the MIT License and the Beerware License.  See
