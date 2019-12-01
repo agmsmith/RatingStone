@@ -16,6 +16,7 @@
 /log/*
 /tmp/*
 !/log/.keep
+!/log/*.txt
 !/tmp/.keep
 
 # Ignore uploaded files in development.
@@ -26,7 +27,7 @@
 .byebug_history
 
 # Ignore master key for decrypting credentials and more.
-/config/master.key
+# /config/master.key
 
 /public/packs
 /public/packs-test

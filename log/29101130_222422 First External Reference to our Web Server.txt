@@ -1,0 +1,24 @@
+Wonder how they found out the URL - maybe from the Does your web page fit on a floppy disk web site?
+
+App 6118 output: That wouldn't be good enough.
+App 6118 output: 		-- Larry Wall in <199710131621.JAA14907@wall.org>
+I, [2019-11-30T22:24:34.932770 #6180]  INFO -- : [8ee99d79-5aa6-49fd-be53-4033159efa2f] Started HEAD "/" for 167.71.109.97 at 2019-11-30 22:24:34 -0500
+I, [2019-11-30T22:24:34.958652 #6180]  INFO -- : [8ee99d79-5aa6-49fd-be53-4033159efa2f] Processing by StaticPagesController#home as HTML
+I, [2019-11-30T22:24:34.986893 #6180]  INFO -- : [8ee99d79-5aa6-49fd-be53-4033159efa2f]   Rendering static_pages/home.html.erb within layouts/application
+I, [2019-11-30T22:24:35.041046 #6180]  INFO -- : [8ee99d79-5aa6-49fd-be53-4033159efa2f]   Rendered static_pages/_home_logged_out.html.erb (Duration: 10.8ms | Allocations: 201)
+I, [2019-11-30T22:24:35.041908 #6180]  INFO -- : [8ee99d79-5aa6-49fd-be53-4033159efa2f]   Rendered static_pages/home.html.erb within layouts/application (Duration: 54.6ms | Allocations: 815)
+I, [2019-11-30T22:24:35.056267 #6180]  INFO -- : [8ee99d79-5aa6-49fd-be53-4033159efa2f]   Rendered layouts/_shim.html.erb (Duration: 5.9ms | Allocations: 86)
+I, [2019-11-30T22:24:35.058146 #6180]  INFO -- : [8ee99d79-5aa6-49fd-be53-4033159efa2f]   Rendered layouts/_header.html.erb (Duration: 1.2ms | Allocations: 486)
+I, [2019-11-30T22:24:35.060405 #6180]  INFO -- : [8ee99d79-5aa6-49fd-be53-4033159efa2f]   Rendered layouts/_footer.html.erb (Duration: 1.4ms | Allocations: 416)
+I, [2019-11-30T22:24:35.061228 #6180]  INFO -- : [8ee99d79-5aa6-49fd-be53-4033159efa2f] Completed 200 OK in 102ms (Views: 83.3ms | Allocations: 4725)
+167.71.109.97 - - [30/Nov/2019:22:24:22 -0500] "HEAD / HTTP/1.1" 200 - "https://www.netcraft.com/survey/" "Mozilla/4.0 (compatible; Netcraft Web Server Survey)" ratingstone.agmsmith.ca 178 1076
+
+
+https://news.netcraft.com/archives/category/web-server-survey/
+
+November 2019 Web Server Survey
+27th November, 2019
+
+In the November 2019 survey we received responses from 1,308,343,327 sites across 243,734,379 unique domain names and 9,274,744 web-facing computers. This reflects a gain of 7.46 million sites, 2.18 million domains and 230,000 computers.
+
+Amongst the largest web server vendors, Microsoft, nginx, and Google all gained sites this month, increasing by 19.41 million (+10.59%), 10.17 million (+2.38%), and 1.33 million (+3.83%) sites respectively, whilst Apache lost 13.56 million (-3.64%) sites.
