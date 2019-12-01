@@ -9,5 +9,5 @@
   <span class="user"><%= link_to micropost.user.name, micropost.user %></span>
   <span class="content"><%= micropost.content %></span>
   <span class="timestamp">Posted <%= time_ago_in_words(micropost.created_at) %>
-    ago - <small><%= micropost.created_at.getlocal %></small>.</span>
+    ago&nbsp;- <small><%= micropost.created_at.getlocal %></small>.</span>
 </li>

@@ -19,7 +19,7 @@ class MicropostsController < ApplicationController
     post_title = @micropost.content.truncate(50, separator: ' ')
     @micropost.destroy
     flash[:success] = "Micropost \"#{post_title}\" deleted."
-    redirect_to request.referrer || root_url
+    redirect_back(fallback_location: root_url)
   end
 
   private
