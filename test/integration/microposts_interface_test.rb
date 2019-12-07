@@ -11,13 +11,14 @@ class MicropostsInterfaceTest < ActionDispatch::IntegrationTest
     log_in_as(@user)
     get root_path
     assert_select 'div.pagination'
+    assert_select 'input[type=file]' # Spot for uploading a picture.
     # Invalid submission
     assert_no_difference 'Micropost.count' do
       post microposts_path, params: { micropost: { content: "" } }
     end
     assert_select 'div#error_explanation'
-    assert_select 'a[href=?]', '/?page=2'  # Correct pagination link
-    # Valid submission
+    assert_select 'a[href=?]', '/?page=2' # Correct pagination link
+    # Valid submission, no picture.
     content = "This micropost really ties the room together"
     assert_difference 'Micropost.count', 1 do
       post microposts_path, params: { micropost: { content: content } }
@@ -29,9 +30,23 @@ class MicropostsInterfaceTest < ActionDispatch::IntegrationTest
     first_micropost = @user.microposts.first # Newest one is the first one.
     assert_select 'body div ol.microposts form.deletebutton[action=?]',
       micropost_path(first_micropost), count: 1
+    assert_not first_micropost.image.attached?
     assert_difference 'Micropost.count', -1 do
       delete micropost_path(first_micropost)
     end
+    # Valid submission with a picture.
+    content = "This micropost has a picture too"
+    image = fixture_file_upload('files/kitten.jpg', 'image/jpeg')
+    assert_difference 'Micropost.count', 1 do
+      post microposts_path, params: { micropost: {
+        content: content, image: image
+      } }
+    end
+    first_micropost = @user.microposts.first
+    assert first_micropost.image.attached?
+    assert_redirected_to root_url
+    follow_redirect!
+    assert_match content, response.body
     # Visit different user (no delete links)
     get user_path(users(:archer))
     assert_select 'body div ol.microposts form.deletebutton', count: 0
