@@ -5,8 +5,6 @@ ruby '2.6.5'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.0'
-# Add validation functionality to ActiveStorage for uploaded pictures.
-gem 'active_storage_validations', '~> 0'
 # Use Puma as the app server
 gem 'puma', '~> 3'
 # Use SCSS for stylesheets
@@ -28,6 +26,11 @@ gem 'faker', '~> 2'
 # For paginating long lists of things.
 gem 'will_paginate', '~> 3'
 gem 'bootstrap-will_paginate', '~> 1'
+# Add validation functionality to ActiveStorage for uploaded pictures.
+gem 'active_storage_validations', '~> 0'
+# For resizing uploaded images.
+gem 'image_processing', '~> 1'
+gem 'mini_magick', '~> 4'
 
 group :development, :test do
   # Use sqlite3 as the database for Active Record
