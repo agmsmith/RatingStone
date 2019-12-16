@@ -8,8 +8,10 @@
   <% end %>
   <span class="user"><%= link_to micropost.user.name, micropost.user %></span>
   <span class="content">
-    <%= micropost.content %>
-    <%= image_tag micropost.display_image if micropost.image.attached? %>
+    <%= micropost.content %><% if micropost.image.attached? %><br>
+      <%= link_to micropost.image do
+        image_tag micropost.displayable_image
+      end %><% end %>
   </span>
   <span class="timestamp">Posted <%= time_ago_in_words(micropost.created_at) %>
     ago&nbsp;- <small><%= micropost.created_at.getlocal %></small>.</span>
