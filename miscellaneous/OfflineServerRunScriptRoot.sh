@@ -14,7 +14,7 @@ sleep 2s
 
 echo
 echo "Now executing: $1"
-runuser --user=SomeUser "/var/www/ratingstone.agmsmith.ca/miscellaneous/$1"
+runuser --login SomeUser "/var/www/ratingstone.agmsmith.ca/miscellaneous/$1"
 echo "Finished executing $1, return code $?."
 echo
 
