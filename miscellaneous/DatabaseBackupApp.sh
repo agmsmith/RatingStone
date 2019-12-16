@@ -4,5 +4,10 @@
  
 umask 027
 pg_dump --verbose --clean --serializable-deferrable --dbname=SomeDBName --user=SomeUser --no-password > /media/SomeFolderName/RatingStone.sql
+
+rm -rv /var/www/SomeWWWName/storage/va/ri/variants/
+rmdir /var/www/SomeWWWName/storage/va/ri
+rmdir /var/www/SomeWWWName/storage/va
 rsync --progress --verbose --itemize-changes --archive --delete-during --inplace --partial /var/www/SomeWWWName/storage /media/SomeFolderName/
 
+echo "Backup of database and files has been completed."
