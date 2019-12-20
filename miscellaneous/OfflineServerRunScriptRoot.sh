@@ -8,13 +8,13 @@ cd /etc/httpd/conf/
 rm -v ratingstone.conf
 ln -s -v ratingstone_off.conf ratingstone.conf
 cd
-sed "--expression=s/MYDATE/`date`/" "--expression=s/MYSCRIPT/$1/" < "/var/www/ratingstone.agmsmith.ca/public/offline/index.template.html" > "/var/www/ratingstone.agmsmith.ca/public/offline/index.html"
+sed "--expression=s/MYDATE/`date`/" "--expression=s/MYSCRIPT/$1/" < "/var/www/SomeWWWName/public/offline/index.template.html" > "/var/www/SomeWWWName/public/offline/index.html"
 systemctl restart httpd
 sleep 2s
 
 echo
 echo "Now executing: $1"
-runuser --login SomeUser "/var/www/ratingstone.agmsmith.ca/miscellaneous/$1"
+runuser --login SomeUser "/var/www/SomeWWWName/miscellaneous/$1"
 echo "Finished executing $1, return code $?."
 echo
 
