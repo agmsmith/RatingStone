@@ -94,4 +94,29 @@ class UserTest < ActiveSupport::TestCase
       @user.destroy
     end
   end
+
+  test "utility functions for follow and unfollow a user" do
+    michael = users(:michael)
+    archer  = users(:archer)
+    assert_not michael.following?(archer)
+    michael.follow(archer)
+    assert michael.following?(archer)
+    michael.unfollow(archer)
+    assert_not michael.following?(archer)
+  end
+
+  test "what happens if you follow twice" do
+    michael = users(:michael)
+    archer  = users(:archer)
+    assert_not michael.following?(archer)
+    michael.follow(archer)
+    assert michael.following?(archer)
+    # Second follow will try to make a duplicate relationship record.
+    assert_raise ActiveRecord::RecordNotUnique do
+      michael.follow(archer)
+    end
+    assert michael.following?(archer)
+    michael.unfollow(archer)
+    assert_not michael.following?(archer)
+  end
 end
