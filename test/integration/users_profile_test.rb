@@ -7,6 +7,9 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
 
   def setup
     @user = users(:michael)
+    @user.follow(users(:archer))
+    @user.follow(users(:lana))
+    users(:lana).follow(@user)
   end
 
   test "profile display" do
@@ -20,5 +23,7 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
     @user.microposts.paginate(page: 1).each do |micropost|
       assert_match micropost.content, response.body
     end
+    assert_select 'strong#following', text: @user.following.count.to_s
+    assert_select 'strong#followers', text: @user.followers.count.to_s
   end
 end

@@ -9,7 +9,7 @@ class User < ApplicationRecord
     foreign_key: :followed_id, dependent: :destroy
   has_many :following, through: :active_relationships, source: :followed
   has_many :followers, through: :passive_relationships, source: :follower
-  
+
   attr_accessor :activation_token, :remember_token, :reset_token
 
   before_save :downcase_email
