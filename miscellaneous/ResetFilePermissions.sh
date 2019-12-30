@@ -4,6 +4,7 @@
 # only saves the executable bit of the file permissions.
  
 cd /var/www/SomeWWWName/
+pwd
 chmod -R -v og-rwx config | grep -i changed
 chmod -R -v og-rwx miscellaneous | grep -i changed
 
