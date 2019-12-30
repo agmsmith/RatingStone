@@ -3,7 +3,15 @@
 # mode (no database accesses, please wait web page). $1 is the name of a script
 # file to run, from the application's miscellaneous directory.  Also rewrites
 # the standby index.html file to show the start time and script name.
- 
+
+if [ -z "$1" ]
+then
+  echo "Usage: $0 Command"
+  echo "Put the web server offline and run one of these commands:"
+  ls "/var/www/SomeWWWName/miscellaneous/"
+  exit 1
+fi
+
 cd /etc/httpd/conf/
 rm -v ratingstone.conf
 ln -s -v ratingstone_off.conf ratingstone.conf
