@@ -22,6 +22,7 @@
   <div class="col-md-8">
     <h3><%= @title %></h3>
     <% if @users.any? %>
+      <%= will_paginate %>
       <ul class="users follow">
         <%= render @users %>
       </ul>
