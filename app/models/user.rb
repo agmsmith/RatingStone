@@ -90,7 +90,8 @@ class User < ApplicationRecord
   # feed.  Currently it's posts from followed users and their own posts.
   def feed
     Micropost.where(user: id).or(Micropost.where(
-      user: Relationship.where(follower: id).select(:followed_id)))
+      user: Relationship.where(follower: id).select(:followed_id)
+    ))
   end
 
   # Follows a user.
