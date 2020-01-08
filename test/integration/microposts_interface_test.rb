@@ -30,7 +30,7 @@ class MicropostsInterfaceTest < ActionDispatch::IntegrationTest
     first_micropost = @user.microposts.first # Newest one is the first one.
     assert_select 'body div ol.microposts form.deletebutton[action=?]',
       micropost_path(first_micropost), count: 1
-    assert_not first_micropost.image.attached?
+    assert_not first_micropost.images.attached?
     assert_difference 'Micropost.count', -1 do
       delete micropost_path(first_micropost)
     end
@@ -39,11 +39,11 @@ class MicropostsInterfaceTest < ActionDispatch::IntegrationTest
     image = fixture_file_upload('files/kitten.jpg', 'image/jpeg')
     assert_difference 'Micropost.count', 1 do
       post microposts_path, params: { micropost: {
-        content: content, image: image
+        content: content, images: [image]
       } }
     end
     first_micropost = @user.microposts.first
-    assert first_micropost.image.attached?
+    assert first_micropost.images.attached?
     assert_redirected_to root_url
     follow_redirect!
     assert_match content, response.body
