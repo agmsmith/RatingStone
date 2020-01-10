@@ -33,6 +33,10 @@ Rails.application.configure do
   # Store uploaded files on the local file system in a temporary directory.
   config.active_storage.service = :test
 
+  # Fix for database busy with multithreaded ActiveStorage purges and SQLite3
+  # database; run the job immediately, don't actually queue it for later.
+  config.active_job.queue_adapter = :inline
+
   config.action_mailer.perform_caching = false
 
   host = 'localhost:3000'
