@@ -6,7 +6,9 @@ class MicropostsController < ApplicationController
 
   def create
     @new_micropost = current_user.microposts.build(micropost_params)
-    @new_micropost.images.attach(params[:micropost][:images])
+    # Cache the images.count to avoid database lookups for text only posts,
+    # note that images_count is a reserved field name so we can't use that.
+    @new_micropost.images_number = @new_micropost.images.count
     if @new_micropost.save
       flash[:success] = "Micropost created!"
       redirect_to(root_url)
@@ -26,7 +28,7 @@ class MicropostsController < ApplicationController
   private
 
   def micropost_params
-    params.require(:micropost).permit(:content, :images)
+    params.require(:micropost).permit(:content, images: [])
   end
 
   def correct_user

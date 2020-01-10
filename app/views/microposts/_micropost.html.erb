@@ -8,11 +8,24 @@
   <% end %>
   <span class="user"><%= link_to micropost.user.name, micropost.user %></span>
   <span class="content">
-    <%= micropost.content %><% if micropost.images.attached? %><br>
-      <% micropost.images.each do |full_size_image|
-        thumbnail_image = micropost.displayable_image(full_size_image) %>
+    <%= micropost.content %><% if micropost.images_number > 0 %><br>
+      <% bigger = true
+      micropost.images.each_with_index do |full_size_image, index|
+        thumbnail_image =
+          full_size_image.variant(resize_to_limit: [500, 500])
+        # First image is always big, later are half size, final one is
+        # back to full size if it is on a line by itself.
+        if index == 0
+          bigger = true
+        elsif index < micropost.images_number - 1
+          bigger = false
+        elsif micropost.images_number.odd?
+          bigger = false
+        else # Last picture, even total number of pictures.
+          bigger = true
+        end %>
         <%= link_to full_size_image do
-          image_tag thumbnail_image
+          image_tag thumbnail_image, width: (bigger ? "99%" : "49%")
         end %>
       <% end %>
     <% end %>
