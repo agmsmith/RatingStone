@@ -2,6 +2,25 @@
 
 <h1>Reset Password</h1>
 
+<% if request.env['HTTPS'] != 'on' # Apache web server HTTPS detection. %>
+  <div class="row center">
+    <div class="col-md-6 col-md-offset-3">
+      <div class="alert alert-warning" role="alert">
+        You are accessing this web page without using encryption.
+        That means someone could more easily spy on your Internet
+        connection, see your reset password, and then pretend to be
+        you.  If your web browser is new enough, you may wish to
+        switch to the encrypted page.
+      </div>
+
+      <a href="<%= edit_password_reset_url(@user.reset_token,
+        email: @user.email).sub(/http:/, 'https:') %>"
+        class="btn btn-lg btn-primary">Switch to <strong>secure</strong>
+        Password Reset</a>
+    </div>
+  </div>
+<% end %>
+
 <div class="row">
   <div class="col-md-6 col-md-offset-3">
     <%= form_with(model: @user, url: password_reset_path(params[:id]),
@@ -20,23 +39,4 @@
     <% end %>
   </div>
 </div>
-
-<% if request.env['HTTPS'] != 'on' # Apache web server HTTPS detection. %>
-  <div class="row center extra_space_at_top">
-    <div class="col-md-6 col-md-offset-3">
-      <div class="alert alert-warning" role="alert">
-        You are accessing this web page without using encryption.
-        That means someone could more easily spy on your Internet
-        connection, see your reset password, and then pretend to be
-        you.  If your web browser is new enough, you may wish to
-        switch to the encrypted page.
-      </div>
-
-      <a href="<%= edit_password_reset_url(@user.reset_token,
-        email: @user.email).sub(/http:/, 'https:') %>"
-        class="btn btn-lg btn-primary">Switch to <strong>secure</strong>
-        Password Reset</a>
-    </div>
-  </div>
-<% end %>
 

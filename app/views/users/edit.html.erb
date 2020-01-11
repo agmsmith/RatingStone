@@ -3,18 +3,8 @@
 
 <h1>Update your Profile</h1>
 
-<div class="row">
-  <div class="col-md-6 col-md-offset-3">
-    <%= render 'name_email_password_form' %>
-    <div class="gravatar_edit">
-      <%= gravatar_for @user %>
-      <a href="https://gravatar.com/emails" target="_blank" rel="noopener">Change</a>
-    </div>
-  </div>
-</div>
-
 <% if request.env['HTTPS'] != 'on' # Apache web server HTTPS detection. %>
-  <div class="row center extra_space_at_top">
+  <div class="row center">
     <div class="col-md-6 col-md-offset-3">
       <div class="alert alert-warning" role="alert">
         You are accessing this web page without using encryption.
@@ -29,4 +19,14 @@
     </div>
   </div>
 <% end %>
+
+<div class="row">
+  <div class="col-md-6 col-md-offset-3">
+    <%= render 'name_email_password_form' %>
+    <div class="gravatar_edit">
+      <%= gravatar_for @user %>
+      <a href="https://gravatar.com/emails" target="_blank" rel="noopener">Change</a>
+    </div>
+  </div>
+</div>
 
