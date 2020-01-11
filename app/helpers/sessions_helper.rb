@@ -9,7 +9,7 @@ module SessionsHelper
     @current_user = user
   end
 
-  # Remembers a user in a persistent cookie.
+  # Remembers a user as being long term logged in via a persistent cookie.
   def remember(user)
     user.remember
     cookies.permanent.signed[:user_id] = user.id

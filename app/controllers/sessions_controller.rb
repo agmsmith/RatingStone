@@ -21,8 +21,11 @@ class SessionsController < ApplicationController
       end
     else
       # Create an error message.
-      flash.now[:danger] = 'Invalid email/password combination'
-      render('new')
+      flash.now[:danger] = 'Invalid email/password combination.'
+      sleep(3) # Delay so guessing passwords takes a while.
+      # Return HTTP error code 401/unauthorized, so Fail2Ban can see it in the
+      # web server logs and block this IP address if they fail login too often.
+      render('new', status: :unauthorized)
     end
   end
 
