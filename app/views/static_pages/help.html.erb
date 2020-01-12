@@ -1,6 +1,7 @@
 <% provide(:page_title, "Help") %>
 
 <h1>Help</h1>
+
 <p>
   This reputation system web site is a layer on top of the Ruby on Rails
   Tutorial sample application.  We'll write up some help text later, once
@@ -8,23 +9,31 @@
 </p>
 
 <p>
-  Get help on the Ruby on Rails Tutorial at the
-  <a href="https://www.railstutorial.org/help">Rails Tutorial Help page</a>.
-  To get help on this sample app, see the
-  <a href="https://www.railstutorial.org/book"><em>Ruby on Rails Tutorial</em>
-  book</a>.
+  For help on the Markdown text language we use, so that you can write
+  Microposts with fancier formatting, see the
+  <a href="https://kramdown.gettalong.org/quickref.html">kramdown quick
+  reference</a> page.
 </p>
 
-<h2 style="clear: both">Debugging - Your Web Page Request Environment</h2>
+<p>
+  Get help on debugging this sample web application at the
+  <a href="https://www.railstutorial.org/help">Rails Tutorial Help</a> page.
+  See the <a href="https://www.railstutorial.org/book"><em>Ruby on Rails
+  Tutorial</em> book</a> to learn how to program well enough to write this
+  application.
+</p>
 
-<table class="table-striped">
-<% request.env.each do | key, item |
-     value = item.inspect
-     if value.length > 120
-       value = value.slice(0, 100) + "... and #{value.length} more letters."
-     end
-%>
-  <tr><td><%= key.inspect %></td><td><%= value %></td></tr>
+<% if Rails.env.development? %>
+  <h2 style="clear: both">Debugging - Your Web Page Request Environment</h2>
+
+  <table class="table-striped">
+    <% request.env.each do | key, item |
+      value = item.inspect
+      if value.length > 65
+        value = value.slice(0, 65) + "... and #{value.length} more letters."
+      end %>
+      <tr><td><%= key %></td><td><%= value %></td></tr>
+    <% end %>
+  </table>
 <% end %>
-</table>
 

@@ -210,6 +210,10 @@ aside {
     .content {
       display: block;
       margin-left: 60px;
+    }
+    .tiled-pictures {
+      display: block;
+      margin-left: 60px;
       img {
         display: inline-block;
         margin: 0;
@@ -224,7 +228,7 @@ aside {
     .gravatar {
       float: left;
       margin-right: 10px;
-      margin-top: 0.5em;
+      margin-top: 0;
     }
     .deletebutton {
       display: block;

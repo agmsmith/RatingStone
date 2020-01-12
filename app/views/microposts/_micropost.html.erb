@@ -8,7 +8,10 @@
   <% end %>
   <span class="user"><%= link_to micropost.user.name, micropost.user %></span>
   <span class="content">
-    <%= micropost.content %><% if micropost.images_number > 0 %><br>
+    <%= Kramdown::Document.new(micropost.content).to_html.html_safe -%>
+  </span>
+  <% if micropost.images_number > 0 %>
+  <span class="tiled-pictures">
       <% bigger = true
       micropost.images.each_with_index do |full_size_image, index|
         thumbnail_image =
@@ -24,12 +27,14 @@
         else # Last picture, even total number of pictures.
           bigger = true
         end %>
-        <%= link_to full_size_image do
-          image_tag thumbnail_image, width: (bigger ? "99%" : "49%")
-        end %>
+<%= # Note no indentation, so there are no space characters between pictures.
+        link_to full_size_image do
+          image_tag thumbnail_image, width: (bigger ? "98%" : "49%")
+        end -%>
       <% end %>
-    <% end %>
+
   </span>
-  <span class="timestamp">Posted <%= time_ago_in_words(micropost.created_at) %>
-    ago&nbsp;- <small><%= micropost.created_at.getlocal %></small>.</span>
+  <% end %>
+  <span class="timestamp">Posted <%= time_ago_in_words(micropost.created_at)
+    %> ago&nbsp;- <small><%= micropost.created_at.getlocal %></small>.</span>
 </li>

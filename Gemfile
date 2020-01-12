@@ -31,6 +31,7 @@ gem 'active_storage_validations', '~> 0'
 # For resizing uploaded images.
 gem 'image_processing', '~> 1'
 gem 'mini_magick', '~> 4'
+gem 'kramdown', '~> 2'
 
 group :development, :test do
   # Use sqlite3 as the database for Active Record
