@@ -5,6 +5,8 @@ class SessionsController < ApplicationController
   end
 
   def create
+    # Delay to slow down automated password guessing, yes even for correct ones.
+    sleep(3) if Rails.env.production?
     session = params[:session]
     email = session[:email] if session
     user = User.find_by(email: email.downcase) if email
@@ -22,7 +24,6 @@ class SessionsController < ApplicationController
     else
       # Create an error message.
       flash.now[:danger] = 'Invalid email/password combination.'
-      sleep(3) # Delay so guessing passwords takes a while.
       # Return HTTP error code 401/unauthorized, so Fail2Ban can see it in the
       # web server logs and block this IP address if they fail login too often.
       render('new', status: :unauthorized)
