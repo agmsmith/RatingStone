@@ -1,0 +1,44 @@
+head	1.1;
+access;
+symbols;
+locks; strict;
+comment	@# @;
+
+
+1.1
+date	2020.01.29.22.43.07;	author agmsmith;	state Exp;
+branches;
+next	;
+
+
+desc
+@Documenting the Rating Stone database design, and related classes.
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@# The Rating Stone Database
+
+$Revision$
+Because I'm thinking someone could implement the system as a BlockChain ledger
+application,  or as a federated collection of systems exchanging records, the
+database is set up as a mostly read-only collection of objects and linkages.
+
+For example, if you want to edit some posted text, the system will create a later object (they all have datestamps) with the new text and a reference back to the original text object. Then when displaying the original text, it will search for newer versions and display that text.  Of course, advanced users can view a list of available versions of the text and see the change history.
+
+Because I don't want to have zillions of tables, and want to inherit functionality for
+various related record types, we're using the Ruby on Rails ActiveRecord "[single table inheritance](https://api.rubyonrails.org/classes/ActiveRecord/Inheritance.html)" setup.   There will be one table, with a "type" field in each row to specify the particular subclass used for that row.
+
+LedgerBase
+: The base class for persistent objects.
+
+* First field name.
+
+$Header$
+$Log$
+
+@
