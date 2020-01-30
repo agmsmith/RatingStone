@@ -1,9 +1,14 @@
-head	1.4;
+head	1.5;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.5
+date	2020.01.30.22.16.28;	author agmsmith;	state Exp;
+branches;
+next	1.4;
 
 1.4
 date	2020.01.30.15.45.39;	author agmsmith;	state Exp;
@@ -31,14 +36,14 @@ desc
 @
 
 
-1.4
+1.5
 log
-@Explain the ledger write-once system and single table inheritance.
+@Starting to add fields to the base object record.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.3 2020/01/30 14:40:09 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.4 2020/01/30 15:45:39 agmsmith Exp agmsmith $</SMALL>
 
 Because I'm thinking someone could implement the reputation system as a
 BlockChain ledger application, or as a federated collection of systems
@@ -87,17 +92,60 @@ generic fields subclass-specific names by using the magic "alias_attribute"
 ActiveRecord function.  So where the base may have a generic string1 and
 string2 field, a User subclass could rename those as FullName and EMailAddress,
 with "alias_attribute :full_name, :string1" and "alias_attribute
-:email_address, :string2".
+:email_address, :string2".  ActiveRecord will then automatically build queries
+using the actual database field names whenever we use the subclass object.
 
 LedgerBase
-: The base class for persistent objects.
+: The base class for persistent objects that the user may interact with.
 
-* First field name.
+* id The usual big (64 bit) integer unique record sequence number, which
+  identifies the record/object.  There's an index of course to make finding a
+  record by id number quick.  In the future we may use a GUID instead, or a
+  pair of (id,server) if there are several federated servers run by different
+  organisations.  Write-once.
+* creator_id Identifies the user who created this record.  Not NULL; the root
+  user is considered to have created themself.  Write-once.
+* permissions_id Points to the most recent permissions record for this object.
+  NULL if everybody is allowed to read it.  Often this will point to a user's
+  settings list which contains the default permissions, and other things.  For
+  discussion groups, it will point to the permission in the group's settings.
+  Updated when a new permissions record is linked to this object.
+* original_id Points to the original version of this record, or NULL if this is
+  the original one.  When someone creates a link to the object, by default it's
+  linked to by the original id.  The original record is still used to cache the
+  rating points and other dyanmic things, though the actual content (text in a
+  Post for example) comes from the latest amended record (unless the user is
+  looking for a specific version the object).
+* amended_id Points to the latest version of this record, or NULL if this is
+  not the original record.
+
+## Test Plan - A few Use Cases
+
+A new user writes a message.  Another user replies to it.  First user edits
+their message.  What does second user see?  First user replies to second user's
+message.  First user deletes their original message.
+
+A user adds some photos and videos to a message.  They are separate objects,
+and need the expendature of rating points to be attached (more points are
+required for a larger number of bytes).  What happens when they run out of
+points?  Do they get attached to the message and show up when it is displayed?
+
+First user sets up a small category tree and adds a message to a couple of
+categories. Second user navigates tree to see messages about their favourite topic.
+
+Weekly batch processing adds some reputation points to first and second user.
+First user likes second user, awarding some up points, declaring their
+appreciation.  Second user awards some down points to first user, declaring
+their disgust.  What are their total points?  Another weekly batch run happens.
+What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.3 2020/01/30 14:40:09 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.4 2020/01/30 15:45:39 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.4  2020/01/30 15:45:39  agmsmith
+Explain the ledger write-once system and single table inheritance.
+
 Revision 1.3  2020/01/30 14:40:09  agmsmith
 Writing continues, work in progress.
 
@@ -107,6 +155,30 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.4
+log
+@Explain the ledger write-once system and single table inheritance.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.3 2020/01/30 14:40:09 agmsmith Exp agmsmith $</SMALL>
+d52 2
+a53 1
+:email_address, :string2".
+d56 1
+a56 1
+: The base class for persistent objects.
+d58 40
+a97 1
+* First field name.
+d100 1
+a100 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.3 2020/01/30 14:40:09 agmsmith Exp agmsmith $
+d103 3
 @
 
 
