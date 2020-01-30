@@ -1,9 +1,19 @@
-head	1.1;
+head	1.3;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.3
+date	2020.01.30.14.40.09;	author agmsmith;	state Exp;
+branches;
+next	1.2;
+
+1.2
+date	2020.01.29.22.52.13;	author agmsmith;	state Exp;
+branches;
+next	1.1;
 
 1.1
 date	2020.01.29.22.43.07;	author agmsmith;	state Exp;
@@ -16,29 +26,90 @@ desc
 @
 
 
-1.1
+1.3
 log
-@Initial revision
+@Writing continues, work in progress.
 @
 text
 @# The Rating Stone Database
 
-$Revision$
+<SMALL>$Id: Database\040Design.md,v 1.2 2020/01/29 22:52:13 agmsmith Exp agmsmith $</SMALL>
+
 Because I'm thinking someone could implement the system as a BlockChain ledger
-application,  or as a federated collection of systems exchanging records, the
+application, or as a federated collection of systems exchanging records, the
 database is set up as a mostly read-only collection of objects and linkages.
 
-For example, if you want to edit some posted text, the system will create a later object (they all have datestamps) with the new text and a reference back to the original text object. Then when displaying the original text, it will search for newer versions and display that text.  Of course, advanced users can view a list of available versions of the text and see the change history.
+For example, if you want to edit some posted text, the system will create a
+later object (they all have datestamps) with the new text and a reference back
+to the original text object.  Then when displaying the original text, it will
+search for newer versions and display that text.  Of course, advanced users can
+view a list of available versions of the text and see the change history.
 
-Because I don't want to have zillions of tables, and want to inherit functionality for
-various related record types, we're using the Ruby on Rails ActiveRecord "[single table inheritance](https://api.rubyonrails.org/classes/ActiveRecord/Inheritance.html)" setup.   There will be one table, with a "type" field in each row to specify the particular subclass used for that row.
+Similarly when someone adds an item to a list, a link record will be added between the item object's id number and the list object's id number.  To remove an item, the link record isn't deleted, instead a new link kill record is created, with the same id number pair.
+
+Theoretically, when displaying the current state of things, you run through all the records, adding and removing objects and links from the current state.  In practice, we cache things. So an object record would have a flag that marks it as deleted or amended, and a link record would similarly be marked.  Since people might want to reference a deleted thing, we don't actually delete them.
+
+Because I don't want to have zillions of tables, and want to inherit
+functionality for various related record types, we're using the Ruby on Rails
+ActiveRecord "[single table
+inheritance](https://api.rubyonrails.org/classes/ActiveRecord/Inheritance.html)"
+setup.  There will be one table, with a "type" field in each row to specify the
+particular subclass used for that row.
 
 LedgerBase
 : The base class for persistent objects.
 
 * First field name.
 
+<PRE>
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.2 2020/01/29 22:52:13 agmsmith Exp agmsmith $
+
+$Log: Database\040Design.md,v $
+Revision 1.2  2020/01/29 22:52:13  agmsmith
+Fixed up formatting of RCS log and version number.
+
+Revision 1.1  2020/01/29 22:43:07  agmsmith
+Initial revision
+</PRE>
+@
+
+
+1.2
+log
+@Fixed up formatting of RCS log and version number.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: 1.1 $</SMALL>
+d15 4
+d32 1
+a32 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.1 2020/01/29 22:43:07 agmsmith Exp agmsmith $
+d35 2
+@
+
+
+1.1
+log
+@Initial revision
+@
+text
+@d3 2
+a4 1
+$Revision$
+d6 1
+a6 1
+application,  or as a federated collection of systems exchanging records, the
+d9 12
+a20 4
+For example, if you want to edit some posted text, the system will create a later object (they all have datestamps) with the new text and a reference back to the original text object. Then when displaying the original text, it will search for newer versions and display that text.  Of course, advanced users can view a list of available versions of the text and see the change history.
+
+Because I don't want to have zillions of tables, and want to inherit functionality for
+various related record types, we're using the Ruby on Rails ActiveRecord "[single table inheritance](https://api.rubyonrails.org/classes/ActiveRecord/Inheritance.html)" setup.   There will be one table, with a "type" field in each row to specify the particular subclass used for that row.
+d27 4
+a30 2
 $Header$
 $Log$
-
+d32 3
 @

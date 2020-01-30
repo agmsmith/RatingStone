@@ -15,8 +15,8 @@
 # Ignore the generated documentation files.  Just keep the ones inside
 # the nested RCS directory.  Usually you "co -u" the files there, then
 # run "kramdown < File.md > File.html"
-/docs/*
-!/docs/RCS
+/docs/*.html
+/docs/*.md
 
 # Ignore all logfiles and tempfiles.
 /log/*
