@@ -1,9 +1,14 @@
-head	1.3;
+head	1.4;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.4
+date	2020.01.30.15.45.39;	author agmsmith;	state Exp;
+branches;
+next	1.3;
 
 1.3
 date	2020.01.30.14.40.09;	author agmsmith;	state Exp;
@@ -26,35 +31,63 @@ desc
 @
 
 
-1.3
+1.4
 log
-@Writing continues, work in progress.
+@Explain the ledger write-once system and single table inheritance.
 @
 text
-@# The Rating Stone Database
+@# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.2 2020/01/29 22:52:13 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.3 2020/01/30 14:40:09 agmsmith Exp agmsmith $</SMALL>
 
-Because I'm thinking someone could implement the system as a BlockChain ledger
-application, or as a federated collection of systems exchanging records, the
-database is set up as a mostly read-only collection of objects and linkages.
+Because I'm thinking someone could implement the reputation system as a
+BlockChain ledger application, or as a federated collection of systems
+exchanging records, the database is set up as a write once collection of object
+records and link records.  Objects are the things the user can view and they
+have ratings (posted messages, lists of things, other users).  Links implement
+lists of things, connecting a pair of objects together, one being a parent or
+container object (such as a list of book reviews) and the other being a child
+object now in that container (such as a book review object).  Usually rating
+points are also transfered when you create a link (perhaps describing how much
+you like that book review).
 
 For example, if you want to edit some posted text, the system will create a
 later object (they all have datestamps) with the new text and a reference back
-to the original text object.  Then when displaying the original text, it will
-search for newer versions and display that text.  Of course, advanced users can
-view a list of available versions of the text and see the change history.
+to the original text object record.  Then when displaying the original text, it
+will search for newer versions and display that text instead.  But new
+references (links) to the text will still point at the original text record,
+since that has a more constant identity then possibly yet more new text
+records.  Of course, advanced users can view a list of all those text records
+and see the change history.
 
-Similarly when someone adds an item to a list, a link record will be added between the item object's id number and the list object's id number.  To remove an item, the link record isn't deleted, instead a new link kill record is created, with the same id number pair.
+Similarly when someone adds an item to a list, a link record will be added to
+connect the list and the item.  To remove an item, the link record isn't
+deleted, instead a new link kill record is created, referencing the same two
+objects.
 
-Theoretically, when displaying the current state of things, you run through all the records, adding and removing objects and links from the current state.  In practice, we cache things. So an object record would have a flag that marks it as deleted or amended, and a link record would similarly be marked.  Since people might want to reference a deleted thing, we don't actually delete them.
+Theoretically, when displaying the current state of things, you run through all
+the records in chronological order, adding and removing objects and links from
+the current state.  In practice, we cache things.  So an object record would
+have a flag that marks it as deleted or amended, and a link record would
+similarly be marked, and there can be cached forward references to more quickly
+point out the record with the latest change.
 
 Because I don't want to have zillions of tables, and want to inherit
-functionality for various related record types, we're using the Ruby on Rails
-ActiveRecord "[single table
+functionality for various related record types (generic object > text object >
+book review object), we're using the Ruby on Rails ActiveRecord "[single table
 inheritance](https://api.rubyonrails.org/classes/ActiveRecord/Inheritance.html)"
-setup.  There will be one table, with a "type" field in each row to specify the
-particular subclass used for that row.
+setup.  There will be one actual database table for objects and another one for
+links, both have a "type" field in each row to specify the particular subclass
+used for that row.
+
+To avoid the common complaint about single table inheritance adding too many
+fields for subclasses, we put some generic number and string fields into the
+base class and reuse them differently for each subclass.  Subclasses give those
+generic fields subclass-specific names by using the magic "alias_attribute"
+ActiveRecord function.  So where the base may have a generic string1 and
+string2 field, a User subclass could rename those as FullName and EMailAddress,
+with "alias_attribute :full_name, :string1" and "alias_attribute
+:email_address, :string2".
 
 LedgerBase
 : The base class for persistent objects.
@@ -62,15 +95,58 @@ LedgerBase
 * First field name.
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.2 2020/01/29 22:52:13 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.3 2020/01/30 14:40:09 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.3  2020/01/30 14:40:09  agmsmith
+Writing continues, work in progress.
+
 Revision 1.2  2020/01/29 22:52:13  agmsmith
 Fixed up formatting of RCS log and version number.
 
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.3
+log
+@Writing continues, work in progress.
+@
+text
+@d1 1
+a1 1
+# The Rating Stone Database
+d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.2 2020/01/29 22:52:13 agmsmith Exp agmsmith $</SMALL>
+d5 10
+a14 3
+Because I'm thinking someone could implement the system as a BlockChain ledger
+application, or as a federated collection of systems exchanging records, the
+database is set up as a mostly read-only collection of objects and linkages.
+d18 18
+a35 7
+to the original text object.  Then when displaying the original text, it will
+search for newer versions and display that text.  Of course, advanced users can
+view a list of available versions of the text and see the change history.
+
+Similarly when someone adds an item to a list, a link record will be added between the item object's id number and the list object's id number.  To remove an item, the link record isn't deleted, instead a new link kill record is created, with the same id number pair.
+
+Theoretically, when displaying the current state of things, you run through all the records, adding and removing objects and links from the current state.  In practice, we cache things. So an object record would have a flag that marks it as deleted or amended, and a link record would similarly be marked.  Since people might want to reference a deleted thing, we don't actually delete them.
+d38 2
+a39 2
+functionality for various related record types, we're using the Ruby on Rails
+ActiveRecord "[single table
+d41 12
+a52 2
+setup.  There will be one table, with a "type" field in each row to specify the
+particular subclass used for that row.
+d60 1
+a60 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.2 2020/01/29 22:52:13 agmsmith Exp agmsmith $
+d63 3
 @
 
 
