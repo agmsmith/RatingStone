@@ -1,9 +1,19 @@
-head	1.8;
+head	1.10;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.10
+date	2020.02.03.22.33.40;	author agmsmith;	state Exp;
+branches;
+next	1.9;
+
+1.9
+date	2020.02.03.22.26.20;	author agmsmith;	state Exp;
+branches;
+next	1.8;
 
 1.8
 date	2020.02.02.22.15.24;	author agmsmith;	state Exp;
@@ -51,14 +61,14 @@ desc
 @
 
 
-1.8
+1.10
 log
-@Added permissions records.
+@Fix up formatting in kramdown for preformatted code.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.7 2020/02/02 21:44:52 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.9 2020/02/03 22:26:20 agmsmith Exp agmsmith $</SMALL>
 
 Because I'm thinking someone could implement the reputation system as a
 BlockChain ledger application, or as a federated collection of systems
@@ -112,7 +122,8 @@ using the actual database field (string1, string2) names whenever we use the
 subclass object.
 
 
-## LedgerBase
+## *LedgerBase*
+
 The base class for persistent objects that the user may interact with.  There
 is one database table for all objects of this class and subclasses.
 
@@ -122,13 +133,9 @@ is one database table for all objects of this class and subclasses.
   pair of (id,server) if there are several federated servers run by different
   organisations.  Write-once.
 * type string The name of the subclass to use for this object record.
+  Write-once.
 * creator_id Identifies the user who created this record.  Never NULL; the root
   user is considered to have created themself.  Write-once.
-* permissions_id Points to the most recent permissions record for this object.
-  NULL if everybody is allowed to read it.  Often this will point to a user's
-  settings list which contains the default permissions.  For discussion groups,
-  it will point to the permission in the group's settings.  Updated when a new
-  permissions record is linked to this object.
 * original_id Points to the original version of this record, or NULL if this is
   the original one.  When someone creates a link to the object, by default it's
   linked to by the original id.  The original record is still used to cache the
@@ -158,15 +165,15 @@ is one database table for all objects of this class and subclasses.
   deleted from the current database, freeing up storage.
 
 
-**LedgerDelete** < LedgerBase
-: Used for marking possibly multiple objects as deleted or killed.
-  LinkDelChild records are used to associate this LedgerDelete with all the
-  objects being deleted.  Undelete is implemented by creating a new
-  LedgerDelete record to kill the original LedgerDelete record, repeat as
-  needed to redelete and so on.  We don't support, or even want to think about
-  having a LedgerDelete delete itself.  Can have several LedgerDelete records
-  deleting the same object; need to kill all those LedgerDelete records to
-  undelete that object.
+### *LedgerDelete* < LedgerBase
+
+Used for marking possibly multiple objects as deleted or killed.  LinkDelChild
+records are used to associate this LedgerDelete with all the objects being
+deleted.  Undelete is implemented by creating a new LedgerDelete record to kill
+the original LedgerDelete record, repeat as needed to redelete and so on.  We
+don't support, or even want to think about having a LedgerDelete delete itself.
+Can have several LedgerDelete records deleting the same object; need to kill
+all those LedgerDelete records to undelete that object.
 
 * unlink_too boolean True if the links to the object (those where LinkBase
   child_id points to the deleted object) are deleted too (removing it from all
@@ -175,15 +182,17 @@ is one database table for all objects of this class and subclasses.
   recursively.
 
 
-**LedgerUnlink** < LedgerBase
-: Breaks a link, used for removing an object from a list.  You can undo an
-  unlink by deleting this LedgerUnlink object.
+### *LedgerUnlink* < LedgerBase
+
+Breaks a link, used for removing an object from a list.  You can undo an unlink
+by deleting this LedgerUnlink object.
 
 * link_id Which LinkBase object to mark as deleted.
 
 
-**LedgerUser** < LedgerBase
-: Idenfities a particular user.
+### *LedgerUser* < LedgerBase
+
+Idenfities a particular user.
 
 * User_id Points to a user's record in the separate Users database (see
   RailsTutorial) which has passwords, e-mail addresses and other private
@@ -196,39 +205,40 @@ is one database table for all objects of this class and subclasses.
   sysop, bought some bonus points) attached to the LedgerUser record by links.
 
 
-**LedgerMicropost** < LedgerBase
-: A micropost made by a user.  Contains some text in UTF-8 markdown format.
-  They can also attach pictures and other media files.  There can also be
-  micropost replies, the micropost can be placed in a category list to identify
-  what the topic of the text is, have rating points awarded to it, and so on.
-  This is the object the user interacts with the most.  It is also usually
-  visible to users and even external web sites, unless permissions make it
-  private.
+### *LedgerMicropost* < LedgerBase
+
+A micropost made by a user.  Contains some text in UTF-8 markdown format.  They
+can also attach pictures and other media files.  There can also be micropost
+replies, the micropost can be placed in a category list to identify what the
+topic of the text is, have rating points awarded to it, and so on.  This is the
+object the user interacts with the most.  It is also usually visible to users
+and even external web sites, unless permissions make it private.
 
 * content Text for the micropost.  Length limited only by the number of points
   the user wants to spend.
 
 
-**LedgerMedia** < LedgerBase
-: A file uploaded by the user.  Usually some sort of media, like a picture or
-  video clip.  Can be attached to microposts to make them more interesting, and
-  referenced by external web sites as well.  Byte size only limited by the
-  points the user wants to spend to upload it.  All kinds can display a
-  picture, which can be clicked on to get more detail or play it if it is a
-  video or audio file.
+### *LedgerMedia* < LedgerBase
+
+A file uploaded by the user.  Usually some sort of media, like a picture or
+video clip.  Can be attached to microposts to make them more interesting, and
+referenced by external web sites as well.  Byte size only limited by the points
+the user wants to spend to upload it.  All kinds can display a picture, which
+can be clicked on to get more detail or play it if it is a video or audio file.
 
 * Implicit ActiveStorage link stores the file.  Have functions for getting the
   file size, data type, URL, etc.
 
 
-**LedgerAwardCeremony** < LedgerBase
-: This record marks the time when (usually weekly) rating points are awarded.
-  We perform the ceremony relative to planetary time, so the actual time
-  between ceremonies won't always be exactly 7 days and 0 seconds, due to the
-  slowdown of the earth's rotation.  If you delete this record, the ceremony is
-  ignored and just about everything needs to be recalculated, including award
-  numbers for subsequent ceremonies and LinkBase records.  Currently deleting
-  this kind of record is not implemented, so don't do it.
+### *LedgerAwardCeremony* < LedgerBase
+
+This record marks the time when (usually weekly) rating points are awarded.  We
+perform the ceremony relative to planetary time, so the actual time between
+ceremonies won't always be exactly 7 days and 0 seconds, due to the slowdown of
+the earth's rotation.  If you delete this record, the ceremony is ignored and
+just about everything needs to be recalculated, including award numbers for
+subsequent ceremonies and LinkBase records.  Currently deleting this kind of
+record is not implemented, so don't do it.
 
 * award_number A count of the number of award ceremonies done up to and
   including this one.  In other words, a seqeunce counter starting at 1.  So if
@@ -239,24 +249,26 @@ is one database table for all objects of this class and subclasses.
   time is in the usual created_at time stamp for this record.
 
 
-**LedgerBirthday** < LedgerBase
-: Identifies the birthday of a user.  Mostly an excuse to reuse the generic
-  timestamp field that LedgerAwardCeremony made necessary.
+### *LedgerBirthday* < LedgerBase
+
+Identifies the birthday of a user.  Mostly an excuse to reuse the generic
+timestamp field that LedgerAwardCeremony made necessary.
 
 * birthday_at Date and time stamp of when the user was born, or first became
   independently operational.
 
 
-**LedgerPermissions** < LedgerBase
-: Specifies the permissions needed to access the LedgerObject this record is
-  linked to via LinkPermission.  There is a list or even a subtree linked to
-  this record specifying a bunch of users in some way (friends of friends etc),
-  as specifed by the link record type.  Often this will be a discussion group
-  list.  There can be several LedgerPermissions records attached to the same
-  object, they are applied in chronological order of link created dates until a
-  decision is made.  A LedgerPermissions record can be shared between several
-  objects too, such as a default permission for a discussion group applying to
-  all microposts and replies in the group.
+### *LedgerPermissions* < LedgerBase
+
+Specifies the permissions needed to access the LedgerObject this record is
+linked to via LinkPermission.  There is a list or even a subtree linked to this
+record specifying a bunch of users in some way (friends of friends etc), as
+specifed by the link record type.  Often this will be a discussion group list.
+There can be several LedgerPermissions records attached to the same object,
+they are applied in chronological order of link created dates until a decision
+is made.  A LedgerPermissions record can be shared between several objects too,
+such as a default permission for a discussion group applying to all microposts
+and replies in the group.
 
 * present_permission char Has "N" to prohibit the listed users from accessing
   the object, "R" to allow only read access, "L" to allow link creation access
@@ -267,14 +279,12 @@ is one database table for all objects of this class and subclasses.
 * absent_permission char Same letter codes, but apply to users NOT listed.
 
 
-## LinkBase
+## *LinkBase*
+
 The base class for links of all kinds between pairs of objects.  There is one
 database table for all objects of this class and subclasses.  The particular
 subclass identifies what the link's purpose is (object A owns object B, object
-A is a list header and B is in the list, etc).  Theoretically we don't need
-subclasses and could determine the use by examining the object types, but
-subclasses and having a type name field in the record is more convenient for
-database debugging and sanity checks.
+A is a list header and B is in the list, etc).
 
 * id The usual big (64 bit) integer unique record sequence number so that we
   can refer to the link record,  only explicitly used by LedgerUnlink.
@@ -291,14 +301,17 @@ database debugging and sanity checks.
   transfered.  However, the rating points spent by the user to make the link
   are not returned to the user (otherwise they could temporarily transfer
   points and someone else could spend more than they are allowed).
-* rating_points float The number of points spent on making this link by the
-  creator.  Over time they are considered to fade (the value in the database
-  doesn't change, we just calculate the current faded value when needed), and
-  when enough time has gone by, you can remove this link completely from the
-  database.  If the child object no longer has any points, it can be deleted
-  too, and so on.  We'll probably do that as part of the weekly point updates -
-  if the total is near zero (under 0.01, about 3 years of fading for one
-  point), the link or object can be deleted.
+* rating_points_spent float The number of points spent on making this link by
+  the creator, including transaction fees (larger fees for storing more bytes
+  and a base fee to avoid high speed trading problems).
+* rating_points_boost float The number of points used to boost the rating of
+  the child object, equals spent minus fees.  Over time they are considered to
+  fade (the value in the database doesn't change, we just calculate the current
+  faded value when needed), and when enough time has gone by, you can remove
+  this link completely from the database.  If the child object no longer has
+  any points, it can be deleted too, and so on.  We'll probably do that as part
+  of the weekly point updates - if the total is near zero (under 0.01, about 3
+  years of fading for one point), the link or object can be deleted.
 * rating_direction char How the points from the creator are applied to the
   child object, can be "U" for up, "D" for down or "M" for meh.
 * award_number The week's award number when this record was created, 0 if
@@ -308,29 +321,114 @@ database debugging and sanity checks.
   LedgerAwardCeremony records.
 
 
-**LinkDelChild** < LinkBase
-: Identifies an object to be deleted, for use with LedgerDelete.  Parent is the
-  LedgerDelete record, child is the object being deleted.  If this link object
-  is deleted, then the LedgerDelete operation is modified to not include child.
+### *LinkDelChild* < LinkBase
+
+Identifies an object to be deleted, for use with LedgerDelete.  Parent is the
+LedgerDelete record, child is the object being deleted.  If this link object is
+deleted, then the LedgerDelete operation is modified to not include child.
 
 
-**LinkReply** < LinkBase
-: The child is a reply to the parent.  Usually both objects are LedgerMicropost.
+### *LinkReply* < LinkBase
+
+The child is a reply to the parent.  Usually both objects are LedgerMicropost.
 
 
-**LinkMedia** < LinkBase
-: The child is some sort of media which should be displayed when the parent is
-  shown.  Usually the parent is a LedgerMicropost and the child is a
-  LedgerMedia of some type.  We just treat them all as pictures and show them
-  in a grid after the text of the micropost.  The user can click on individual
-  ones to play them.
+### *LinkMedia* < LinkBase
+
+The child is some sort of media which should be displayed when the parent is
+shown.  Usually the parent is a LedgerMicropost and the child is a LedgerMedia
+of some type.  We just treat them all as pictures and show them in a grid after
+the text of the micropost.  The user can click on individual ones to play them.
 
 
-**LinkPermission** < LinkBase
-: The parent is some LedgerObject, the child is a LedgerPermissions record that
-  applies to the parent.  If there are several LinkPermission records for the
-  same parent object, they are run through in increasing date of link creation
-  until a permission decision is made.
+### *LinkPermission* < LinkBase
+
+The parent is some LedgerObject, the child is a LedgerPermissions record that
+applies to the parent.  If there are several LinkPermission records for the
+same parent object, they are run through in increasing date of link creation
+until a permission decision is made.
+
+
+## Generating the Database
+
+Here are the rails command lines and edits needed to generate the database:
+
+<PRE>rails generate model LedgerBase type:string
+bool1:boolean date1:datetime number1:integer string1:string text1:text
+creator:references original:references amended:references
+deleted:references ledger1:references
+current_down_points:float current_meh_points:float current_up_points:float</PRE>
+
+Edit the migration file to have default values like this:
+
+<PRE>class CreateLedgerBases < ActiveRecord::Migration[6.0]
+  def change
+    create_table :ledger_bases, force: false, comment: "Ledger objects base class and record.  Don't force: cascade deletes since it is a write-once ledger." do |t|
+      t.string :type, default: "LedgerBase", comment: "Names the ActiveRecord subclass used to load this row."
+      t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
+      t.datetime :date1, default: DateTime.new(1,1,1,0,0,0), comment: "Generic date and time from year 0 to year 9999, defined by subclasses."
+      t.integer :number1, default: 0, comment: "Generic number for counting things, defined by subclasses."
+      t.string :string1, default: "", comment: "Generic string (up to 255 characters), defined by subclasses."
+      t.text :text1, default: "", comment: "Generic text (lots of characters), defined by subclasses."
+      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record."
+      t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or NULL if this is the original one."
+      t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
+      t.references :deleted, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgerdeleted"}, comment: "Points to one of the LedgerDelete records that is currently deleting this record, otherwise NULL (record is alive)."
+      t.references :ledger1, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledger1"}, comment: "Generic reference to some other LedgerBase record, can be NULL, defined by subclasses."
+      t.float :current_down_points, default: 0.0
+      t.float :current_meh_points, default: 0.0
+      t.float :current_up_points, default: 0.0
+      t.timestamps
+    end
+  end
+end</PRE>
+
+In ledger_base.rb:
+<PRE>
+  has_many :link_downs, class_name: :LinkBase, foreign_key: :parent_id
+  has_many :descendants, through: :link_downs, source: :child
+  has_many :link_ups, class_name: :LinkBase, foreign_key: :child_id
+  has_many :ancestors, through: :link_ups, source: :parent
+</PRE>
+
+Then make the LinkBase object / record:
+
+<PRE>rails generate model LinkBase type:string
+parent:references child:references creator:references deleted:references
+rating_points:float rating_direction:string award_number:integer</PRE>
+
+<PRE>class CreateLinkBases < ActiveRecord::Migration[6.0]
+  def change
+    create_table :link_bases, force: false, comment: "LinkBase base class and record for linking LedgerObjects together." do |t|
+      t.string :type, default: "LinkBase", comment: "Names the ActiveRecord subclass used to load this row."
+      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the LedgerBase object (or subclass) which is usually the main one in the association."
+      t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the LedgerBase object (or subclass) which is the other one in the association."
+      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link."
+      t.references :deleted, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkdeleted"}, comment: "Points to one of the LedgerUnlink or LedgerDelete records that deleted this record, otherwise NULL (this record is alive)."
+      t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
+      t.float :rating_points_boost, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+      t.string :rating_direction, default: "M", comment: "Use U for up, D for down or M for meh."
+      t.integer :award_number, default: 0, comment: "The week's award number when this record was created, 0 if before time starts."
+      t.timestamps
+    end
+  end
+end</PRE>
+
+In link_base.rb add:
+<PRE>
+  belongs_to :parent, class_name: :LedgerBase, optional: false
+  belongs_to :child, class_name: :LedgerBase, optional: false
+</PRE>
+
+Then add the LinkBase reference field in the LedgerBase record:
+
+<PRE>rails generate migration AddLink1ToLedgerBase link1:references:index</PRE>
+
+<PRE>class AddLink1ToLedgerBase < ActiveRecord::Migration[6.0]
+  def change
+    add_reference :ledger_bases, :link1, null: true, foreign_key: {to_table: :link_bases, name: "fk_rails_ledgerlink1"}, comment: "Points to a generic LinkBase object (or subclass)."
+  end
+end</PRE>
 
 
 ## Test Plan - A few Use Cases
@@ -355,9 +453,15 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.7 2020/02/02 21:44:52 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.9 2020/02/03 22:26:20 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.9  2020/02/03 22:26:20  agmsmith
+Added command lines needed to generate the database.
+
+Revision 1.8  2020/02/02 22:15:24  agmsmith
+Added permissions records.
+
 Revision 1.7  2020/02/02 21:44:52  agmsmith
 After some experiments, decided to use floating point rating points.
 
@@ -379,6 +483,182 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.9
+log
+@Added command lines needed to generate the database.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.8 2020/02/02 22:15:24 agmsmith Exp agmsmith $</SMALL>
+d296 1
+a296 1
+class CreateLedgerBases < ActiveRecord::Migration[6.0]
+d316 1
+a316 1
+end
+d319 1
+d324 1
+d326 1
+d332 1
+a332 1
+class CreateLinkBases < ActiveRecord::Migration[6.0]
+d347 1
+a347 1
+end
+d350 1
+d353 1
+a353 1
+
+d359 1
+a359 1
+class AddLink1ToLedgerBase < ActiveRecord::Migration[6.0]
+d363 1
+a363 1
+end
+d388 1
+a388 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.8 2020/02/02 22:15:24 agmsmith Exp agmsmith $
+d391 3
+@
+
+
+1.8
+log
+@Added permissions records.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.7 2020/02/02 21:44:52 agmsmith Exp agmsmith $</SMALL>
+d57 2
+a58 1
+## LedgerBase
+d68 1
+a70 5
+* permissions_id Points to the most recent permissions record for this object.
+  NULL if everybody is allowed to read it.  Often this will point to a user's
+  settings list which contains the default permissions.  For discussion groups,
+  it will point to the permission in the group's settings.  Updated when a new
+  permissions record is linked to this object.
+d100 9
+a108 9
+**LedgerDelete** < LedgerBase
+: Used for marking possibly multiple objects as deleted or killed.
+  LinkDelChild records are used to associate this LedgerDelete with all the
+  objects being deleted.  Undelete is implemented by creating a new
+  LedgerDelete record to kill the original LedgerDelete record, repeat as
+  needed to redelete and so on.  We don't support, or even want to think about
+  having a LedgerDelete delete itself.  Can have several LedgerDelete records
+  deleting the same object; need to kill all those LedgerDelete records to
+  undelete that object.
+d117 4
+a120 3
+**LedgerUnlink** < LedgerBase
+: Breaks a link, used for removing an object from a list.  You can undo an
+  unlink by deleting this LedgerUnlink object.
+d125 3
+a127 2
+**LedgerUser** < LedgerBase
+: Idenfities a particular user.
+d140 8
+a147 8
+**LedgerMicropost** < LedgerBase
+: A micropost made by a user.  Contains some text in UTF-8 markdown format.
+  They can also attach pictures and other media files.  There can also be
+  micropost replies, the micropost can be placed in a category list to identify
+  what the topic of the text is, have rating points awarded to it, and so on.
+  This is the object the user interacts with the most.  It is also usually
+  visible to users and even external web sites, unless permissions make it
+  private.
+d153 7
+a159 7
+**LedgerMedia** < LedgerBase
+: A file uploaded by the user.  Usually some sort of media, like a picture or
+  video clip.  Can be attached to microposts to make them more interesting, and
+  referenced by external web sites as well.  Byte size only limited by the
+  points the user wants to spend to upload it.  All kinds can display a
+  picture, which can be clicked on to get more detail or play it if it is a
+  video or audio file.
+d165 9
+a173 8
+**LedgerAwardCeremony** < LedgerBase
+: This record marks the time when (usually weekly) rating points are awarded.
+  We perform the ceremony relative to planetary time, so the actual time
+  between ceremonies won't always be exactly 7 days and 0 seconds, due to the
+  slowdown of the earth's rotation.  If you delete this record, the ceremony is
+  ignored and just about everything needs to be recalculated, including award
+  numbers for subsequent ceremonies and LinkBase records.  Currently deleting
+  this kind of record is not implemented, so don't do it.
+d184 4
+a187 3
+**LedgerBirthday** < LedgerBase
+: Identifies the birthday of a user.  Mostly an excuse to reuse the generic
+  timestamp field that LedgerAwardCeremony made necessary.
+d193 11
+a203 10
+**LedgerPermissions** < LedgerBase
+: Specifies the permissions needed to access the LedgerObject this record is
+  linked to via LinkPermission.  There is a list or even a subtree linked to
+  this record specifying a bunch of users in some way (friends of friends etc),
+  as specifed by the link record type.  Often this will be a discussion group
+  list.  There can be several LedgerPermissions records attached to the same
+  object, they are applied in chronological order of link created dates until a
+  decision is made.  A LedgerPermissions record can be shared between several
+  objects too, such as a default permission for a discussion group applying to
+  all microposts and replies in the group.
+d214 2
+a215 1
+## LinkBase
+d219 1
+a219 4
+A is a list header and B is in the list, etc).  Theoretically we don't need
+subclasses and could determine the use by examining the object types, but
+subclasses and having a type name field in the record is more convenient for
+database debugging and sanity checks.
+d236 11
+a246 8
+* rating_points float The number of points spent on making this link by the
+  creator.  Over time they are considered to fade (the value in the database
+  doesn't change, we just calculate the current faded value when needed), and
+  when enough time has gone by, you can remove this link completely from the
+  database.  If the child object no longer has any points, it can be deleted
+  too, and so on.  We'll probably do that as part of the weekly point updates -
+  if the total is near zero (under 0.01, about 3 years of fading for one
+  point), the link or object can be deleted.
+d256 1
+a256 8
+**LinkDelChild** < LinkBase
+: Identifies an object to be deleted, for use with LedgerDelete.  Parent is the
+  LedgerDelete record, child is the object being deleted.  If this link object
+  is deleted, then the LedgerDelete operation is modified to not include child.
+
+
+**LinkReply** < LinkBase
+: The child is a reply to the parent.  Usually both objects are LedgerMicropost.
+d258 102
+a359 14
+
+**LinkMedia** < LinkBase
+: The child is some sort of media which should be displayed when the parent is
+  shown.  Usually the parent is a LedgerMicropost and the child is a
+  LedgerMedia of some type.  We just treat them all as pictures and show them
+  in a grid after the text of the micropost.  The user can click on individual
+  ones to play them.
+
+
+**LinkPermission** < LinkBase
+: The parent is some LedgerObject, the child is a LedgerPermissions record that
+  applies to the parent.  If there are several LinkPermission records for the
+  same parent object, they are run through in increasing date of link creation
+  until a permission decision is made.
+d384 1
+a384 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.7 2020/02/02 21:44:52 agmsmith Exp agmsmith $
+d387 3
 @
 
 
