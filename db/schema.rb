@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_01_09_234235) do
+ActiveRecord::Schema.define(version: 2020_02_03_201932) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -31,6 +31,30 @@ ActiveRecord::Schema.define(version: 2020_01_09_234235) do
     t.string "checksum", null: false
     t.datetime "created_at", null: false
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "ledger_bases", force: :cascade do |t|
+    t.string "type", default: "LedgerBase"
+    t.boolean "bool1", default: false
+    t.datetime "date1", default: "0001-01-01 00:00:00"
+    t.integer "number1", default: 0
+    t.string "string1", default: ""
+    t.text "text1", default: ""
+    t.integer "creator_id", null: false
+    t.integer "original_id"
+    t.integer "amended_id"
+    t.integer "deleted_id"
+    t.integer "ledger1_id"
+    t.float "current_down_points", default: 0.0
+    t.float "current_meh_points", default: 0.0
+    t.float "current_up_points", default: 0.0
+    t.datetime "created_at", precision: 6, null: false
+    t.datetime "updated_at", precision: 6, null: false
+    t.index ["amended_id"], name: "index_ledger_bases_on_amended_id"
+    t.index ["creator_id"], name: "index_ledger_bases_on_creator_id"
+    t.index ["deleted_id"], name: "index_ledger_bases_on_deleted_id"
+    t.index ["ledger1_id"], name: "index_ledger_bases_on_ledger1_id"
+    t.index ["original_id"], name: "index_ledger_bases_on_original_id"
   end
 
   create_table "microposts", force: :cascade do |t|
@@ -70,5 +94,10 @@ ActiveRecord::Schema.define(version: 2020_01_09_234235) do
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "ledger_bases", "ledger_bases", column: "amended_id"
+  add_foreign_key "ledger_bases", "ledger_bases", column: "creator_id"
+  add_foreign_key "ledger_bases", "ledger_bases", column: "deleted_id"
+  add_foreign_key "ledger_bases", "ledger_bases", column: "ledger1_id"
+  add_foreign_key "ledger_bases", "ledger_bases", column: "original_id"
   add_foreign_key "microposts", "users"
 end
