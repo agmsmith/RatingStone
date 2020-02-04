@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  type: 
+  parent: one
+  child: one
+  creator: one
+  deleted: one
+  rating_points: 1.5
+  rating_direction: MyString
+  award_number: 1
+
+two:
+  type: 
+  parent: two
+  child: two
+  creator: two
+  deleted: two
+  rating_points: 1.5
+  rating_direction: MyString
+  award_number: 1
