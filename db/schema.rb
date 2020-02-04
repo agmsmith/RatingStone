@@ -39,6 +39,7 @@ ActiveRecord::Schema.define(version: 2020_02_03_221413) do
     t.datetime "date1", default: "0001-01-01 00:00:00"
     t.integer "number1", default: 0
     t.string "string1", default: ""
+    t.string "string2", default: ""
     t.text "text1", default: ""
     t.integer "creator_id", null: false
     t.integer "original_id"

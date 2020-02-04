@@ -1,9 +1,14 @@
-head	1.10;
+head	1.11;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.11
+date	2020.02.04.22.20.21;	author agmsmith;	state Exp;
+branches;
+next	1.10;
 
 1.10
 date	2020.02.03.22.33.40;	author agmsmith;	state Exp;
@@ -61,14 +66,16 @@ desc
 @
 
 
-1.10
+1.11
 log
-@Fix up formatting in kramdown for preformatted code.
+@Proof reading pass done.  Also added list design choices.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.9 2020/02/03 22:26:20 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.10 2020/02/03 22:33:40 agmsmith Exp agmsmith $</SMALL>
+
+## Basic Ideas
 
 Because I'm thinking someone could implement the reputation system as a
 BlockChain ledger application, or as a federated collection of systems
@@ -81,8 +88,10 @@ object now in that container (such as a book review object).  Usually rating
 points are also transfered when you create a link (perhaps describing how much
 you like that book review).
 
+### Changing Things by Making New Objects
+
 For example, if you want to edit some posted text, the system will create a
-later object (they all have datestamps) with the new text and a reference back
+newer object (they all have datestamps) with the new text and a reference back
 to the original text object record.  Then when displaying the original text, it
 will search for newer versions and display that text instead.  But new
 references (links) to the text will still point at the original text record,
@@ -92,8 +101,8 @@ and see the change history.
 
 Similarly when someone adds an item to a list, a link record will be added to
 connect the list and the item.  To remove an item, the link record isn't
-deleted, instead a new link kill record is created, referencing the same two
-objects.
+deleted, instead a new unlink record is created, referencing the original link
+record.
 
 Theoretically, when displaying the current state of things, you run through all
 the records in chronological order, adding and removing objects and links from
@@ -102,6 +111,8 @@ have a flag that marks it as deleted or amended, and a link record would
 similarly be marked, and there can be cached forward references to more quickly
 point out the record with the latest change.
 
+### Single Table Inheritance
+
 Because I don't want to have zillions of tables, and want to inherit
 functionality for various related record types (generic object > text object >
 book review object), we're using the Ruby on Rails ActiveRecord "[single table
@@ -109,6 +120,8 @@ inheritance](https://api.rubyonrails.org/classes/ActiveRecord/Inheritance.html)"
 setup.  There will be one actual database table for objects and another one for
 links, both have a "type" field in each row to specify the particular subclass
 used for that row.
+
+#### Reusing Generic Fields to Avoid Space Explosion
 
 To avoid the common complaint about single table inheritance adding too many
 fields for subclasses, we put some generic number and string fields into the
@@ -120,6 +133,27 @@ with "alias_attribute :full_name, :string1" and "alias_attribute
 :email_address, :string2".  ActiveRecord will then automatically build queries
 using the actual database field (string1, string2) names whenever we use the
 subclass object.
+
+### Direct References, Link Records, or Full Blown Lists
+
+There's a design choice needed on making lists of things.  Should you make link
+records between a main object and sub-objects that apply to it, or should you
+have a second object as kind of a list header, and link the sub-objects to it?
+For example, a Friends list.  You could link friends (LedgerUser records) to
+the main user (another LedgerUser record) with specialised link_friend records.
+Or you could make a LedgerListFriends object with a link to the main user, then
+attach the friends to that with generic link records.
+
+#### Design Choice - Faster
+
+Direct links are faster for the database, but need a lot of custom link record
+subclasses.  The list header method just needs to give the list header a name
+and uses generic records, but requires more database operations.  There's also
+a third option of putting the link reference in the record as an id field, like
+friend_id, but that only works if you have one friend (useful in other cases,
+like having only one creator).  We'll go with the faster but more work custom
+link subclasses method, except for user defined lists which will use the list
+header with a name technique.  And plain references where that makes sense.
 
 
 ## *LedgerBase*
@@ -141,29 +175,28 @@ is one database table for all objects of this class and subclasses.
   linked to by the original id.  The original record is still used to cache the
   rating points and other dyanmic things, though the actual content (text in a
   Post for example) comes from the latest amended record (unless the user is
-  looking for a specific version the object).
+  looking for a specific version the object).  Happens to be write-once.
 * amended_id Points to the latest version of this record, or NULL if this is
-  not the original record.
+  not the original record.  Changed as needed.
 * deleted_id Points to one of the LedgerDelete records that is currently
   deleting this record, otherwise NULL (record is alive).  Deleted records just
-  show a message to the user when an attempt is made to display this object.
-  Rating points are accumulated as usual.  That way we can undelete this record
-  if needed.
-* current_down_points float
-* current_meh_points float
-* current_up_points float Number of rating points in each of the directions for
-  this object.  This is the current total, including fading over time
-  (recalculated at the beginning of the week in the awards ceremony) plus new
-  ratings applied this week.  We keep the directions seprate to improve
-  statistical estimation of how accurate the rating is (just storing the net
-  difference of 2 points isn't as meaningful as knowing you had 102 up and 100
-  down vs 3 up and 1 down), and use them as inputs to various different sorting
-  algorithms.  Until someone redoes the statistical theory, we'll split meh
-  points 50% to each of up and down.  But once we have better math, we can use
-  meh directly.  When they have all faded away to close to zero (less than
+  show a warning message to the user when an attempt is made to display this
+  object.  Rating points are accumulated as usual.  That way we can undelete
+  this record if needed.  Changed as needed.
+* current_down_points float  Changed as needed.
+* current_meh_points float  Changed as needed.
+* current_up_points float Changed as needed.  Number of rating points in each
+  of the directions for this object.  This is the current total, including
+  fading over time (recalculated at the beginning of the week in the awards
+  ceremony) plus new ratings applied this week.  We keep the directions seprate
+  to improve statistical estimation of how accurate the rating is (just storing
+  the net difference of 2 points isn't as meaningful as knowing you had 102 up
+  and 100 down vs 3 up and 1 down), and use them as inputs to various different
+  sorting algorithms.  Until someone redoes the statistical theory, we'll split
+  meh points 50% to each of up and down.  But once we have better math, we can
+  use meh directly.  When they have all faded away to close to zero (less than
   0.01, equivalent to 3 years of fading one point) then the record can be
   deleted from the current database, freeing up storage.
-
 
 ### *LedgerDelete* < LedgerBase
 
@@ -242,9 +275,9 @@ record is not implemented, so don't do it.
 
 * award_number A count of the number of award ceremonies done up to and
   including this one.  In other words, a seqeunce counter starting at 1.  So if
-  rating points were used at the beginning of time, before any awards, the
+  rating points were assigned at the beginning of time, before any awards, the
   faded value of the points after a particular award ceremony would be original
-  points * (fade ** AwardNumber).
+  points * (fade ** award_number).
 * completed_at Time stamp for when the award ceremony was completed.  The start
   time is in the usual created_at time stamp for this record.
 
@@ -274,8 +307,8 @@ and replies in the group.
   the object, "R" to allow only read access, "L" to allow link creation access
   too (adding a micropost to your own list), "W" to allow write access too
   (writing replies, effectively adding a link to the micropost), "A" to add
-  amending and deleting access, "I" to inherit permissions from some other
-  permission record.
+  amending and deleting access, "I" to inherit permissions from a later
+  permission record ("I" could also be thought to mean ignore).
 * absent_permission char Same letter codes, but apply to users NOT listed.
 
 
@@ -300,7 +333,9 @@ A is a list header and B is in the list, etc).
   points gained by that object through the link vanish, as if they never were
   transfered.  However, the rating points spent by the user to make the link
   are not returned to the user (otherwise they could temporarily transfer
-  points and someone else could spend more than they are allowed).
+  points and someone else could spend more than they are allowed).  Can
+  undelete by deleting the LedgerUnlink or LedgerDelete, another good reason
+  for keeping the rating points spent.
 * rating_points_spent float The number of points spent on making this link by
   the creator, including transaction fees (larger fees for storing more bytes
   and a base fee to avoid high speed trading problems).
@@ -324,8 +359,9 @@ A is a list header and B is in the list, etc).
 ### *LinkDelChild* < LinkBase
 
 Identifies an object to be deleted, for use with LedgerDelete.  Parent is the
-LedgerDelete record, child is the object being deleted.  If this link object is
-deleted, then the LedgerDelete operation is modified to not include child.
+LedgerDelete record, child is one of the objects being deleted.  If this
+LinkDelChild object is deleted, then the LedgerDelete operation is modified to
+not include the child.
 
 
 ### *LinkReply* < LinkBase
@@ -354,8 +390,8 @@ until a permission decision is made.
 Here are the rails command lines and edits needed to generate the database:
 
 <PRE>rails generate model LedgerBase type:string
-bool1:boolean date1:datetime number1:integer string1:string text1:text
-creator:references original:references amended:references
+bool1:boolean date1:datetime number1:integer string1:string string2:string
+text1:text creator:references original:references amended:references
 deleted:references ledger1:references
 current_down_points:float current_meh_points:float current_up_points:float</PRE>
 
@@ -368,7 +404,8 @@ Edit the migration file to have default values like this:
       t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
       t.datetime :date1, default: DateTime.new(1,1,1,0,0,0), comment: "Generic date and time from year 0 to year 9999, defined by subclasses."
       t.integer :number1, default: 0, comment: "Generic number for counting things, defined by subclasses."
-      t.string :string1, default: "", comment: "Generic string (up to 255 characters), defined by subclasses."
+      t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
+      t.string :string2, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.text :text1, default: "", comment: "Generic text (lots of characters), defined by subclasses."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record."
       t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or NULL if this is the original one."
@@ -453,9 +490,12 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.9 2020/02/03 22:26:20 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.10 2020/02/03 22:33:40 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.10  2020/02/03 22:33:40  agmsmith
+Fix up formatting in kramdown for preformatted code.
+
 Revision 1.9  2020/02/03 22:26:20  agmsmith
 Added command lines needed to generate the database.
 
@@ -483,6 +523,81 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.10
+log
+@Fix up formatting in kramdown for preformatted code.
+@
+text
+@d3 3
+a5 1
+<SMALL>$Id: Database\040Design.md,v 1.9 2020/02/03 22:26:20 agmsmith Exp agmsmith $</SMALL>
+d18 2
+d21 1
+a21 1
+later object (they all have datestamps) with the new text and a reference back
+d31 2
+a32 2
+deleted, instead a new link kill record is created, referencing the same two
+objects.
+d41 2
+d51 2
+d64 21
+d105 1
+a105 1
+  looking for a specific version the object).
+d107 1
+a107 1
+  not the original record.
+d110 15
+a124 15
+  show a message to the user when an attempt is made to display this object.
+  Rating points are accumulated as usual.  That way we can undelete this record
+  if needed.
+* current_down_points float
+* current_meh_points float
+* current_up_points float Number of rating points in each of the directions for
+  this object.  This is the current total, including fading over time
+  (recalculated at the beginning of the week in the awards ceremony) plus new
+  ratings applied this week.  We keep the directions seprate to improve
+  statistical estimation of how accurate the rating is (just storing the net
+  difference of 2 points isn't as meaningful as knowing you had 102 up and 100
+  down vs 3 up and 1 down), and use them as inputs to various different sorting
+  algorithms.  Until someone redoes the statistical theory, we'll split meh
+  points 50% to each of up and down.  But once we have better math, we can use
+  meh directly.  When they have all faded away to close to zero (less than
+a127 1
+
+d205 1
+a205 1
+  rating points were used at the beginning of time, before any awards, the
+d207 1
+a207 1
+  points * (fade ** AwardNumber).
+d237 2
+a238 2
+  amending and deleting access, "I" to inherit permissions from some other
+  permission record.
+d263 3
+a265 1
+  points and someone else could spend more than they are allowed).
+d289 3
+a291 2
+LedgerDelete record, child is the object being deleted.  If this link object is
+deleted, then the LedgerDelete operation is modified to not include child.
+d320 2
+a321 2
+bool1:boolean date1:datetime number1:integer string1:string text1:text
+creator:references original:references amended:references
+d334 2
+a335 1
+      t.string :string1, default: "", comment: "Generic string (up to 255 characters), defined by subclasses."
+d420 1
+a420 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.9 2020/02/03 22:26:20 agmsmith Exp agmsmith $
+d423 3
 @
 
 
