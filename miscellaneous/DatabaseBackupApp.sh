@@ -3,7 +3,7 @@
 # in ~/.pgpass (host:port:database:user:password, use * for host and port).
  
 umask 027
-pg_dump --verbose --clean --serializable-deferrable --dbname=SomeDBName --user=SomeUser --no-password > /media/SomeFolderName/RatingStone.sql
+pg_dump --verbose --clean --dbname=SomeDBName --user=SomeUser --no-password > /media/SomeFolderName/RatingStone.sql
 
 rm -rv /var/www/SomeWWWName/storage/va/ri/variants/
 rmdir /var/www/SomeWWWName/storage/va/ri
