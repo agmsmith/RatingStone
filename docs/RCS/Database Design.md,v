@@ -1,9 +1,14 @@
-head	1.11;
+head	1.12;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.12
+date	2020.02.07.15.28.32;	author agmsmith;	state Exp;
+branches;
+next	1.11;
 
 1.11
 date	2020.02.04.22.20.21;	author agmsmith;	state Exp;
@@ -66,14 +71,14 @@ desc
 @
 
 
-1.11
+1.12
 log
-@Proof reading pass done.  Also added list design choices.
+@Mention initialising the root object in the database.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.10 2020/02/03 22:33:40 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.11 2020/02/04 22:20:21 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -467,6 +472,9 @@ Then add the LinkBase reference field in the LedgerBase record:
   end
 end</PRE>
 
+Then do rails db:seed to set up the initial database contents.  One key step is
+making the root LedgerBase object, with itself as its creator.
+
 
 ## Test Plan - A few Use Cases
 
@@ -490,9 +498,12 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.10 2020/02/03 22:33:40 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.11 2020/02/04 22:20:21 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.11  2020/02/04 22:20:21  agmsmith
+Proof reading pass done.  Also added list design choices.
+
 Revision 1.10  2020/02/03 22:33:40  agmsmith
 Fix up formatting in kramdown for preformatted code.
 
@@ -523,6 +534,22 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.11
+log
+@Proof reading pass done.  Also added list design choices.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.10 2020/02/03 22:33:40 agmsmith Exp agmsmith $</SMALL>
+d397 3
+d423 1
+a423 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.10 2020/02/03 22:33:40 agmsmith Exp agmsmith $
+d426 3
 @
 
 
