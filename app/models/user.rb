@@ -86,6 +86,32 @@ class User < ApplicationRecord
     reset_sent_at < 2.hours.ago
   end
 
+  # Returns the LedgerUser record corresponding to this user, if none then
+  # creates one and adds it to the All Users ledger list.
+  def ledger_user
+    lu = LedgerUser.find_by(id: ledger_user_id) if ledger_user_id
+    if lu.nil?
+      lu = LedgerUser.create!(
+        creator_id: 0, name: name, email: email, user_id: id)
+      self.ledger_user_id = lu.id # Need self... here to make it work.
+      self.save
+
+      # Link it into the all users system list.
+      au = LedgerList.find_by(list_name: "All Users")
+      linku = LinkList.create!(parent: au, child: lu, creator_id: 0)
+    end
+    if ledger_user_id != lu.id || lu.user_id != id
+      raise "Database problem - User #{id} link to Ledger #{lu.id} is "\
+        "not bidirectional.  Database corrupt?"
+    end
+    if lu.email != email || lu.name != name
+      lu.email = email
+      lu.name = name
+      lu.save
+    end
+    lu
+  end
+
   # Returns a collection of all the Microposts the user should see in their
   # feed.  Currently it's posts from followed users and their own posts.
   def feed

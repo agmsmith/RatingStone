@@ -6,6 +6,7 @@ class LedgerBase < ApplicationRecord
   belongs_to :amended, class_name: :LedgerBase, optional: true
   belongs_to :deleted, class_name: :LedgerBase, optional: true
   belongs_to :ledger1, class_name: :LedgerBase, optional: true
+  belongs_to :link1, class_name: :LinkBase, optional: true
 
   has_many :link_downs, class_name: :LinkBase, foreign_key: :parent_id
   has_many :descendants, through: :link_downs, source: :child
