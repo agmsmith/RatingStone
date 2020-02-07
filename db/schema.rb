@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_02_07_162818) do
+ActiveRecord::Schema.define(version: 2020_02_07_230127) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -57,7 +57,10 @@ ActiveRecord::Schema.define(version: 2020_02_07_162818) do
     t.index ["deleted_id"], name: "index_ledger_bases_on_deleted_id"
     t.index ["ledger1_id"], name: "index_ledger_bases_on_ledger1_id"
     t.index ["link1_id"], name: "index_ledger_bases_on_link1_id"
+    t.index ["number1"], name: "index_ledger_bases_on_number1"
     t.index ["original_id"], name: "index_ledger_bases_on_original_id"
+    t.index ["string1"], name: "index_ledger_bases_on_string1"
+    t.index ["string2"], name: "index_ledger_bases_on_string2"
   end
 
   create_table "link_bases", force: :cascade do |t|
