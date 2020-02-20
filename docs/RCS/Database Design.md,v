@@ -1,9 +1,14 @@
-head	1.12;
+head	1.13;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.13
+date	2020.02.20.21.45.08;	author agmsmith;	state Exp;
+branches;
+next	1.12;
 
 1.12
 date	2020.02.07.15.28.32;	author agmsmith;	state Exp;
@@ -71,14 +76,14 @@ desc
 @
 
 
-1.12
+1.13
 log
-@Mention initialising the root object in the database.
+@Fix typos after proofreading.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.11 2020/02/04 22:20:21 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.12 2020/02/07 15:28:32 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -91,7 +96,8 @@ lists of things, connecting a pair of objects together, one being a parent or
 container object (such as a list of book reviews) and the other being a child
 object now in that container (such as a book review object).  Usually rating
 points are also transfered when you create a link (perhaps describing how much
-you like that book review).
+you like that book review).  I'm using separate links rather than parent
+pointers in the objects so that an object can have multiple parents.
 
 ### Changing Things by Making New Objects
 
@@ -158,7 +164,9 @@ a third option of putting the link reference in the record as an id field, like
 friend_id, but that only works if you have one friend (useful in other cases,
 like having only one creator).  We'll go with the faster but more work custom
 link subclasses method, except for user defined lists which will use the list
-header with a name technique.  And plain references where that makes sense.
+header with a name technique.  And plain references where that makes sense.  If
+the number of subclasses gets too big, this decision will have to be
+reconsidered.
 
 
 ## *LedgerBase*
@@ -174,11 +182,11 @@ is one database table for all objects of this class and subclasses.
 * type string The name of the subclass to use for this object record.
   Write-once.
 * creator_id Identifies the user who created this record.  Never NULL; the root
-  user is considered to have created themself.  Write-once.
+  object is considered to have created itself.  Write-once.
 * original_id Points to the original version of this record, or NULL if this is
   the original one.  When someone creates a link to the object, by default it's
   linked to by the original id.  The original record is still used to cache the
-  rating points and other dyanmic things, though the actual content (text in a
+  rating points and other dynamic things, though the actual content (text in a
   Post for example) comes from the latest amended record (unless the user is
   looking for a specific version the object).  Happens to be write-once.
 * amended_id Points to the latest version of this record, or NULL if this is
@@ -193,15 +201,15 @@ is one database table for all objects of this class and subclasses.
 * current_up_points float Changed as needed.  Number of rating points in each
   of the directions for this object.  This is the current total, including
   fading over time (recalculated at the beginning of the week in the awards
-  ceremony) plus new ratings applied this week.  We keep the directions seprate
-  to improve statistical estimation of how accurate the rating is (just storing
-  the net difference of 2 points isn't as meaningful as knowing you had 102 up
-  and 100 down vs 3 up and 1 down), and use them as inputs to various different
-  sorting algorithms.  Until someone redoes the statistical theory, we'll split
-  meh points 50% to each of up and down.  But once we have better math, we can
-  use meh directly.  When they have all faded away to close to zero (less than
-  0.01, equivalent to 3 years of fading one point) then the record can be
-  deleted from the current database, freeing up storage.
+  ceremony) plus new ratings applied this week.  We keep the directions
+  separate to improve statistical estimation of how accurate the rating is
+  (just storing the net difference of 2 points isn't as meaningful as knowing
+  you had 102 up and 100 down vs 3 up and 1 down), and use them as inputs to
+  various different sorting algorithms.  Until someone redoes the statistical
+  theory, we'll split meh points 50% to each of up and down.  But once we have
+  better math, we can use meh directly.  When they have all faded away to close
+  to zero (less than 0.01, equivalent to 3 years of fading one point) then the
+  record can be deleted from the current database, freeing up storage.
 
 ### *LedgerDelete* < LedgerBase
 
@@ -284,7 +292,8 @@ record is not implemented, so don't do it.
   faded value of the points after a particular award ceremony would be original
   points * (fade ** award_number).
 * completed_at Time stamp for when the award ceremony was completed.  The start
-  time is in the usual created_at time stamp for this record.
+  time is in the usual created_at time stamp for this record.  The web site is
+  offline while the awards are being calculated.
 
 
 ### *LedgerBirthday* < LedgerBase
@@ -498,9 +507,12 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.11 2020/02/04 22:20:21 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.12 2020/02/07 15:28:32 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.12  2020/02/07 15:28:32  agmsmith
+Mention initialising the root object in the database.
+
 Revision 1.11  2020/02/04 22:20:21  agmsmith
 Proof reading pass done.  Also added list design choices.
 
@@ -534,6 +546,47 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.12
+log
+@Mention initialising the root object in the database.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.11 2020/02/04 22:20:21 agmsmith Exp agmsmith $</SMALL>
+d16 2
+a17 1
+you like that book review).
+d84 3
+a86 1
+header with a name technique.  And plain references where that makes sense.
+d102 1
+a102 1
+  user is considered to have created themself.  Write-once.
+d106 1
+a106 1
+  rating points and other dyanmic things, though the actual content (text in a
+d121 9
+a129 9
+  ceremony) plus new ratings applied this week.  We keep the directions seprate
+  to improve statistical estimation of how accurate the rating is (just storing
+  the net difference of 2 points isn't as meaningful as knowing you had 102 up
+  and 100 down vs 3 up and 1 down), and use them as inputs to various different
+  sorting algorithms.  Until someone redoes the statistical theory, we'll split
+  meh points 50% to each of up and down.  But once we have better math, we can
+  use meh directly.  When they have all faded away to close to zero (less than
+  0.01, equivalent to 3 years of fading one point) then the record can be
+  deleted from the current database, freeing up storage.
+d212 2
+a213 1
+  time is in the usual created_at time stamp for this record.
+d427 1
+a427 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.11 2020/02/04 22:20:21 agmsmith Exp agmsmith $
+d430 3
 @
 
 

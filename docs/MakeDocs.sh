@@ -13,5 +13,5 @@ for NameMD in *.md
 do
   NameHTML="${NameMD%.md}.html"
   echo "Now converting $NameMD to $NameHTML."
-  kramdown < "$NameMD" > "$NameHTML"
+  kramdown --entity-output=:symbolic < "$NameMD" > "$NameHTML"
 done
