@@ -1,4 +1,4 @@
-# frozen_string_literal: true.
+# frozen_string_literal: true
 
 class LedgerBase < ApplicationRecord
   belongs_to :creator, class_name: :LedgerBase, optional: false

@@ -91,14 +91,14 @@ class User < ApplicationRecord
   def ledger_user
     lu = LedgerUser.find_by(id: ledger_user_id) if ledger_user_id
     if lu.nil?
-      lu = LedgerUser.create!(
-        creator_id: 0, name: name, email: email, user_id: id)
-      self.ledger_user_id = lu.id # Need self... here to make it work.
-      self.save
+      lu = LedgerUser.create!(creator_id: 0, name: name, email: email,
+        user_id: id)
+      self.ledger_user_id = lu.id # Need self.attr here to make it work.
+      save
 
       # Link it into the all users system list.
       au = LedgerList.find_by(list_name: "All Users")
-      linku = LinkList.create!(parent: au, child: lu, creator_id: 0)
+      LinkList.create!(parent: au, child: lu, creator_id: 0)
     end
     if ledger_user_id != lu.id || lu.user_id != id
       raise "Database problem - User #{id} link to Ledger #{lu.id} is "\
