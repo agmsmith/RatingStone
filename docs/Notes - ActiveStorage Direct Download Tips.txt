@@ -1,0 +1,9 @@
+AGMS20200324
+ActiveStorage URL redirection avoidance, and perhaps getting rid of those
+ridiculously long URLs that clutter up the server logs:
+
+https://github.com/rails/rails/issues/31419#issuecomment-370900013
+https://github.com/rails/rails/issues/30431#issuecomment-399112876
+
+Or use CarrierWave (supercedes Paperclip file uploader).
+
