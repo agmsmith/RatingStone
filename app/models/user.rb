@@ -98,7 +98,7 @@ class User < ApplicationRecord
 
       # Link it into the all users system list.
       au = LedgerList.find_by(list_name: "All Users")
-      LinkList.create!(parent: au, child: lu, creator_id: 0)
+      LinkList.create!(parent: au, child_ledger: lu, creator_id: 0)
     end
     if ledger_user_id != lu.id || lu.user_id != id
       raise "Database problem - User #{id} link to Ledger #{lu.id} is "\

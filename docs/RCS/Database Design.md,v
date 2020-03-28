@@ -1,9 +1,14 @@
-head	1.15;
+head	1.16;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.16
+date	2020.03.28.13.18.21;	author agmsmith;	state Exp;
+branches;
+next	1.15;
 
 1.15
 date	2020.03.27.19.03.58;	author agmsmith;	state Exp;
@@ -86,14 +91,14 @@ desc
 @
 
 
-1.15
+1.16
 log
-@Minor typos fixed.
+@Typos.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.14 2020/03/26 20:25:45 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.15 2020/03/27 19:03:58 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -346,9 +351,10 @@ A is a list header and B is in the list, etc).
 * type string  The name of the subclass to use for this record.  Write-once.
 * parent_id Points to the LedgerBase object (or subclass) which is usually the
   main one in the association.  Never NULL.  Write-once.
-* ledger_id Used by LinkBaseObject subclasses for child pointers to LedgerBase
-  objects.  Will only be NULL for LinkBaseLink subclasses.  Write-once.
-* link_id Used by LinkBaseLink subclasses for child pointers to other LinkBase
+* ledger1_id Used by LinkBaseObject subclasses for child pointers to
+  LedgerBase objects.  Will only be NULL for LinkBaseLink subclasses.
+  Write-once.
+* link1_id Used by LinkBaseLink subclasses for child pointers to other LinkBase
   records.  Will only be NULL for LinkBaseObject subclasses.  Unfortunately
   can't be combined with ledger_id though they are mutually exclusive in use,
   since we need to have a different foreign key index on each one.  Write-once.
@@ -589,9 +595,12 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.14 2020/03/26 20:25:45 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.15 2020/03/27 19:03:58 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.15  2020/03/27 19:03:58  agmsmith
+Minor typos fixed.
+
 Revision 1.14  2020/03/26 20:25:45  agmsmith
 Rethought deleting and permissions.
 
@@ -634,6 +643,26 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.15
+log
+@Minor typos fixed.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.14 2020/03/26 20:25:45 agmsmith Exp agmsmith $</SMALL>
+d256 4
+a259 3
+* ledger_id Used by LinkBaseObject subclasses for child pointers to LedgerBase
+  objects.  Will only be NULL for LinkBaseLink subclasses.  Write-once.
+* link_id Used by LinkBaseLink subclasses for child pointers to other LinkBase
+d500 1
+a500 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.14 2020/03/26 20:25:45 agmsmith Exp agmsmith $
+d503 3
 @
 
 

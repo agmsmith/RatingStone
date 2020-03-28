@@ -1,4 +1,4 @@
 # frozen_string_literal: true
 
-class LinkList < LinkBaseObject
+class LinkBaseObject < LinkBase
 end
