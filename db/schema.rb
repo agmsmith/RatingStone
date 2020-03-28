@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_27_153900) do
+ActiveRecord::Schema.define(version: 2020_03_28_104628) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -33,27 +33,39 @@ ActiveRecord::Schema.define(version: 2020_03_27_153900) do
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
   end
 
+  create_table "aux_ledgers", force: :cascade do |t|
+    t.integer "parent_id", null: false
+    t.integer "child_id", null: false
+    t.index ["child_id"], name: "index_aux_ledgers_on_child_id"
+    t.index ["parent_id"], name: "index_aux_ledgers_on_parent_id"
+  end
+
+  create_table "aux_links", force: :cascade do |t|
+    t.integer "parent_id", null: false
+    t.integer "child_id", null: false
+    t.index ["child_id"], name: "index_aux_links_on_child_id"
+    t.index ["parent_id"], name: "index_aux_links_on_parent_id"
+  end
+
   create_table "ledger_bases", force: :cascade do |t|
     t.string "type", default: "LedgerBase"
     t.boolean "bool1", default: false
-    t.datetime "date1", default: "0001-01-01 00:00:00"
     t.integer "number1", default: 0
     t.string "string1", default: ""
     t.string "string2", default: ""
     t.text "text1", default: ""
     t.integer "creator_id", null: false
-    t.integer "original_id"
     t.integer "amended_id"
-    t.integer "ledger1_id"
     t.boolean "deleted", default: false
+    t.integer "original_id"
     t.float "current_down_points", default: 0.0
     t.float "current_meh_points", default: 0.0
     t.float "current_up_points", default: 0.0
+    t.datetime "date1"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["amended_id"], name: "index_ledger_bases_on_amended_id"
     t.index ["creator_id"], name: "index_ledger_bases_on_creator_id"
-    t.index ["ledger1_id"], name: "index_ledger_bases_on_ledger1_id"
     t.index ["number1"], name: "index_ledger_bases_on_number1"
     t.index ["original_id"], name: "index_ledger_bases_on_original_id"
     t.index ["string1"], name: "index_ledger_bases_on_string1"
@@ -63,8 +75,7 @@ ActiveRecord::Schema.define(version: 2020_03_27_153900) do
   create_table "link_bases", force: :cascade do |t|
     t.string "type", default: "LinkBase"
     t.integer "parent_id", null: false
-    t.integer "child_ledger_id"
-    t.integer "child_link_id"
+    t.integer "child_id", null: false
     t.integer "creator_id", null: false
     t.boolean "deleted", default: false
     t.boolean "pending", default: false
@@ -75,8 +86,7 @@ ActiveRecord::Schema.define(version: 2020_03_27_153900) do
     t.integer "award_number", default: 0
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.index ["child_ledger_id"], name: "index_link_bases_on_child_ledger_id"
-    t.index ["child_link_id"], name: "index_link_bases_on_child_link_id"
+    t.index ["child_id"], name: "index_link_bases_on_child_id"
     t.index ["creator_id"], name: "index_link_bases_on_creator_id"
     t.index ["parent_id"], name: "index_link_bases_on_parent_id"
   end
@@ -119,13 +129,15 @@ ActiveRecord::Schema.define(version: 2020_03_27_153900) do
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "aux_ledgers", "ledger_bases", column: "child_id"
+  add_foreign_key "aux_ledgers", "ledger_bases", column: "parent_id"
+  add_foreign_key "aux_links", "ledger_bases", column: "parent_id"
+  add_foreign_key "aux_links", "link_bases", column: "child_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "amended_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "creator_id"
-  add_foreign_key "ledger_bases", "ledger_bases", column: "ledger1_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "original_id"
-  add_foreign_key "link_bases", "ledger_bases", column: "child_ledger_id"
+  add_foreign_key "link_bases", "ledger_bases", column: "child_id"
   add_foreign_key "link_bases", "ledger_bases", column: "creator_id"
   add_foreign_key "link_bases", "ledger_bases", column: "parent_id"
-  add_foreign_key "link_bases", "link_bases", column: "child_link_id"
   add_foreign_key "microposts", "users"
 end

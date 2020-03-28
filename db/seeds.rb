@@ -8,7 +8,7 @@
 
 # Create the root LedgerBase object, which is its own creator.
 
-ActiveRecord::Base.connection.execute("INSERT into ledger_bases (id, string1, string2, text1, creator_id, created_at, updated_at) VALUES (0, 'Root LedgerBase Object', 'agmsmith@ncf.ca', 'The special root object which we need to manually create with a creator id of itself.  Then initial system objects can be created with it as their creator.  AGMS20200206', 0, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);")
+ActiveRecord::Base.connection.execute("INSERT into ledger_bases (id, string1, string2, text1, creator_id, date1, created_at, updated_at) VALUES (0, 'Root LedgerBase Object', 'agmsmith@ncf.ca', 'The special root object which we need to manually create with a creator id of itself.  Then initial system objects can be created with it as their creator.  AGMS20200206', 0, '0001-01-01 00:00:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);")
 
 # Make some system ledger lists.
 LedgerList.create!(list_name: "All Users", creator_id: 0)
@@ -24,6 +24,8 @@ sysop_user = User.create!(
   activated_at: Time.zone.now)
 
 sysop_ledger = sysop_user.ledger_user
+sysop_ledger.birthday = DateTime.new(2020,2,20,20,20,20) # Palindromic date.
+sysop_ledger.save
 
 # Generate a bunch of additional users.
 #9.times do |n|
