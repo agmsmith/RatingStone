@@ -6,6 +6,10 @@ require 'rails/test_help'
 require "minitest/reporters"
 Minitest::Reporters.use!
 
+# Fill (seed) the database with stock objects, and special cases like the root
+# object.  Fixtures can do that too.
+# Rails.application.load_seed
+
 module ActiveSupport
   class TestCase
     # Run tests in parallel with specified workers
