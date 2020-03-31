@@ -14,4 +14,5 @@ do
   NameHTML="${NameMD%.md}.html"
   echo "Now converting $NameMD to $NameHTML."
   kramdown --entity-output=:symbolic < "$NameMD" > "$NameHTML"
+  cp -v "$NameHTML" ../public/docs/
 done
