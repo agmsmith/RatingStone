@@ -10,7 +10,7 @@
 
 # If needed, create the root LedgerBase object, which is its own creator.
 if LedgerBase.all.empty?
-  ActiveRecord::Base.connection.execute("INSERT into ledger_bases (id, string1, string2, text1, creator_id, date1, created_at, updated_at) VALUES (0, 'Root LedgerBase Object', 'agmsmith@ncf.ca', 'The special root object which we need to manually create with a creator id of itself.  Then initial system objects can be created with it as their creator.  AGMS20200206', 0, '0001-01-01 00:00:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);")
+  ActiveRecord::Base.connection.execute("INSERT into ledger_bases (id, type, string1, string2, text1, creator_id, date1, created_at, updated_at) VALUES (0, 'LedgerUser', 'Root LedgerBase Object', 'agmsmith@ncf.ca', 'The special root object which we need to manually create with a creator id of itself.  Then initial system objects can be created with it as their creator.  AGMS20200206', 0, '0001-01-01 00:00:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);")
 end
 
 # Make some system ledger lists, if needed.
@@ -34,25 +34,25 @@ if User.where(name: "System Operator").empty?
 end
 
 # Generate a bunch of additional users.
-#9.times do |n|
-#  name  = Faker::Name.name
-#  email = "example-#{n+1}@railstutorial.org"
-#  password = "password"
-#  User.create!(
-#    name: name,
-#    email: email,
-#    password: password,
-#    password_confirmation: password,
-#    activated: true,
-#    activated_at: Time.zone.now)
-#end
+12.times do |n|
+  name  = Faker::Name.name
+  email = "example-#{n+1}@railstutorial.org"
+  password = "password"
+  User.create!(
+    name: name,
+    email: email,
+    password: password,
+    password_confirmation: password,
+    activated: true,
+    activated_at: Time.zone.now)
+end
 
-## Generate microposts for a subset of users.
-#users = User.order(:created_at).take(6)
-#5.times do
-#  content = Faker::Lorem.sentence(word_count: 5)
-#  users.each { |user| user.microposts.create!(content: content) }
-#end
+# Generate microposts for a subset of users.
+users = User.order(:created_at).take(6)
+5.times do
+  content = Faker::Lorem.sentence(word_count: 5)
+  users.each { |user| user.microposts.create!(content: content) }
+end
 
 ## Create following relationships.
 #users = User.all
