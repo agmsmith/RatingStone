@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+  before_save :downcase_email
+  before_create :create_activation_digest
+
   has_many :microposts, dependent: :destroy
 
   has_many :active_relationships, class_name: :Relationship,
@@ -11,9 +14,6 @@ class User < ApplicationRecord
   has_many :followers, through: :passive_relationships, source: :follower
 
   attr_accessor :activation_token, :remember_token, :reset_token
-
-  before_save :downcase_email
-  before_create :create_activation_digest
 
   validates :name, presence: true, length: { maximum: 50 }
   VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
@@ -87,7 +87,7 @@ class User < ApplicationRecord
   end
 
   # Returns the LedgerUser record corresponding to this user, if none then
-  # creates one and adds it to the All Users ledger list.
+  # creates one.
   def ledger_user
     lu = LedgerUser.find_by(id: ledger_user_id) if ledger_user_id
     if lu.nil?
@@ -95,10 +95,6 @@ class User < ApplicationRecord
         user_id: id)
       self.ledger_user_id = lu.id # Need self.attr here to make it work.
       save
-
-      # Link it into the all users system list.
-      au = LedgerList.find_by(list_name: "All Users")
-      LinkList.create!(parent: au, child: lu, creator_id: 0)
     end
     if ledger_user_id != lu.id || lu.user_id != id
       raise "Database problem - User #{id} link to Ledger #{lu.id} is "\
