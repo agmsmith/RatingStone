@@ -20,9 +20,10 @@ class LedgerBase < ApplicationRecord
   # first, the save will fail with an error.
   def append_ledger
     new_entry = latest_version.dup
+    new_entry.original_id = original_version.id
     new_entry.amended_id = nil
+    # Cached values not used (see original record) in amended, set to defaults.
     new_entry.deleted = false
-    new_entry.original_id = id
     new_entry.current_down_points = 0.0
     new_entry.current_meh_points = 0.0
     new_entry.current_up_points = 0.0
@@ -33,7 +34,7 @@ class LedgerBase < ApplicationRecord
   # Finds the original version of this record, which is still used as a central
   # point for the cached calculated values.
   def original_version
-    return self if original.nil?
+    return self if original_id.nil?
     original
   end
 
