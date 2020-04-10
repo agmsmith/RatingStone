@@ -1,9 +1,24 @@
-head	1.17;
+head	1.20;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.20
+date	2020.04.10.15.58.33;	author agmsmith;	state Exp;
+branches;
+next	1.19;
+
+1.19
+date	2020.04.10.15.40.04;	author agmsmith;	state Exp;
+branches;
+next	1.18;
+
+1.18
+date	2020.04.10.15.37.19;	author agmsmith;	state Exp;
+branches;
+next	1.17;
 
 1.17
 date	2020.03.28.16.19.43;	author agmsmith;	state Exp;
@@ -96,14 +111,14 @@ desc
 @
 
 
-1.17
+1.20
 log
-@Split out AuxLink and AuxLedger records, making things simpler again.
+@Have original_id be NULL on creation, but soon changing to copy of id.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.16 2020/03/28 13:18:21 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.19 2020/04/10 15:40:04 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -204,12 +219,17 @@ is one database table for all objects of this class and subclasses.
   inheritance mode.  Write-once.
 * creator_id Identifies the user who created this record.  Never NULL; the root
   object is considered to have created itself.  Write-once.
-* original_id Points to the original version of this record, or NULL if this is
-  the original one.  When someone creates a link to the object, by default it's
-  linked to by the original id.  The original record is still used to cache the
-  rating points and other dynamic things, though the actual content (text in a
-  Post for example) comes from the latest amended record (unless the user is
-  looking for a specific version the object).  Happens to be write-once.
+* original_id Points to the original version of this record, or equal to id if
+  this is the original one.  When someone creates a link to the object, by
+  default it's linked to by the original id.  The original record is still used
+  to cache the rating points and other dynamic things, though the actual
+  content (text in a Post for example) comes from the latest amended record
+  (unless the user is looking for a specific version the object).  NULL if not
+  initialised properly (should be a copy of the id of the record in that case).
+  Had considered NULL for marking the original record, but it's easier to find
+  all versions of something if the original one is marked the same way, so soon
+  after creation the original_id will be updated to be equal to id.  Happens to
+  be write-once.
 * amended_id Points to the latest version of this record, or NULL if this is
   not the original record.  Changed as needed.
 * deleted boolean True if there is a LedgerDelete record that is currently
@@ -508,7 +528,7 @@ details like this:
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record."
       t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
-      t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or NULL if this is the original one."
+      t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one.  NULL if not initialised (should be a copy of the id of the record)."
       t.float :current_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_meh_points, default: 0.0, comment: "Number of rating points in the meh non-direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
@@ -596,9 +616,18 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.16 2020/03/28 13:18:21 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.19 2020/04/10 15:40:04 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.19  2020/04/10 15:40:04  agmsmith
+Update migration comment for original_id.
+
+Revision 1.18  2020/04/10 15:37:19  agmsmith
+Change original_id to be equal to id for the original record, not NULL.
+
+Revision 1.17  2020/03/28 16:19:43  agmsmith
+Split out AuxLink and AuxLedger records, making things simpler again.
+
 Revision 1.16  2020/03/28 13:18:21  agmsmith
 Typos.
 
@@ -647,6 +676,70 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.19
+log
+@Update migration comment for original_id.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.18 2020/04/10 15:37:19 agmsmith Exp agmsmith $</SMALL>
+d105 10
+a114 7
+  this is the original one (had considered NULL for the original record, but
+  it's easier to find all versions of something if the original one is marked
+  the same way).  When someone creates a link to the object, by default it's
+  linked to by the original id.  The original record is still used to cache the
+  rating points and other dynamic things, though the actual content (text in a
+  Post for example) comes from the latest amended record (unless the user is
+  looking for a specific version the object).  Happens to be write-once.
+d413 1
+a413 1
+      t.references :original, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one."
+d501 1
+a501 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.18 2020/04/10 15:37:19 agmsmith Exp agmsmith $
+d504 3
+@
+
+
+1.18
+log
+@Change original_id to be equal to id for the original record, not NULL.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.17 2020/03/28 16:19:43 agmsmith Exp agmsmith $</SMALL>
+d410 1
+a410 1
+      t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or NULL if this is the original one."
+d498 1
+a498 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.17 2020/03/28 16:19:43 agmsmith Exp agmsmith $
+d501 3
+@
+
+
+1.17
+log
+@Split out AuxLink and AuxLedger records, making things simpler again.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.16 2020/03/28 13:18:21 agmsmith Exp agmsmith $</SMALL>
+d104 4
+a107 2
+* original_id Points to the original version of this record, or NULL if this is
+  the original one.  When someone creates a link to the object, by default it's
+d498 1
+a498 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.16 2020/03/28 13:18:21 agmsmith Exp agmsmith $
+d501 3
 @
 
 

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class LedgerBase < ApplicationRecord
+  after_save :patch_original_id # Do this one first - lower level field init.
   after_save :amend_original_record
 
   belongs_to :creator, class_name: :LedgerBase, optional: false
@@ -20,10 +21,10 @@ class LedgerBase < ApplicationRecord
   # first, the save will fail with an error.
   def append_ledger
     new_entry = latest_version.dup
-    new_entry.original_id = original_version.id
     new_entry.amended_id = nil
-    # Cached values not used (see original record) in amended, set to defaults.
+    # original_id is copied, now that even the original has its own ID there.
     new_entry.deleted = false
+    # Cached values not used (see original record) in amended, set to defaults.
     new_entry.current_down_points = 0.0
     new_entry.current_meh_points = 0.0
     new_entry.current_up_points = 0.0
@@ -34,7 +35,7 @@ class LedgerBase < ApplicationRecord
   # Finds the original version of this record, which is still used as a central
   # point for the cached calculated values.
   def original_version
-    return self if original_id.nil?
+    return self if (original_id == id) || original_id.nil?
     original
   end
 
@@ -54,9 +55,8 @@ class LedgerBase < ApplicationRecord
   # If this is an amended ledger record, once it has been saved, go back and
   # update the original record to point to the newly saved amended data.  Check
   # that this is indeed the latest amendment by date, fail if it is not.
-
   def amend_original_record
-    return if original_id.nil? # We are the original record.
+    return if (original_id == id) || original_id.nil?
     # Verify that there are no later amended version records than this one.
     latest = LedgerBase.where(original_id: original_id).order('created_at').last
     if latest.id != id
@@ -64,7 +64,17 @@ class LedgerBase < ApplicationRecord
         "this (#{inspect}) new amended record."
       throw(:abort)
     end
-    original.amended_id = id
-    original.save
+    original.update_attribute(:amended_id, id)
+  end
+
+  ##
+  # Patch the original_id if needed.  If this is a record being saved without
+  # an original_id, it is an original record itself.  For future queries for
+  # all versions convenience, we want original_id to point to self.  Since we
+  # can't know the id value until after the save, update original_id after the
+  # save.
+  def patch_original_id
+    return unless original_id.nil?
+    update_attribute(:original_id, id) # Doing "save" here would be recursive!
   end
 end
