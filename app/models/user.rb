@@ -3,9 +3,11 @@
 class User < ApplicationRecord
   before_save :downcase_email
   before_create :create_activation_digest
+  after_save :update_ledger_user
 
   has_many :microposts, dependent: :destroy
 
+  # Relationship things...
   has_many :active_relationships, class_name: :Relationship,
     foreign_key: :follower_id, dependent: :destroy
   has_many :passive_relationships, class_name: :Relationship,
@@ -86,24 +88,22 @@ class User < ApplicationRecord
     reset_sent_at < 2.hours.ago
   end
 
-  # Returns the LedgerUser record corresponding to this user, if none then
-  # creates one.
+  # Returns the latest version LedgerUser record corresponding to this user,
+  # if none then creates one.
   def ledger_user
     lu = LedgerUser.find_by(id: ledger_user_id) if ledger_user_id
     if lu.nil?
-      lu = LedgerUser.create!(creator_id: 0, name: name, email: email,
+      lu = LedgerUser.create(creator_id: 0, name: name, email: email,
         user_id: id)
+      lu.save
       self.ledger_user_id = lu.id # Need self.attr here to make it work.
       save
+    else
+      lu = lu.latest_version
     end
-    if ledger_user_id != lu.id || lu.user_id != id
+    if (ledger_user_id != lu.original_id) || (lu.user_id != id)
       raise "Database problem - User #{id} link to Ledger #{lu.id} is "\
         "not bidirectional.  Database corrupt?"
-    end
-    if lu.email != email || lu.name != name
-      lu.email = email
-      lu.name = name
-      lu.save
     end
     lu
   end
@@ -142,5 +142,16 @@ class User < ApplicationRecord
   def create_activation_digest
     self.activation_token  = User.new_token
     self.activation_digest = User.digest(activation_token)
+  end
+
+  # If there is a corresponding LedgerUser, update its name and email.
+  def update_ledger_user
+    return if ledger_user_id.nil?
+    luser = ledger_user # Gets latest version of the data.
+    return if (luser.name == name) && (luser.email == email)
+    new_luser = luser.append_ledger
+    new_luser.name = name
+    new_luser.email = email
+    new_luser.save
   end
 end

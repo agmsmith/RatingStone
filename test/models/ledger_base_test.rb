@@ -17,6 +17,17 @@ class LedgerBaseTest < ActiveSupport::TestCase
       "original_id of the original record should be the same as its ID number")
   end
 
+  test "creator always required" do
+    assert_raise(ActiveRecord::NotNullViolation, "Can't have a NULL creator") do
+      lbase = LedgerBase.new(creator_id: nil, string1: "String Two")
+      lbase.save
+    end
+    assert_raise(ActiveRecord::InvalidForeignKey, "Creator must exist") do
+      lbase = LedgerBase.new(creator_id: 123456, string1: "String Two")
+      lbase.save
+    end
+  end
+
   test "amended record fields" do
     original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String One")
     original_lbase.deleted = true

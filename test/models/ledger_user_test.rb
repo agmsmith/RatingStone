@@ -34,8 +34,11 @@ class LedgerUserTest < ActiveSupport::TestCase
   end
 
   test "Changes in name and e-mail in a User should show up in LedgerUser" do
+    old_name = "Test Regular User"
+    new_name = "A New Name"
+
     user = User.create!(
-      name:  "Test Regular User",
+      name: old_name,
       email: "SomeEMail@SomeDomain.com",
       password: "SomePassword",
       password_confirmation: "SomePassword",
@@ -46,14 +49,18 @@ class LedgerUserTest < ActiveSupport::TestCase
     assert_equal(luser.name, user.name)
     assert_equal(luser.email, user.email)
 
-    new_name = "A New Name"
     user.name = new_name
     user.save
-    assert_equal(new_name, luser.name)
+    luser.reload # Old version record here.
+    assert_equal(luser.name, old_name)
+    luser = luser.latest_version
+    assert_equal(luser.name, new_name)
+    assert_equal(luser, user.ledger_user)
 
-    new_email = "A New E-Mail"
+    new_email = "newmail@somewhere.com"
     user.email = new_email
     user.save
+    luser = user.ledger_user
     assert_equal(new_email, luser.email)
   end
 end

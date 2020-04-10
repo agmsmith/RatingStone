@@ -4,7 +4,11 @@ class LedgerBase < ApplicationRecord
   after_save :patch_original_id # Do this one first - lower level field init.
   after_save :amend_original_record
 
-  belongs_to :creator, class_name: :LedgerBase, optional: false
+  # Always have a creator, but "optional: false" makes it reload the creator
+  # object every time we do something with an object.  So just require it to
+  # be non-NULL in the database definition.
+  belongs_to :creator, class_name: :LedgerBase, optional: true
+
   belongs_to :original, class_name: :LedgerBase, optional: true
   belongs_to :amended, class_name: :LedgerBase, optional: true
 

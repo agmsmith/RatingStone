@@ -11,11 +11,12 @@
 # If needed, create the root LedgerBase object, which is its own creator.
 if LedgerBase.all.empty?
   ActiveRecord::Base.connection.execute("INSERT into ledger_bases (id, type, number1, string1, string2, text1, creator_id, original_id, date1, created_at, updated_at) VALUES (0, 'LedgerUser', 0, 'Root LedgerBase Object', 'agmsmith@ncf.ca', 'The special root object which we need to manually create with a creator id of itself.  Then initial system objects can be created with it as their creator.  AGMS20200206', 0, 0, '0001-01-01 00:00:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);")
+  root_luser = LedgerBase.find(0)
   root_user = User.create!(
     id: 0,
     ledger_user_id: 0,
-    name:  "Root User",
-    email: "root@example.com",
+    name:  root_luser.string1,
+    email: root_luser.string2,
     password: "SomePassword",
     password_confirmation: "SomePassword",
     admin: true,
