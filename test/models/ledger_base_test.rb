@@ -23,17 +23,17 @@ class LedgerBaseTest < ActiveSupport::TestCase
       lbase.save
     end
     assert_raise(ActiveRecord::InvalidForeignKey, "Creator must exist") do
-      lbase = LedgerBase.new(creator_id: 123456, string1: "String Two")
+      lbase = LedgerBase.new(creator_id: 123456, string1: "String Three")
       lbase.save
     end
   end
 
   test "amended record fields" do
-    original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String One")
+    original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String Four")
     original_lbase.deleted = true
-    original_lbase.current_down_points = 1
-    original_lbase.current_meh_points = 2
-    original_lbase.current_up_points = 3
+    original_lbase.current_down_points = 1.0
+    original_lbase.current_meh_points = 2.0
+    original_lbase.current_up_points = 3.0
     original_lbase.save
     assert_equal(original_lbase.latest_version.id, original_lbase.id)
     amended_lbase = original_lbase.append_ledger

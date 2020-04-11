@@ -47,11 +47,11 @@ class LedgerUserTest < ActiveSupport::TestCase
     )
     luser = user.ledger_user
     assert_equal(luser.name, user.name)
-    assert_equal(luser.email, user.email)
+    assert_equal(luser.email, user.email) # Note email is by now downcased.
 
     user.name = new_name
     user.save
-    luser.reload # Old version record here.
+    luser.reload # Old ledger version record here, should still have old name.
     assert_equal(luser.name, old_name)
     luser = luser.latest_version
     assert_equal(luser.name, new_name)
