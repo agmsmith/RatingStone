@@ -1,0 +1,15 @@
+<li id="ledgerpost-<%= ledger_post.id %>">
+  <%= link_to gravatar_for(ledger_post.creator.user, size: 50), ledger_post.creator.user %>
+  <% if current_user?(ledger_post.creator.user) %>
+  <%= button_to "Delete", ledger_post, method: :delete,
+      data: { confirm: "You sure?" },
+      form_class: 'deletebutton', class: 'btn btn-danger'
+    %>
+  <% end %>
+  <span class="user"><%= link_to ledger_post.creator.name, ledger_post.creator.user %></span>
+  <span class="content">
+    <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
+  </span>
+  <span class="timestamp">Posted <%= time_ago_in_words(ledger_post.created_at)
+    %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.</span>
+</li>

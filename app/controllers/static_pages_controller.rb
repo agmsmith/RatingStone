@@ -14,6 +14,7 @@ class StaticPagesController < ApplicationController
     if logged_in?
       @new_micropost = current_user.microposts.build
       @feed_items = current_user.feed.paginate(page: params[:page])
+      @ledger_feed_items = current_user.ledger_user.feed.paginate(page: params[:ledger_pageno])
     end
   end
 end

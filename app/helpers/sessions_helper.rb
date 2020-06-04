@@ -7,6 +7,7 @@ module SessionsHelper
   def log_in(user)
     session[:user_id] = user.id
     @current_user = user
+    @current_ledger_user = user.ledger_user
   end
 
   # Remembers a user as being long term logged in via a persistent cookie.
@@ -33,13 +34,29 @@ module SessionsHelper
           log_in(user)
         end
       end
+      if @current_user.nil?
+        @current_ledger_user = nil
+      else
+        @current_ledger_user = @current_user.ledger_user
+      end
     end
     @current_user
+  end
+
+  # Returns the LedgerUser record for the currently logged in User record.
+  def current_ledger_user
+    current_user # Authenticate and log in if needed.
+    @current_ledger_user
   end
 
   # Returns true if the given user is the current non-nil user, false otherwise.
   def current_user?(user)
     !user.nil? && user == current_user
+  end
+
+  # Returns true if the given LedgerUser is the current user, false otherwise.
+  def current_ledger_user?(ledger_user)
+    !ledger_user.nil? && ledger_user == @current_ledger_user
   end
 
   # Returns true if the user is logged in, false otherwise.
@@ -59,6 +76,7 @@ module SessionsHelper
     forget(current_user) if current_user
     session.delete(:user_id)
     @current_user = nil
+    @current_ledger_user = nil
   end
 
   # Redirects to stored location (or to the default).

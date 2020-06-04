@@ -1,0 +1,7 @@
+<% if @ledger_feed_items&.any? %>
+  <ol class="microposts">
+    <%= render @ledger_feed_items %>
+  </ol>
+  <%= will_paginate @ledger_feed_items,
+    params: { controller: :static_pages, action: :home, param_name: :ledger_pageno } %>
+<% end %>

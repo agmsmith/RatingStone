@@ -18,6 +18,23 @@ class LedgerBase < ApplicationRecord
   has_many :ancestors, through: :link_ups, source: :parent
 
   ##
+  # Deletes a list of records.  This can include both LedgerBase and LedgerLink
+  # records and their subclasses.  A single LedgerDelete record will be created
+  # identifying all the records to be deleted (an AuxLedger or AuxLink record
+  # will be created for each thing deleted).  The reason is a string explaining
+  # why the delete is being done.
+  def self.delete_records(record_array, reason)
+    return if record_array.nil || record_array.empty?
+    ledger_user = current_ledger_user()
+    return if ledger_user.nil?
+    ledger_delete = new LedgerDelete(creator: ledger_user, reason: reason)
+    ledger_delete.save
+    record_array.each do |a_record|
+      a_record.ledger_delete_append(ledger_delete)
+    end
+  end
+
+  ##
   # Returns a new Ledger record with a copy of this record's latest version's
   # data (doesn't include cached and calculated data).  Modify it as you will,
   # then when you save it, it will update the original record to point to the
@@ -51,6 +68,21 @@ class LedgerBase < ApplicationRecord
     latest = original_version.amended
     return latest unless latest.nil?
     self # We are the only and original version.
+  end
+
+  ##
+  # Internal function to include this record in a bunch being deleted.  Since
+  # this is a ledger, it doesn't actually get deleted.  Instead, it's linked to
+  # a LedgerDelete record (created by a utility function in the LedgerBase
+  # class) by an AuxLedger record (parent field in AuxLedger identifies the
+  # LedgerDelete) to this record being deleted (child field in AuxLedger,
+  # actually points to the original version of this record).  All versions of
+  # this record will also be marked as deleted.
+  def ledger_delete_append(ledger_delete_record)
+    aux_record = AuxLedger.new(parent: ledger_delete_record,
+      child: original_version)
+    aux_record.save
+    LedgerBase.where(original: original_version).update_all(deleted: true)
   end
 
   private

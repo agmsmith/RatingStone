@@ -9,4 +9,11 @@ class LedgerUser < LedgerBase
   def user
     User.find(user_id)
   end
+
+  # Returns a collection of all the LedgerPosts the user should see in their
+  # feed.  Currently it's just their own posts.
+  def feed
+    LedgerPost.where(creator: id)
+  end
+
 end
