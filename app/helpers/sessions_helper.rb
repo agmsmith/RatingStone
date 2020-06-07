@@ -35,9 +35,7 @@ module SessionsHelper
         end
       end
       @current_ledger_user = nil
-      if @current_user
-        @current_ledger_user = @current_user.ledger_user
-      end
+      @current_ledger_user = @current_user.ledger_user if @current_user
     end
     @current_user
   end

@@ -1,0 +1,13 @@
+<% provide(:page_title, "All Versions of Post #" + params[:id]) %>
+
+<h1>All Versions of Post #<%= params[:id] %></h1>
+
+<% if @ledger_post&.any? %>
+  <%= will_paginate @ledger_post %>
+  <ol class="microposts">
+    <%= render @ledger_post %>
+  </ol>
+  <%= will_paginate @ledger_post %>
+<% else %>
+  <p>Sorry, no versions of this post exist.</p>
+<% end %>

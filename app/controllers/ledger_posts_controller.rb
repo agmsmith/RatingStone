@@ -9,9 +9,15 @@ class LedgerPostsController < ApplicationController
 
   def destroy
     post_title = @ledger_post.content.truncate(50, separator: ' ')
-    @ledger_post.destroy
+    LedgerDelete.delete_records([@ledger_post])
     flash[:success] = "LedgerPost \"#{post_title}\" deleted."
     redirect_back(fallback_location: root_url)
+  end
+
+  def show
+    @ledger_post = LedgerPost.where(id: params[:id])
+    @ledger_post = @ledger_post.first.all_versions if !@ledger_post.empty?
+    @ledger_post = @ledger_post.paginate(page: params[:page])
   end
 
   private
@@ -22,6 +28,6 @@ class LedgerPostsController < ApplicationController
 
   def correct_user
     @ledger_post = LedgerPost.find(params[:id])
-    redirect_to(root_url) if current_ledger_user != @ledger_post.creator
+    redirect_to(root_url) if !current_ledger_user?(@ledger_post.creator)
   end
 end
