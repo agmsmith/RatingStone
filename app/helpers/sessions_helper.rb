@@ -34,9 +34,8 @@ module SessionsHelper
           log_in(user)
         end
       end
-      if @current_user.nil?
-        @current_ledger_user = nil
-      else
+      @current_ledger_user = nil
+      if @current_user
         @current_ledger_user = @current_user.ledger_user
       end
     end

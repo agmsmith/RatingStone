@@ -15,5 +15,4 @@ class LedgerUser < LedgerBase
   def feed
     LedgerPost.where(creator: id)
   end
-
 end

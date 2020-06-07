@@ -577,6 +577,7 @@ Layout/BlockEndNewline:
 
 Style/CaseEquality:
   Enabled: true
+  AllowOnConstant: true
 
 Style/CharacterLiteral:
   Enabled: true
@@ -834,7 +835,7 @@ Style/ZeroLengthPredicate:
   Enabled: true
 
 Layout/HeredocIndentation:
-  EnforcedStyle: squiggly
+  Enabled: true
 
 Lint/AmbiguousOperator:
   Enabled: true
@@ -1014,4 +1015,7 @@ Style/ModuleFunction:
   EnforcedStyle: extend_self
 
 Lint/OrderedMagicComments:
+  Enabled: true
+
+Lint/DeprecatedOpenSSLConstant:
   Enabled: true

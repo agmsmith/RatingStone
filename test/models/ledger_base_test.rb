@@ -3,11 +3,6 @@
 require 'test_helper'
 
 class LedgerBaseTest < ActiveSupport::TestCase
-  def setup
-    # Create the root user/object #0.
-    Rails.application.load_seed
-  end
-
   test "original record fields" do
     original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String One")
     assert_nil(original_lbase.id, "No ID number before saving")
