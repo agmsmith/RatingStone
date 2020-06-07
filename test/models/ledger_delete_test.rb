@@ -21,28 +21,29 @@ class LedgerDeleteTest < ActiveSupport::TestCase
       rating_direction: 'U')
     link_original_second.save
     original_lbase.reload
-    records_to_delete = original_lbase.all_versions.to_a
-      .append(second_lbase, link_original_second)
-    assert_equal(records_to_delete.size, 5)
-    records_to_delete.each do |x|
+    # Note that no matter what record we ask to delete, only the original
+    # version gets deleted and the other versions just have their deleted flag
+    # set.
+    records_to_delete = [amended_lbase, second_lbase, link_original_second]
+    assert_equal(records_to_delete.size, 3)
+    all_deleted_records = original_lbase.all_versions.to_a
+    all_deleted_records.push(second_lbase, link_original_second)
+    all_deleted_records.each do |x|
       assert_not(x.deleted)
     end
     ledger_delete = LedgerDelete.delete_records(records_to_delete,
       LedgerUser.first, "Testing deletion.")
     assert_equal(ledger_delete.reason, "Testing deletion.")
-    records_to_delete.each do |x|
+    all_deleted_records.each do |x|
       x.reload
       assert(x.deleted)
     end
     deleted_ledgers = ledger_delete.aux_ledger_descendants
-    assert_equal(deleted_ledgers.count, 4)
-    deleted_ledgers.each do |x|
-      assert(records_to_delete.include?(x))
-    end
+    assert_equal(deleted_ledgers.count, 2)
+    assert(deleted_ledgers.include?(original_lbase))
+    assert(deleted_ledgers.include?(second_lbase))
     deleted_links = ledger_delete.aux_link_descendants
     assert_equal(deleted_links.count, 1)
-    deleted_links.each do |x|
-      assert(records_to_delete.include?(x))
-    end
+    assert(deleted_links.include?(link_original_second))
   end
 end

@@ -66,6 +66,15 @@ if !Rails.env.test?
     users.each { |user| user.microposts.create!(content: content) }
   end
 
+  # Make some LedgerPosts for some users.
+  users = User.order(:created_at).take(4)
+  3.times do
+    content = Faker::Lorem.sentence(word_count: 10)
+    users.each do |user|
+      LedgerPost.create!(content: content, creator: user.ledger_user)
+    end
+  end
+
   # Create following relationships.
   users = User.all
   user  = users.first

@@ -80,9 +80,9 @@ class LedgerBase < ApplicationRecord
   # record will also be marked as deleted.
   def ledger_delete_append(ledger_delete_record)
     aux_record = AuxLedger.new(parent: ledger_delete_record,
-      child: original_version)
+      child_id: original_id)
     aux_record.save
-    LedgerBase.where(original: original_version).update_all(deleted: true)
+    LedgerBase.where(original_id: original_id).update_all(deleted: true)
   end
 
   private
