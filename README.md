@@ -1,11 +1,9 @@
 # The Rating Stone Project
 
-This is a social media reputation system built on top of the training
-application from [*Ruby on Rails Tutorial:
+This is a social media experimental reputation system built on top of
+the training application from [*Ruby on Rails Tutorial:
 Learn Web Development with Rails*](https://www.railstutorial.org/)
 (6th Edition) by [Michael Hartl](https://www.michaelhartl.com/).
-
-From the web site's about page at one point in time:
 
 ## About Rating Stone
 
@@ -16,8 +14,7 @@ systems, we've made it slightly less evil - it forgives the past and avoids
 appealing to the addictive side of Human nature.
 
 You can find out more about <em>Rating Stone</em>'s theoretical underpinnings
-in the related paper [A Less Dystopian Reputation System]
-(http://web.ncf.ca/au829/WeekendReports/20190201/AGMSReputationSystem.html).
+in the related paper [A Less Dystopian Reputation System](http://web.ncf.ca/au829/WeekendReports/20190201/AGMSReputationSystem.html).
 
 ## License
 
