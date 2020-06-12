@@ -9,5 +9,5 @@
   </ol>
   <%= will_paginate @ledger_post %>
 <% else %>
-  <p>Sorry, no versions of this post exist.</p>
+  <p>Sorry, no versions of post "<%= params[:id] %>" exist.</p>
 <% end %>

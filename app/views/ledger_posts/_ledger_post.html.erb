@@ -16,7 +16,7 @@
     <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
   </span>
 <% end %>
-  <span class="timestamp">#<%= ledger_post.id %> posted <%=
-    time_ago_in_words(ledger_post.created_at)
+  <span class="timestamp"><%= link_to "##{ledger_post.id}",
+    ledger_post %> posted <%= time_ago_in_words(ledger_post.created_at)
     %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.</span>
 </li>

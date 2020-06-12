@@ -48,12 +48,12 @@ module SessionsHelper
 
   # Returns true if the given user is the current non-nil user, false otherwise.
   def current_user?(user)
-    !user.nil? && user == current_user
+    user && user == current_user
   end
 
   # Returns true if the given LedgerUser is the current user, false otherwise.
   def current_ledger_user?(ledger_user)
-    !ledger_user.nil? && ledger_user == @current_ledger_user
+    ledger_user && ledger_user == current_ledger_user
   end
 
   # Returns true if the user is logged in, false otherwise.

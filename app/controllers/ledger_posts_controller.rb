@@ -19,8 +19,12 @@ class LedgerPostsController < ApplicationController
   end
 
   def show
-    @ledger_post = LedgerPost.find(params[:id]).all_versions
-      .paginate(page: params[:page])
+    # Slightly more complex code to show an empty list when ID not found.
+    @ledger_post = LedgerPost.where(id: params[:id])
+    if @ledger_post.any?
+      @ledger_post = @ledger_post.first.all_versions
+        .paginate(page: params[:page])
+    end
   end
 
   private
