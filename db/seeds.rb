@@ -71,7 +71,13 @@ if !Rails.env.test?
   3.times do
     content = Faker::Lorem.sentence(word_count: 10)
     users.each do |user|
-      LedgerPost.create!(content: content, creator: user.ledger_user)
+      post = LedgerPost.create!(content: content, creator: user.ledger_user)
+      post2 = post.append_ledger
+      post2.content = "Sorry, I meant " + Faker::Lorem.sentence(word_count: 8)
+      post2.save
+      post3 = post.append_ledger
+      post3.content = "Oops, that was " + Faker::Lorem.sentence(word_count: 6)
+      post3.save
     end
   end
 

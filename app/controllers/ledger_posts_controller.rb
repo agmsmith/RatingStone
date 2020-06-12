@@ -9,15 +9,18 @@ class LedgerPostsController < ApplicationController
 
   def destroy
     post_title = @ledger_post.content.truncate(50, separator: ' ')
-    LedgerDelete.delete_records([@ledger_post])
-    flash[:success] = "LedgerPost \"#{post_title}\" deleted."
+    LedgerDelete.delete_records([@ledger_post], current_ledger_user,
+      "Manual delete by user \"#{current_ledger_user.name}\".")
+    feedback_text = "LedgerPost \"#{post_title}\" deleted"
+    vcount = @ledger_post.all_versions.count
+    feedback_text += " (#{vcount} versions included)" if vcount > 1
+    flash[:success] = feedback_text + '.'
     redirect_back(fallback_location: root_url)
   end
 
   def show
-    @ledger_post = LedgerPost.where(id: params[:id])
-    @ledger_post = @ledger_post.first.all_versions if !@ledger_post.empty?
-    @ledger_post = @ledger_post.paginate(page: params[:page])
+    @ledger_post = LedgerPost.find(params[:id]).all_versions
+      .paginate(page: params[:page])
   end
 
   private

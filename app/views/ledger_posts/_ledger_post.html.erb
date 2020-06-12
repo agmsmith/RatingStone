@@ -1,4 +1,9 @@
 <li id="ledgerpost-<%= ledger_post.id %>">
+<% if ledger_post.deleted %>
+  <span class="deleted">
+    This post has been deleted.
+  </span>
+<% else %>
   <%= link_to gravatar_for(ledger_post.creator.user, size: 50), ledger_post.creator.user %>
   <% if current_ledger_user?(ledger_post.creator) %>
   <%= button_to "Delete", ledger_post, method: :delete,
@@ -10,6 +15,7 @@
   <span class="content">
     <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
   </span>
+<% end %>
   <span class="timestamp">#<%= ledger_post.id %> posted <%=
     time_ago_in_words(ledger_post.created_at)
     %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.</span>
