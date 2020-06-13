@@ -71,18 +71,37 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
-  # Internal function to include this record in a bunch being deleted.  Since
-  # this is a ledger, it doesn't actually get deleted.  Instead, it's linked to
-  # a LedgerDelete record (created by a utility function in the LedgerBase
-  # class) by an AuxLedger record (parent field in AuxLedger identifies the
-  # LedgerDelete) to this record being deleted (child field in AuxLedger,
-  # points to the original version of this record).  All versions of this
-  # record will also be marked as deleted.
-  def ledger_delete_append(ledger_delete_record)
+  # Internal function to include this record in a bunch being deleted or
+  # undeleted.  Since this is a ledger, it doesn't actually get deleted.
+  # Instead, it's linked to a LedgerDelete or LedgerUndelete record (created by
+  # a utility function in the LedgerDelete/Undelete class) by an AuxLedger
+  # record (parent field in AuxLedger identifies the Ledger(Un)Delete) to this
+  # record being deleted (child field in AuxLedger, points to the original
+  # version of this record).  If doing an undelete, the parameter "deleting"
+  # will be false.  All versions of this record will also be marked
+  # as (un)deleted.  In the future we may mark individual versions as being
+  # deleted, if that's useful.
+  def ledger_delete_append(ledger_delete_record, deleting)
     aux_record = AuxLedger.new(parent: ledger_delete_record,
       child_id: original_id)
     aux_record.save
-    LedgerBase.where(original_id: original_id).update_all(deleted: true)
+    LedgerBase.where(original_id: original_id).update_all(deleted: deleting)
+  end
+
+  ##
+  # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
+  # records, with the most recent first.  Works by searching the AuxLedger
+  # records for references to this particular record and also to the original
+  # record if this one is a later version.
+  def deleted_by
+    deleted_ids = [id]
+    deleted_ids.push(original_id) if id != original_id
+    LedgerBase.joins(:aux_ledger_descendants)
+      .where({
+        aux_ledgers: { child_id: deleted_ids },
+        type: [:LedgerDelete, :LedgerUndelete],
+      })
+      .order(created_at: :desc)
   end
 
   private

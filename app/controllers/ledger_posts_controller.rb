@@ -35,6 +35,6 @@ class LedgerPostsController < ApplicationController
 
   def correct_user
     @ledger_post = LedgerPost.find(params[:id])
-    redirect_to(root_url) if !current_ledger_user?(@ledger_post.creator)
+    redirect_to(root_url) unless current_ledger_user?(@ledger_post.creator)
   end
 end

@@ -18,17 +18,27 @@ class LedgerDelete < LedgerBase
   # Returns the LedgerDelete record or nil on failure or throws a database
   # error (will roll back everything in that case).
   def self.delete_records(record_array, delete_user, reason = nil)
+    add_aux_records(record_array, delete_user, reason, true)
+  end
+
+  ##
+  # Internal function that adds the auxiliary records to connect deleted or
+  # undeleted things to a LedgerDelete or LedgerUndelete record, as specified
+  # by the "deleting" parameter.
+  private_class_method def self.add_aux_records(record_array, user, reason,
+    deleting = true)
     return nil if record_array.nil? || record_array.empty?
-    return nil if delete_user.nil?
-    ledger_delete = nil
-    LedgerDelete.transaction do
-      ledger_delete = LedgerDelete.new(creator: delete_user)
-      ledger_delete.reason = reason if reason
-      ledger_delete.save
+    return nil if user.nil?
+    ledger_record = nil
+    ledger_class = deleting ? LedgerDelete : LedgerUndelete
+    ledger_class.transaction do
+      ledger_record = ledger_class.new(creator: user)
+      ledger_record.reason = reason if reason
+      ledger_record.save
       record_array.each do |a_record|
-        a_record.ledger_delete_append(ledger_delete)
+        a_record.ledger_delete_append(ledger_record, deleting)
       end
     end
-    ledger_delete
+    ledger_record
   end
 end
