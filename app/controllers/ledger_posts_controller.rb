@@ -5,6 +5,14 @@ class LedgerPostsController < ApplicationController
   before_action :correct_user, only: :destroy
 
   def create
+    @new_ledger_post = LedgerPost.new(ledger_post_params
+      .merge(creator: current_ledger_user, type: :LedgerPost))
+    if @new_ledger_post.save
+      flash[:success] = "LedgerPost created!" 
+      redirect_to(root_url)
+    else # Show error messages in the data entry form.
+      render('static_pages/home')
+    end
   end
 
   def destroy

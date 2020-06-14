@@ -6,15 +6,26 @@
     <section class="user_follow_stats">
       <%= render 'shared/user_follow_stats' %>
     </section>
+    <% if @new_ledger_post %>
+    <section class="ledger_post_form">
+      <%= render 'shared/ledger_post_form' %>
+    </section>
+    <% end %>
+    <% if @new_micropost %>
     <section class="micropost_form">
       <%= render 'shared/micropost_form' %>
     </section>
+    <% end %>
   </aside>
   <div class="col-sm-8">
+    <% if @ledger_feed_items %>
     <h3>LedgerPost Feed</h3>
     <%= render 'shared/ledger_feed' %>
+    <% end %>
+    <% if @feed_items %>
     <h3>Micropost Feed</h3>
     <%= render 'shared/feed' %>
+    <% end %>
   </div>
 </div>
 

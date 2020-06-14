@@ -12,8 +12,7 @@ class MicropostsController < ApplicationController
     if @new_micropost.save
       flash[:success] = "Micropost created!"
       redirect_to(root_url)
-    else # Show error messages with wrong controller, fake static_pages one.
-      @feed_items = current_user.feed.paginate(page: params[:page])
+    else # Show error messages in the data entry form.
       render('static_pages/home')
     end
   end
