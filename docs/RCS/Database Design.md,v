@@ -1,9 +1,14 @@
-head	1.20;
+head	1.21;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.21
+date	2020.06.15.15.56.25;	author agmsmith;	state Exp;
+branches;
+next	1.20;
 
 1.20
 date	2020.04.10.15.58.33;	author agmsmith;	state Exp;
@@ -111,14 +116,15 @@ desc
 @
 
 
-1.20
+1.21
 log
-@Have original_id be NULL on creation, but soon changing to copy of id.
+@Rewording, also combine pending and deleted functionality into the
+same thing (granting permission undeletes a record).
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.19 2020/04/10 15:40:04 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.20 2020/04/10 15:58:33 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -132,7 +138,8 @@ container object (such as a list of book reviews) and the other being a child
 object in that container (such as a book review object).  Usually rating points
 are also transfered when you create a link (perhaps describing how much you
 like that book review).  I'm using separate link records rather than parent
-pointers in the objects so that an object can have multiple parents.
+pointers in the objects so that an object can have multiple parents (useful for
+filing something in multiple categories).
 
 ### Changing Things by Making New Objects
 
@@ -147,8 +154,8 @@ records and see the change history.
 
 Similarly when someone adds an item to a list, a link record will be added to
 connect the list and the item.  To remove an item, the link record isn't
-deleted, instead a new unlink record is created, referencing the original link
-record.
+modified, instead a new deletion record is created, referencing the original
+link record.
 
 Theoretically, when displaying the current state of things, you run through all
 the records in chronological order, adding and removing objects and links from
@@ -159,10 +166,10 @@ point out the record with the latest change.
 
 ### Single Table Inheritance
 
-Because I don't want to have zillions of tables, and want to inherit
-functionality for various related record types (generic object > text object >
-book review object), we're using the Ruby on Rails ActiveRecord "[single table
-inheritance](https://api.rubyonrails.org/classes/ActiveRecord/Inheritance.html)"
+Because I don't want to have zillions of tables in the database, and want to
+inherit functionality for various related record types (generic object > text
+object > book review object), we're using the Ruby on Rails ActiveRecord
+"[single table inheritance](https://api.rubyonrails.org/classes/ActiveRecord/Inheritance.html)"
 setup.  There will be one actual database table for objects and another one for
 links between objects, both have the Rails magic "type" field in each row to
 specify the particular subclass used for that row.
@@ -182,13 +189,13 @@ subclass object.
 
 ### Direct References, Link Records, or Full Blown Lists
 
-There's a design choice needed on making lists of things.  Should you make link
-records between a main object and sub-objects that apply to it, or should you
-have a second object as kind of a list header, and link the sub-objects to it?
-For example, a Friends list.  You could link friends (LedgerUser records) to
-the main user (another LedgerUser record) with specialised link_friend records.
-Or you could make a LedgerListFriends object with a link to the main user, then
-attach the friends to that with generic link records.
+There's a design choice needed for making lists of things.  Should you make
+link records between a main object and sub-objects that apply to it, or should
+you have a second object as kind of a list header, and link the sub-objects to
+it?  For example, a Friends list.  You could link friends (LedgerUser records)
+to the main user (another LedgerUser record) with specialised LinkFriend
+records.  Or you could make a LedgerListFriends object with a link to the main
+user, then attach the friends to that with generic link records.
 
 #### Design Choice - Faster
 
@@ -217,21 +224,24 @@ is one database table for all objects of this class and subclasses.
 * type string The name of the subclass to use for this object record.  "type"
   is the magic word Rails recognises to name a class and turn on single table
   inheritance mode.  Write-once.
-* creator_id Identifies the user who created this record.  Never NULL; the root
-  object is considered to have created itself.  Write-once.
+* creator_id Identifies the user who created this record.  The root object is
+  considered to have created itself.  If you want to change the creator of an
+  object, you have to make a new version of the record with the new creator.
+  Write-once.
 * original_id Points to the original version of this record, or equal to id if
   this is the original one.  When someone creates a link to the object, by
   default it's linked to by the original id.  The original record is still used
   to cache the rating points and other dynamic things, though the actual
   content (text in a Post for example) comes from the latest amended record
-  (unless the user is looking for a specific version the object).  NULL if not
-  initialised properly (should be a copy of the id of the record in that case).
-  Had considered NULL for marking the original record, but it's easier to find
-  all versions of something if the original one is marked the same way, so soon
-  after creation the original_id will be updated to be equal to id.  Happens to
-  be write-once.
+  (unless the user is looking for a specific version the object).  Had
+  considered NULL for marking the original record, but it's easier to find all
+  versions of something if the original one is marked the same way, so soon
+  after creation the original_id will be updated to be equal to id (there's a
+  brief time when it is NULL, could cause bugs).  Happens to be write-once.
 * amended_id Points to the latest version of this record, or NULL if this is
-  not the original record.  Changed as needed.
+  not the original record.  Usually we delete or undelete all versions of an
+  object, but if we ever delete/undelete just some versions, this will point to
+  the latest not deleted version.  Changed as needed.
 * deleted boolean True if there is a LedgerDelete record that is currently
   deleting this record, otherwise false (record is alive).  A deleted object
   just shows a warning message to the user when an attempt is made to display
@@ -268,7 +278,8 @@ longer be deleted.  Though most often the targets will have faded away too by
 that time.  Or we could have a policy of not garbage collecting LedgerDelete
 and LedgerUndelete records.
 
-* reason string  Reason for deletion.
+* reason string Reason for deletion.  User is implied by the creator of this
+  record.  Could mention the IP address of the user too.
 
 
 ### *LedgerUndelete* < LedgerBase
@@ -284,7 +295,8 @@ Gives permission for pending links to start working.  The links are specified
 by AuxLink records.  Used for things like approving a request to join a group
 (the request is a LinkBase record joining the person to the group).  To deny
 permission, delete the unapproved link with LedgerDelete.  If you change your
-mind, you can undelete the unapproved link.
+mind, you can undelete the unapproved link.  Functionally equivalent to
+LedgerUndelete.
 
 * reason string  Reason for giving permission.
 
@@ -304,30 +316,30 @@ Idenfities a particular user.
   sysop, bought some bonus points) attached to the LedgerUser record by links.
 
 
-### *LedgerMicropost* < LedgerBase
+### *LedgerPost* < LedgerBase
 
-A micropost made by a user.  Contains some formatted text.  They can also
-attach pictures and other media files (displayed in a grid, in order by link
-creation date).  There can also be micropost replies, the micropost can be
-placed in a category list to identify what the topic of the text is, have
-rating points awarded to it, and so on.  This is the object the user interacts
-with the most.  It is also usually visible to users and even external web
-sites, unless permissions make it private.
+A post made by a user.  Contains some formatted text.  They can also attach
+pictures and other media files (displayed in a grid, in order by link creation
+date).  There can also be post replies, the post can be placed in a category
+list to identify what the topic of the text is, have rating points awarded to
+it, and so on.  This is the object the user interacts with the most.  It is
+also usually visible to users and even external web sites, unless permissions
+make it private.
 
-* scribbles text The text written by the user for the micropost, in markdown
-  UTF-8 format (we're using the kramdown dialect).  Length limited only by the
-  number of points the user wants to spend (it's an unlimited Text not a String
+* content text The text written by the user for the post, in markdown UTF-8
+  format (we're using the kramdown dialect).  Length limited only by the number
+  of points the user wants to spend (it's an unlimited Text not a String
   field).  Write-once.
 
 
 ### *LedgerMedia* < LedgerBase
 
 A file uploaded by the user.  Usually some sort of media, like a picture or
-video clip.  Can be attached to multiple microposts to make them more
-interesting, and referenced by external web sites as well.  Byte size only
-limited by the points the user wants to spend to upload it.  All kinds can
-display a picture, which can be clicked on to get more detail or play it if it
-is a video or audio file.
+video clip.  Can be attached to multiple posts to make them more interesting,
+and referenced by external web sites as well.  Byte size only limited by the
+points the user wants to spend to upload it.  All kinds can display a picture,
+which can be clicked on to get more detail or play it if it is a video or audio
+file.
 
 * Implicit ActiveStorage link stores the file.  May use CarrierWave if
   ActiveStorage URL policies are too annoying (too long, permanent links
@@ -381,25 +393,17 @@ A is a list header and B is in the list, etc).
   header record, child_id is something in the list).  Never NULL.  Write-once.
 * creator_id Identifies the LedgerUser who created this link.  Never NULL.
   Write-once.
-* deleted boolean True if there is a LedgerDelete record that deletes this
-  record, otherwise false (this record is alive).  Any rating points gained by
-  the child object through this link vanish when it is deleted, as if they
-  never were transfered.  However, the rating points spent by the user to make
-  the link are not returned to the user (otherwise they could temporarily
-  transfer points and someone else could spend more than they are allowed).
-  Can undelete with LedgerUndelete, another good reason for keeping the rating
+* deleted boolean True if this record should be hidden from the users,
+  otherwise false (this record is alive).  Could have been deleted by
+  LedgerDelete or maybe it was created in a deleted state, which we use for
+  pending things that need approval (approved by a moderator functionally
+  undeleting it with LedgerGivePermission).  Any rating points gained by the
+  child object through this link vanish when it is deleted, as if they never
+  were transfered.  However, the rating points spent by the user to make the
+  link are not returned to the user (otherwise they could temporarily transfer
+  points and someone else could spend more than they are allowed).  Can
+  undelete with LedgerUndelete, another good reason for keeping the rating
   points spent.  Changed as needed.
-* pending boolean True if permission is currently denied.  The link record
-  exists but it can't be traversed (sort of like being deleted) until someone
-  gives permission.  The typical use case will be someone signing up for a
-  discussion group by adding themselves as a member of the group (creating a
-  LinkGroupMember between the group and their user record).  If the group's
-  permissions allow linking, it goes into effect immediately.  If permission
-  isn't automatic, then the new link is marked as pending.  Then one of the
-  group moderators can approve the pending membership link by changing
-  permission settings on the referenced objects or explicitly giving permission
-  to this link with a LedgerGivePermission record.  The deleted boolean has
-  priority over the pending one.  Changed as needed.
 * rating_points_spent float The number of points spent on making this link by
   the creator.  Includes transaction fees (larger fees for storing more bytes
   and a base fee to avoid high speed trading problems).  Points after the fees
@@ -429,16 +433,16 @@ A is a list header and B is in the list, etc).
 
 ### *LinkReply* < LinkBase
 
-The child is a reply to the parent.  Usually both objects are LedgerMicropost.
+The child is a reply to the parent.  Usually both objects are LedgerPost.
 
 
 ### *LinkMedia* < LinkBase
 
 The child is some sort of media which should be displayed when the parent is
-shown.  Usually the parent is a LedgerMicropost and the child is a LedgerMedia
-of some type.  We just treat them all as pictures and show them in a grid after
-the text of the micropost (grid order determined by the order of datestamps of
-these link records).  The user can click on individual ones to play them.
+shown.  Usually the parent is a LedgerPost and the child is a LedgerMedia of
+some type.  We just treat them all as pictures and show them in a grid after
+the text of the post (grid order determined by the order of datestamps of these
+link records).  The user can click on individual ones to play them.
 
 
 ### *LinkPermission* < LinkBase
@@ -460,7 +464,7 @@ Possible subclasses are:
 
 * LinkPermissionDeny - Target is not allowed to access the parent object.
 * LinkPermissionView - Target can view the parent object.
-* LinkPermissionReply - Target can link a new micropost object to the parent
+* LinkPermissionReply - Target can link a new post object to the parent
   object as a reply.
 * LinkPermissionWrite - Target can change the parent object (make new version).
 * LinkPermissionOwner - Target has ownership permissions for the parent object.
@@ -616,9 +620,12 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.19 2020/04/10 15:40:04 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.20 2020/04/10 15:58:33 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.20  2020/04/10 15:58:33  agmsmith
+Have original_id be NULL on creation, but soon changing to copy of id.
+
 Revision 1.19  2020/04/10 15:40:04  agmsmith
 Update migration comment for original_id.
 
@@ -676,6 +683,120 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.20
+log
+@Have original_id be NULL on creation, but soon changing to copy of id.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.19 2020/04/10 15:40:04 agmsmith Exp agmsmith $</SMALL>
+d17 2
+a18 1
+pointers in the objects so that an object can have multiple parents.
+d33 2
+a34 2
+deleted, instead a new unlink record is created, referencing the original link
+record.
+d45 4
+a48 4
+Because I don't want to have zillions of tables, and want to inherit
+functionality for various related record types (generic object > text object >
+book review object), we're using the Ruby on Rails ActiveRecord "[single table
+inheritance](https://api.rubyonrails.org/classes/ActiveRecord/Inheritance.html)"
+d68 7
+a74 7
+There's a design choice needed on making lists of things.  Should you make link
+records between a main object and sub-objects that apply to it, or should you
+have a second object as kind of a list header, and link the sub-objects to it?
+For example, a Friends list.  You could link friends (LedgerUser records) to
+the main user (another LedgerUser record) with specialised link_friend records.
+Or you could make a LedgerListFriends object with a link to the main user, then
+attach the friends to that with generic link records.
+d103 4
+a106 2
+* creator_id Identifies the user who created this record.  Never NULL; the root
+  object is considered to have created itself.  Write-once.
+d112 5
+a116 6
+  (unless the user is looking for a specific version the object).  NULL if not
+  initialised properly (should be a copy of the id of the record in that case).
+  Had considered NULL for marking the original record, but it's easier to find
+  all versions of something if the original one is marked the same way, so soon
+  after creation the original_id will be updated to be equal to id.  Happens to
+  be write-once.
+d118 3
+a120 1
+  not the original record.  Changed as needed.
+d157 2
+a158 1
+* reason string  Reason for deletion.
+d174 2
+a175 1
+mind, you can undelete the unapproved link.
+d195 1
+a195 1
+### *LedgerMicropost* < LedgerBase
+d197 11
+a207 11
+A micropost made by a user.  Contains some formatted text.  They can also
+attach pictures and other media files (displayed in a grid, in order by link
+creation date).  There can also be micropost replies, the micropost can be
+placed in a category list to identify what the topic of the text is, have
+rating points awarded to it, and so on.  This is the object the user interacts
+with the most.  It is also usually visible to users and even external web
+sites, unless permissions make it private.
+
+* scribbles text The text written by the user for the micropost, in markdown
+  UTF-8 format (we're using the kramdown dialect).  Length limited only by the
+  number of points the user wants to spend (it's an unlimited Text not a String
+d214 5
+a218 5
+video clip.  Can be attached to multiple microposts to make them more
+interesting, and referenced by external web sites as well.  Byte size only
+limited by the points the user wants to spend to upload it.  All kinds can
+display a picture, which can be clicked on to get more detail or play it if it
+is a video or audio file.
+d272 10
+a281 7
+* deleted boolean True if there is a LedgerDelete record that deletes this
+  record, otherwise false (this record is alive).  Any rating points gained by
+  the child object through this link vanish when it is deleted, as if they
+  never were transfered.  However, the rating points spent by the user to make
+  the link are not returned to the user (otherwise they could temporarily
+  transfer points and someone else could spend more than they are allowed).
+  Can undelete with LedgerUndelete, another good reason for keeping the rating
+a282 11
+* pending boolean True if permission is currently denied.  The link record
+  exists but it can't be traversed (sort of like being deleted) until someone
+  gives permission.  The typical use case will be someone signing up for a
+  discussion group by adding themselves as a member of the group (creating a
+  LinkGroupMember between the group and their user record).  If the group's
+  permissions allow linking, it goes into effect immediately.  If permission
+  isn't automatic, then the new link is marked as pending.  Then one of the
+  group moderators can approve the pending membership link by changing
+  permission settings on the referenced objects or explicitly giving permission
+  to this link with a LedgerGivePermission record.  The deleted boolean has
+  priority over the pending one.  Changed as needed.
+d312 1
+a312 1
+The child is a reply to the parent.  Usually both objects are LedgerMicropost.
+d318 4
+a321 4
+shown.  Usually the parent is a LedgerMicropost and the child is a LedgerMedia
+of some type.  We just treat them all as pictures and show them in a grid after
+the text of the micropost (grid order determined by the order of datestamps of
+these link records).  The user can click on individual ones to play them.
+d343 1
+a343 1
+* LinkPermissionReply - Target can link a new micropost object to the parent
+d499 1
+a499 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.19 2020/04/10 15:40:04 agmsmith Exp agmsmith $
+d502 3
 @
 
 
