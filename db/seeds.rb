@@ -65,11 +65,15 @@ if !Rails.env.test?
     content = Faker::Lorem.sentence(word_count: 5)
     users.each { |user| user.microposts.create!(content: content) }
   end
+  user = User.last
+  40.times do
+    user.microposts.create!(content: Faker::Company.catch_phrase)
+  end
 
-  # Make some LedgerPosts for some users.
+  # Make some LedgerPosts for some users.  Use Markdown formatting.
   users = User.order(:created_at).take(4)
   3.times do
-    content = Faker::Lorem.sentence(word_count: 10)
+    content = Faker::Markdown.random
     users.each do |user|
       post = LedgerPost.create!(content: content, creator: user.ledger_user)
       post2 = post.append_ledger

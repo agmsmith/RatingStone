@@ -12,12 +12,12 @@ class MicropostsInterfaceTest < ActionDispatch::IntegrationTest
     get root_path
     assert_select 'div.pagination'
     assert_select 'input[type=file]' # Spot for uploading a picture.
+    assert_select 'a[href=?]', '/?page=2' # Correct pagination link
     # Invalid submission
     assert_no_difference 'Micropost.count' do
       post microposts_path, params: { micropost: { content: "" } }
     end
     assert_select 'div#error_explanation'
-    assert_select 'a[href=?]', '/?page=2' # Correct pagination link
     # Valid submission, no picture.
     content = "This micropost really ties the room together"
     assert_difference 'Micropost.count', 1 do
