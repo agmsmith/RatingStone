@@ -45,7 +45,8 @@ class LedgerBase < ApplicationRecord
   ##
   # Finds the original version of this record, which is still used as a central
   # point for the cached calculated values.  May be slightly faster than just
-  # using "original".
+  # using "original".  Also safer, for that brief moment when original_id is
+  # nil since we can't easily have a transaction around record creation.
   def original_version
     return self if (original_id == id) || original_id.nil?
     original
@@ -95,7 +96,7 @@ class LedgerBase < ApplicationRecord
   # record if this one is a later version.
   def deleted_by
     deleted_ids = [id]
-    deleted_ids.push(original_id) if id != original_id
+    deleted_ids.push(original_id) if original_id && id != original_id
     LedgerBase.joins(:aux_ledger_descendants)
       .where({
         aux_ledgers: { child_id: deleted_ids },
