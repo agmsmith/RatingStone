@@ -2,7 +2,7 @@
 
 class LedgerPostsController < ApplicationController
   before_action :logged_in_user, only: [:create, :destroy]
-  before_action :correct_user, only: :destroy
+  before_action :correct_user, only: [:destroy, :undelete, :update]
 
   def create
     @new_ledger_post = LedgerPost.new(ledger_post_params
@@ -18,7 +18,8 @@ class LedgerPostsController < ApplicationController
   def destroy
     post_title = @ledger_post.content.truncate(50, separator: ' ')
     LedgerDelete.delete_records([@ledger_post], current_ledger_user,
-      "Manual delete by user \"#{current_ledger_user.name}\".")
+      "Manual delete by user logged in from IP address " \
+      "#{request.env['REMOTE_ADDR']}.")
     feedback_text = "LedgerPost \"#{post_title}\" deleted"
     vcount = @ledger_post.all_versions.count
     feedback_text += " (#{vcount} versions included)" if vcount > 1
@@ -35,6 +36,18 @@ class LedgerPostsController < ApplicationController
     end
   end
 
+  def undelete
+    post_title = @ledger_post.content.truncate(50, separator: ' ')
+    LedgerUndelete.undelete_records([@ledger_post], current_ledger_user,
+      "Manual undelete by user logged in from IP address " \
+      "#{request.env['REMOTE_ADDR']}.")
+    feedback_text = "LedgerPost \"#{post_title}\" undeleted"
+    vcount = @ledger_post.all_versions.count
+    feedback_text += " (#{vcount} versions included)" if vcount > 1
+    flash[:success] = feedback_text + '.'
+    redirect_back(fallback_location: root_url)
+  end
+
   private
 
   def ledger_post_params
@@ -43,6 +56,10 @@ class LedgerPostsController < ApplicationController
 
   def correct_user
     @ledger_post = LedgerPost.find(params[:id])
-    redirect_to(root_url) unless current_ledger_user?(@ledger_post.creator)
+    unless current_ledger_user?(@ledger_post.creator)
+      flash[:error] =
+        "You didn't create that post, so you can't update or delete it."
+      redirect_to(root_url)
+    end
   end
 end

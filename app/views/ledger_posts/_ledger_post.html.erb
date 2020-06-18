@@ -2,15 +2,19 @@
 <% if ledger_post.deleted %>
   <span class="deleted">
     <% if current_ledger_user?(ledger_post.creator) %>
-      <%= button_to "Undelete", ledger_post, method: :undelete,
+      <%= button_to "Undelete", ledger_post_undelete_path(ledger_post),
+          method: :post,
           data: { confirm: "Sure you want to undelete this post?" },
           form_class: 'undeletebutton', class: 'btn btn-info'
         %>
+      <ul>
       <% ledger_post.deleted_by.each do |x| %>
-        <%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
-        <%= x.creator.name %> on <%= x.created_at.getlocal %><BR>
-        <small><%= x.reason %></small>
+        <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
+        <%= x.creator.name %> (#<%= x.creator_id %>) on
+        <%= x.created_at.getlocal %><BR>
+        <small><%= x.reason %></small></li>
       <% end %>
+      </ul>
     <% else %>
       This post has been deleted.
     <% end %>
