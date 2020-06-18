@@ -21,8 +21,8 @@ Rails.application.routes.draw do
   resources :microposts, only: [:create, :destroy]
   resources :ledger_posts, except: [:new]
   # Note can't use "/ledger_posts/:id" since that confuses the CSRF token
-  # validation because it combines the action with the posting method.  So we
-  # use a slightly different action name in the URL.
+  # validation because that combines the action with the posting method to
+  # generate the token.  So we use a slightly different action name in the URL.
   post '/ledger_posts_undelete/:id', to: 'ledger_posts#undelete',
     as: :ledger_post_undelete
   resources :relationships, only: [:create, :destroy]

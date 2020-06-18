@@ -58,7 +58,7 @@ class LedgerPostsController < ApplicationController
     @ledger_post = LedgerPost.find(params[:id])
     unless current_ledger_user?(@ledger_post.creator)
       flash[:error] =
-        "You didn't create that post, so you can't update or delete it."
+        "You didn't create that post, so you can't update or (un)delete it."
       redirect_to(root_url)
     end
   end
