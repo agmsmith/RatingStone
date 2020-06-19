@@ -92,4 +92,18 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     end
     assert_equal(ledger_undelete.deleted_by.count, 0)
   end
+
+  test "delete authorisation" do
+    lbase = LedgerBase.new(creator: users(:archer).ledger_user,
+      string1: "Something to delete, by Archer.")
+    lbase.save
+    assert_nil(LedgerDelete.delete_records([lbase],
+      users(:malory).ledger_user, "Testing delete from wrong user."))
+    assert_nil(LedgerUndelete.undelete_records([lbase],
+      users(:archer).ledger_user, "Testing undelete on not deleted thing."))
+    ldelete = LedgerDelete.undelete_records([lbase], users(:archer).ledger_user,
+      "Testing delete, should work.")
+    assert_equal(:LedgerDelete, ldelete.class)
+    assert_equal("Testing delete, should work.", ldelete.reason)
+  end
 end

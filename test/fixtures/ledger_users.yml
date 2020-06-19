@@ -1,9 +1,14 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-root_ledger:
-   id: 0
-   type: 'LedgerUser'
-   string1: 'Root User Object created by the Fixture system.'
-   creator_id: 0
-   original_id: 0
+root_ledger_user:
+  id: 0
+  type: 'LedgerUser'
+  string1: 'Root User Object created by the Fixture system.'
+  creator_id: 0
+  original_id: 0
+
+some_ledger_user:
+  type: 'LedgerUser'
+  string1: 'Some LedgerUser made by the fixture system'
+  creator_id: 0
 
