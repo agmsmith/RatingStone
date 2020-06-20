@@ -78,7 +78,8 @@ ActiveRecord::Schema.define(version: 2020_03_28_104628) do
     t.integer "child_id", null: false
     t.integer "creator_id", null: false
     t.boolean "deleted", default: false
-    t.boolean "pending", default: false
+    t.boolean "approved_parent", default: false
+    t.boolean "approved_child", default: false
     t.float "rating_points_spent", default: 0.0
     t.float "rating_points_boost_child", default: 0.0
     t.float "rating_points_boost_parent", default: 0.0
