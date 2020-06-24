@@ -1,9 +1,19 @@
-head	1.22;
+head	1.24;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.24
+date	2020.06.24.11.18.49;	author agmsmith;	state Exp;
+branches;
+next	1.23;
+
+1.23
+date	2020.06.21.00.20.58;	author agmsmith;	state Exp;
+branches;
+next	1.22;
 
 1.22
 date	2020.06.20.17.14.23;	author agmsmith;	state Exp;
@@ -121,15 +131,14 @@ desc
 @
 
 
-1.22
+1.24
 log
-@Rework approval vs deletion of records.  Now have separate child and parent
-end of the link approval flags.  Delete is orthogonal to approval.
+@More work in progress on permission roles and discussion groups.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.21 2020/06/15 15:56:25 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.23 2020/06/21 00:20:58 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -216,7 +225,7 @@ references where that makes sense.  If the number of subclasses gets too big,
 this decision will have to be reconsidered.
 
 
-## *LedgerBase*
+## *LedgerBase* Classes
 
 The base class for persistent objects that the user may interact with.  There
 is one database table for all objects of this class and subclasses.
@@ -290,7 +299,7 @@ and LedgerUndelete records.
   system.
 
 
-### *LedgerUndelete* < LedgerDelete
+#### *LedgerUndelete* < LedgerDelete
 
 Undoes a LedgerDelete and is otherwise similar to it.  Besides being less
 confusing than deleting a delete record, this lets us more easily find out who
@@ -313,7 +322,7 @@ LedgerDelete.  If you change your mind, you can undelete the unapproved link.
 * context string Where the approval was given (IP address, web page, etc).
 
 
-### *LedgerUnapprove* < LedgerApprove
+#### *LedgerUnapprove* < LedgerApprove
 
 Undoes approval for the specified links.  Not usually useful, since it puts the
 links back in pending state.  If you want to reject approval, try deleting the
@@ -394,7 +403,7 @@ timestamp field that LedgerAwardCeremony made necessary.
   independently operational.
 
 
-## *LinkBase*
+## *LinkBase* Classes
 
 The base class for links of all kinds between pairs of objects.  There is one
 database table for all instances of this class and subclasses.  The particular
@@ -464,6 +473,12 @@ A is a list header and B is in the list, etc).
   LedgerAwardCeremony records up to the creation time.  Write-once.
 
 
+### *LinkOwner* < LinkBase
+
+The child is a LedgerUser who is to be treated almost the same as the creator
+of the object specified as the parent of the link.  They can do everything the
+creator can do, except change the creator.
+
 ### *LinkReply* < LinkBase
 
 The child is a reply to the parent.  Usually both objects are LedgerPost.
@@ -503,7 +518,9 @@ Possible subclasses are:
 * LinkPermissionOwner - Target has ownership permissions for the parent object.
 
 
-## *AuxLink*
+## Auxiliary Classes
+
+### *AuxLink*
 
 This database table and class is used for connecting LedgerBase records
 (a LedgerDelete/Undelete or LedgerGivePermission) and LinkBase records.  Used
@@ -515,7 +532,7 @@ difference with LinkBase is that no rating points are involved.
 * No time stamps or other fields, see the parent_id for the date etc.
 
 
-## *AuxLedger*
+### *AuxLedger*
 
 Like AuxLink, but for connecting LedgerBase objects (usually a
 LedgerDelete/Undelete) to child LedgerBase objects (things being deleted).
@@ -523,6 +540,135 @@ LedgerDelete/Undelete) to child LedgerBase objects (things being deleted).
 * parent_id Points to a LedgerBase record doing something to an object.
 * child_id Points to a LedgerBase record being modified in some way.
 * No time stamps or other fields, see the parent_id for the date etc.
+
+
+## Permissions Role Model
+
+The main worry is about posts.  The system needs to decide who can read a post,
+who is allowed to reply, who can add a post to a private discussion group, who
+can delete it and so on.  We'll worry about other permissions later.  After
+considering access control lists and even [UNIX style
+permissions](https://en.wikipedia.org/wiki/File_system_permissions#Traditional_Unix_permissions)
+I decided that every post should be in a group or several groups.  The group
+decides many of those things mainly by having a membership list.  Even a
+person's blog would be a group.  Perhaps private direct communictions could be
+a group too, with just the two people in the conversation being group members.
+
+The next big insight was to use permission roles.  They can be put in a rough
+order where one more permissive role includes the things allowed in the lower
+less permissive roles, to save on having to grant each permission individually.
+In practice, each role is granted by linking the user to a group with a record
+that specifies the highest role they have.
+
+1. **Banned**.  Can't access the group or posts.
+2. **Reader**.  Can read posts and see the group description.
+3. **Member**.  Can see more group information, like membership lists.  Some
+   groups also automatically approve posts by members.  Others require approval
+   by a moderator.  By the way, there's no permission needed to request that a
+   post be added to a group, so even a non-member could do that.
+4. **Message Moderator**.  Can approve, unapprove (makes it pending approval
+   again) and delete posts.
+5. **Member Moderator**.  Approves and rejects membership requests.
+6. **Owner**.  Owners can be added to a group (and other objects).  They have
+   all permissions (including approving or deleting owners and moderators),
+   except they can't change the creator.
+7. **Creator**.  Has all permissions to modify the object, including changing
+   the creator.
+
+When finding out if a user has a permission for an action allowed by a certain
+role, check for a match with the creator first (everything is allowed).  Then
+see if they are in the Banned role second; permission is denied (if you want to
+explicitly deny a user access to the group, give them the Banned role).  Then
+start searching at the most permissive role after Creator and work down to the
+lowest level that matches the role query.  If they were not found in the search
+then they don't have permission for the role.  In practice, we'll first look
+for some LinkBase subclass record that specifies roles and sort by role
+priority.  Then try the more computationally expensive wildcards for each role.
+
+The group would have a few settings related to those roles:
+
+* Posts by non-members automatically approved?  Could lead to rowdy
+  discussions, though the requirement to spend points to talk hopefully will
+  make people think before posting.
+* Posts by members automatically approved?  Avoids most of the need for message
+  moderators (might still need moderators to delete posts).
+* Membership requests automatically approved?  Not sure if this is a good idea.
+* We can do interesting things with the reputation points the user gave the
+  group when adding their post to the group.  Maybe require a minimum number of
+  points to have the post automatically accepted.  Perhaps have a discount for
+  members.  If the user didn't spend enough points on making the link to the
+  group, the link stays pending, waiting for a moderator to approve it or
+  delete it (wasting the user's points).
+* Beside the explicit links to the group to identify members, readers, etc,
+  have relationship wildcards to specify users for each role.  They're usually
+  relative to the owners & creator of the group.  Includes concepts like
+  Everybody, Friends of the owners, Friends of Friends of the owners, Parents
+  of Parents, Enemies of Friends and so on.  We need a little language to
+  specify users, using relationships declared elsewhere (Friend, Sibling,
+  Spouse and so on links).  Could use up too much database time resulting in a
+  terminated web session, so maybe warn people when they set wildcards that
+  could potentially select from too many people (count up how many friends of
+  enemies the owners have, before saving the new wildcard in case of
+  termination).
+* Generic Internet users (people not logged in) allowed as readers?  Done by
+  having a special Internet user for non-logged-in people which you can assign
+  to the Reader role, or to the Banned role or just leave out.
+* Allow anyone to be a Reader?  If enabled, lets anyone read messages.  Also
+  no need for storage for the list of Readers.  Done by adding the Everybody
+  wildcard to the Reader role.
+
+## About Posts and Groups
+
+When someone writes a post, they create both a LedgerPost object with the text
+and a link object (LinkGroupHasPost?) to connect it to the group it is in.  If
+they want it to be in multiple groups, they can just add more links.  If it's a
+reply to some other post, they add a link (LinkPostHasReply?) to that post too.
+It's a bit awkward and expensive in ratings points (each link needs points)
+having both a link to the reply and a link to the group, but both are needed.
+We can't default to the group based on the group the previous message is in,
+since later on someone could add that previous post to some other group and
+your post would suddenly be visible to people you hadn't expected.  Also this
+discourages the evil of unnecessary or accidental cross-posting.
+
+The links also award points to both the post and the group (the user decides
+how much to spend and how to split it), so that posts using the group
+contribute a bit to its upkeep.  The group owners can spend the group points on
+the group's behalf, perhaps reimbursing moderators for the points they use
+while doing their work (creating approval and deletion objects takes points).
+Of course, if the group's points fall to zero, it can be garbage collected.
+Same for posts that aren't referenced much.
+
+I'd like to have small points awarded for just reading a post, but that won't
+be done since it would blow up the database size tremendously (each read would
+create a LinkBase record).  Or maybe we could have a daily "tip" or donation
+operation that awards points to the list of posts the user read that day, and a
+variation of LinkBase that uses AuxLedger records to specify a bunch of posts
+to get a reward.  Though that would make the backtracking from the post to
+donors awkward (not just looking for a connected LinkBase object) when doing
+awards ceremonies.  So for now, you can "like" or maybe "cast a stone" for
+individual posts and award points manually.
+
+So, what happens if you make a post that isn't in a group?  People can still
+find it by looking at your profile for all the posts you have written.  But it
+doesn't have any links to it (other than the implied creator one) so it has
+zero reputation points and can be garbage collected at the next awards
+ceremony.  Maybe we should require the implied spending of a single reputation point to create
+anything, so the implied link to the creator has a bit of permanence.  Also,
+there are no groups to allow people to read it, so it has a default permission
+role of Banned for everyone except the creator or owners (if the user attaches
+extra owners to the post).
+
+stand alone posts.
+Points given to reply and group.
+
+Assiging a post to a group or multiple groups.
+
+
+WIP:
+
+Subgroups for categories.
+
+Moderators spending rating points - reimburse from group?
 
 
 ## Generating the Database
@@ -654,9 +800,16 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.21 2020/06/15 15:56:25 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.23 2020/06/21 00:20:58 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.23  2020/06/21 00:20:58  agmsmith
+Working on the Permissions Model.  Idea of Groups for all posts, roles.
+
+Revision 1.22  2020/06/20 17:14:23  agmsmith
+Rework approval vs deletion of records.  Now have separate child and parent
+end of the link approval flags.  Delete is orthogonal to approval.
+
 Revision 1.21  2020/06/15 15:56:25  agmsmith
 Rewording, also combine pending and deleted functionality into the
 same thing (granting permission undeletes a record).
@@ -721,6 +874,88 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.23
+log
+@Working on the Permissions Model.  Idea of Groups for all posts, roles.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.22 2020/06/20 17:14:23 agmsmith Exp agmsmith $</SMALL>
+d338 6
+d407 1
+a407 1
+## Permissions Model
+d425 1
+a425 1
+1. **Nothing**.  Can't access the group or posts.
+d440 9
+a448 7
+When searching roles to find out if a user has a permission for an action
+allowed by a certain role, check the Nothing role first to see if permission is
+denied (if you want to explicitly deny a user access to the group, give them
+the Nothing role), then start searching at the most permissive (Creator) and
+work down to the lowest level that matches the role query.  If they were
+Nothing or not found in the search then they don't have permission for the
+role.
+d452 3
+d458 17
+a474 6
+* Beside the explicit links to the group, have relationship wildcards to
+  specify users for each role.  They're usually relative to the owners +
+  creator of the group.  Includes concepts like Everybody, Friends of the
+  owners, Friends of Friends of the owners, Parents of Parents, Enemies of
+  Friends and so on.  We need a little language to specify users, using
+  relationships declared elsewhere (Friend, Sibling, Spouse and so on links).
+d477 1
+a477 1
+  to the Reader role, or to the Nothing role (or just leave out).
+d482 47
+a532 2
+Assiging a post to a group or multiple groups.
+
+d665 1
+a665 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.22 2020/06/20 17:14:23 agmsmith Exp agmsmith $
+d668 3
+@
+
+
+1.22
+log
+@Rework approval vs deletion of records.  Now have separate child and parent
+end of the link approval flags.  Delete is orthogonal to approval.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.21 2020/06/15 15:56:25 agmsmith Exp agmsmith $</SMALL>
+d90 1
+a90 1
+## *LedgerBase*
+d164 1
+a164 1
+### *LedgerUndelete* < LedgerDelete
+d187 1
+a187 1
+### *LedgerUnapprove* < LedgerApprove
+d268 1
+a268 1
+## *LinkBase*
+d377 3
+a379 1
+## *AuxLink*
+d391 1
+a391 1
+## *AuxLedger*
+d401 68
+d598 1
+a598 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.21 2020/06/15 15:56:25 agmsmith Exp agmsmith $
+d601 4
 @
 
 
