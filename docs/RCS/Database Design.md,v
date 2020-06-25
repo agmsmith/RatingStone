@@ -1,9 +1,14 @@
-head	1.24;
+head	1.25;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.25
+date	2020.06.25.00.06.50;	author agmsmith;	state Exp;
+branches;
+next	1.24;
 
 1.24
 date	2020.06.24.11.18.49;	author agmsmith;	state Exp;
@@ -131,14 +136,14 @@ desc
 @
 
 
-1.24
+1.25
 log
-@More work in progress on permission roles and discussion groups.
+@Decide on making ungrouped posts public.  Add LinkOwner record.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.23 2020/06/21 00:20:58 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.24 2020/06/24 11:18:49 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -463,9 +468,10 @@ A is a list header and B is in the list, etc).
   object can be deleted.  Write-once.
 * rating_points_boost_parent float The number of points to boost the rating of
   the parent.
-* rating_direction char How the points from the creator are applied to the
-  child and parent objects (both are in the same direction we assume), can be
-  "U" for up, "D" for down or "M" for meh.  Write-once.
+* rating_direction_child char
+* rating_direction_parent char How the points from the creator are applied to
+  the child and parent objects (both are usually but not always in the same
+  direction), can be "U" for up, "D" for down or "M" for meh.  Write-once.
 * award_number integer The week's award number when this record was created, 0
   if before any ceremonies have been done.  Lets us easily calculate the
   current faded value of the rating points.  This field can be recalculated by
@@ -475,9 +481,18 @@ A is a list header and B is in the list, etc).
 
 ### *LinkOwner* < LinkBase
 
-The child is a LedgerUser who is to be treated almost the same as the creator
-of the object specified as the parent of the link.  They can do everything the
-creator can do, except change the creator.
+The parent is a LedgerUser who is to be treated almost the same as the creator
+of the object specified as the child of the link.  They can do everything the
+creator can do, except change the creator.  This record is also used to link
+the object to the creator if the creator doesn't spend points on the object via
+some other LinkBase record (such as a LinkReply or LinkGroup).  That's because
+the implied LinkCreator (the creator_id field in the LedgerBase record) has
+zero reputation points assigned to it.  If we just created the object, at the
+next awards ceremony it would have zero points and be garbage collected.  Also
+by using a LinkOwner, rather than having an implied LinkCreator with a fixed
+1.0 fee, we can charge a larger and variable fee for more resource consuming
+objects, such as big media files.
+
 
 ### *LinkReply* < LinkBase
 
@@ -491,6 +506,19 @@ shown.  Usually the parent is a LedgerPost and the child is a LedgerMedia of
 some type.  We just treat them all as pictures and show them in a grid after
 the text of the post (grid order determined by the order of datestamps of these
 link records).  The user can click on individual ones to play them.
+
+
+### *LinkGroup* < LinkBase
+
+Links a child object (usually a LedgerPost) to a parent LedgerGroup.  Means
+that the child is considered part of the group's displayable content and will
+use the group's permissions to decide who can see the child.  Quite often the
+links will be pending until each end is approved by a moderator or higher role
+(usually moderator at the group end, owner/creator at the post end).  Note that
+all replies to a post that are in the same group also have a LinkGroup record,
+since group inclusion can change from post to post as the users wish (user
+interface defaults to using the same groups as the original post when
+replying).
 
 
 ### *LinkPermission* < LinkBase
@@ -639,30 +667,29 @@ Of course, if the group's points fall to zero, it can be garbage collected.
 Same for posts that aren't referenced much.
 
 I'd like to have small points awarded for just reading a post, but that won't
-be done since it would blow up the database size tremendously (each read would
-create a LinkBase record).  Or maybe we could have a daily "tip" or donation
-operation that awards points to the list of posts the user read that day, and a
-variation of LinkBase that uses AuxLedger records to specify a bunch of posts
-to get a reward.  Though that would make the backtracking from the post to
-donors awkward (not just looking for a connected LinkBase object) when doing
-awards ceremonies.  So for now, you can "like" or maybe "cast a stone" for
-individual posts and award points manually.
+be practical since it would blow up the database size tremendously (each read
+would create a LinkBase record).  Or maybe we could have a daily "tip" or
+donation operation that awards points to the list of posts the user read that
+day, and a variation of LinkBase that uses AuxLedger records to specify a bunch
+of posts to get a reward.  Though that would make the backtracking from the
+post to donors awkward (not just looking for a connected LinkBase object) when
+doing awards ceremonies.  So for now, you can "like" or maybe "cast a stone"
+for individual posts and award points manually.
 
 So, what happens if you make a post that isn't in a group?  People can still
-find it by looking at your profile for all the posts you have written.  But it
-doesn't have any links to it (other than the implied creator one) so it has
-zero reputation points and can be garbage collected at the next awards
-ceremony.  Maybe we should require the implied spending of a single reputation point to create
-anything, so the implied link to the creator has a bit of permanence.  Also,
-there are no groups to allow people to read it, so it has a default permission
-role of Banned for everyone except the creator or owners (if the user attaches
-extra owners to the post).
-
-stand alone posts.
-Points given to reply and group.
-
-Assiging a post to a group or multiple groups.
-
+find it by looking at the creator's profile for all the posts they have
+written.  There are no groups to allow people to read it, so it has a default
+permission role of Banned for everyone except the creator or owners (if the
+user attaches extra owners to the post).  An alternative for ungrouped posts is
+to make them readable by everybody, including anonymous Internet users so
+search engines will pick them up.  Which to choose?  A default of Banned would
+force users to spend extra points to make their post readable in some group.  A
+default of overly public would encourage more public discussion.  I'm going to
+make them public, since we still require spending typically 1.0 reputation
+points to create an ungrouped reply.  It costs twice as much (or you could make
+do with a shorter message life) to make it a reply in a private discussion,
+since you have the group link(s) to add as well as the reply link.  People will
+still use groups since it's worthwhile to reach a more relevant audience.
 
 WIP:
 
@@ -800,9 +827,12 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.23 2020/06/21 00:20:58 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.24 2020/06/24 11:18:49 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.24  2020/06/24 11:18:49  agmsmith
+More work in progress on permission roles and discussion groups.
+
 Revision 1.23  2020/06/21 00:20:58  agmsmith
 Working on the Permissions Model.  Idea of Groups for all posts, roles.
 
@@ -874,6 +904,58 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.24
+log
+@More work in progress on permission roles and discussion groups.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.23 2020/06/21 00:20:58 agmsmith Exp agmsmith $</SMALL>
+d328 4
+a331 3
+* rating_direction char How the points from the creator are applied to the
+  child and parent objects (both are in the same direction we assume), can be
+  "U" for up, "D" for down or "M" for meh.  Write-once.
+d341 12
+a352 3
+The child is a LedgerUser who is to be treated almost the same as the creator
+of the object specified as the parent of the link.  They can do everything the
+creator can do, except change the creator.
+d368 13
+d527 8
+a534 8
+be done since it would blow up the database size tremendously (each read would
+create a LinkBase record).  Or maybe we could have a daily "tip" or donation
+operation that awards points to the list of posts the user read that day, and a
+variation of LinkBase that uses AuxLedger records to specify a bunch of posts
+to get a reward.  Though that would make the backtracking from the post to
+donors awkward (not just looking for a connected LinkBase object) when doing
+awards ceremonies.  So for now, you can "like" or maybe "cast a stone" for
+individual posts and award points manually.
+d537 13
+a549 14
+find it by looking at your profile for all the posts you have written.  But it
+doesn't have any links to it (other than the implied creator one) so it has
+zero reputation points and can be garbage collected at the next awards
+ceremony.  Maybe we should require the implied spending of a single reputation point to create
+anything, so the implied link to the creator has a bit of permanence.  Also,
+there are no groups to allow people to read it, so it has a default permission
+role of Banned for everyone except the creator or owners (if the user attaches
+extra owners to the post).
+
+stand alone posts.
+Points given to reply and group.
+
+Assiging a post to a group or multiple groups.
+
+d687 1
+a687 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.23 2020/06/21 00:20:58 agmsmith Exp agmsmith $
+d690 3
 @
 
 
