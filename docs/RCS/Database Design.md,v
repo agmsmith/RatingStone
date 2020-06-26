@@ -1,9 +1,14 @@
-head	1.25;
+head	1.26;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.26
+date	2020.06.26.00.37.21;	author agmsmith;	state Exp;
+branches;
+next	1.25;
 
 1.25
 date	2020.06.25.00.06.50;	author agmsmith;	state Exp;
@@ -136,14 +141,14 @@ desc
 @
 
 
-1.25
+1.26
 log
-@Decide on making ungrouped posts public.  Add LinkOwner record.
+@Added LinkRelationship, removed LinkPermission.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.24 2020/06/24 11:18:49 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.25 2020/06/25 00:06:50 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -420,7 +425,8 @@ A is a list header and B is in the list, etc).
   and LedgerGivePermission.  Write-once.
 * type string  The name of the subclass to use for this record.  Write-once.
 * parent_id Points to the LedgerBase object (or subclass) which is usually the
-  main one in the association.  Never NULL.  Write-once.
+  main one in the association.  Generally the older one is the parent (eg:
+  original post is parent, reply to it is child).  Never NULL.  Write-once.
 * child_id Points to the child LedgerBase object (or subclass) which is usually
   the target one in the association (for example, parent_id could be a list
   header record, child_id is something in the list).  Never NULL.  Write-once.
@@ -437,20 +443,21 @@ A is a list header and B is in the list, etc).
 * approved_parent boolean
 * approved_child boolean False if a particular end of the link hasn't been
   approved.  The link record exists but it can't be traversed by ordinary users
-  (sort of like being deleted) until both ends have been approved.  The typical
-  use case will be someone posting a message to a discussion group by adding a
-  link between their post and the group.  The approved_child end (assuming the
-  post is the child) is set to true when it is created since the link creator
-  is the same as the post's creator.  If the group's permission for that user
-  allows auto-approval (such as a post by the creator of the group), the link
-  is created with the approved_parent flag is set to true.  If approval isn't
-  automatic, then the new link is considered to be pending and the flag(s)
-  start out false.  Later on someone with appropriate permissions (usually a
-  group moderator) can approve the pending post link by using a LedgerApprove
-  record.  Approval can be revoked by using LedgerUnapprove, or the link could
-  just be deleted if you want to reject it completely.  Combined with the
-  deleted boolean, a record is normally only seen if it is both fully approved
-  and not deleted.  Changed as needed.
+  until both ends have been approved.  Like being deleted, the points for
+  parent or child aren't awarded until that end of the link has been approved.
+  The typical use case will be someone posting a message to a discussion group
+  by adding a link between their post and the group.  The approved_child end
+  (assuming the post is the child) is set to true when it is created since the
+  link creator is the same as the post's creator.  If the group's permission
+  for that user allows auto-approval (such as a post by the creator of the
+  group), the link is created with the approved_parent flag is set to true.  If
+  approval isn't automatic, then the new link is considered to be pending and
+  the flag(s) start out false.  Later on someone with appropriate permissions
+  (usually a group moderator) can approve the pending post link by using a
+  LedgerApprove record.  Approval can be revoked by using LedgerUnapprove, or
+  the link could just be deleted if you want to reject it completely.  Combined
+  with the deleted boolean, a record is normally only seen if it is both fully
+  approved and not deleted.  Changed as needed.
 * rating_points_spent float The number of points spent on making this link by
   the creator.  Includes transaction fees (larger fees for storing more bytes
   and a base fee to avoid high speed trading problems).  Points after the fees
@@ -521,29 +528,77 @@ interface defaults to using the same groups as the original post when
 replying).
 
 
-### *LinkPermission* < LinkBase
+### *LinkRelationship* < LinkBase
 
-The parent is some LedgerObject, the child is some other LedgerObject that is
-being granted permissions to access the parent.  Stock permissions are stored
-in the LedgerObject itself (friends, owners, friends of friends, public, etc)
-but for unusual special case objects being granted permission (like a
-discussion group or a specific user), a LinkPermission is needed.  If there are
-several LinkPermission records for the same parent/child object pair, they are
-run through in reverse date of link creation (newest permission examined first)
-until a permission decision is made.  The type of the permission granted is
-specified by the link's subclass.  No permission check is needed to specify the
-child of LinkPermission; you just need points and ownership rights to the
-parent object to be able to creat a LinkPermission from your own object to any
-LedgerUser object.
+The abstract base class to show the parent and child are LederUser objects in
+some sort of relationship, such as parent, child, spouse, friend, enemy.
+Relationships can be equal and bidirectional, such as between spouses or
+between friends.  For searching efficiency, we'll just arbitrarily make the
+older user (lower ID number) the parent in bidirectional links.  Others have an
+order where parent and child ends of the relationship are different (such as
+real world parent and child).  Many require both ends to be approved by the
+parties (auto-approve the ends which are the creator).  Until both are
+approved, it's a partial relationship (admirer rather than friends).  Some
+always one way relationships, such as follower, don't require approval of the
+child end, and can't be deleted by the child end.
 
-Possible subclasses are:
+* comment string Up to 255 bytes of kramdown formatted text describing the
+  relationship.
 
-* LinkPermissionDeny - Target is not allowed to access the parent object.
-* LinkPermissionView - Target can view the parent object.
-* LinkPermissionReply - Target can link a new post object to the parent
-  object as a reply.
-* LinkPermissionWrite - Target can change the parent object (make new version).
-* LinkPermissionOwner - Target has ownership permissions for the parent object.
+
+#### *LinkFriend* < LinkRelationship
+
+The parent is a friend of child.  This is a bidirectional relationship so both
+ends are friends with each other.  If one end hasn't approved the friendship,
+then we'll refer to it as an unacknowledged friendship and perhaps say X is
+admired by Y and Y has an admirer.  If neither are approved, then it's a
+suggested (by the creator) friendship.
+
+
+#### *LinkEnemy* < LinkRelationship
+
+You can declare your enemies too, if they agree.  Bidirectional like
+LinkFriend.  Real enemies will give and accept negative points.
+
+
+#### *LinkParent* < LinkRelationship
+
+Parent is parent in real life of child.  Both ends need to be approved.
+
+
+#### *LinkSpouse* < LinkRelationship
+
+Parent is a spouse of child.  Bidirectional.  Both ends need to be approved.
+
+
+#### *LinkEmployer* < LinkRelationship
+
+Parent is the employee, child is the company employing them.  Both ends need to
+be approved.  Otherwise you'll see something like "claims to be employed by X".
+
+
+#### *LinkFollower* < LinkRelationship
+
+Parent LinkUser is interested in the child LinkUser's posts in general.  They
+could also subscribe to the child user's personal group(s).  But this will
+include all posts parent is allowed to read from that child user in their feed.
+
+Automatic approval for the child end.  Can only be deleted by the creator or
+parent.  If you like the child LedgerUser, send some positive points, negative
+if you hate them.
+
+
+### *LinkOpinion* < LinkBase
+
+Parent LinkUser (usually the creator) has an opinion about the child object
+(usually a LedgerPost or a LedgerUser).  Can be positive or negative or meh,
+decided by the points awarded to the child.  Usually no points awarded to the
+parent, unless a third party is essentially paying someone to have an opinion.
+Automatically approved for the child end, parent end auto approved if it is the
+creator, and can only be deleted by the creator or parent end.
+
+* comment string Up to 255 bytes of kramdown formatted text describing the
+  opinion.
 
 
 ## Auxiliary Classes
@@ -827,9 +882,12 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.24 2020/06/24 11:18:49 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.25 2020/06/25 00:06:50 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.25  2020/06/25 00:06:50  agmsmith
+Decide on making ungrouped posts public.  Add LinkOwner record.
+
 Revision 1.24  2020/06/24 11:18:49  agmsmith
 More work in progress on permission roles and discussion groups.
 
@@ -904,6 +962,66 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.25
+log
+@Decide on making ungrouped posts public.  Add LinkOwner record.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.24 2020/06/24 11:18:49 agmsmith Exp agmsmith $</SMALL>
+d280 2
+a281 1
+  main one in the association.  Never NULL.  Write-once.
+d298 15
+a312 14
+  (sort of like being deleted) until both ends have been approved.  The typical
+  use case will be someone posting a message to a discussion group by adding a
+  link between their post and the group.  The approved_child end (assuming the
+  post is the child) is set to true when it is created since the link creator
+  is the same as the post's creator.  If the group's permission for that user
+  allows auto-approval (such as a post by the creator of the group), the link
+  is created with the approved_parent flag is set to true.  If approval isn't
+  automatic, then the new link is considered to be pending and the flag(s)
+  start out false.  Later on someone with appropriate permissions (usually a
+  group moderator) can approve the pending post link by using a LedgerApprove
+  record.  Approval can be revoked by using LedgerUnapprove, or the link could
+  just be deleted if you want to reject it completely.  Combined with the
+  deleted boolean, a record is normally only seen if it is both fully approved
+  and not deleted.  Changed as needed.
+d383 1
+a383 1
+### *LinkPermission* < LinkBase
+d385 69
+a453 21
+The parent is some LedgerObject, the child is some other LedgerObject that is
+being granted permissions to access the parent.  Stock permissions are stored
+in the LedgerObject itself (friends, owners, friends of friends, public, etc)
+but for unusual special case objects being granted permission (like a
+discussion group or a specific user), a LinkPermission is needed.  If there are
+several LinkPermission records for the same parent/child object pair, they are
+run through in reverse date of link creation (newest permission examined first)
+until a permission decision is made.  The type of the permission granted is
+specified by the link's subclass.  No permission check is needed to specify the
+child of LinkPermission; you just need points and ownership rights to the
+parent object to be able to creat a LinkPermission from your own object to any
+LedgerUser object.
+
+Possible subclasses are:
+
+* LinkPermissionDeny - Target is not allowed to access the parent object.
+* LinkPermissionView - Target can view the parent object.
+* LinkPermissionReply - Target can link a new post object to the parent
+  object as a reply.
+* LinkPermissionWrite - Target can change the parent object (make new version).
+* LinkPermissionOwner - Target has ownership permissions for the parent object.
+d737 1
+a737 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.24 2020/06/24 11:18:49 agmsmith Exp agmsmith $
+d740 3
 @
 
 
