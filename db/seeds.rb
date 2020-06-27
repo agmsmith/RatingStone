@@ -43,6 +43,21 @@ if User.where(name: "System Operator").empty?
   sysop_ledger.save
 end
 
+# Create a dummy user to represent anonymous Internet browsers and search engines.
+if User.where(name: "Anonymous Internet Browser").empty?
+  internet_user = User.create!(
+    name:  "Anonymous Internet Browser",
+    email: "anonymous.internet@example.com",
+    password: "SomePassword",
+    password_confirmation: "SomePassword",
+    admin: false,
+    activated: true,
+    activated_at: Time.zone.now)
+  internet_ledger = internet_user.ledger_user # Will create ledger record.
+  internet_ledger.birthday = DateTime.new(2020,2,2,2,2,2)
+  internet_ledger.save
+end
+
 # Generate a bunch of additional users, but not in test mode.
 if !Rails.env.test?
   12.times do |n|

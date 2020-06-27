@@ -3,7 +3,7 @@ class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
     create_table :ledger_bases, force: false, comment: "Ledger objects base class and record.  Don't force: cascade deletes since this is a write-once ledger." do |t|
       t.string :type, default: "LedgerBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
       t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
-      t.integer :number1, default: 0, comment: "Generic number for counting things, defined by subclasses."
+      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.string :string2, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.text :text1, default: "", comment: "Generic text (lots of characters), defined by subclasses."
@@ -24,6 +24,8 @@ class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
 
     create_table :link_bases, force: false, comment: "LinkBase base class and record for linking LedgerObjects together." do |t|
       t.string :type, default: "LinkBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
+      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+      t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the LedgerBase object (or subclass) which is usually the main one in the association."
       t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the LedgerBase object (or subclass) which is the child in the association."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link."
@@ -37,6 +39,9 @@ class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
       t.integer :award_number, default: 0, comment: "The week's award number when this record was created, 0 if before time starts."
       t.timestamps
     end
+
+    add_index :link_bases, :string1
+    add_index :link_bases, :number1
 
     create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerDelete) to LinkBase records (usually links being deleted)." do |t|
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxlinkparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete or give permission order."

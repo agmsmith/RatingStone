@@ -1,9 +1,14 @@
-head	1.26;
+head	1.27;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.27
+date	2020.06.27.21.30.08;	author agmsmith;	state Exp;
+branches;
+next	1.26;
 
 1.26
 date	2020.06.26.00.37.21;	author agmsmith;	state Exp;
@@ -141,18 +146,18 @@ desc
 @
 
 
-1.26
+1.27
 log
-@Added LinkRelationship, removed LinkPermission.
+@Proof reading.  Added Subgroups.  Wildcard language.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.25 2020/06/25 00:06:50 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.26 2020/06/26 00:37:21 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
-Because I'm thinking that someone could implement the reputation system as a
+Because I'm planning that someone could implement the reputation system as a
 BlockChain ledger application, or as a federated collection of systems
 exchanging records, the database is set up as a write once collection of object
 records and link records.  Objects are the things the user can view and which
@@ -162,8 +167,8 @@ container object (such as a list of book reviews) and the other being a child
 object in that container (such as a book review object).  Usually rating points
 are also transfered when you create a link (perhaps describing how much you
 like that book review).  I'm using separate link records rather than parent
-pointers in the objects so that an object can have multiple parents (useful for
-filing something in multiple categories).
+references in the objects so that an object can have multiple parents (useful
+for filing something under multiple categories).
 
 ### Changing Things by Making New Objects
 
@@ -171,7 +176,7 @@ For example, if you want to edit some posted text, the system will create a
 newer object (they all have datestamps) with the new text and a reference back
 to the original text object record.  Then when displaying the original text, it
 will search for newer versions and display that text instead.  But new
-references (links) to the text (such as replies) will still point at the
+references (links) to the text (such as replies) will still reference the
 original text record, since that has a more constant identity then possibly yet
 more new text records.  Advanced users can view a list of all those text
 records and see the change history.
@@ -186,7 +191,7 @@ the records in chronological order, adding and removing objects and links from
 the current state.  In practice, we cache things.  So an object record would
 have a flag that marks it as deleted or amended, and a link record would
 similarly be marked, and there can be cached forward references to more quickly
-point out the record with the latest change.
+point out the record with the latest information.
 
 ### Single Table Inheritance
 
@@ -237,8 +242,11 @@ this decision will have to be reconsidered.
 
 ## *LedgerBase* Classes
 
-The base class for persistent objects that the user may interact with.  There
-is one database table for all objects of this class and subclasses.
+This is the base class for persistent objects that the user may interact with.
+There is one database table for all objects of this class and subclasses.  The
+name is short for LedgerObjectBase class.  I tried to find other words for a
+short form, but there's already an "Object" class and "Thing" didn't seem
+serious or distinct enough.
 
 * id The usual big (64 bit) integer unique record sequence number, which
   identifies the record/object.  There's an index of course to make finding a
@@ -251,7 +259,9 @@ is one database table for all objects of this class and subclasses.
 * creator_id Identifies the user who created this record.  The root object is
   considered to have created itself.  If you want to change the creator of an
   object, you have to make a new version of the record with the new creator.
-  Write-once.
+  Conceptually there is a LinkCreator record that links the object to the
+  creator, with zero reference points allocated.  To cut down on such a common
+  record, it's implied by the creator_id field.  Write-once.
 * original_id Points to the original version of this record, or equal to id if
   this is the original one.  When someone creates a link to the object, by
   default it's linked to by the original id.  The original record is still used
@@ -261,7 +271,8 @@ is one database table for all objects of this class and subclasses.
   considered NULL for marking the original record, but it's easier to find all
   versions of something if the original one is marked the same way, so soon
   after creation the original_id will be updated to be equal to id (there's a
-  brief time when it is NULL, could cause bugs).  Happens to be write-once.
+  brief time when it is NULL, could cause timing bugs).  Happens to be
+  write-once.
 * amended_id Points to the latest version of this record, or NULL if this is
   not the original record.  Usually we delete or undelete all versions of an
   object, but if we ever delete/undelete just some versions, this will point to
@@ -324,9 +335,8 @@ rating points for things like spam replies to your post or spam posts to a
 group, you can specify multiple links with many AuxLink records.  Used for
 things like approving a request to join a group (the request is a LinkBase
 subclass record joining the person to the group).  Both child and parent
-approvals are given as appropriate, determined by whether you have the rights
-to do that.  To reject permission, delete the unapproved link with
-LedgerDelete.  If you change your mind, you can undelete the unapproved link.
+approvals are given, determined by whether you have the rights to do that.  To
+reject permission, delete the unapproved link with LedgerDelete.
 
 * reason string  Reason for giving permission, provided by the user.
 * context string Where the approval was given (IP address, web page, etc).
@@ -354,15 +364,29 @@ Idenfities a particular user.
   sysop, bought some bonus points) attached to the LedgerUser record by links.
 
 
-### *LedgerPost* < LedgerBase
+#### *LedgerCompany* < LedgerUser
+
+Are corporations people?  Not really, but we have them as users too in case
+someone wants to run a company web page or otherwise have a presence on this
+web site.  As well, employees can list the LedgerCompany as their employer.
+
+
+### *LedgerContent* < LedgerBase
+
+An abstract base class for things which can be displayed to the user.  There
+can also be replies to this thing, it can be put in a discussion group, added
+to a category list to identify what the topic of the content is, have rating
+points awarded to it, and so on.  It is also usually visible to users and even
+external web sites, unless permissions (determined by the groups it is in) make
+it private.
+
+
+#### *LedgerPost* < LedgerContent
 
 A post made by a user.  Contains some formatted text.  They can also attach
-pictures and other media files (displayed in a grid, in order by link creation
-date).  There can also be post replies, the post can be placed in a category
-list to identify what the topic of the text is, have rating points awarded to
-it, and so on.  This is the object the user interacts with the most.  It is
-also usually visible to users and even external web sites, unless permissions
-make it private.
+pictures and other media files with LinkMedia records.  They'll be displayed in
+a grid, in order by link creation date.  This is the object the user interacts
+with the most.
 
 * content text The text written by the user for the post, in markdown UTF-8
   format (we're using the kramdown dialect).  Length limited only by the number
@@ -370,7 +394,7 @@ make it private.
   field).  Write-once.
 
 
-### *LedgerMedia* < LedgerBase
+#### *LedgerMedia* < LedgerContent
 
 A file uploaded by the user.  Usually some sort of media, like a picture or
 video clip.  Can be attached to multiple posts to make them more interesting,
@@ -382,6 +406,45 @@ file.
 * Implicit ActiveStorage link stores the file.  May use CarrierWave if
   ActiveStorage URL policies are too annoying (too long, permanent links
   difficult).  Have functions for getting the file size, data type, URL, etc.
+
+
+### *LedgerSubgroup* < LedgerBase
+
+A way of collecting related things together.  Useful as a subtopic of a
+discussion group or a category for photographs within a classification tree.
+All content that fit the subtopic (decided by users and moderators) are linked
+to this object by LinkGroupContent records (even replies to posts already in
+the subgroup).
+
+LinkSubgroup records specify the hierarchy of subgroups (actually a cyclic
+directed graph), by linking parent group to child group.  Multiple parents are
+allowed, so a photo taken in Canada in July 2020 could be filed both in a
+subgroup for North America and a subgroup for Year 2020.  You could even make
+subgroups for each family member and classify the photos by who is in them.
+
+There's an optional home post (see LinkHomePost) that describes the group in
+more detail.  The home post usually will have a list of recent additions in the
+group appended to it.
+
+A subgroup object doesn't have members attached or do permission role check
+operations; that's delegated to the LedgerGroup(s) which control this subgroup
+by LinkGroupRoleDelegation records.
+
+* name string A short string used as the group's name.
+* description text A paragraph of text in kramdown format describing the group.
+
+
+#### *LedgerGroup* < LedgerSubgroup
+
+Besides being a grouping object, this one also keeps track of LedgerUsers in
+various roles (plain member, moderator and so on), linked to it by LinkRole
+records.  The plain LedgerSubgroup objects controlled by this group will
+delegate their permission determination to this LedgerGroup and its membership
+lists by a LinkGroupRoleDelegation record.
+
+* group_settings_id integer A reference to a separate GroupSettings database
+  table that contains more information about the group, such as whether posts
+  need to be approved by moderators.
 
 
 ### *LedgerAwardCeremony* < LedgerBase
@@ -415,14 +478,14 @@ timestamp field that LedgerAwardCeremony made necessary.
 
 ## *LinkBase* Classes
 
-The base class for links of all kinds between pairs of objects.  There is one
-database table for all instances of this class and subclasses.  The particular
-subclass identifies what the link's purpose is (object A owns object B, object
-A is a list header and B is in the list, etc).
+This is the base class for links of all kinds between pairs of objects.  There
+is one database table for all instances of this class and subclasses.  The
+particular subclass identifies what the link's purpose is (object A owns object
+B, object A is a list header and B is in the list, etc).
 
 * id The usual big (64 bit) integer unique record sequence number so that we
   can refer to the link record, currently only used by LedgerDelete/Undelete
-  and LedgerGivePermission.  Write-once.
+  and similar operations.  Write-once.
 * type string  The name of the subclass to use for this record.  Write-once.
 * parent_id Points to the LedgerBase object (or subclass) which is usually the
   main one in the association.  Generally the older one is the parent (eg:
@@ -492,18 +555,19 @@ The parent is a LedgerUser who is to be treated almost the same as the creator
 of the object specified as the child of the link.  They can do everything the
 creator can do, except change the creator.  This record is also used to link
 the object to the creator if the creator doesn't spend points on the object via
-some other LinkBase record (such as a LinkReply or LinkGroup).  That's because
-the implied LinkCreator (the creator_id field in the LedgerBase record) has
-zero reputation points assigned to it.  If we just created the object, at the
-next awards ceremony it would have zero points and be garbage collected.  Also
-by using a LinkOwner, rather than having an implied LinkCreator with a fixed
-1.0 fee, we can charge a larger and variable fee for more resource consuming
-objects, such as big media files.
+some other LinkBase record (such as a LinkReply or LinkGroupContent).  That's
+because the implied LinkCreator (the creator_id field in the LedgerBase record)
+has zero reputation points assigned to it.  If we just created the object, at
+the next awards ceremony it would have zero points and be garbage collected.
+Also by using a LinkOwner, rather than having an implied LinkCreator with a
+fixed 1.0 fee, we can charge a larger and variable fee for more resource
+consuming objects, such as big media files.
 
 
 ### *LinkReply* < LinkBase
 
-The child is a reply to the parent.  Usually both objects are LedgerPost.
+The child is a reply to the parent.  Usually both objects are LedgerPost, or at
+least LedgerContent.
 
 
 ### *LinkMedia* < LinkBase
@@ -515,20 +579,67 @@ the text of the post (grid order determined by the order of datestamps of these
 link records).  The user can click on individual ones to play them.
 
 
-### *LinkGroup* < LinkBase
+### *LinkHomePost* < LinkBase
 
-Links a child object (usually a LedgerPost) to a parent LedgerGroup.  Means
-that the child is considered part of the group's displayable content and will
-use the group's permissions to decide who can see the child.  Quite often the
-links will be pending until each end is approved by a moderator or higher role
-(usually moderator at the group end, owner/creator at the post end).  Note that
-all replies to a post that are in the same group also have a LinkGroup record,
-since group inclusion can change from post to post as the users wish (user
-interface defaults to using the same groups as the original post when
-replying).
+Parent is a LedgerUser or Ledger(Sub)group and child is usually a LedgerPost.
+That post will be used as the home post (home page, status page, profile page,
+same thing) for the person or the group.  If there are several, the latest one
+will be used and the others considered to be previous ones, visible if someone
+asks for the history of home pages.
+
+
+### *LinkRole* < LinkBase
+
+Specifies the role a person has in a group.  Parent is the LedgerGroup, child
+is the LedgerUser.
+
+* role_priority integer Specifies the role as a number; lower ones have fewer
+  permissions and 10 or less means banned.  The roles are 10 times (in case we
+  want to insert new roles) the list numbers from the table in the [Permissions
+  Role Model](#permissions-role-model) section of this document.  Owner and
+  creator roles can't be declared by LinkRole records, use LinkOwner and the
+  actual creator field in the group object.
+
+
+### *LinkGroupRoleDelegation* < LinkBase
+
+Specifies that the parent LedgerGroup is used for permission checks for users
+trying to access the child LedgerSubgroup.  If there is more than one of these
+records, they're all checked until one of them gives permission or all of them
+deny permission.
+
+
+### *LinkGroupContent* < LinkBase
+
+Links a child object (usually a LedgerPost or LedgerMedia) to a parent
+LedgerGroup or LedgerSubgroup.  Means that the child is considered part of the
+group's displayable content and will use the group's permissions to decide who
+can see the child.  Quite often the links will be pending until each end is
+approved by a moderator or higher role (usually moderator at the group end,
+owner/creator at the post end).  Note that all replies to a post that are in
+the same group also have a LinkGroupContent record, since group inclusion can
+change from post to post as the users wish (user interface defaults to using
+the same groups as the original post when replying).
+
+* display_priority integer Importance of showing this object.  Higher numbers
+  for content which is more likely to be an original post, the start of a chain
+  of replies.  Saves having to hunt for top posts every time we display the
+  group's feed.  Also since someone could retroactively make a top post be a
+  reply to something else, this maintains its topness.
+
+
+### *LinkSubgroup* < LinkBase
+
+Specifies that the child LedgerSubgroup or LedgerGroup is subordinate to the
+parent LedgerGroup or LedgerSubgroup.  Used for making a directed graph
+structure of groups in order to classify things (like photos or posts attached
+to individual group objects) or otherwise break them down into more managable
+smaller chunks.
 
 
 ### *LinkRelationship* < LinkBase
+
+Rethink this area, unidirectional vs bidirectional, preapproved, etc.
 
 The abstract base class to show the parent and child are LederUser objects in
 some sort of relationship, such as parent, child, spouse, friend, enemy.
@@ -591,7 +702,7 @@ if you hate them.
 ### *LinkOpinion* < LinkBase
 
 Parent LinkUser (usually the creator) has an opinion about the child object
-(usually a LedgerPost or a LedgerUser).  Can be positive or negative or meh,
+(usually a LedgerContent or a LedgerUser).  Can be positive or negative or meh,
 decided by the points awarded to the child.  Usually no points awarded to the
 parent, unless a third party is essentially paying someone to have an opinion.
 Automatically approved for the child end, parent end auto approved if it is the
@@ -605,9 +716,9 @@ creator, and can only be deleted by the creator or parent end.
 
 ### *AuxLink*
 
-This database table and class is used for connecting LedgerBase records
-(a LedgerDelete/Undelete or LedgerGivePermission) and LinkBase records.  Used
-for deleting, undeleting, and giving permission to a LinkBase record.  The main
+This database table and class is used for connecting LedgerBase records (a
+LedgerDelete/Undelete or LedgerApprove/Unapprove) and LinkBase records.  Used
+for deleting, undeleting, and giving approvals to a LinkBase record.  The main
 difference with LinkBase is that no rating points are involved.
 
 * parent_id Points to a LedgerBase record doing something to a link.
@@ -652,11 +763,14 @@ that specifies the highest role they have.
 4. **Message Moderator**.  Can approve, unapprove (makes it pending approval
    again) and delete posts.
 5. **Member Moderator**.  Approves and rejects membership requests.
-6. **Owner**.  Owners can be added to a group (and other objects).  They have
-   all permissions (including approving or deleting owners and moderators),
-   except they can't change the creator.
+6. **Owner**.  Owners can be added to a group (and other objects) by a
+   LinkOwner record.  They have all permissions (including approving or
+   deleting owners and moderators), except they can't change the creator.
 7. **Creator**.  Has all permissions to modify the object, including changing
    the creator.
+
+We'll use ten times the list row numbers here as the role priority, in case we
+later want to add new roles in-between.
 
 When finding out if a user has a permission for an action allowed by a certain
 role, check for a match with the creator first (everything is allowed).  Then
@@ -668,31 +782,32 @@ then they don't have permission for the role.  In practice, we'll first look
 for some LinkBase subclass record that specifies roles and sort by role
 priority.  Then try the more computationally expensive wildcards for each role.
 
-The group would have a few settings related to those roles:
+The group would have a few settings related to those roles (stored in a
+separate database table rather than directly in the LedgerGroup record):
 
 * Posts by non-members automatically approved?  Could lead to rowdy
   discussions, though the requirement to spend points to talk hopefully will
   make people think before posting.
 * Posts by members automatically approved?  Avoids most of the need for message
   moderators (might still need moderators to delete posts).
-* Membership requests automatically approved?  Not sure if this is a good idea.
+* Membership requests automatically approved?  Good for public bulletin boards.
 * We can do interesting things with the reputation points the user gave the
   group when adding their post to the group.  Maybe require a minimum number of
   points to have the post automatically accepted.  Perhaps have a discount for
   members.  If the user didn't spend enough points on making the link to the
   group, the link stays pending, waiting for a moderator to approve it or
   delete it (wasting the user's points).
-* Beside the explicit links to the group to identify members, readers, etc,
-  have relationship wildcards to specify users for each role.  They're usually
-  relative to the owners & creator of the group.  Includes concepts like
-  Everybody, Friends of the owners, Friends of Friends of the owners, Parents
-  of Parents, Enemies of Friends and so on.  We need a little language to
-  specify users, using relationships declared elsewhere (Friend, Sibling,
-  Spouse and so on links).  Could use up too much database time resulting in a
-  terminated web session, so maybe warn people when they set wildcards that
-  could potentially select from too many people (count up how many friends of
-  enemies the owners have, before saving the new wildcard in case of
-  termination).
+* Beside the explicit links to the group to identify members and other kinds of
+  users, also have relationship wildcards to specify users for each role.
+  They're usually relative to the owners & creator of the group.  Includes
+  concepts like Everybody, Friends of the owners, Friends of Friends of the
+  owners, Parents of Parents, Enemies of Friends and so on.  We need a little
+  language to specify users, using relationships declared elsewhere (Friend,
+  Sibling, Spouse and so on links).  Could use up too much database time
+  resulting in a terminated web session, so maybe warn people when they set
+  wildcards that could potentially select from too many people (count up how
+  many friends of enemies the owners have, before saving the new wildcard in
+  case of termination).
 * Generic Internet users (people not logged in) allowed as readers?  Done by
   having a special Internet user for non-logged-in people which you can assign
   to the Reader role, or to the Banned role or just leave out.
@@ -700,18 +815,47 @@ The group would have a few settings related to those roles:
   no need for storage for the list of Readers.  Done by adding the Everybody
   wildcard to the Reader role.
 
+
+### Wildcard Language
+
+To identify a group of people by wildcards, we can make up a little language.
+We want to have expressions that say:
+
+* Everybody.
+* A particular person.
+* Friends of someone.
+* Members (and all the other roles, such as moderators, owners) of a group.
+
+Perhaps a functional language like:
+* "99" the LedgerUser record number for a particular person.
+* "*" for everybody.
+* "Friend()" for all friends of the contents.  Other relationships can be used
+  as well as Friends.  Some are asymetric so we need to know paired words such
+  as "Parent" and "Child" and that they refer to opposite ends of the same
+  relationship record.
+* "Banned", "Readers", "Members", "MessageMods", "MemberMods", "Owners",
+  "Creator" specifies all the people who are explicit members (have a LinkRole
+  record for the group) in that role or higher (Members includes up to
+  Creator etc).
+* Plus "+" to concatenate wildcards.
+* Round brackets for grouping order of operations.
+
+So you could have "Friend(Members)+Members" for friends of all members and the
+members too.  An empty string would mean nobody.
+
+
 ## About Posts and Groups
 
 When someone writes a post, they create both a LedgerPost object with the text
-and a link object (LinkGroupHasPost?) to connect it to the group it is in.  If
+and a link object (LinkGroupContent) to connect it to the group it is in.  If
 they want it to be in multiple groups, they can just add more links.  If it's a
-reply to some other post, they add a link (LinkPostHasReply?) to that post too.
-It's a bit awkward and expensive in ratings points (each link needs points)
-having both a link to the reply and a link to the group, but both are needed.
-We can't default to the group based on the group the previous message is in,
-since later on someone could add that previous post to some other group and
-your post would suddenly be visible to people you hadn't expected.  Also this
-discourages the evil of unnecessary or accidental cross-posting.
+reply to some other post, they add a link (LinkReply) to that post too.  It's a
+bit awkward and expensive in ratings points (each link needs points) having
+both a link to the reply and a link to the group, but both are needed.  We
+can't default to the group based on the group the previous message is in, since
+later on someone could add that previous post to some other group and your post
+would suddenly be visible to people you hadn't expected.  Also this discourages
+the evil of unnecessary cross-posting.
 
 The links also award points to both the post and the group (the user decides
 how much to spend and how to split it), so that posts using the group
@@ -745,12 +889,6 @@ points to create an ungrouped reply.  It costs twice as much (or you could make
 do with a shorter message life) to make it a reply in a private discussion,
 since you have the group link(s) to add as well as the reply link.  People will
 still use groups since it's worthwhile to reach a more relevant audience.
-
-WIP:
-
-Subgroups for categories.
-
-Moderators spending rating points - reimburse from group?
 
 
 ## Generating the Database
@@ -786,7 +924,7 @@ details like this:
     create_table :ledger_bases, force: false, comment: "Ledger objects base class and record.  Don't force: cascade deletes since this is a write-once ledger." do |t|
       t.string :type, default: "LedgerBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
       t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
-      t.integer :number1, default: 0, comment: "Generic number for counting things, defined by subclasses."
+      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.string :string2, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.text :text1, default: "", comment: "Generic text (lots of characters), defined by subclasses."
@@ -807,6 +945,8 @@ details like this:
 
     create_table :link_bases, force: false, comment: "LinkBase base class and record for linking LedgerObjects together." do |t|
       t.string :type, default: "LinkBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
+      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+      t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the LedgerBase object (or subclass) which is usually the main one in the association."
       t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the LedgerBase object (or subclass) which is the child in the association."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link."
@@ -820,6 +960,9 @@ details like this:
       t.integer :award_number, default: 0, comment: "The week's award number when this record was created, 0 if before time starts."
       t.timestamps
     end
+
+    add_index :link_bases, :string1
+    add_index :link_bases, :number1
 
     create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerDelete) to LinkBase records (usually links being deleted)." do |t|
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxlinkparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete or give permission order."
@@ -882,9 +1025,12 @@ their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.25 2020/06/25 00:06:50 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.26 2020/06/26 00:37:21 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.26  2020/06/26 00:37:21  agmsmith
+Added LinkRelationship, removed LinkPermission.
+
 Revision 1.25  2020/06/25 00:06:50  agmsmith
 Decide on making ungrouped posts public.  Add LinkOwner record.
 
@@ -962,6 +1108,158 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.26
+log
+@Added LinkRelationship, removed LinkPermission.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.25 2020/06/25 00:06:50 agmsmith Exp agmsmith $</SMALL>
+d7 1
+a7 1
+Because I'm thinking that someone could implement the reputation system as a
+d17 2
+a18 2
+pointers in the objects so that an object can have multiple parents (useful for
+filing something in multiple categories).
+d26 1
+a26 1
+references (links) to the text (such as replies) will still point at the
+d41 1
+a41 1
+point out the record with the latest change.
+d92 5
+a96 2
+The base class for persistent objects that the user may interact with.  There
+is one database table for all objects of this class and subclasses.
+d109 3
+a111 1
+  Write-once.
+d121 2
+a122 1
+  brief time when it is NULL, could cause bugs).  Happens to be write-once.
+d185 2
+a186 3
+approvals are given as appropriate, determined by whether you have the rights
+to do that.  To reject permission, delete the unapproved link with
+LedgerDelete.  If you change your mind, you can undelete the unapproved link.
+d214 18
+a231 1
+### *LedgerPost* < LedgerBase
+d234 3
+a236 6
+pictures and other media files (displayed in a grid, in order by link creation
+date).  There can also be post replies, the post can be placed in a category
+list to identify what the topic of the text is, have rating points awarded to
+it, and so on.  This is the object the user interacts with the most.  It is
+also usually visible to users and even external web sites, unless permissions
+make it private.
+d244 1
+a244 1
+### *LedgerMedia* < LedgerBase
+d258 39
+d328 4
+a331 4
+The base class for links of all kinds between pairs of objects.  There is one
+database table for all instances of this class and subclasses.  The particular
+subclass identifies what the link's purpose is (object A owns object B, object
+A is a list header and B is in the list, etc).
+d335 1
+a335 1
+  and LedgerGivePermission.  Write-once.
+d405 7
+a411 7
+some other LinkBase record (such as a LinkReply or LinkGroup).  That's because
+the implied LinkCreator (the creator_id field in the LedgerBase record) has
+zero reputation points assigned to it.  If we just created the object, at the
+next awards ceremony it would have zero points and be garbage collected.  Also
+by using a LinkOwner, rather than having an implied LinkCreator with a fixed
+1.0 fee, we can charge a larger and variable fee for more resource consuming
+objects, such as big media files.
+d416 2
+a417 1
+The child is a reply to the parent.  Usually both objects are LedgerPost.
+d429 29
+a457 1
+### *LinkGroup* < LinkBase
+d459 26
+a484 9
+Links a child object (usually a LedgerPost) to a parent LedgerGroup.  Means
+that the child is considered part of the group's displayable content and will
+use the group's permissions to decide who can see the child.  Quite often the
+links will be pending until each end is approved by a moderator or higher role
+(usually moderator at the group end, owner/creator at the post end).  Note that
+all replies to a post that are in the same group also have a LinkGroup record,
+since group inclusion can change from post to post as the users wish (user
+interface defaults to using the same groups as the original post when
+replying).
+d489 2
+d552 1
+a552 1
+(usually a LedgerPost or a LedgerUser).  Can be positive or negative or meh,
+d566 3
+a568 3
+This database table and class is used for connecting LedgerBase records
+(a LedgerDelete/Undelete or LedgerGivePermission) and LinkBase records.  Used
+for deleting, undeleting, and giving permission to a LinkBase record.  The main
+d613 3
+a615 3
+6. **Owner**.  Owners can be added to a group (and other objects).  They have
+   all permissions (including approving or deleting owners and moderators),
+   except they can't change the creator.
+d619 3
+d632 2
+a633 1
+The group would have a few settings related to those roles:
+d640 1
+a640 1
+* Membership requests automatically approved?  Not sure if this is a good idea.
+d647 11
+a657 11
+* Beside the explicit links to the group to identify members, readers, etc,
+  have relationship wildcards to specify users for each role.  They're usually
+  relative to the owners & creator of the group.  Includes concepts like
+  Everybody, Friends of the owners, Friends of Friends of the owners, Parents
+  of Parents, Enemies of Friends and so on.  We need a little language to
+  specify users, using relationships declared elsewhere (Friend, Sibling,
+  Spouse and so on links).  Could use up too much database time resulting in a
+  terminated web session, so maybe warn people when they set wildcards that
+  could potentially select from too many people (count up how many friends of
+  enemies the owners have, before saving the new wildcard in case of
+  termination).
+d665 29
+d697 1
+a697 1
+and a link object (LinkGroupHasPost?) to connect it to the group it is in.  If
+d699 7
+a705 7
+reply to some other post, they add a link (LinkPostHasReply?) to that post too.
+It's a bit awkward and expensive in ratings points (each link needs points)
+having both a link to the reply and a link to the group, but both are needed.
+We can't default to the group based on the group the previous message is in,
+since later on someone could add that previous post to some other group and
+your post would suddenly be visible to people you hadn't expected.  Also this
+discourages the evil of unnecessary or accidental cross-posting.
+a739 6
+WIP:
+
+Subgroups for categories.
+
+Moderators spending rating points - reimburse from group?
+
+d774 1
+a774 1
+      t.integer :number1, default: 0, comment: "Generic number for counting things, defined by subclasses."
+d795 2
+d811 3
+d875 1
+a875 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.25 2020/06/25 00:06:50 agmsmith Exp agmsmith $
+d878 3
 @
 
 

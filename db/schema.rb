@@ -74,6 +74,8 @@ ActiveRecord::Schema.define(version: 2020_03_28_104628) do
 
   create_table "link_bases", force: :cascade do |t|
     t.string "type", default: "LinkBase"
+    t.integer "number1", default: 0
+    t.string "string1", default: ""
     t.integer "parent_id", null: false
     t.integer "child_id", null: false
     t.integer "creator_id", null: false
@@ -89,7 +91,9 @@ ActiveRecord::Schema.define(version: 2020_03_28_104628) do
     t.datetime "updated_at", precision: 6, null: false
     t.index ["child_id"], name: "index_link_bases_on_child_id"
     t.index ["creator_id"], name: "index_link_bases_on_creator_id"
+    t.index ["number1"], name: "index_link_bases_on_number1"
     t.index ["parent_id"], name: "index_link_bases_on_parent_id"
+    t.index ["string1"], name: "index_link_bases_on_string1"
   end
 
   create_table "microposts", force: :cascade do |t|
