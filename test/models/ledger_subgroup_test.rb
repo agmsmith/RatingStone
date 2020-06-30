@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-class LinkListTest < ActiveSupport::TestCase
+class LedgerSubgroupTest < ActiveSupport::TestCase
   # test "the truth" do
   #   assert true
   # end
