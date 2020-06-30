@@ -1,9 +1,14 @@
-head	1.31;
+head	1.32;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.32
+date	2020.06.30.20.51.44;	author agmsmith;	state Exp;
+branches;
+next	1.31;
 
 1.31
 date	2020.06.30.00.24.46;	author agmsmith;	state Exp;
@@ -166,16 +171,14 @@ desc
 @
 
 
-1.31
+1.32
 log
-@Proof-reading pass.  Fix conceptual problem - no owners of links.
-Also clarify who can delete links (if you need approval, you can
-delete it too).
+@Added database setup for GroupSettings table.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.30 2020/06/29 20:27:42 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.31 2020/06/30 00:24:46 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -1130,6 +1133,21 @@ details like this:
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete order."
       t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerchild"}, comment: "Points to the child LedgerBase object (or subclass) which is being modified by the parent."
     end
+
+    create_table :group_settings do |t|
+      t.references :ledger_full_group, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_groupsettingsgroup"}, comment: "Points to the LedgerFullGroup (a LedgerBase subclass) that this record contains the extra settings for."
+      t.boolean :auto_approve_non_member_posts, default: false, comment: "True if posts attached to the group by a non-member are automatically approved (if they have enough points).  False means a moderator will need to approve them."
+      t.boolean :auto_approve_member_posts, default: false, comment: "True if posts attached to the group by a member are automatically approved (if they have enough points).  False means a moderator will need to approve them."
+      t.boolean :auto_approve_members, default: false, comment: "True if new member applications are automatically approved (if they have enough points).  False requires approval by a member moderator."
+      t.float :min_points_non_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a non-member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :min_points_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :min_points_membership, default: 0.0, comment: "Minimum number of Up rating points needed when applying to be a member to get automatic approval.  Ignored if automatic approval is turned off.  If they don't get automatically approved, a moderator will need to approve their request."
+      t.string :wildcard_role_banned, default: "", comment: "Wildcard expression to identify people who are banned, in addition to explicit LinkRole records.  So we can ban friends of banned people, etc."
+      t.string :wildcard_role_reader, default: "", comment: "Relationship expression specifying additional people who are allowed to read the group."
+      t.string :wildcard_role_member, default: "", comment: "Relationship expression specifying additional people who are considered members of the group, even if they didn't apply."
+      t.string :wildcard_role_message_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate messages."
+      t.string :wildcard_role_member_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate membership requests."
+    end
   end
 end
 </PRE>
@@ -1185,9 +1203,14 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.30 2020/06/29 20:27:42 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.31 2020/06/30 00:24:46 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.31  2020/06/30 00:24:46  agmsmith
+Proof-reading pass.  Fix conceptual problem - no owners of links.
+Also clarify who can delete links (if you need approval, you can
+delete it too).
+
 Revision 1.30  2020/06/29 20:27:42  agmsmith
 Nope, not owners, else you could get someone to preapprove a relationship.
 
@@ -1281,6 +1304,24 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.31
+log
+@Proof-reading pass.  Fix conceptual problem - no owners of links.
+Also clarify who can delete links (if you need approval, you can
+delete it too).
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.30 2020/06/29 20:27:42 agmsmith Exp agmsmith $</SMALL>
+d958 15
+d1028 1
+a1028 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.30 2020/06/29 20:27:42 agmsmith Exp agmsmith $
+d1031 5
 @
 
 

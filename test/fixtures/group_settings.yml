@@ -1,0 +1,14 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+# one:
+#   auto_approve_non_member_posts: false
+#   auto_approve_member_posts: false
+#   auto_approve_members: false
+#   min_points_non_member_post: 1.5
+#   min_points_member_post: 1.5
+#   min_points_membership: 1.5
+#   wildcard_role_banned: MyString
+#   wildcard_role_reader: MyString
+#   wildcard_role_member: MyString
+#   wildcard_role_message_moderator: MyString
+#   wildcard_role_member_moderator: MyString

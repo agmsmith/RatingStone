@@ -1,10 +1,15 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
+# Using a recent version of Ruby, may need manual compilation
+# if our host OS isn't that up to date.
 ruby '2.7.1'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6.0'
+# Use a recent version of interactive ruby to
+# avoid duplicate loads with system's version of irb.
+gem 'irb', '~> 1'
 # Use Puma as the app server
 gem 'puma', '~> 4'
 # Use SCSS for stylesheets

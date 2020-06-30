@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_03_28_104628) do
+ActiveRecord::Schema.define(version: 2020_06_30_193857) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -45,6 +45,22 @@ ActiveRecord::Schema.define(version: 2020_03_28_104628) do
     t.integer "child_id", null: false
     t.index ["child_id"], name: "index_aux_links_on_child_id"
     t.index ["parent_id"], name: "index_aux_links_on_parent_id"
+  end
+
+  create_table "group_settings", force: :cascade do |t|
+    t.integer "ledger_full_group_id", null: false
+    t.boolean "auto_approve_non_member_posts", default: false
+    t.boolean "auto_approve_member_posts", default: false
+    t.boolean "auto_approve_members", default: false
+    t.float "min_points_non_member_post", default: 0.0
+    t.float "min_points_member_post", default: 0.0
+    t.float "min_points_membership", default: 0.0
+    t.string "wildcard_role_banned", default: ""
+    t.string "wildcard_role_reader", default: ""
+    t.string "wildcard_role_member", default: ""
+    t.string "wildcard_role_message_moderator", default: ""
+    t.string "wildcard_role_member_moderator", default: ""
+    t.index ["ledger_full_group_id"], name: "index_group_settings_on_ledger_full_group_id"
   end
 
   create_table "ledger_bases", force: :cascade do |t|
@@ -138,6 +154,7 @@ ActiveRecord::Schema.define(version: 2020_03_28_104628) do
   add_foreign_key "aux_ledgers", "ledger_bases", column: "parent_id"
   add_foreign_key "aux_links", "ledger_bases", column: "parent_id"
   add_foreign_key "aux_links", "link_bases", column: "child_id"
+  add_foreign_key "group_settings", "ledger_bases", column: "ledger_full_group_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "amended_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "creator_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "original_id"
