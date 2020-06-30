@@ -1,9 +1,29 @@
-head	1.27;
+head	1.31;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.31
+date	2020.06.30.00.24.46;	author agmsmith;	state Exp;
+branches;
+next	1.30;
+
+1.30
+date	2020.06.29.20.27.42;	author agmsmith;	state Exp;
+branches;
+next	1.29;
+
+1.29
+date	2020.06.29.15.43.14;	author agmsmith;	state Exp;
+branches;
+next	1.28;
+
+1.28
+date	2020.06.29.01.01.00;	author agmsmith;	state Exp;
+branches;
+next	1.27;
 
 1.27
 date	2020.06.27.21.30.08;	author agmsmith;	state Exp;
@@ -146,29 +166,31 @@ desc
 @
 
 
-1.27
+1.31
 log
-@Proof reading.  Added Subgroups.  Wildcard language.
+@Proof-reading pass.  Fix conceptual problem - no owners of links.
+Also clarify who can delete links (if you need approval, you can
+delete it too).
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.26 2020/06/26 00:37:21 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.30 2020/06/29 20:27:42 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
-Because I'm planning that someone could implement the reputation system as a
-BlockChain ledger application, or as a federated collection of systems
-exchanging records, the database is set up as a write once collection of object
-records and link records.  Objects are the things the user can view and which
-have ratings (posted messages, lists of things, other users).  Links implement
-lists of things, connecting a pair of objects together, one being a parent or
-container object (such as a list of book reviews) and the other being a child
-object in that container (such as a book review object).  Usually rating points
-are also transfered when you create a link (perhaps describing how much you
-like that book review).  I'm using separate link records rather than parent
-references in the objects so that an object can have multiple parents (useful
-for filing something under multiple categories).
+Because I'm planning on implementing the reputation system as a BlockChain
+ledger application, or as a federated collection of systems exchanging records,
+the database is set up as a write once collection of object records and link
+records.  Objects are the things the user can view and which have ratings
+(posted messages, lists of things, other users).  Links implement lists of
+things, connecting a pair of objects together, one being a parent or container
+object (such as a list of book reviews) and the other being a child object in
+that container (such as a book review object).  Usually rating points are also
+transfered when you create a link (perhaps describing how much you like that
+book review).  I'm using separate link records rather than parent references in
+the objects so that an object can have multiple parents (useful for filing
+something under multiple categories).
 
 ### Changing Things by Making New Objects
 
@@ -267,7 +289,7 @@ serious or distinct enough.
   default it's linked to by the original id.  The original record is still used
   to cache the rating points and other dynamic things, though the actual
   content (text in a Post for example) comes from the latest amended record
-  (unless the user is looking for a specific version the object).  Had
+  (unless the user is looking for a specific version the object).  I had
   considered NULL for marking the original record, but it's easier to find all
   versions of something if the original one is marked the same way, so soon
   after creation the original_id will be updated to be equal to id (there's a
@@ -313,6 +335,8 @@ longer be deleted.  Though most often the targets will have faded away too by
 that time.  Or we could have a policy of not garbage collecting LedgerDelete
 and LedgerUndelete records.
 
+You need to be the creator or owner of the object being deleted.
+
 * reason string Reason for deletion.  Text supplied by the user.
 * context string The context around the deletion, such as being a manual
   delete button push from a given web page, from a specified IP address.  User
@@ -331,12 +355,13 @@ were deleted.
 ### *LedgerApprove* < LedgerBase
 
 Gives permission for pending links to start working.  To avoid costing a lot of
-rating points for things like spam replies to your post or spam posts to a
-group, you can specify multiple links with many AuxLink records.  Used for
-things like approving a request to join a group (the request is a LinkBase
-subclass record joining the person to the group).  Both child and parent
-approvals are given, determined by whether you have the rights to do that.  To
-reject permission, delete the unapproved link with LedgerDelete.
+rating points for approving things like replies to your post or bulk approving
+posts to a group, you can specify multiple links with many AuxLink records.
+Also used for things like approving a request to join a group (the request is a
+LinkBase subclass record joining the person to the group).  Both child and
+parent approvals are given, determined by whether you are the child or parent.
+To more strongly reject permission, delete the unapproved link with
+LedgerDelete (if you need to be asked for approval, you can delete it too).
 
 * reason string  Reason for giving permission, provided by the user.
 * context string Where the approval was given (IP address, web page, etc).
@@ -359,16 +384,21 @@ Idenfities a particular user.
 * Elsewhere, the user is referenced by the record id number of the LedgerUser
   record.  Though for export or federated systems we'd need a GUID or an
   id+server pair.
-* Points gained per week cached value.  Computed by considering various award
-  records (such as e-mail verified, passport photo uploaded, had tea with the
-  sysop, bought some bonus points) attached to the LedgerUser record by links.
+* Points awarded per week cached value from the most recent award ceremony.
+  Computed by considering various achievement records (such as e-mail verified,
+  passport photo uploaded, had tea with the sysop, bought some bonus points)
+  attached to the LedgerUser record by links.  A user can always spend their
+  weekly award even if their reputation is negative.  If it is net positive,
+  they can spend their net reputation too, down to zero.  Unspent awards get
+  added to their up reputation.
 
 
 #### *LedgerCompany* < LedgerUser
 
 Are corporations people?  Not really, but we have them as users too in case
 someone wants to run a company web page or otherwise have a presence on this
-web site.  As well, employees can list the LedgerCompany as their employer.
+reputation system.  As well, employees can list the LedgerCompany as their
+employer.
 
 
 ### *LedgerContent* < LedgerBase
@@ -385,8 +415,8 @@ it private.
 
 A post made by a user.  Contains some formatted text.  They can also attach
 pictures and other media files with LinkMedia records.  They'll be displayed in
-a grid, in order by link creation date.  This is the object the user interacts
-with the most.
+a grid after the text, in order by link creation date.  This is the object the
+user interacts with the most.
 
 * content text The text written by the user for the post, in markdown UTF-8
   format (we're using the kramdown dialect).  Length limited only by the number
@@ -401,7 +431,7 @@ video clip.  Can be attached to multiple posts to make them more interesting,
 and referenced by external web sites as well.  Byte size only limited by the
 points the user wants to spend to upload it.  All kinds can display a picture,
 which can be clicked on to get more detail or play it if it is a video or audio
-file.
+file or download it if binary.
 
 * Implicit ActiveStorage link stores the file.  May use CarrierWave if
   ActiveStorage URL policies are too annoying (too long, permanent links
@@ -416,31 +446,33 @@ All content that fit the subtopic (decided by users and moderators) are linked
 to this object by LinkGroupContent records (even replies to posts already in
 the subgroup).
 
-LinkSubgroup records specify the hierarchy of subgroups (actually a cyclic
-directed graph), by linking parent group to child group.  Multiple parents are
-allowed, so a photo taken in Canada in July 2020 could be filed both in a
-subgroup for North America and a subgroup for Year 2020.  You could even make
-subgroups for each family member and classify the photos by who is in them.
+LinkSubgroup records specify the hierarchy of subgroups (actually a possibly
+cyclic directed graph), by linking parent group to child group.  Multiple
+parents are allowed, so a photo taken in Canada in July 2020 could be filed
+both in a subgroup for North America and a subgroup for Year 2020.  You could
+even make subgroups for each family member and classify the photos by who is in
+them.
 
 There's an optional home post (see LinkHomePost) that describes the group in
 more detail.  The home post usually will have a list of recent additions in the
-group appended to it.
+group displayed after it.
 
 A subgroup object doesn't have members attached or do permission role check
-operations; that's delegated to the LedgerGroup(s) which control this subgroup
-by LinkGroupRoleDelegation records.
+operations; that's delegated to the LedgerFullGroup(s) which control this
+subgroup by LinkGroupRoleDelegation records.  If there are none then only
+creators or owners can use the subgroup.
 
 * name string A short string used as the group's name.
 * description text A paragraph of text in kramdown format describing the group.
 
 
-#### *LedgerGroup* < LedgerSubgroup
+#### *LedgerFullGroup* < LedgerSubgroup
 
 Besides being a grouping object, this one also keeps track of LedgerUsers in
 various roles (plain member, moderator and so on), linked to it by LinkRole
 records.  The plain LedgerSubgroup objects controlled by this group will
-delegate their permission determination to this LedgerGroup and its membership
-lists by a LinkGroupRoleDelegation record.
+delegate their permission determination to this LedgerFullGroup and its
+membership lists by a LinkGroupRoleDelegation record for each subgroup.
 
 * group_settings_id integer A reference to a separate GroupSettings database
   table that contains more information about the group, such as whether posts
@@ -474,6 +506,14 @@ timestamp field that LedgerAwardCeremony made necessary.
 
 * birthday_at Date and time stamp of when the user was born, or first became
   independently operational.
+
+
+### *LedgerDeathday* < LedgerBase
+
+Identifies the date of a user's death.
+
+* deathday_at Date and time stamp of when the user died, or is otherwise no
+  longer operational.  May make spouses show up as widows.
 
 
 ## *LinkBase* Classes
@@ -518,9 +558,10 @@ B, object A is a list header and B is in the list, etc).
   the flag(s) start out false.  Later on someone with appropriate permissions
   (usually a group moderator) can approve the pending post link by using a
   LedgerApprove record.  Approval can be revoked by using LedgerUnapprove, or
-  the link could just be deleted if you want to reject it completely.  Combined
-  with the deleted boolean, a record is normally only seen if it is both fully
-  approved and not deleted.  Changed as needed.
+  the link could just be deleted if you want to reject it more completely
+  (still could get undeleted).  Combined with the deleted boolean, a record is
+  normally only seen if it is both fully approved and not deleted.  Changed as
+  needed.
 * rating_points_spent float The number of points spent on making this link by
   the creator.  Includes transaction fees (larger fees for storing more bytes
   and a base fee to avoid high speed trading problems).  Points after the fees
@@ -563,6 +604,11 @@ Also by using a LinkOwner, rather than having an implied LinkCreator with a
 fixed 1.0 fee, we can charge a larger and variable fee for more resource
 consuming objects, such as big media files.
 
+Only the creator or an existing owner can add new owners to an object.
+
+Adding an owner to a LedgerUser currently doesn't do much, but in future it
+could be a way of letting multiple people control a person or company account.
+
 
 ### *LinkReply* < LinkBase
 
@@ -581,17 +627,19 @@ link records).  The user can click on individual ones to play them.
 
 ### *LinkHomePost* < LinkBase
 
-Parent is a LedgerUser or Ledger(Sub)group and child is usually a LedgerPost.
-That post will be used as the home post (home page, status page, profile page,
-same thing) for the person or the group.  If there are several, the latest one
-will be used and the others considered to be previous ones, visible if someone
-asks for the history of home pages.
+Parent is a LedgerUser or Ledger(Full/Sub)group and child is usually a
+LedgerPost.  That post will be used as the home post (home page, status page,
+profile page, same thing) for the person or the group.  If there are several,
+the latest one will be used and the others considered to be previous ones,
+visible if someone asks for the history of home pages.  Or maybe we show them
+all, kind of like a list of announcements or pinned posts.  Delete the
+LinkHomePost to unpin them.
 
 
 ### *LinkRole* < LinkBase
 
-Specifies the role a person has in a group.  Parent is the LedgerGroup, child
-is the LedgerUser.
+Specifies the role a person has in a group.  Parent is the LedgerFullGroup,
+child is the LedgerUser.
 
 * role_priority integer Specifies the role as a number; lower ones have fewer
   permissions and 10 or less means banned.  The roles are 10 times (in case we
@@ -603,21 +651,21 @@ is the LedgerUser.
 
 ### *LinkGroupRoleDelegation* < LinkBase
 
-Specifies that the parent LedgerGroup is used for permission checks for users
-trying to access the child LedgerSubgroup.  If there is more than one of these
-records, they're all checked until one of them gives permission or all of them
-deny permission.
+Specifies that the parent LedgerFullGroup is used for permission checks for
+users trying to access the child LedgerSubgroup.  If there is more than one of
+these records, they're all checked until one of them gives permission or all of
+them deny permission.
 
 
 ### *LinkGroupContent* < LinkBase
 
-Links a child object (usually a LedgerPost or LedgerMedia) to a parent
-LedgerGroup or LedgerSubgroup.  Means that the child is considered part of the
-group's displayable content and will use the group's permissions to decide who
-can see the child.  Quite often the links will be pending until each end is
+Links a child LedgerContent (usually a LedgerPost or LedgerMedia) to a parent
+LedgerFullGroup or LedgerSubgroup.  Means that the child is considered part of
+the group's displayable content and will use the group's permissions to decide
+who can see the child.  Quite often the links will be pending until each end is
 approved by a moderator or higher role (usually moderator at the group end,
 owner/creator at the post end).  Note that all replies to a post that are in
-the same group also have a LinkGroupContent record, since group inclusion can
+the same group also need a LinkGroupContent record, since group inclusion can
 change from post to post as the users wish (user interface defaults to using
 the same groups as the original post when replying).
 
@@ -630,34 +678,78 @@ the same groups as the original post when replying).
 
 ### *LinkSubgroup* < LinkBase
 
-Specifies that the child LedgerSubgroup or LedgerGroup is subordinate to the
-parent LedgerGroup or LedgerSubgroup.  Used for making a directed graph
+Specifies that the child LedgerSubgroup or LedgerFullGroup is subordinate to
+the parent LedgerFullGroup or LedgerSubgroup.  Used for making a directed graph
 structure of groups in order to classify things (like photos or posts attached
 to individual group objects) or otherwise break them down into more managable
-smaller chunks.
+smaller chunks.  Multiple parents are allowed and you can make cycles if you
+wish.
 
 
 ### *LinkRelationship* < LinkBase
 
-Rethink this area, unidirectional vs bidirectional, preapproved, etc.
+This is the abstract base class to show the parent and child are LedgerUser
+objects in some sort of relationship, such as parent, child, spouse, friend,
+enemy, employer, follower.
 
-The abstract base class to show the parent and child are LederUser objects in
-some sort of relationship, such as parent, child, spouse, friend, enemy.
-Relationships can be equal and bidirectional, such as between spouses or
-between friends.  For searching efficiency, we'll just arbitrarily make the
-older user (lower ID number) the parent in bidirectional links.  Others have an
-order where parent and child ends of the relationship are different (such as
-real world parent and child).  Many require both ends to be approved by the
-parties (auto-approve the ends which are the creator).  Until both are
-approved, it's a partial relationship (admirer rather than friends).  Some
-always one way relationships, such as follower, don't require approval of the
-child end, and can't be deleted by the child end.
+Only the creator and people who need to give approval can delete it.
+
+Of course, the link will fade away over time unless new reputation points are
+spent to create a fresh copy.  Thus you may have several copies of the same
+relationship in the database.  Whichever one is undeleted and has full
+approvals will be used to find people with the relationship.
+
+All ends of the link which are the same as the creator are automatically
+approved.  Other ends will be in a pending state until the referred person uses
+a LedgerApprove to approve their end.  Where you can approve, you can also
+unapprove your end of the relationship.  Until both are approved, it's a
+partial relationship (admirer rather than friends) and not usually shown to
+users or used for finding related people.
+
+When finding posts for a person's feed, items from related people will be given
+increased priority.
 
 * comment string Up to 255 bytes of kramdown formatted text describing the
   relationship.
 
 
-#### *LinkFriend* < LinkRelationship
+#### *LinkSymmetricRelationship* < LinkRelationship
+
+Relationships can be symmetric (friend/friend) or asymetric (parent/child).
+This subclass handles the symmetric ones.  For searching efficiency, we'll just
+arbitrarily make the older user (lower ID number) the parent_id in symmetric
+links.
+
+Subclasses of this will export a function that finds all people related to a
+specified bunch of people, such as Friends(X).  Note the input X is a
+collection of people, so we can use the results of a previous relationship test
+as input.  That way Enemies(Enemies(X)) works, if you want to give permissions
+to enemies of X's enemies.
+
+
+#### *LinkAsymmetricRelationship* < LinkRelationship
+
+Asymmetric relationships have distinctly different ends of the relationship
+(such as real world parent and child, or Follower/Leader, Employer/Employee).
+The particular relationship class will define which one goes in the parent
+field and which is the child.
+
+Subclasses will export two functions that find all people that are related to a
+specified person, one for each end, so you can ask for all employees of a boss
+via Employees(x) or ask for all bosses of an employee via Bosses(x).
+
+
+#### *LinkOneWayRelationship* < LinkAsymmetricRelationship
+
+Rather than two way relationships, some are one way such as follower.  The
+person being followed (a Leader) doesn't have a say in whether they're being
+followed.  Thus approval is always given for the child end and the relationship
+is set up with the originator as parent (follower in the parent field, followed
+or leader in the child field).  If the parent is the creator, they're
+automatically approved.  Only the creator and parent can delete this link.
+
+
+##### *LinkFriend* < LinkSymmetricRelationship
 
 The parent is a friend of child.  This is a bidirectional relationship so both
 ends are friends with each other.  If one end hasn't approved the friendship,
@@ -666,42 +758,39 @@ admired by Y and Y has an admirer.  If neither are approved, then it's a
 suggested (by the creator) friendship.
 
 
-#### *LinkEnemy* < LinkRelationship
+##### *LinkEnemy* < LinkSymmetricRelationship
 
 You can declare your enemies too, if they agree.  Bidirectional like
-LinkFriend.  Real enemies will give and accept negative points.
+LinkFriend.  Real enemies will give and accept negative points.  Don't expect
+that to happen often.
 
 
-#### *LinkParent* < LinkRelationship
-
-Parent is parent in real life of child.  Both ends need to be approved.
-
-
-#### *LinkSpouse* < LinkRelationship
+##### *LinkSpouse* < LinkSymmetricRelationship
 
 Parent is a spouse of child.  Bidirectional.  Both ends need to be approved.
 
 
-#### *LinkEmployer* < LinkRelationship
+##### *LinkParentChild* < LinkAsymmetricRelationship
 
-Parent is the employee, child is the company employing them.  Both ends need to
-be approved.  Otherwise you'll see something like "claims to be employed by X".
+Parent is parent in real life of child.  Both ends need to be approved.
 
 
-#### *LinkFollower* < LinkRelationship
+##### *LinkEmployerEmployee* < LinkAsymmetricRelationship
 
-Parent LinkUser is interested in the child LinkUser's posts in general.  They
-could also subscribe to the child user's personal group(s).  But this will
-include all posts parent is allowed to read from that child user in their feed.
+Parent is the employer or company employing the child.  Both ends need to be
+approved.  Otherwise you'll see something like "claims to be employed by X".
 
-Automatic approval for the child end.  Can only be deleted by the creator or
-parent.  If you like the child LedgerUser, send some positive points, negative
-if you hate them.
+
+##### *LinkFollower* < LinkOneWayRelationship
+
+Parent LedgerUser is a fan or at least interested in the child.  If you like
+the child LedgerUser, send some positive points, negative if you hate them.
+They receive those points either way.
 
 
 ### *LinkOpinion* < LinkBase
 
-Parent LinkUser (usually the creator) has an opinion about the child object
+Parent LedgerUser (usually the creator) has an opinion about the child object
 (usually a LedgerContent or a LedgerUser).  Can be positive or negative or meh,
 decided by the points awarded to the child.  Usually no points awarded to the
 parent, unless a third party is essentially paying someone to have an opinion.
@@ -761,7 +850,7 @@ that specifies the highest role they have.
    by a moderator.  By the way, there's no permission needed to request that a
    post be added to a group, so even a non-member could do that.
 4. **Message Moderator**.  Can approve, unapprove (makes it pending approval
-   again) and delete posts.
+   again) and disconnect posts from the group.
 5. **Member Moderator**.  Approves and rejects membership requests.
 6. **Owner**.  Owners can be added to a group (and other objects) by a
    LinkOwner record.  They have all permissions (including approving or
@@ -774,7 +863,7 @@ later want to add new roles in-between.
 
 When finding out if a user has a permission for an action allowed by a certain
 role, check for a match with the creator first (everything is allowed).  Then
-see if they are in the Banned role second; permission is denied (if you want to
+see if they are in the Banned role second: permission is denied (if you want to
 explicitly deny a user access to the group, give them the Banned role).  Then
 start searching at the most permissive role after Creator and work down to the
 lowest level that matches the role query.  If they were not found in the search
@@ -783,7 +872,7 @@ for some LinkBase subclass record that specifies roles and sort by role
 priority.  Then try the more computationally expensive wildcards for each role.
 
 The group would have a few settings related to those roles (stored in a
-separate database table rather than directly in the LedgerGroup record):
+separate database table rather than directly in the LedgerFullGroup record):
 
 * Posts by non-members automatically approved?  Could lead to rowdy
   discussions, though the requirement to spend points to talk hopefully will
@@ -827,6 +916,7 @@ We want to have expressions that say:
 * Members (and all the other roles, such as moderators, owners) of a group.
 
 Perhaps a functional language like:
+
 * "99" the LedgerUser record number for a particular person.
 * "*" for everybody.
 * "Friend()" for all friends of the contents.  Other relationships can be used
@@ -889,6 +979,73 @@ points to create an ungrouped reply.  It costs twice as much (or you could make
 do with a shorter message life) to make it a reply in a private discussion,
 since you have the group link(s) to add as well as the reply link.  People will
 still use groups since it's worthwhile to reach a more relevant audience.
+
+
+## Relationships
+
+We want to identify people based on relationships.  The obvious one used by
+many social media is Friend.  Another is Follower.  We can also do Parent,
+Child, Spouse and that should about cover it for family relationships
+(grandparents are Parent of Parent of person, siblings share a parent, etc).
+We might want to add variations of friendship like boyfriend/girlfriend, work
+related acquaintance, divorced and so on but preferably without the extra
+complication of gender.  Possibly besides birthday records, we'll need death
+date records so a spouse is a widower when the other spouse is dead, but they
+go back to being married when they are both dead (they're always married, but
+we're showing what is important to their audience).
+
+After discarding some earlier ideas on relationship implementation, it seems
+there are a two orthogonal properties of relationships we have to worry about
+for searching and security purposes: Symmetry and approval.  All relationships
+will be represented in our database by a LinkBase subclass record listing two
+people (parent and child fields, though that usually isn't the actual meaning)
+and how they're connected.
+
+
+### Symmetry Dimension
+
+Bidirectional or equal or symmetric relationships are like Friend where both
+ends of the relationship are an indistinguishable "Friend".  Same for Spouse.
+But Parent/Child is a pair that has distinctly different ends.  So is
+Follower/Leader, or Employer/Employee.  Those we'll call asymmetric.
+
+The main complication is that we have to search differently depending on the
+symmetry.  If we're looking for friends of person X, we have to search for all
+Friend records that have X in the parent_id as well as all Friend records that
+have X as the child_id.  If we're looking for all parents of X, we have to
+search the Parent/Child records which have X as the child.  If we're looking
+for all children of X, we have to search the same kind of parent/child records,
+but look for ones where the parent field is X.
+
+So, the search technique changes and we need to know that Parent/Child searches
+look for the same type of record but search different fields.
+
+
+### Approval Dimension
+
+The other dimension is approval.  Sometimes we need approval from both parties
+to create the link; each approves their end using a LedgerApprove record.
+Other times we have a one way relationship, such as a fan of a movie star, and
+only the fan end needs approval (and that's usually automatic).
+
+One side effect of approval is that the reputation points assigned to the link
+only get counted when the link is fully approved.  That gives incentive to do
+approvals, and opens the door to third party suggested relationships (be a fan
+of this brand and you get some points).  Of course, instead of approving, you
+can delete the link, and the points spent on making the link are wasted.
+
+Partially approved relationships are still useful.  If only one end is
+approved, then for example instead of Friends we have admirer (the approved
+end) and admiree (the unapproved one).  Or if both ends haven't been approved,
+we have a suggested friendship (maybe a third party created the relationship
+record).  One-way relationships still need approval of the originating end, the
+fan implicitly approves the relationship record when they create it for
+themselves.  If someone else created it, then it still needs the originating
+end approved by the fan.  The movie star end is automatically approved.
+Otherwise fans and haters would have their one way relationship rebuffed; a
+particular problem for awarding down points.  No, the movie star or villain
+can't delete one way relationships; like fleas they stick around for a while
+and annoy.
 
 
 ## Generating the Database
@@ -1024,10 +1181,26 @@ appreciation.  Second user awards some down points to first user, declaring
 their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
+1. Table of Contents
+{:toc}
+
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.26 2020/06/26 00:37:21 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.30 2020/06/29 20:27:42 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.30  2020/06/29 20:27:42  agmsmith
+Nope, not owners, else you could get someone to preapprove a relationship.
+
+Revision 1.29  2020/06/29 15:43:14  agmsmith
+Work out Relationship class structure, write up a bit more
+about relationships and the dimensions of symmetry and approval.
+
+Revision 1.28  2020/06/29 01:01:00  agmsmith
+Added relationships section.
+
+Revision 1.27  2020/06/27 21:30:08  agmsmith
+Proof reading.  Added Subgroups.  Wildcard language.
+
 Revision 1.26  2020/06/26 00:37:21  agmsmith
 Added LinkRelationship, removed LinkPermission.
 
@@ -1108,6 +1281,322 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.30
+log
+@Nope, not owners, else you could get someone to preapprove a relationship.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.29 2020/06/29 15:43:14 agmsmith Exp agmsmith $</SMALL>
+d7 12
+a18 12
+Because I'm planning that someone could implement the reputation system as a
+BlockChain ledger application, or as a federated collection of systems
+exchanging records, the database is set up as a write once collection of object
+records and link records.  Objects are the things the user can view and which
+have ratings (posted messages, lists of things, other users).  Links implement
+lists of things, connecting a pair of objects together, one being a parent or
+container object (such as a list of book reviews) and the other being a child
+object in that container (such as a book review object).  Usually rating points
+are also transfered when you create a link (perhaps describing how much you
+like that book review).  I'm using separate link records rather than parent
+references in the objects so that an object can have multiple parents (useful
+for filing something under multiple categories).
+d117 1
+a117 1
+  (unless the user is looking for a specific version the object).  Had
+d163 2
+d183 7
+a189 6
+rating points for things like spam replies to your post or spam posts to a
+group, you can specify multiple links with many AuxLink records.  Used for
+things like approving a request to join a group (the request is a LinkBase
+subclass record joining the person to the group).  Both child and parent
+approvals are given, determined by whether you have the rights to do that.  To
+reject permission, delete the unapproved link with LedgerDelete.
+d212 7
+a218 3
+* Points gained per week cached value.  Computed by considering various award
+  records (such as e-mail verified, passport photo uploaded, had tea with the
+  sysop, bought some bonus points) attached to the LedgerUser record by links.
+d225 2
+a226 1
+web site.  As well, employees can list the LedgerCompany as their employer.
+d243 2
+a244 2
+a grid, in order by link creation date.  This is the object the user interacts
+with the most.
+d259 1
+a259 1
+file.
+d274 6
+a279 5
+LinkSubgroup records specify the hierarchy of subgroups (actually a cyclic
+directed graph), by linking parent group to child group.  Multiple parents are
+allowed, so a photo taken in Canada in July 2020 could be filed both in a
+subgroup for North America and a subgroup for Year 2020.  You could even make
+subgroups for each family member and classify the photos by who is in them.
+d283 1
+a283 1
+group appended to it.
+d286 3
+a288 2
+operations; that's delegated to the LedgerGroup(s) which control this subgroup
+by LinkGroupRoleDelegation records.
+d294 1
+a294 1
+#### *LedgerGroup* < LedgerSubgroup
+d299 2
+a300 2
+delegate their permission determination to this LedgerGroup and its membership
+lists by a LinkGroupRoleDelegation record.
+d336 8
+d386 4
+a389 3
+  the link could just be deleted if you want to reject it completely.  Combined
+  with the deleted boolean, a record is normally only seen if it is both fully
+  approved and not deleted.  Changed as needed.
+d432 5
+d455 7
+a461 5
+Parent is a LedgerUser or Ledger(Sub)group and child is usually a LedgerPost.
+That post will be used as the home post (home page, status page, profile page,
+same thing) for the person or the group.  If there are several, the latest one
+will be used and the others considered to be previous ones, visible if someone
+asks for the history of home pages.
+d466 2
+a467 2
+Specifies the role a person has in a group.  Parent is the LedgerGroup, child
+is the LedgerUser.
+d479 4
+a482 4
+Specifies that the parent LedgerGroup is used for permission checks for users
+trying to access the child LedgerSubgroup.  If there is more than one of these
+records, they're all checked until one of them gives permission or all of them
+deny permission.
+d487 4
+a490 4
+Links a child object (usually a LedgerPost or LedgerMedia) to a parent
+LedgerGroup or LedgerSubgroup.  Means that the child is considered part of the
+group's displayable content and will use the group's permissions to decide who
+can see the child.  Quite often the links will be pending until each end is
+d493 1
+a493 1
+the same group also have a LinkGroupContent record, since group inclusion can
+d506 2
+a507 2
+Specifies that the child LedgerSubgroup or LedgerGroup is subordinate to the
+parent LedgerGroup or LedgerSubgroup.  Used for making a directed graph
+d510 2
+a511 1
+smaller chunks.
+d516 3
+a518 3
+The abstract base class to show the parent and child are LedgerUser objects in
+some sort of relationship, such as parent, child, spouse, friend, enemy,
+employer, follower.
+d520 1
+a520 2
+Only the creator and owners can delete it.  Really trusting friends will make
+the other friend an owner of the relationship link too.
+d527 6
+a532 6
+All ends of the link which are the same as the creator (but not owners) are
+automatically approved.  Other ends will be in a pending state until the
+refered person uses a LedgerApprove to approve their end.  Where you can
+approve, you can also unapprove your end of the relationship.  Until both are
+approved, it's a partial relationship (admirer rather than friends) and not
+usually shown to users or used for finding related people.
+d549 4
+a552 1
+specified person, such as Friends(x).
+d573 2
+a574 1
+or leader in the child field).
+d605 1
+a605 1
+Parent is the employer pr company employing the child.  Both ends need to be
+d611 3
+a613 3
+Parent LinkUser is a fan or at least interested in the child.  If you like the
+child LedgerUser, send some positive points, negative if you hate them.  They
+receive those points either way.
+d618 1
+a618 1
+Parent LinkUser (usually the creator) has an opinion about the child object
+d623 1
+a623 1
+creator, and can only be deleted by the creator/owners or parent end.
+d678 1
+a678 1
+   again) and delete posts.
+d691 1
+a691 1
+see if they are in the Banned role second; permission is denied (if you want to
+d700 1
+a700 1
+separate database table rather than directly in the LedgerGroup record):
+d744 1
+d866 1
+a866 1
+record).  One way relationships still need approval of the originating end, the
+d870 1
+a870 1
+Otherwise fans and haters could get their one way relationship rebuffed; a
+d872 2
+a873 1
+can't delete one way relationships; like fleas they stick around for a while.
+d1013 1
+a1013 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.29 2020/06/29 15:43:14 agmsmith Exp agmsmith $
+d1016 3
+@
+
+
+1.29
+log
+@Work out Relationship class structure, write up a bit more
+about relationships and the dimensions of symmetry and approval.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.28 2020/06/29 01:01:00 agmsmith Exp agmsmith $</SMALL>
+d501 1
+a501 1
+All ends of the link which are the same as the creator or owners are
+d981 1
+a981 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.28 2020/06/29 01:01:00 agmsmith Exp agmsmith $
+d984 4
+@
+
+
+1.28
+log
+@Added relationships section.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.27 2020/06/27 21:30:08 agmsmith Exp agmsmith $</SMALL>
+d489 18
+a506 1
+Rethink this area, unidirectional vs bidirectional, preapproved, etc.
+d508 2
+a509 11
+The abstract base class to show the parent and child are LederUser objects in
+some sort of relationship, such as parent, child, spouse, friend, enemy.
+Relationships can be equal and bidirectional, such as between spouses or
+between friends.  For searching efficiency, we'll just arbitrarily make the
+older user (lower ID number) the parent in bidirectional links.  Others have an
+order where parent and child ends of the relationship are different (such as
+real world parent and child).  Many require both ends to be approved by the
+parties (auto-approve the ends which are the creator).  Until both are
+approved, it's a partial relationship (admirer rather than friends).  Some
+always one way relationships, such as follower, don't require approval of the
+child end, and can't be deleted by the child end.
+d515 33
+a547 1
+#### *LinkFriend* < LinkRelationship
+d556 1
+a556 1
+#### *LinkEnemy* < LinkRelationship
+d559 2
+a560 1
+LinkFriend.  Real enemies will give and accept negative points.
+d563 1
+a563 1
+#### *LinkParent* < LinkRelationship
+d565 1
+a565 1
+Parent is parent in real life of child.  Both ends need to be approved.
+d568 1
+a568 1
+#### *LinkSpouse* < LinkRelationship
+d570 1
+a570 1
+Parent is a spouse of child.  Bidirectional.  Both ends need to be approved.
+d573 1
+a573 1
+#### *LinkEmployer* < LinkRelationship
+d575 2
+a576 2
+Parent is the employee, child is the company employing them.  Both ends need to
+be approved.  Otherwise you'll see something like "claims to be employed by X".
+d579 1
+a579 1
+#### *LinkFollower* < LinkRelationship
+d581 3
+a583 7
+Parent LinkUser is interested in the child LinkUser's posts in general.  They
+could also subscribe to the child user's personal group(s).  But this will
+include all posts parent is allowed to read from that child user in their feed.
+
+Automatic approval for the child end.  Can only be deleted by the creator or
+parent.  If you like the child LedgerUser, send some positive points, negative
+if you hate them.
+d593 1
+a593 1
+creator, and can only be deleted by the creator or parent end.
+d784 6
+a789 3
+We might want to add variations of friendship like boyfriend/girlfriend,
+divorced and so on but without the gender.  Possibly we'll need death so a
+spouse is a widower when the other spouse is dead.
+d791 2
+a792 1
+There are a two orthogonal properties of relationships we have to worry about
+d794 6
+a799 2
+will be represented in our database by a LinkBase record listing two people and
+how they're connected.
+d802 17
+a818 3
+ends of the relationship are indistinguishable "Friend".  Same for Spouse.  But
+Parent/Child is a pair that has distinctly different ends.  So is
+Follower/Leader.  Those we'll call asymmetric.
+d821 3
+a823 10
+to create the link; each approves their end using a LedgerApprove.  Other times
+we have a one way relationship, such as a fan of a movie star.  Partially
+approved relationships are still useful.  If only one end is approved, then for
+example instead of Friends we have admirer (the approved end) and admiree (the
+unapproved one).  Or if both ends haven't been approved, we have a suggested
+friendship (maybe a third party created the relationship record).  One way
+relationships still need approval of the originating end, the fan implicitly
+approves the relationship record when they create it for themselves.  If
+someone else created it, then it still needs the originating end approved by
+the fan.
+d828 1
+a828 1
+of this brand and you get some points).  Of course, instead of approving you
+d831 12
+d981 1
+a981 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.27 2020/06/27 21:30:08 agmsmith Exp agmsmith $
+d984 3
+@
+
+
+1.27
+log
+@Proof reading.  Added Subgroups.  Wildcard language.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.26 2020/06/26 00:37:21 agmsmith Exp agmsmith $</SMALL>
+d741 39
+d913 3
+d917 1
+a917 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.26 2020/06/26 00:37:21 agmsmith Exp agmsmith $
+d920 3
 @
 
 
