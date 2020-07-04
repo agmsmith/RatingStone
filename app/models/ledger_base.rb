@@ -53,6 +53,13 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # Finds the id number of the original version of this record.
+  def original_version_id
+    return id if (original_id == id) || original_id.nil?
+    original_id
+  end
+
+  ##
   # Finds the latest version of this record (could be a deleted one).  Note
   # that non-ledger fields (cached calculated values like rating points) are
   # stored elsewhere, in the original ledger record.
@@ -69,6 +76,26 @@ class LedgerBase < ApplicationRecord
   # stored elsewhere, in the original ledger record.
   def all_versions
     LedgerBase.where(original_id: original_id).order('created_at')
+  end
+
+  ##
+  # See if the given user is allowed to delete and otherwise modify this
+  # record.  Has to be the creator or the owner of the object.  Returns
+  # true if they have permission.
+  def creator_owner?(ledger_user)
+  debugger
+    if !ledger_user.is_a?(LedgerUser)
+      raise SecurityError.new(
+        "LedgerBase#creator_owner? given a non-user to test against.")
+      return false
+    end
+    return true if creator == ledger_user
+
+    # Hunt for LinkOwner records that include the mentioned user and this
+    # object. Use the original_id as key, since we can be using amended
+    # versions for data but we want the canonical base version for references.
+    LinkOwner.exists?(parent_id: ledger_user.original_version_id,
+      child_id: original_version_id)
   end
 
   ##

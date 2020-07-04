@@ -2,6 +2,8 @@
 
 lpost_one:
   type: 'LedgerPost'
-  text1: 'The first ledger post, used for testing.'
+  id: 201
+  original_id: 201
   creator_id: 0
+  text1: 'The first ledger post, used for testing.'
 

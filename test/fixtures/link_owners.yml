@@ -1,0 +1,14 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+linkowner_owner_all:
+  type: "LinkOwner"
+  creator: group_creator_user.id
+  parent: group_owner_user.id
+  child: group_all.id
+  string1: "Giving ownership of group All to the owner_user."
+  approved_parent: true
+  approved_child: true
+  rating_points_spent: 1.0
+  rating_points_boost_child: 0.5
+  rating_points_boost_parent: 0.5
+  rating_direction: "U"
