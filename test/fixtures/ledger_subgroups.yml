@@ -1,2 +1,14 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
+group_animals:
+  type: "LedgerSubgroup"
+  string1: "Animals"
+  string2: "All things contained are animals."
+  creator: group_owner_user
+
+group_dogs:
+  type: "LedgerSubgroup"
+  string1: "Dogs"
+  string2: "Canines inside."
+  creator: group_owner_user
+

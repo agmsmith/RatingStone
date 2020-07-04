@@ -1,9 +1,14 @@
-head	1.32;
+head	1.33;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.33
+date	2020.07.04.16.58.42;	author agmsmith;	state Exp;
+branches;
+next	1.32;
 
 1.32
 date	2020.06.30.20.51.44;	author agmsmith;	state Exp;
@@ -171,14 +176,15 @@ desc
 @
 
 
-1.32
+1.33
 log
-@Added database setup for GroupSettings table.
+@No GroupSettings_id field needed, separate table indexed by
+id of the group instead.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.31 2020/06/30 00:24:46 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.32 2020/06/30 20:51:44 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -477,9 +483,9 @@ records.  The plain LedgerSubgroup objects controlled by this group will
 delegate their permission determination to this LedgerFullGroup and its
 membership lists by a LinkGroupRoleDelegation record for each subgroup.
 
-* group_settings_id integer A reference to a separate GroupSettings database
-  table that contains more information about the group, such as whether posts
-  need to be approved by moderators.
+Currently, extra settings (post moderation options, etc) are stored in a
+related GroupSettings database table, though we may need to use ledger objects
+if a history of changes needs to be preserved.
 
 
 ### *LedgerAwardCeremony* < LedgerBase
@@ -1203,9 +1209,12 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.31 2020/06/30 00:24:46 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.32 2020/06/30 20:51:44 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.32  2020/06/30 20:51:44  agmsmith
+Added database setup for GroupSettings table.
+
 Revision 1.31  2020/06/30 00:24:46  agmsmith
 Proof-reading pass.  Fix conceptual problem - no owners of links.
 Also clarify who can delete links (if you need approval, you can
@@ -1304,6 +1313,26 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.32
+log
+@Added database setup for GroupSettings table.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.31 2020/06/30 00:24:46 agmsmith Exp agmsmith $</SMALL>
+d302 3
+a304 3
+* group_settings_id integer A reference to a separate GroupSettings database
+  table that contains more information about the group, such as whether posts
+  need to be approved by moderators.
+d1028 1
+a1028 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.31 2020/06/30 00:24:46 agmsmith Exp agmsmith $
+d1031 3
 @
 
 

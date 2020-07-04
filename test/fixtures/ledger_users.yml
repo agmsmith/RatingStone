@@ -7,8 +7,28 @@ root_ledger_user:
   creator_id: 0
   original_id: 0
 
-some_ledger_user:
+group_owner_user:
   type: 'LedgerUser'
-  string1: 'Some LedgerUser made by the fixture system'
+  string1: 'Owner or creator of a group.'
+  creator_id: 0
+
+message_moderator_user:
+  type: 'LedgerUser'
+  string1: 'Moderator of messages in a group.'
+  creator_id: 0
+
+member_moderator_user:
+  type: 'LedgerUser'
+  string1: 'Moderator of members in a group.'
+  creator_id: 0
+
+member_user:
+  type: 'LedgerUser'
+  string1: 'Member of a group.'
+  creator_id: 0
+
+some_user:
+  type: 'LedgerUser'
+  string1: 'Some generic LedgerUser made by the fixture system.'
   creator_id: 0
 

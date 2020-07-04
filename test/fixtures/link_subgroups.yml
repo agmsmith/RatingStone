@@ -1,2 +1,28 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
+linkgroup_all_animals:
+  type: "LinkSubgroup"
+  parent: group_all
+  child: group_animals
+  creator: group_owner_user
+  string1: "Connection between all and subgroup animals."
+  approved_parent: true
+  approved_child: true
+  rating_points_spent: 1.0
+  rating_points_boost_child: 0.5
+  rating_points_boost_parent: 0.5
+  rating_direction: "U"
+
+linkgroup_animals_dogs:
+  type: "LinkSubgroup"
+  parent: group_animals
+  child: group_dogs
+  creator: group_owner_user
+  string1: "Connection between animals and dogs."
+  approved_parent: true
+  approved_child: true
+  rating_points_spent: 1.0
+  rating_points_boost_child: 0.5
+  rating_points_boost_parent: 0.5
+  rating_direction: "U"
+

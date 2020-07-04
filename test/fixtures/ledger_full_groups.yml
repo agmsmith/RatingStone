@@ -1,2 +1,8 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
+group_all:
+  type: "LedgerFullGroup"
+  string1: "All"
+  string2: "Everything is possible at the start of a category tree."
+  creator: group_owner_user
+
