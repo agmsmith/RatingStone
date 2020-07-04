@@ -2,9 +2,9 @@
 
 linkowner_owner_all:
   type: "LinkOwner"
-  creator: group_creator_user.id
-  parent: group_owner_user.id
-  child: group_all.id
+  creator: group_creator_user
+  parent: group_owner_user
+  child: group_all
   string1: "Giving ownership of group All to the owner_user."
   approved_parent: true
   approved_child: true

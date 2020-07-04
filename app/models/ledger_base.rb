@@ -33,7 +33,7 @@ class LedgerBase < ApplicationRecord
   def append_ledger
     new_entry = latest_version.dup
     new_entry.amended_id = nil
-    # original_id is copied, now that even the original has its own ID there.
+    new_entry.original_id = original_version_id # In case original_id is nil.
     new_entry.deleted = false
     # Cached values not used (see original record) in amended, set to defaults.
     new_entry.current_down_points = 0.0
@@ -46,7 +46,8 @@ class LedgerBase < ApplicationRecord
   # Finds the original version of this record, which is still used as a central
   # point for the cached calculated values.  May be slightly faster than just
   # using "original".  Also safer, for that brief moment when original_id is
-  # nil since we can't easily have a transaction around record creation.
+  # nil since we can't easily have a transaction around record creation (also
+  # get a nil original_id in Fixtures used for testing).
   def original_version
     return self if (original_id == id) || original_id.nil?
     original
@@ -73,9 +74,10 @@ class LedgerBase < ApplicationRecord
   # Finds all versions of this record (including deleted ones).  Returned in
   # increasing date order (thus original version is first, we assume).  Note
   # that non-ledger fields (cached calculated values like rating points) are
-  # stored elsewhere, in the original ledger record.
+  # stored elsewhere, in the original ledger record.  Won't work in test mode
+  # where original_id is nil for Fixture generated data.
   def all_versions
-    LedgerBase.where(original_id: original_id).order('created_at')
+    LedgerBase.where(original_id: original_version_id).order('created_at')
   end
 
   ##
@@ -83,19 +85,18 @@ class LedgerBase < ApplicationRecord
   # record.  Has to be the creator or the owner of the object.  Returns
   # true if they have permission.
   def creator_owner?(ledger_user)
-  debugger
     if !ledger_user.is_a?(LedgerUser)
       raise SecurityError.new(
         "LedgerBase#creator_owner? given a non-user to test against.")
       return false
     end
-    return true if creator == ledger_user
+    ledger_user_id = ledger_user.original_version_id
+    return true if creator_id == ledger_user_id
 
     # Hunt for LinkOwner records that include the mentioned user and this
     # object. Use the original_id as key, since we can be using amended
     # versions for data but we want the canonical base version for references.
-    LinkOwner.exists?(parent_id: ledger_user.original_version_id,
-      child_id: original_version_id)
+    LinkOwner.exists?(parent_id: ledger_user_id, child_id: original_version_id)
   end
 
   ##
@@ -111,9 +112,10 @@ class LedgerBase < ApplicationRecord
   # deleted, if that's useful.
   def ledger_delete_append(ledger_delete_record, deleting)
     aux_record = AuxLedger.new(parent: ledger_delete_record,
-      child_id: original_id)
+      child_id: original_version_id)
     aux_record.save
-    LedgerBase.where(original_id: original_id).update_all(deleted: deleting)
+    LedgerBase.where(original_id: original_version_id).
+      update_all(deleted: deleting)
   end
 
   ##
@@ -123,7 +125,7 @@ class LedgerBase < ApplicationRecord
   # record if this one is a later version.
   def deleted_by
     deleted_ids = [id]
-    deleted_ids.push(original_id) if original_id && id != original_id
+    deleted_ids.push(original_version_id) if id != original_version_id
     LedgerBase.joins(:aux_ledger_descendants)
       .where({
         aux_ledgers: { child_id: deleted_ids },
@@ -145,7 +147,7 @@ class LedgerBase < ApplicationRecord
     if latest.id != id
       puts "Bug: some other amended record (#{latest.inspect}) is later than " \
         "this (#{inspect}) new amended record."
-      throw(:abort)
+      throw(:abort) # Stop the ActiveRecord transaction.
     end
     original.update_attribute(:amended_id, id)
   end

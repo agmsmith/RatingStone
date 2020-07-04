@@ -9,17 +9,18 @@ class LedgerFullGroupTest < ActiveSupport::TestCase
   end
 
   test "Owner and creator should have group access" do
-    puts @group.inspect
-    test_user = ledger_users(:group_creator_user)
-    puts test_user.inspect
-    assert @group.creator_owner?(test_user)
+    assert @group.creator_owner?(ledger_users(:group_creator_user))
     assert @group.creator_owner?(ledger_users(:group_owner_user))
-    assert @group.creator_owner?(ledger_users(:message_moderator_user))
-    assert @group.creator_owner?(ledger_users(:member_moderator_user))
-    assert @group.creator_owner?(ledger_users(:member_user))
-    assert @group.creator_owner?(ledger_users(:some_user))
-    assert @group.creator_owner?(ledger_users(:root_ledger_user))
-    assert @group.creator_owner?(ledger_posts(:lpost_one))
-    assert @group.creator_owner?(nil)
+    assert_not @group.creator_owner?(ledger_users(:message_moderator_user))
+    assert_not @group.creator_owner?(ledger_users(:member_moderator_user))
+    assert_not @group.creator_owner?(ledger_users(:member_user))
+    assert_not @group.creator_owner?(ledger_users(:some_user))
+    assert_not @group.creator_owner?(ledger_users(:root_ledger_user))
+    assert_raise(SecurityError, "Passing in a Post instead of a LedgerUser") do
+      @group.creator_owner?(ledger_posts(:lpost_one))
+    end
+    assert_raise(SecurityError, "Passing in nil instead of a LedgerUser") do
+      @group.creator_owner?(nil)
+    end
   end
 end

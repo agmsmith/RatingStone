@@ -9,43 +9,31 @@ root_ledger_user:
 
 group_creator_user:
   type: 'LedgerUser'
-  id: 401
-  original_id: 401
   creator_id: 0
   string1: 'Creator of a group.'
 
 group_owner_user:
   type: 'LedgerUser'
-  id: 402
-  original_id: 402
   creator_id: 0
   string1: 'Owner of a group.'
 
 message_moderator_user:
   type: 'LedgerUser'
-  id: 403
-  original_id: 403
   creator_id: 0
   string1: 'Moderator of messages in a group.'
 
 member_moderator_user:
   type: 'LedgerUser'
-  id: 404
-  original_id: 404
   creator_id: 0
   string1: 'Moderator of members in a group.'
 
 member_user:
   type: 'LedgerUser'
-  id: 405
-  original_id: 405
   creator_id: 0
   string1: 'Member of a group.'
 
 some_user:
   type: 'LedgerUser'
-  id: 406
-  original_id: 406
   creator_id: 0
   string1: 'Some generic LedgerUser made by the fixture system.'
 

@@ -2,16 +2,12 @@
 
 group_animals:
   type: "LedgerSubgroup"
-  id: 301
-  original_id: 301
   creator: group_owner_user
   string1: "Animals"
   string2: "All things contained are animals."
 
 group_dogs:
   type: "LedgerSubgroup"
-  id: 302
-  original_id: 302
   creator: group_owner_user
   string1: "Dogs"
   string2: "Canines inside."

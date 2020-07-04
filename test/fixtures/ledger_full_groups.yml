@@ -2,9 +2,7 @@
 
 group_all:
   type: "LedgerFullGroup"
-  id: 101
-  original_id: 101
-  creator: group_owner_user
+  creator: group_creator_user
   string1: "All"
   string2: "Everything is possible at the start of a category tree."
 
