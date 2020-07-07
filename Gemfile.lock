@@ -182,7 +182,7 @@ GEM
     reline (0.1.4)
       io-console (~> 0.5)
     rexml (3.2.4)
-    rubocop (0.87.0)
+    rubocop (0.87.1)
       parallel (~> 1.10)
       parser (>= 2.7.1.1)
       rainbow (>= 2.2.2, < 4.0)
