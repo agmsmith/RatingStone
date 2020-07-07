@@ -1,9 +1,14 @@
-head	1.33;
+head	1.34;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.34
+date	2020.07.07.20.51.57;	author agmsmith;	state Exp;
+branches;
+next	1.33;
 
 1.33
 date	2020.07.04.16.58.42;	author agmsmith;	state Exp;
@@ -176,15 +181,14 @@ desc
 @
 
 
-1.33
+1.34
 log
-@No GroupSettings_id field needed, separate table indexed by
-id of the group instead.
+@Added meta-moderation idea from a discussion on Slashdot.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.32 2020/06/30 20:51:44 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.33 2020/07/04 16:58:42 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -806,8 +810,48 @@ parent, unless a third party is essentially paying someone to have an opinion.
 Automatically approved for the child end, parent end auto approved if it is the
 creator, and can only be deleted by the creator or parent end.
 
+For example, if you like a post, you can make a LinkOpinion referencing the
+post (as the child object) and give it some of your rating points.  The parent
+field would identify you as the person with the opinion.
+
+A meta example: if you don't like the rating someone made on a post, you can
+make a LinkOpinion that has an AuxLink record referencing the rating (which is
+itself another LinkOpinion) and give some opposite points to the post
+(specified in the child field) to counter the bad rating.  Or you could specify
+the person with the bad opinion as the child and rate them.
+
+Or if you like the way someone connected a bit of useful information (an
+existing old post answering a frequently asked question) as a reply to a new
+post, you can reward them for making that link with a LinkOpinion's AuxLink
+referencing the LinkReply record and with the creator of the LinkReply as the
+rewarded child.
+
 * comment string Up to 255 bytes of kramdown formatted text describing the
   opinion.
+* meta_link boolean True if the opinion is actually about another opinion or
+  other LinkBase connection, specified by an AuxLink record.  The child (the
+  object which gets rating points) will usually be one or the other end of the
+  mentioned link or its creator.  False means don't bother searching for an
+  AuxLink record; it shouldn't exist.  Mostly this field exists to avoid
+  searching for AuxLink records every time an opinion is shown.
+
+
+#### *LinkMetaMod* < LinkOpinion
+
+This is an opinion about someone else's opinions, used for meta-moderation.
+The main difference is that it is anonymous.  Usually members of a group will
+on occasion (much more often if they have the meta-moderator role in the group)
+be shown a random opinion about a message in the group (usually a recent one,
+but not always).  They can decide how many points to award and in which
+direction to the person making the opinion.  Additionally they will receive a
+bit of a positive reward too, and for convenience the LinkMetaMod will be
+initially approved on the parent end rather than needing the creator to be the
+parent for pre-approval.  The group will pay for the points and be listed as
+the creator of the LinkMetaMod record.  For meta-meta-moderation, we'll just
+use an annual performance review for the more significant meta-moderators
+(since they get paid in points, they could do this as a kind of job, and
+moderators would also get points from the meta-moderator operation, and the
+group could get points by having a weekly membership fee).
 
 
 ## Auxiliary Classes
@@ -860,11 +904,13 @@ that specifies the highest role they have.
    post be added to a group, so even a non-member could do that.
 4. **Message Moderator**.  Can approve, unapprove (makes it pending approval
    again) and disconnect posts from the group.
-5. **Member Moderator**.  Approves and rejects membership requests.
-6. **Owner**.  Owners can be added to a group (and other objects) by a
+5. **Meta Moderator**.  Can make anonymous comments on opinions about messages
+   in the group.
+6. **Member Moderator**.  Approves and rejects membership requests.
+7. **Owner**.  Owners can be added to a group (and other objects) by a
    LinkOwner record.  They have all permissions (including approving or
    deleting owners and moderators), except they can't change the creator.
-7. **Creator**.  Has all permissions to modify the object, including changing
+8. **Creator**.  Has all permissions to modify the object, including changing
    the creator.
 
 We'll use ten times the list row numbers here as the role priority, in case we
@@ -895,6 +941,10 @@ separate database table rather than directly in the LedgerFullGroup record):
   members.  If the user didn't spend enough points on making the link to the
   group, the link stays pending, waiting for a moderator to approve it or
   delete it (wasting the user's points).
+* There could be a weekly membership fee, which would go to the group.
+* Reward the moderators by reimbursing their point usage from the group's
+  supply of points.  Possibly give them a bit extra, which could provide
+  incentive to moderate and meta-moderate.
 * Beside the explicit links to the group to identify members and other kinds of
   users, also have relationship wildcards to specify users for each role.
   They're usually relative to the owners & creator of the group.  Includes
@@ -1151,7 +1201,8 @@ details like this:
       t.string :wildcard_role_banned, default: "", comment: "Wildcard expression to identify people who are banned, in addition to explicit LinkRole records.  So we can ban friends of banned people, etc."
       t.string :wildcard_role_reader, default: "", comment: "Relationship expression specifying additional people who are allowed to read the group."
       t.string :wildcard_role_member, default: "", comment: "Relationship expression specifying additional people who are considered members of the group, even if they didn't apply."
-      t.string :wildcard_role_message_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate messages."
+      t.string :wildcard_role_message_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate (approve/delete) messages."
+      t.string :wildcard_role_meta_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to anonymously rate opinions about messages in this group."
       t.string :wildcard_role_member_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate membership requests."
     end
   end
@@ -1209,9 +1260,13 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.32 2020/06/30 20:51:44 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.33 2020/07/04 16:58:42 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.33  2020/07/04 16:58:42  agmsmith
+No GroupSettings_id field needed, separate table indexed by
+id of the group instead.
+
 Revision 1.32  2020/06/30 20:51:44  agmsmith
 Added database setup for GroupSettings table.
 
@@ -1313,6 +1368,35 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.33
+log
+@No GroupSettings_id field needed, separate table indexed by
+id of the group instead.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.32 2020/06/30 20:51:44 agmsmith Exp agmsmith $</SMALL>
+d625 16
+d643 24
+d719 4
+a722 2
+5. **Member Moderator**.  Approves and rejects membership requests.
+6. **Owner**.  Owners can be added to a group (and other objects) by a
+d725 1
+a725 1
+7. **Creator**.  Has all permissions to modify the object, including changing
+d756 4
+d1016 2
+a1017 1
+      t.string :wildcard_role_message_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate messages."
+d1075 1
+a1075 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.32 2020/06/30 20:51:44 agmsmith Exp agmsmith $
+d1078 4
 @
 
 

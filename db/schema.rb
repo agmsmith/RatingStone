@@ -59,6 +59,7 @@ ActiveRecord::Schema.define(version: 2020_06_30_193857) do
     t.string "wildcard_role_reader", default: ""
     t.string "wildcard_role_member", default: ""
     t.string "wildcard_role_message_moderator", default: ""
+    t.string "wildcard_role_meta_moderator", default: ""
     t.string "wildcard_role_member_moderator", default: ""
     t.index ["ledger_full_group_id"], name: "index_group_settings_on_ledger_full_group_id"
   end
