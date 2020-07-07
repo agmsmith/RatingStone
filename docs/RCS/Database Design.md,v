@@ -1,9 +1,14 @@
-head	1.34;
+head	1.35;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.35
+date	2020.07.07.21.35.52;	author agmsmith;	state Exp;
+branches;
+next	1.34;
 
 1.34
 date	2020.07.07.20.51.57;	author agmsmith;	state Exp;
@@ -181,14 +186,15 @@ desc
 @
 
 
-1.34
+1.35
 log
-@Added meta-moderation idea from a discussion on Slashdot.
+@Put some of the exploratory explanations near the beginning, leaving
+the class definitions at the end.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.33 2020/07/04 16:58:42 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.34 2020/07/07 20:51:57 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -273,6 +279,232 @@ with the faster but more work custom link subclasses method, except for user
 defined lists which will use the list header with a name technique, and plain
 references where that makes sense.  If the number of subclasses gets too big,
 this decision will have to be reconsidered.
+
+
+## About Posts and Groups
+
+When someone writes a post, they create both a LedgerPost object with the text
+and a link object (LinkGroupContent) to connect it to the group it is in.  If
+they want it to be in multiple groups, they can just add more links.  If it's a
+reply to some other post, they add a link (LinkReply) to that post too.  It's a
+bit awkward and expensive in ratings points (each link needs points) having
+both a link to the reply and a link to the group, but both are needed.  We
+can't default to the group based on the group the previous message is in, since
+later on someone could add that previous post to some other group and your post
+would suddenly be visible to people you hadn't expected.  Also this discourages
+the evil of unnecessary cross-posting.
+
+The links also award points to both the post and the group (the user decides
+how much to spend and how to split it), so that posts using the group
+contribute a bit to its upkeep.  The group owners can spend the group points on
+the group's behalf, perhaps reimbursing moderators for the points they use
+while doing their work (creating approval and deletion objects takes points).
+Of course, if the group's points fall to zero, it can be garbage collected.
+Same for posts that aren't referenced much.
+
+I'd like to have small points awarded for just reading a post, but that won't
+be practical since it would blow up the database size tremendously (each read
+would create a LinkBase record).  Or maybe we could have a daily "tip" or
+donation operation that awards points to the list of posts the user read that
+day, and a variation of LinkBase that uses AuxLedger records to specify a bunch
+of posts to get a reward.  Though that would make the backtracking from the
+post to donors awkward (not just looking for a connected LinkBase object) when
+doing awards ceremonies.  So for now, you can "like" or maybe "cast a stone"
+for individual posts and award points manually.
+
+So, what happens if you make a post that isn't in a group?  People can still
+find it by looking at the creator's profile for all the posts they have
+written.  There are no groups to allow people to read it, so it has a default
+permission role of Banned for everyone except the creator or owners (if the
+user attaches extra owners to the post).  An alternative for ungrouped posts is
+to make them readable by everybody, including anonymous Internet users so
+search engines will pick them up.  Which to choose?  A default of Banned would
+force users to spend extra points to make their post readable in some group.  A
+default of overly public would encourage more public discussion.  I'm going to
+make them public, since we still require spending typically 1.0 reputation
+points to create an ungrouped reply.  It costs twice as much (or you could make
+do with a shorter message life) to make it a reply in a private discussion,
+since you have the group link(s) to add as well as the reply link.  People will
+still use groups since it's worthwhile to reach a more relevant audience.
+
+
+## Relationships
+
+We want to identify people based on relationships.  The obvious one used by
+many social media is Friend.  Another is Follower.  We can also do Parent,
+Child, Spouse and that should about cover it for family relationships
+(grandparents are Parent of Parent of person, siblings share a parent, etc).
+We might want to add variations of friendship like boyfriend/girlfriend, work
+related acquaintance, divorced and so on but preferably without the extra
+complication of gender.  Possibly besides birthday records, we'll need death
+date records so a spouse is a widower when the other spouse is dead, but they
+go back to being married when they are both dead (they're always married, but
+we're showing what is important to their audience).
+
+After discarding some earlier ideas on relationship implementation, it seems
+there are a two orthogonal properties of relationships we have to worry about
+for searching and security purposes: Symmetry and approval.  All relationships
+will be represented in our database by a LinkBase subclass record listing two
+people (parent and child fields, though that usually isn't the actual meaning)
+and how they're connected.
+
+### Symmetry Dimension
+
+Bidirectional or equal or symmetric relationships are like Friend where both
+ends of the relationship are an indistinguishable "Friend".  Same for Spouse.
+But Parent/Child is a pair that has distinctly different ends.  So is
+Follower/Leader, or Employer/Employee.  Those we'll call asymmetric.
+
+The main complication is that we have to search differently depending on the
+symmetry.  If we're looking for friends of person X, we have to search for all
+Friend records that have X in the parent_id as well as all Friend records that
+have X as the child_id.  If we're looking for all parents of X, we have to
+search the Parent/Child records which have X as the child.  If we're looking
+for all children of X, we have to search the same kind of parent/child records,
+but look for ones where the parent field is X.
+
+So, the search technique changes and we need to know that Parent/Child searches
+look for the same type of record but search different fields.
+
+### Approval Dimension
+
+The other dimension is approval.  Sometimes we need approval from both parties
+to create the link; each approves their end using a LedgerApprove record.
+Other times we have a one way relationship, such as a fan of a movie star, and
+only the fan end needs approval (and that's usually automatic).
+
+One side effect of approval is that the reputation points assigned to the link
+only get counted when the link is fully approved.  That gives incentive to do
+approvals, and opens the door to third party suggested relationships (be a fan
+of this brand and you get some points).  Of course, instead of approving, you
+can delete the link, and the points spent on making the link are wasted.
+
+Partially approved relationships are still useful.  If only one end is
+approved, then for example instead of Friends we have admirer (the approved
+end) and admiree (the unapproved one).  Or if both ends haven't been approved,
+we have a suggested friendship (maybe a third party created the relationship
+record).  One-way relationships still need approval of the originating end, the
+fan implicitly approves the relationship record when they create it for
+themselves.  If someone else created it, then it still needs the originating
+end approved by the fan.  The movie star end is automatically approved.
+Otherwise fans and haters would have their one way relationship rebuffed; a
+particular problem for awarding down points.  No, the movie star or villain
+can't delete one way relationships; like fleas they stick around for a while
+and annoy.
+
+
+## Permissions Role Model
+
+The main worry is about posts.  The system needs to decide who can read a post,
+who is allowed to reply, who can add a post to a private discussion group, who
+can delete it and so on.  We'll worry about other permissions later.  After
+considering access control lists and even [UNIX style
+permissions](https://en.wikipedia.org/wiki/File_system_permissions#Traditional_Unix_permissions)
+I decided that every post should be in a group or several groups.  The group
+decides many of those things mainly by having a membership list.  Even a
+person's blog would be a group.  Perhaps private direct communictions could be
+a group too, with just the two people in the conversation being group members.
+
+The next big insight was to use permission roles.  They can be put in a rough
+order where one more permissive role includes the things allowed in the lower
+less permissive roles, to save on having to grant each permission individually.
+In practice, each role is granted by linking the user to a group with a record
+that specifies the highest role they have.
+
+1. **Banned**.  Can't access the group or posts.
+2. **Reader**.  Can read posts and see the group description.
+3. **Member**.  Can see more group information, like membership lists.  Some
+   groups also automatically approve posts by members.  Others require approval
+   by a moderator.  By the way, there's no permission needed to request that a
+   post be added to a group, so even a non-member could do that.
+4. **Message Moderator**.  Can approve, unapprove (makes it pending approval
+   again) and disconnect posts from the group.
+5. **Meta Moderator**.  Can make anonymous comments on opinions about messages
+   in the group.
+6. **Member Moderator**.  Approves and rejects membership requests.
+7. **Owner**.  Owners can be added to a group (and other objects) by a
+   LinkOwner record.  They have all permissions (including approving or
+   deleting owners and moderators), except they can't change the creator.
+8. **Creator**.  Has all permissions to modify the object, including changing
+   the creator.
+
+We'll use ten times the list row numbers here as the role priority, in case we
+later want to add new roles in-between.
+
+When finding out if a user has a permission for an action allowed by a certain
+role, check for a match with the creator first (everything is allowed).  Then
+see if they are in the Banned role second: permission is denied (if you want to
+explicitly deny a user access to the group, give them the Banned role).  Then
+start searching at the most permissive role after Creator and work down to the
+lowest level that matches the role query.  If they were not found in the search
+then they don't have permission for the role.  In practice, we'll first look
+for some LinkBase subclass record that specifies roles and sort by role
+priority.  Then try the more computationally expensive wildcards for each role.
+
+The group would have a few settings related to those roles (stored in a
+separate database table rather than directly in the LedgerFullGroup record):
+
+* Posts by non-members automatically approved?  Could lead to rowdy
+  discussions, though the requirement to spend points to talk hopefully will
+  make people think before posting.
+* Posts by members automatically approved?  Avoids most of the need for message
+  moderators (might still need moderators to delete posts).
+* Membership requests automatically approved?  Good for public bulletin boards.
+* We can do interesting things with the reputation points the user gave the
+  group when adding their post to the group.  Maybe require a minimum number of
+  points to have the post automatically accepted.  Perhaps have a discount for
+  members.  If the user didn't spend enough points on making the link to the
+  group, the link stays pending, waiting for a moderator to approve it or
+  delete it (wasting the user's points).
+* There could be a weekly membership fee, which would go to the group.
+* Reward the moderators by reimbursing their point usage from the group's
+  supply of points.  Possibly give them a bit extra, which could provide
+  incentive to moderate and meta-moderate.
+* Beside the explicit links to the group to identify members and other kinds of
+  users, also have relationship wildcards to specify users for each role.
+  They're usually relative to the owners & creator of the group.  Includes
+  concepts like Everybody, Friends of the owners, Friends of Friends of the
+  owners, Parents of Parents, Enemies of Friends and so on.  We need a little
+  language to specify users, using relationships declared elsewhere (Friend,
+  Sibling, Spouse and so on links).  Could use up too much database time
+  resulting in a terminated web session, so maybe warn people when they set
+  wildcards that could potentially select from too many people (count up how
+  many friends of enemies the owners have, before saving the new wildcard in
+  case of termination).
+* Generic Internet users (people not logged in) allowed as readers?  Done by
+  having a special Internet user for non-logged-in people which you can assign
+  to the Reader role, or to the Banned role or just leave out.
+* Allow anyone to be a Reader?  If enabled, lets anyone read messages.  Also
+  no need for storage for the list of Readers.  Done by adding the Everybody
+  wildcard to the Reader role.
+
+### Wildcard Language
+
+To identify a group of people by wildcards, we can make up a little language.
+We want to have expressions that say:
+
+* Everybody.
+* A particular person.
+* Friends of someone.
+* Members (and all the other roles, such as moderators, owners) of a group.
+
+Perhaps a functional language like:
+
+* "99" the LedgerUser record number for a particular person.
+* "*" for everybody.
+* "Friend()" for all friends of the contents.  Other relationships can be used
+  as well as Friends.  Some are asymetric so we need to know paired words such
+  as "Parent" and "Child" and that they refer to opposite ends of the same
+  relationship record.
+* "Banned", "Readers", "Members", "MessageMods", "MemberMods", "Owners",
+  "Creator" specifies all the people who are explicit members (have a LinkRole
+  record for the group) in that role or higher (Members includes up to
+  Creator etc).
+* Plus "+" to concatenate wildcards.
+* Round brackets for grouping order of operations.
+
+So you could have "Friend(Members)+Members" for friends of all members and the
+members too.  An empty string would mean nobody.
 
 
 ## *LedgerBase* Classes
@@ -878,6 +1110,283 @@ LedgerDelete/Undelete) to child LedgerBase objects (things being deleted).
 * No time stamps or other fields, see the parent_id for the date etc.
 
 
+## Generating the Database
+
+Here are the rails command lines and edits needed to generate the database:
+
+<PRE>rails generate model LedgerBase type:string
+bool1:boolean date1:datetime number1:integer string1:string string2:string
+text1:text creator:references original:references amended:references
+deleted:boolean current_down_points:float current_meh_points:float
+current_up_points:float
+
+rails generate model LinkBase type:string
+parent:references child:references creator:references deleted:boolean
+pending:boolean rating_points_spent:float rating_points_boost_child:float
+rating_points_boost_parent:float rating_direction:string award_number:integer
+
+rails generate model AuxLedger parent:references child:references
+
+rails generate model AuxLink parent:references child:references
+
+# And for subclasses, do something like this:
+
+rails generate model LedgerList --parent=LedgerBase
+
+</PRE>
+
+Combine and edit the migration files to have default values and better field
+details like this:
+
+<PRE>class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
+  def change
+    create_table :ledger_bases, force: false, comment: "Ledger objects base class and record.  Don't force: cascade deletes since this is a write-once ledger." do |t|
+      t.string :type, default: "LedgerBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
+      t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
+      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+      t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
+      t.string :string2, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
+      t.text :text1, default: "", comment: "Generic text (lots of characters), defined by subclasses."
+      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record."
+      t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
+      t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one.  NULL if not initialised (should be a copy of the id of the record)."
+      t.float :current_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
+      t.float :current_meh_points, default: 0.0, comment: "Number of rating points in the meh non-direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
+      t.float :current_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
+      t.datetime :date1, null: true, comment: "Generic date and time from year 0 to year 9999, defined by subclasses."
+      t.timestamps
+    end
+
+    add_index :ledger_bases, :string1
+    add_index :ledger_bases, :string2
+    add_index :ledger_bases, :number1
+
+    create_table :link_bases, force: false, comment: "LinkBase base class and record for linking LedgerObjects together." do |t|
+      t.string :type, default: "LinkBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
+      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+      t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
+      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the LedgerBase object (or subclass) which is usually the main one in the association."
+      t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the LedgerBase object (or subclass) which is the child in the association."
+      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link."
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
+      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
+      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
+      t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
+      t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+      t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+      t.string :rating_direction, default: "M", comment: "Use U for up, D for down or M for meh."
+      t.integer :award_number, default: 0, comment: "The week's award number when this record was created, 0 if before time starts."
+      t.timestamps
+    end
+
+    add_index :link_bases, :string1
+    add_index :link_bases, :number1
+
+    create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerDelete) to LinkBase records (usually links being deleted)." do |t|
+      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxlinkparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete or give permission order."
+      t.references :child, null: false, foreign_key: {to_table: :link_bases, name: "fk_rails_auxlinkchild"}, comment: "Points to the child LinkBase object (or subclass) which is being modified by the parent."
+    end
+
+    create_table :aux_ledgers, force: false, comment: "AuxLedger class and record for connecting LedgerBase records (usually LedgerDelete) to other LedgerBase records (usually objects being deleted)." do |t|
+      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete order."
+      t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerchild"}, comment: "Points to the child LedgerBase object (or subclass) which is being modified by the parent."
+    end
+
+    create_table :group_settings do |t|
+      t.references :ledger_full_group, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_groupsettingsgroup"}, comment: "Points to the LedgerFullGroup (a LedgerBase subclass) that this record contains the extra settings for."
+      t.boolean :auto_approve_non_member_posts, default: false, comment: "True if posts attached to the group by a non-member are automatically approved (if they have enough points).  False means a moderator will need to approve them."
+      t.boolean :auto_approve_member_posts, default: false, comment: "True if posts attached to the group by a member are automatically approved (if they have enough points).  False means a moderator will need to approve them."
+      t.boolean :auto_approve_members, default: false, comment: "True if new member applications are automatically approved (if they have enough points).  False requires approval by a member moderator."
+      t.float :min_points_non_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a non-member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :min_points_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :min_points_membership, default: 0.0, comment: "Minimum number of Up rating points needed when applying to be a member to get automatic approval.  Ignored if automatic approval is turned off.  If they don't get automatically approved, a moderator will need to approve their request."
+      t.string :wildcard_role_banned, default: "", comment: "Wildcard expression to identify people who are banned, in addition to explicit LinkRole records.  So we can ban friends of banned people, etc."
+      t.string :wildcard_role_reader, default: "", comment: "Relationship expression specifying additional people who are allowed to read the group."
+      t.string :wildcard_role_member, default: "", comment: "Relationship expression specifying additional people who are considered members of the group, even if they didn't apply."
+      t.string :wildcard_role_message_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate (approve/delete) messages."
+      t.string :wildcard_role_meta_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to anonymously rate opinions about messages in this group."
+      t.string :wildcard_role_member_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate membership requests."
+    end
+  end
+end
+</PRE>
+
+
+Flesh out link_base.rb with a few associations too:
+
+<PRE>
+class LinkBase < ApplicationRecord
+  belongs_to :parent, class_name: :LedgerBase, optional: false
+  belongs_to :child, class_name: :LedgerBase, optional: false
+  belongs_to :creator, class_name: :LedgerBase, optional: false
+end
+</PRE>
+
+Then do rails db:seed to set up the initial database contents.  One key step is
+making the root LedgerBase object, with itself as its creator.
+
+<PRE>ActiveRecord::Base.connection.execute(
+  "INSERT into ledger_bases
+    (id, string1, string2, text1, creator_id, created_at, updated_at)
+  VALUES
+    (0, 'Root LedgerBase Object', 'agmsmith@@ncf.ca', 'The special root object
+    which we need to manually create with a creator id of itself.  Then initial
+    system objects can be created with it as their creator.  AGMS20200206', 0,
+    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);"
+)
+</PRE>
+
+
+## Test Plan - A few Use Cases
+
+A new user writes a message.  Another user replies to it.  First user edits
+their message.  What does second user see?  First user replies to second user's
+message.  First user deletes their original message.
+
+A user adds some photos and videos to a message.  They are separate objects,
+and need the expendature of rating points to be attached (more points are
+required for a larger number of bytes).  What happens when they run out of
+points?  Do they get attached to the message and show up when it is displayed?
+
+First user sets up a small category tree and adds a message to a couple of
+categories.  Second user navigates tree to see messages about their favourite
+topic.
+
+Weekly batch processing adds some reputation points to first and second user.
+First user likes second user, awarding some up points, declaring their
+appreciation.  Second user awards some down points to first user, declaring
+their disgust.  What are their total points?  Another weekly batch run happens.
+What are their points?
+
+1. Table of Contents
+{:toc}
+
+<PRE>
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.34 2020/07/07 20:51:57 agmsmith Exp agmsmith $
+
+$Log: Database\040Design.md,v $
+Revision 1.34  2020/07/07 20:51:57  agmsmith
+Added meta-moderation idea from a discussion on Slashdot.
+
+Revision 1.33  2020/07/04 16:58:42  agmsmith
+No GroupSettings_id field needed, separate table indexed by
+id of the group instead.
+
+Revision 1.32  2020/06/30 20:51:44  agmsmith
+Added database setup for GroupSettings table.
+
+Revision 1.31  2020/06/30 00:24:46  agmsmith
+Proof-reading pass.  Fix conceptual problem - no owners of links.
+Also clarify who can delete links (if you need approval, you can
+delete it too).
+
+Revision 1.30  2020/06/29 20:27:42  agmsmith
+Nope, not owners, else you could get someone to preapprove a relationship.
+
+Revision 1.29  2020/06/29 15:43:14  agmsmith
+Work out Relationship class structure, write up a bit more
+about relationships and the dimensions of symmetry and approval.
+
+Revision 1.28  2020/06/29 01:01:00  agmsmith
+Added relationships section.
+
+Revision 1.27  2020/06/27 21:30:08  agmsmith
+Proof reading.  Added Subgroups.  Wildcard language.
+
+Revision 1.26  2020/06/26 00:37:21  agmsmith
+Added LinkRelationship, removed LinkPermission.
+
+Revision 1.25  2020/06/25 00:06:50  agmsmith
+Decide on making ungrouped posts public.  Add LinkOwner record.
+
+Revision 1.24  2020/06/24 11:18:49  agmsmith
+More work in progress on permission roles and discussion groups.
+
+Revision 1.23  2020/06/21 00:20:58  agmsmith
+Working on the Permissions Model.  Idea of Groups for all posts, roles.
+
+Revision 1.22  2020/06/20 17:14:23  agmsmith
+Rework approval vs deletion of records.  Now have separate child and parent
+end of the link approval flags.  Delete is orthogonal to approval.
+
+Revision 1.21  2020/06/15 15:56:25  agmsmith
+Rewording, also combine pending and deleted functionality into the
+same thing (granting permission undeletes a record).
+
+Revision 1.20  2020/04/10 15:58:33  agmsmith
+Have original_id be NULL on creation, but soon changing to copy of id.
+
+Revision 1.19  2020/04/10 15:40:04  agmsmith
+Update migration comment for original_id.
+
+Revision 1.18  2020/04/10 15:37:19  agmsmith
+Change original_id to be equal to id for the original record, not NULL.
+
+Revision 1.17  2020/03/28 16:19:43  agmsmith
+Split out AuxLink and AuxLedger records, making things simpler again.
+
+Revision 1.16  2020/03/28 13:18:21  agmsmith
+Typos.
+
+Revision 1.15  2020/03/27 19:03:58  agmsmith
+Minor typos fixed.
+
+Revision 1.14  2020/03/26 20:25:45  agmsmith
+Rethought deleting and permissions.
+
+Revision 1.13  2020/02/20 21:45:08  agmsmith
+Fix typos after proofreading.
+
+Revision 1.12  2020/02/07 15:28:32  agmsmith
+Mention initialising the root object in the database.
+
+Revision 1.11  2020/02/04 22:20:21  agmsmith
+Proof reading pass done.  Also added list design choices.
+
+Revision 1.10  2020/02/03 22:33:40  agmsmith
+Fix up formatting in kramdown for preformatted code.
+
+Revision 1.9  2020/02/03 22:26:20  agmsmith
+Added command lines needed to generate the database.
+
+Revision 1.8  2020/02/02 22:15:24  agmsmith
+Added permissions records.
+
+Revision 1.7  2020/02/02 21:44:52  agmsmith
+After some experiments, decided to use floating point rating points.
+
+Revision 1.6  2020/01/31 21:54:25  agmsmith
+Work in progress adding fields and descriptions, worrying about deleting.
+
+Revision 1.5  2020/01/30 22:16:28  agmsmith
+Starting to add fields to the base object record.
+
+Revision 1.4  2020/01/30 15:45:39  agmsmith
+Explain the ledger write-once system and single table inheritance.
+
+Revision 1.3  2020/01/30 14:40:09  agmsmith
+Writing continues, work in progress.
+
+Revision 1.2  2020/01/29 22:52:13  agmsmith
+Fixed up formatting of RCS log and version number.
+
+Revision 1.1  2020/01/29 22:43:07  agmsmith
+Initial revision
+</PRE>
+@
+
+
+1.34
+log
+@Added meta-moderation idea from a discussion on Slashdot.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.33 2020/07/04 16:58:42 agmsmith Exp agmsmith $</SMALL>
+d90 226
+a918 229
 ## Permissions Role Model
 
 The main worry is about posts.  The system needs to decide who can read a post,
@@ -1107,267 +1616,10 @@ can't delete one way relationships; like fleas they stick around for a while
 and annoy.
 
 
-## Generating the Database
-
-Here are the rails command lines and edits needed to generate the database:
-
-<PRE>rails generate model LedgerBase type:string
-bool1:boolean date1:datetime number1:integer string1:string string2:string
-text1:text creator:references original:references amended:references
-deleted:boolean current_down_points:float current_meh_points:float
-current_up_points:float
-
-rails generate model LinkBase type:string
-parent:references child:references creator:references deleted:boolean
-pending:boolean rating_points_spent:float rating_points_boost_child:float
-rating_points_boost_parent:float rating_direction:string award_number:integer
-
-rails generate model AuxLedger parent:references child:references
-
-rails generate model AuxLink parent:references child:references
-
-# And for subclasses, do something like this:
-
-rails generate model LedgerList --parent=LedgerBase
-
-</PRE>
-
-Combine and edit the migration files to have default values and better field
-details like this:
-
-<PRE>class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
-  def change
-    create_table :ledger_bases, force: false, comment: "Ledger objects base class and record.  Don't force: cascade deletes since this is a write-once ledger." do |t|
-      t.string :type, default: "LedgerBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
-      t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
-      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
-      t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
-      t.string :string2, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
-      t.text :text1, default: "", comment: "Generic text (lots of characters), defined by subclasses."
-      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record."
-      t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
-      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
-      t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one.  NULL if not initialised (should be a copy of the id of the record)."
-      t.float :current_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
-      t.float :current_meh_points, default: 0.0, comment: "Number of rating points in the meh non-direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
-      t.float :current_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
-      t.datetime :date1, null: true, comment: "Generic date and time from year 0 to year 9999, defined by subclasses."
-      t.timestamps
-    end
-
-    add_index :ledger_bases, :string1
-    add_index :ledger_bases, :string2
-    add_index :ledger_bases, :number1
-
-    create_table :link_bases, force: false, comment: "LinkBase base class and record for linking LedgerObjects together." do |t|
-      t.string :type, default: "LinkBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
-      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
-      t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
-      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the LedgerBase object (or subclass) which is usually the main one in the association."
-      t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the LedgerBase object (or subclass) which is the child in the association."
-      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link."
-      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
-      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
-      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
-      t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
-      t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
-      t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the child object."
-      t.string :rating_direction, default: "M", comment: "Use U for up, D for down or M for meh."
-      t.integer :award_number, default: 0, comment: "The week's award number when this record was created, 0 if before time starts."
-      t.timestamps
-    end
-
-    add_index :link_bases, :string1
-    add_index :link_bases, :number1
-
-    create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerDelete) to LinkBase records (usually links being deleted)." do |t|
-      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxlinkparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete or give permission order."
-      t.references :child, null: false, foreign_key: {to_table: :link_bases, name: "fk_rails_auxlinkchild"}, comment: "Points to the child LinkBase object (or subclass) which is being modified by the parent."
-    end
-
-    create_table :aux_ledgers, force: false, comment: "AuxLedger class and record for connecting LedgerBase records (usually LedgerDelete) to other LedgerBase records (usually objects being deleted)." do |t|
-      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete order."
-      t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerchild"}, comment: "Points to the child LedgerBase object (or subclass) which is being modified by the parent."
-    end
-
-    create_table :group_settings do |t|
-      t.references :ledger_full_group, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_groupsettingsgroup"}, comment: "Points to the LedgerFullGroup (a LedgerBase subclass) that this record contains the extra settings for."
-      t.boolean :auto_approve_non_member_posts, default: false, comment: "True if posts attached to the group by a non-member are automatically approved (if they have enough points).  False means a moderator will need to approve them."
-      t.boolean :auto_approve_member_posts, default: false, comment: "True if posts attached to the group by a member are automatically approved (if they have enough points).  False means a moderator will need to approve them."
-      t.boolean :auto_approve_members, default: false, comment: "True if new member applications are automatically approved (if they have enough points).  False requires approval by a member moderator."
-      t.float :min_points_non_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a non-member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
-      t.float :min_points_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
-      t.float :min_points_membership, default: 0.0, comment: "Minimum number of Up rating points needed when applying to be a member to get automatic approval.  Ignored if automatic approval is turned off.  If they don't get automatically approved, a moderator will need to approve their request."
-      t.string :wildcard_role_banned, default: "", comment: "Wildcard expression to identify people who are banned, in addition to explicit LinkRole records.  So we can ban friends of banned people, etc."
-      t.string :wildcard_role_reader, default: "", comment: "Relationship expression specifying additional people who are allowed to read the group."
-      t.string :wildcard_role_member, default: "", comment: "Relationship expression specifying additional people who are considered members of the group, even if they didn't apply."
-      t.string :wildcard_role_message_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate (approve/delete) messages."
-      t.string :wildcard_role_meta_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to anonymously rate opinions about messages in this group."
-      t.string :wildcard_role_member_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate membership requests."
-    end
-  end
-end
-</PRE>
-
-
-Flesh out link_base.rb with a few associations too:
-
-<PRE>
-class LinkBase < ApplicationRecord
-  belongs_to :parent, class_name: :LedgerBase, optional: false
-  belongs_to :child, class_name: :LedgerBase, optional: false
-  belongs_to :creator, class_name: :LedgerBase, optional: false
-end
-</PRE>
-
-Then do rails db:seed to set up the initial database contents.  One key step is
-making the root LedgerBase object, with itself as its creator.
-
-<PRE>ActiveRecord::Base.connection.execute(
-  "INSERT into ledger_bases
-    (id, string1, string2, text1, creator_id, created_at, updated_at)
-  VALUES
-    (0, 'Root LedgerBase Object', 'agmsmith@@ncf.ca', 'The special root object
-    which we need to manually create with a creator id of itself.  Then initial
-    system objects can be created with it as their creator.  AGMS20200206', 0,
-    CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);"
-)
-</PRE>
-
-
-## Test Plan - A few Use Cases
-
-A new user writes a message.  Another user replies to it.  First user edits
-their message.  What does second user see?  First user replies to second user's
-message.  First user deletes their original message.
-
-A user adds some photos and videos to a message.  They are separate objects,
-and need the expendature of rating points to be attached (more points are
-required for a larger number of bytes).  What happens when they run out of
-points?  Do they get attached to the message and show up when it is displayed?
-
-First user sets up a small category tree and adds a message to a couple of
-categories.  Second user navigates tree to see messages about their favourite
-topic.
-
-Weekly batch processing adds some reputation points to first and second user.
-First user likes second user, awarding some up points, declaring their
-appreciation.  Second user awards some down points to first user, declaring
-their disgust.  What are their total points?  Another weekly batch run happens.
-What are their points?
-
-1. Table of Contents
-{:toc}
-
-<PRE>
+d1072 1
+a1072 1
 $Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.33 2020/07/04 16:58:42 agmsmith Exp agmsmith $
-
-$Log: Database\040Design.md,v $
-Revision 1.33  2020/07/04 16:58:42  agmsmith
-No GroupSettings_id field needed, separate table indexed by
-id of the group instead.
-
-Revision 1.32  2020/06/30 20:51:44  agmsmith
-Added database setup for GroupSettings table.
-
-Revision 1.31  2020/06/30 00:24:46  agmsmith
-Proof-reading pass.  Fix conceptual problem - no owners of links.
-Also clarify who can delete links (if you need approval, you can
-delete it too).
-
-Revision 1.30  2020/06/29 20:27:42  agmsmith
-Nope, not owners, else you could get someone to preapprove a relationship.
-
-Revision 1.29  2020/06/29 15:43:14  agmsmith
-Work out Relationship class structure, write up a bit more
-about relationships and the dimensions of symmetry and approval.
-
-Revision 1.28  2020/06/29 01:01:00  agmsmith
-Added relationships section.
-
-Revision 1.27  2020/06/27 21:30:08  agmsmith
-Proof reading.  Added Subgroups.  Wildcard language.
-
-Revision 1.26  2020/06/26 00:37:21  agmsmith
-Added LinkRelationship, removed LinkPermission.
-
-Revision 1.25  2020/06/25 00:06:50  agmsmith
-Decide on making ungrouped posts public.  Add LinkOwner record.
-
-Revision 1.24  2020/06/24 11:18:49  agmsmith
-More work in progress on permission roles and discussion groups.
-
-Revision 1.23  2020/06/21 00:20:58  agmsmith
-Working on the Permissions Model.  Idea of Groups for all posts, roles.
-
-Revision 1.22  2020/06/20 17:14:23  agmsmith
-Rework approval vs deletion of records.  Now have separate child and parent
-end of the link approval flags.  Delete is orthogonal to approval.
-
-Revision 1.21  2020/06/15 15:56:25  agmsmith
-Rewording, also combine pending and deleted functionality into the
-same thing (granting permission undeletes a record).
-
-Revision 1.20  2020/04/10 15:58:33  agmsmith
-Have original_id be NULL on creation, but soon changing to copy of id.
-
-Revision 1.19  2020/04/10 15:40:04  agmsmith
-Update migration comment for original_id.
-
-Revision 1.18  2020/04/10 15:37:19  agmsmith
-Change original_id to be equal to id for the original record, not NULL.
-
-Revision 1.17  2020/03/28 16:19:43  agmsmith
-Split out AuxLink and AuxLedger records, making things simpler again.
-
-Revision 1.16  2020/03/28 13:18:21  agmsmith
-Typos.
-
-Revision 1.15  2020/03/27 19:03:58  agmsmith
-Minor typos fixed.
-
-Revision 1.14  2020/03/26 20:25:45  agmsmith
-Rethought deleting and permissions.
-
-Revision 1.13  2020/02/20 21:45:08  agmsmith
-Fix typos after proofreading.
-
-Revision 1.12  2020/02/07 15:28:32  agmsmith
-Mention initialising the root object in the database.
-
-Revision 1.11  2020/02/04 22:20:21  agmsmith
-Proof reading pass done.  Also added list design choices.
-
-Revision 1.10  2020/02/03 22:33:40  agmsmith
-Fix up formatting in kramdown for preformatted code.
-
-Revision 1.9  2020/02/03 22:26:20  agmsmith
-Added command lines needed to generate the database.
-
-Revision 1.8  2020/02/02 22:15:24  agmsmith
-Added permissions records.
-
-Revision 1.7  2020/02/02 21:44:52  agmsmith
-After some experiments, decided to use floating point rating points.
-
-Revision 1.6  2020/01/31 21:54:25  agmsmith
-Work in progress adding fields and descriptions, worrying about deleting.
-
-Revision 1.5  2020/01/30 22:16:28  agmsmith
-Starting to add fields to the base object record.
-
-Revision 1.4  2020/01/30 15:45:39  agmsmith
-Explain the ledger write-once system and single table inheritance.
-
-Revision 1.3  2020/01/30 14:40:09  agmsmith
-Writing continues, work in progress.
-
-Revision 1.2  2020/01/29 22:52:13  agmsmith
-Fixed up formatting of RCS log and version number.
-
-Revision 1.1  2020/01/29 22:43:07  agmsmith
-Initial revision
-</PRE>
+d1075 3
 @
 
 
