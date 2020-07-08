@@ -32,20 +32,14 @@ class LedgerDelete < LedgerBase
     return nil if record_array.nil? || record_array.empty?
     ledger_record = nil
     ledger_class = do_delete ? LedgerDelete : LedgerUndelete
-    begin
-      ledger_class.transaction do
-        ledger_record = ledger_class.new(creator: luser)
-        ledger_record.reason = reason if reason
-        ledger_record.save
-        record_array.each do |a_record|
-          a_record.original_version.ledger_delete_append(ledger_record,
-            do_delete)
-        end
+    ledger_class.transaction do
+      ledger_record = ledger_class.new(creator: luser)
+      ledger_record.reason = reason if reason
+      ledger_record.save
+      record_array.each do |a_record|
+        a_record.original_version.ledger_delete_append(ledger_record,
+          do_delete)
       end
-    rescue StandardError => e
-      logger.error("Exception #{e.class.name}: #{e.message}\n\t" \
-        "#{e.backtrace.join("\n\t")}")
-      ledger_record = nil
     end
     ledger_record
   end
