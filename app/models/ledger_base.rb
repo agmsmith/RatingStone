@@ -85,11 +85,8 @@ class LedgerBase < ApplicationRecord
   # record.  Has to be the creator or the owner of the object.  Returns
   # true if they have permission.
   def creator_owner?(ledger_user)
-    if !ledger_user.is_a?(LedgerUser)
-      raise SecurityError.new(
-        "LedgerBase#creator_owner? given a non-user to test against.")
-      return false
-    end
+    raise SecurityError, "LedgerBase#creator_owner? " \
+      "given a non-user to test against." unless ledger_user.is_a?(LedgerUser)
     ledger_user_id = ledger_user.original_version_id
     return true if creator_id == ledger_user_id
 
@@ -114,8 +111,8 @@ class LedgerBase < ApplicationRecord
     aux_record = AuxLedger.new(parent: ledger_delete_record,
       child_id: original_version_id)
     aux_record.save
-    LedgerBase.where(original_id: original_version_id).
-      update_all(deleted: deleting)
+    LedgerBase.where(original_id: original_version_id)
+      .update_all(deleted: deleting)
   end
 
   ##
