@@ -15,29 +15,37 @@ class LedgerDelete < LedgerBase
   # are deleted by implication.  Delete_user is the LedgerUser that the deletion
   # will be done by (used for permission checks and assigning blame).
   # The reason is an optional string explaining why the delete is being done.
-  # Returns the LedgerDelete record or nil on failure or throws a database
-  # error (will roll back everything in that case).
+  # Returns the LedgerDelete record on success, nil on nothing to do, raises
+  # an exception if something goes wrong.
   def self.delete_records(record_array, delete_user, reason = nil)
-    add_aux_records(record_array, delete_user, reason, true)
+    add_aux_records(record_array, delete_user.original_version, reason, true)
   end
 
   ##
   # Internal function that adds the auxiliary records to connect deleted or
   # undeleted things to a LedgerDelete or LedgerUndelete record, as specified
-  # by the "deleting" parameter.
-  private_class_method def self.add_aux_records(record_array, user, reason,
-    deleting = true)
+  # by the "do_delete" parameter.  Returns the LedgerDelete/Undelete record on
+  # success, nil on doing nothing, raises a RuntimeError exception (will roll
+  # back everything in that case) when something goes wrong.
+  private_class_method def self.add_aux_records(record_array, luser,
+    reason, do_delete = true)
     return nil if record_array.nil? || record_array.empty?
-    return nil if user.nil?
     ledger_record = nil
-    ledger_class = deleting ? LedgerDelete : LedgerUndelete
-    ledger_class.transaction do
-      ledger_record = ledger_class.new(creator: user)
-      ledger_record.reason = reason if reason
-      ledger_record.save
-      record_array.each do |a_record|
-        a_record.ledger_delete_append(ledger_record, deleting)
+    ledger_class = do_delete ? LedgerDelete : LedgerUndelete
+    begin
+      ledger_class.transaction do
+        ledger_record = ledger_class.new(creator: luser)
+        ledger_record.reason = reason if reason
+        ledger_record.save
+        record_array.each do |a_record|
+          a_record.original_version.ledger_delete_append(ledger_record,
+            do_delete)
+        end
       end
+    rescue StandardError => e
+      logger.error("Exception #{e.class.name}: #{e.message}\n\t" \
+        "#{e.backtrace.join("\n\t")}")
+      ledger_record = nil
     end
     ledger_record
   end

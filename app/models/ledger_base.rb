@@ -47,7 +47,7 @@ class LedgerBase < ApplicationRecord
   # point for the cached calculated values.  May be slightly faster than just
   # using "original".  Also safer, for that brief moment when original_id is
   # nil since we can't easily have a transaction around record creation (also
-  # get a nil original_id in Fixtures used for testing).
+  # get a nil original_id in Fixture generated data used for testing).
   def original_version
     return self if (original_id == id) || original_id.nil?
     original
@@ -85,8 +85,9 @@ class LedgerBase < ApplicationRecord
   # record.  Has to be the creator or the owner of the object.  Returns
   # true if they have permission.
   def creator_owner?(ledger_user)
-    raise SecurityError, "LedgerBase#creator_owner? " \
-      "given a non-user to test against." unless ledger_user.is_a?(LedgerUser)
+    raise RatingStoneErrors,
+      "Need a LedgerUser, not a #{ledger_user.class.name} " \
+      "object to test against." unless ledger_user.is_a?(LedgerUser)
     ledger_user_id = ledger_user.original_version_id
     return true if creator_id == ledger_user_id
 
@@ -103,16 +104,20 @@ class LedgerBase < ApplicationRecord
   # a utility function in the LedgerDelete/Undelete class) by an AuxLedger
   # record (parent field in AuxLedger identifies the Ledger(Un)Delete) to this
   # record being deleted (child field in AuxLedger, points to the original
-  # version of this record).  If doing an undelete, the parameter "deleting"
+  # version of this record).  If doing an undelete, the parameter "do_delete"
   # will be false.  All versions of this record will also be marked
   # as (un)deleted.  In the future we may mark individual versions as being
   # deleted, if that's useful.
-  def ledger_delete_append(ledger_delete_record, deleting)
+  def ledger_delete_append(ledger_delete_record, do_delete)
+    luser = ledger_delete_record.creator
+    raise RatingStoneErrors, "#{luser.class.name} ##{luser.id} " \
+      "(#{luser.name}) not allowed to delete #{type} ##{id}." unless
+      creator_owner?(luser)
     aux_record = AuxLedger.new(parent: ledger_delete_record,
       child_id: original_version_id)
     aux_record.save
     LedgerBase.where(original_id: original_version_id)
-      .update_all(deleted: deleting)
+      .update_all(deleted: do_delete)
   end
 
   ##
