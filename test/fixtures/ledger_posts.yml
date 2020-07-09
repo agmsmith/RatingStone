@@ -5,3 +5,8 @@ lpost_one:
   creator_id: 0
   text1: 'The first ledger post, used for testing.'
 
+lpost_two:
+  type: 'LedgerPost'
+  creator: member_user
+  text1: 'The second ledger post, used for testing ownership.'
+

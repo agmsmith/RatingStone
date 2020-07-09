@@ -14,12 +14,12 @@ class LedgerFullGroupTest < ActiveSupport::TestCase
     assert_not @group.creator_owner?(ledger_users(:message_moderator_user))
     assert_not @group.creator_owner?(ledger_users(:member_moderator_user))
     assert_not @group.creator_owner?(ledger_users(:member_user))
-    assert_not @group.creator_owner?(ledger_users(:some_user))
+    assert_not @group.creator_owner?(ledger_users(:someone_user))
     assert_not @group.creator_owner?(ledger_users(:root_ledger_user))
-    assert_raise(SecurityError, "Passing in a Post instead of a LedgerUser") do
+    assert_raise(RatingStoneErrors, "Passing in a Post, not LedgerUser") do
       @group.creator_owner?(ledger_posts(:lpost_one))
     end
-    assert_raise(SecurityError, "Passing in nil instead of a LedgerUser") do
+    assert_raise(RatingStoneErrors, "Passing in nil instead of LedgerUser") do
       @group.creator_owner?(nil)
     end
   end

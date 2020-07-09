@@ -32,8 +32,8 @@ member_user:
   creator_id: 0
   string1: 'Member of a group.'
 
-some_user:
+someone_user:
   type: 'LedgerUser'
   creator_id: 0
-  string1: 'Some generic LedgerUser made by the fixture system.'
+  string1: 'Someone who is a generic LedgerUser made by the fixture system.'
 

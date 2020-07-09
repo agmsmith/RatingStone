@@ -37,8 +37,8 @@ class LedgerDelete < LedgerBase
       ledger_record.reason = reason if reason
       ledger_record.save
       record_array.each do |a_record|
-        a_record.original_version.ledger_delete_append(ledger_record,
-          do_delete)
+        a_record = a_record.original_version if a_record.is_a?(LedgerBase)
+        a_record.ledger_delete_append(ledger_record, do_delete)
       end
     end
     ledger_record

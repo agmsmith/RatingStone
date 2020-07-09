@@ -22,9 +22,9 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     link_original_second.save
     original_lbase.reload
 
-    # Note that no matter what record we ask to delete, only the original
-    # version gets deleted and the other versions just have their deleted flag
-    # set.
+    # Note that no matter what version of a record we ask to delete, only the
+    # original version gets an AuxLedger record saying it was deleted and the
+    # other versions just have their deleted flag set.
 
     records_to_delete = [amended_lbase, second_lbase, link_original_second]
     assert_equal(records_to_delete.size, 3)
@@ -93,17 +93,27 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     assert_equal(ledger_undelete.deleted_by.count, 0)
   end
 
-  test "delete authorisation" do
-    lbase = LedgerBase.new(creator: users(:archer).ledger_user,
-      string1: "Something to delete, by Archer.")
-    lbase.save
-    assert_nil(LedgerDelete.delete_records([lbase],
-      users(:malory).ledger_user, "Testing delete from wrong user."))
-    assert_nil(LedgerUndelete.undelete_records([lbase],
-      users(:archer).ledger_user, "Testing undelete on not deleted thing."))
-    ldelete = LedgerDelete.undelete_records([lbase], users(:archer).ledger_user,
-      "Testing delete, should work.")
-    assert_equal(:LedgerDelete, ldelete.class)
-    assert_equal("Testing delete, should work.", ldelete.reason)
+  # Test permissions.  Need to be creator or an owner to delete.
+
+  test "delete needs permission" do
+    assert_raise(RatingStoneErrors) do
+      LedgerDelete.delete_records([ledger_posts(:lpost_one)],
+        ledger_users(:member_user), "Testing delete from wrong user.")
+    end
+    assert_raise(RatingStoneErrors) do
+      LedgerUndelete.undelete_records([ledger_posts(:lpost_one)],
+        ledger_users(:member_user), "Testing undelete on not deleted thing.")
+    end
+    ldelete = LedgerDelete.delete_records([ledger_posts(:lpost_two)],
+      ledger_users(:member_user), "Testing delete by creator, should work.")
+    assert_equal(ldelete.class.name, "LedgerDelete")
+    assert_equal("Testing delete by creator, should work.", ldelete.reason)
+    lundelete = LedgerUndelete.undelete_records([ledger_posts(:lpost_two)],
+      ledger_users(:someone_user), "Testing undelete by owner, should work.")
+    assert_equal(lundelete.class.name, "LedgerUndelete")
+    assert_equal("Testing delete by creator, should work.", ldelete.reason)
+    ldelete = LedgerDelete.delete_records([ledger_posts(:lpost_two)],
+      ledger_users(:someone_user), "Testing delete by owner, should work.")
+    assert_equal(ldelete.class.name, "LedgerDelete")
   end
 end
