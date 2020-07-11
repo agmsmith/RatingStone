@@ -128,6 +128,22 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
+  # records, with the most recent first.  Works by searching the AuxLedger
+  # records for references to this particular record and also to the original
+  # record if this one is a later version (theoretically don't have to do that).
+  def deleted_by
+    deleted_ids = [id]
+    deleted_ids.push(original_version_id) if id != original_version_id
+    LedgerBase.joins(:aux_ledger_downs)
+      .where({
+        aux_ledgers: { child_id: deleted_ids },
+        type: [:LedgerDelete, :LedgerUndelete],
+      })
+      .order(created_at: :desc)
+  end
+
+  ##
   # Internal function to include this record in a bunch being deleted or
   # undeleted.  Since this is a ledger, it doesn't actually get deleted.
   # Instead, it's linked to a LedgerDelete or LedgerUndelete record (created by
@@ -148,22 +164,6 @@ class LedgerBase < ApplicationRecord
     aux_record.save
     LedgerBase.where(original_id: original_version_id)
       .update_all(deleted: do_delete)
-  end
-
-  ##
-  # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
-  # records, with the most recent first.  Works by searching the AuxLedger
-  # records for references to this particular record and also to the original
-  # record if this one is a later version (theoretically don't have to do that).
-  def deleted_by
-    deleted_ids = [id]
-    deleted_ids.push(original_version_id) if id != original_version_id
-    LedgerBase.joins(:aux_ledger_downs)
-      .where({
-        aux_ledgers: { child_id: deleted_ids },
-        type: [:LedgerDelete, :LedgerUndelete],
-      })
-      .order(created_at: :desc)
   end
 
   private

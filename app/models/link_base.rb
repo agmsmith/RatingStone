@@ -21,6 +21,19 @@ class LinkBase < ApplicationRecord
   end
 
   ##
+  # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
+  # records, with the most recent first.  Works by searching the AuxLink
+  # records for references to this particular record.
+  def deleted_by
+    LedgerBase.joins(:aux_link_downs)
+      .where({
+        aux_links: { child_id: id },
+        type: [:LedgerDelete, :LedgerUndelete],
+      })
+      .order(created_at: :desc)
+  end
+
+  ##
   # Internal function to include this record in a bunch being deleted or
   # undeleted.  Since this is a ledger, it doesn't actually get deleted.
   # Instead, it's linked to a LedgerDelete or LedgerUndelete record (created by
@@ -36,18 +49,5 @@ class LinkBase < ApplicationRecord
     aux_record = AuxLink.new(parent: ledger_delete_record, child: self)
     aux_record.save
     update_attribute(:deleted, do_delete)
-  end
-
-  ##
-  # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
-  # records, with the most recent first.  Works by searching the AuxLink
-  # records for references to this particular record.
-  def deleted_by
-    LedgerBase.joins(:aux_link_downs)
-      .where({
-        aux_links: { child_id: id },
-        type: [:LedgerDelete, :LedgerUndelete],
-      })
-      .order(created_at: :desc)
   end
 end
