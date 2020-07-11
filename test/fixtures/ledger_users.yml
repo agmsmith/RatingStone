@@ -37,3 +37,8 @@ someone_user:
   creator_id: 0
   string1: 'Someone who is a generic LedgerUser made by the fixture system.'
 
+undesirable_user:
+  type: 'LedgerUser'
+  creator_id: 0
+  string1: 'An undesirable user who gets banned.'
+

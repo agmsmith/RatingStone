@@ -1,9 +1,14 @@
-head	1.35;
+head	1.36;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.36
+date	2020.07.10.19.35.35;	author agmsmith;	state Exp;
+branches;
+next	1.35;
 
 1.35
 date	2020.07.07.21.35.52;	author agmsmith;	state Exp;
@@ -186,15 +191,14 @@ desc
 @
 
 
-1.35
+1.36
 log
-@Put some of the exploratory explanations near the beginning, leaving
-the class definitions at the end.
+@Mention that the original version's id number is stored in various records.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.34 2020/07/07 20:51:57 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.35 2020/07/07 21:35:52 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -523,7 +527,8 @@ serious or distinct enough.
 * type string The name of the subclass to use for this object record.  "type"
   is the magic word Rails recognises to name a class and turn on single table
   inheritance mode.  Write-once.
-* creator_id Identifies the user who created this record.  The root object is
+* creator_id Identifies the user who created this record.  Store the id of the
+  original version of the user's LedgerUser record.  The root object is
   considered to have created itself.  If you want to change the creator of an
   object, you have to make a new version of the record with the new creator.
   Conceptually there is a LinkCreator record that links the object to the
@@ -626,9 +631,9 @@ Idenfities a particular user.
 * User_id Points to a user's record in the separate Users database (see
   RailsTutorial) which has passwords, e-mail addresses and other private
   information.
-* Elsewhere, the user is referenced by the record id number of the LedgerUser
-  record.  Though for export or federated systems we'd need a GUID or an
-  id+server pair.
+* Elsewhere, the user is referenced by the record id number of the original
+  version of the LedgerUser record.  Though for export or federated systems
+  we'd need a GUID or an id+server pair.
 * Points awarded per week cached value from the most recent award ceremony.
   Computed by considering various achievement records (such as e-mail verified,
   passport photo uploaded, had tea with the sysop, bought some bonus points)
@@ -774,12 +779,14 @@ B, object A is a list header and B is in the list, etc).
 * type string  The name of the subclass to use for this record.  Write-once.
 * parent_id Points to the LedgerBase object (or subclass) which is usually the
   main one in the association.  Generally the older one is the parent (eg:
-  original post is parent, reply to it is child).  Never NULL.  Write-once.
+  original post is parent, reply to it is child).  Never NULL.  Use the
+  original version's id number.  Write-once.
 * child_id Points to the child LedgerBase object (or subclass) which is usually
   the target one in the association (for example, parent_id could be a list
-  header record, child_id is something in the list).  Never NULL.  Write-once.
-* creator_id Identifies the LedgerUser who created this link.  Never NULL.
-  Write-once.
+  header record, child_id is something in the list).  Never NULL.  Use the
+  original version's id number.  Write-once.
+* creator_id Identifies the LedgerUser who created this link.  Never NULL.  Use
+  the original version's id number.  Write-once.
 * deleted boolean True if there is a LedgerDelete record that deletes this
   record, otherwise false (this record is alive).  Any rating points gained by
   the child object through this link vanish when it is deleted, as if they
@@ -1263,9 +1270,13 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.34 2020/07/07 20:51:57 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.35 2020/07/07 21:35:52 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.35  2020/07/07 21:35:52  agmsmith
+Put some of the exploratory explanations near the beginning, leaving
+the class definitions at the end.
+
 Revision 1.34  2020/07/07 20:51:57  agmsmith
 Added meta-moderation idea from a discussion on Slashdot.
 
@@ -1374,6 +1385,38 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.35
+log
+@Put some of the exploratory explanations near the beginning, leaving
+the class definitions at the end.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.34 2020/07/07 20:51:57 agmsmith Exp agmsmith $</SMALL>
+d332 2
+a333 1
+* creator_id Identifies the user who created this record.  The root object is
+d436 3
+a438 3
+* Elsewhere, the user is referenced by the record id number of the LedgerUser
+  record.  Though for export or federated systems we'd need a GUID or an
+  id+server pair.
+d584 2
+a585 1
+  original post is parent, reply to it is child).  Never NULL.  Write-once.
+d588 4
+a591 3
+  header record, child_id is something in the list).  Never NULL.  Write-once.
+* creator_id Identifies the LedgerUser who created this link.  Never NULL.
+  Write-once.
+d1075 1
+a1075 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.34 2020/07/07 20:51:57 agmsmith Exp agmsmith $
+d1078 4
 @
 
 

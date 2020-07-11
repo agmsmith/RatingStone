@@ -1,2 +1,50 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
+role_banned:
+  type: 'LinkRole'
+  creator: undesirable_user
+  number1: <%= LinkRole::BANNED %>
+  parent: group_all
+  child: undesirable_user
+  string1: 'Undesirable user is banned.'
+
+role_reader:
+  type: 'LinkRole'
+  creator: someone_user
+  number1: <%= LinkRole::READER %>
+  parent: group_all
+  child: someone_user
+  string1: 'Someone is just a reader.'
+
+role_member:
+  type: 'LinkRole'
+  creator: member_user
+  number1: <%= LinkRole::MEMBER %>
+  parent: group_all
+  child: member_user
+  string1: 'Member is a member.'
+
+role_message_moderator:
+  type: 'LinkRole'
+  creator: message_moderator_user
+  number1: <%= LinkRole::MESSAGE_MODERATOR %>
+  parent: group_all
+  child: message_moderator_user
+  string1: 'Message moderator is a message moderator.'
+
+role_meta_moderator:
+  type: 'LinkRole'
+  creator: meta_moderator_user
+  number1: <%= LinkRole::META_MODERATOR %>
+  parent: group_all
+  child: meta_moderator_user
+  string1: 'Meta moderator user is a meta moderator.'
+
+role_member_moderator:
+  type: 'LinkRole'
+  creator: member_moderator_user
+  number1: <%= LinkRole::MEMBER_MODERATOR %>
+  parent: group_all
+  child: member_moderator_user
+  string1: 'Member moderator user is a member moderator.'
+

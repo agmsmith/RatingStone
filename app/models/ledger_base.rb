@@ -71,6 +71,14 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # Finds the id of the latest version of this record.
+  def latest_version_id
+    latest_id = original_version.amended_id
+    return latest_id unless latest_id.nil?
+    id # We are the only and original version.
+  end
+
+  ##
   # Finds all versions of this record (including deleted ones).  Returned in
   # increasing date order (thus original version is first, we assume).  Note
   # that non-ledger fields (cached calculated values like rating points) are
@@ -98,6 +106,28 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # Return true if the user has permission to do the things implied by the role.
+  # Since this is a plain object, it delegates to a group if it can.
+  def permission?(luser, test_role)
+    # Creator has all permissions.
+    return true if creator_id == luser.original_version_id
+
+    # If looking for the owner.
+    if creator_owner?(luser)
+      return true if test_role <= LinkRole::OWNER
+    end
+
+    # See if we are linked to a group by a LinkGroupContent record.
+    LedgerBase.joins(:link_downs)
+      .where({
+        link_bases: { child_id: original_version_id, type: :LinkGroupContent },
+      }).each do |a_group|
+      return true if a_group.permission?(luser, test_role)
+    end
+    false
+  end
+
+  ##
   # Internal function to include this record in a bunch being deleted or
   # undeleted.  Since this is a ledger, it doesn't actually get deleted.
   # Instead, it's linked to a LedgerDelete or LedgerUndelete record (created by
@@ -109,7 +139,7 @@ class LedgerBase < ApplicationRecord
   # as (un)deleted.  In the future we may mark individual versions as being
   # deleted, if that's useful.
   def ledger_delete_append(ledger_delete_record, do_delete)
-    luser = ledger_delete_record.creator
+    luser = ledger_delete_record.creator.latest_version # Get most recent name.
     raise RatingStoneErrors, "#{luser.class.name} ##{luser.id} " \
       "(#{luser.name}) not allowed to delete #{type} ##{id}." unless
       creator_owner?(luser)
@@ -124,11 +154,11 @@ class LedgerBase < ApplicationRecord
   # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
   # records, with the most recent first.  Works by searching the AuxLedger
   # records for references to this particular record and also to the original
-  # record if this one is a later version.
+  # record if this one is a later version (theoretically don't have to do that).
   def deleted_by
     deleted_ids = [id]
     deleted_ids.push(original_version_id) if id != original_version_id
-    LedgerBase.joins(:aux_ledger_descendants)
+    LedgerBase.joins(:aux_ledger_downs)
       .where({
         aux_ledgers: { child_id: deleted_ids },
         type: [:LedgerDelete, :LedgerUndelete],

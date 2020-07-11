@@ -62,4 +62,21 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert_equal(original_lbase.latest_version.id, another_amend_lbase.id)
     assert_equal(original_lbase.id, another_amend_lbase.original_version.id)
   end
+
+  test "creator_owner? function" do
+    lgroup = ledger_full_groups(:group_all)
+    assert lgroup.creator_owner?(ledger_users(:group_creator_user))
+    assert lgroup.creator_owner?(ledger_users(:group_owner_user))
+    assert_not lgroup.creator_owner?(ledger_users(:message_moderator_user))
+    assert_not lgroup.creator_owner?(ledger_users(:member_moderator_user))
+    assert_not lgroup.creator_owner?(ledger_users(:member_user))
+    assert_not lgroup.creator_owner?(ledger_users(:someone_user))
+    assert_not lgroup.creator_owner?(ledger_users(:root_ledger_user))
+    assert_raise(RatingStoneErrors, "Passing in a Post, not LedgerUser") do
+      lgroup.creator_owner?(ledger_posts(:lpost_one))
+    end
+    assert_raise(RatingStoneErrors, "Passing in nil instead of LedgerUser") do
+      lgroup.creator_owner?(nil)
+    end
+  end
 end

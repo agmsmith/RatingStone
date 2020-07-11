@@ -34,8 +34,9 @@ class LedgerDeleteTest < ActiveSupport::TestCase
       assert_not(x.deleted)
     end
     ledger_delete = LedgerDelete.delete_records(records_to_delete,
-      LedgerUser.first, "Testing deletion.")
+      LedgerUser.first, "Some Context", "Testing deletion.")
     assert_equal(ledger_delete.reason, "Testing deletion.")
+    assert_equal(ledger_delete.context, "Some Context")
     all_deleted_records.each do |x|
       x.reload
       assert(x.deleted)
@@ -64,7 +65,7 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     all_undeleted_records = original_lbase.all_versions.to_a
     all_undeleted_records.push(link_original_second)
     ledger_undelete = LedgerUndelete.undelete_records(records_to_undelete,
-      LedgerUser.first, "Testing undeletion.")
+      LedgerUser.first, "Some Other Context", "Testing undeletion.")
     assert_equal(ledger_undelete.reason, "Testing undeletion.")
     all_undeleted_records.each do |x|
       x.reload
@@ -93,7 +94,7 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     assert_equal(ledger_undelete.deleted_by.count, 0)
   end
 
-  # Test permissions.  Need to be creator or an owner to delete.
+  # Test permission to delete.  Need to be creator or an owner to delete.
 
   test "delete needs permission" do
     assert_raise(RatingStoneErrors) do
@@ -102,14 +103,17 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     end
     assert_raise(RatingStoneErrors) do
       LedgerUndelete.undelete_records([ledger_posts(:lpost_one)],
-        ledger_users(:member_user), "Testing undelete on not deleted thing.")
+        ledger_users(:member_user), "Testing undelete on someone else's thing.")
     end
     ldelete = LedgerDelete.delete_records([ledger_posts(:lpost_two)],
-      ledger_users(:member_user), "Testing delete by creator, should work.")
+      ledger_users(:member_user), "My Context",
+      "Testing delete by creator, should work.")
     assert_equal(ldelete.class.name, "LedgerDelete")
     assert_equal("Testing delete by creator, should work.", ldelete.reason)
+    assert_equal("My Context", ldelete.context)
     lundelete = LedgerUndelete.undelete_records([ledger_posts(:lpost_two)],
-      ledger_users(:someone_user), "Testing undelete by owner, should work.")
+      ledger_users(:someone_user), "That Context",
+      "Testing undelete by owner, should work.")
     assert_equal(lundelete.class.name, "LedgerUndelete")
     assert_equal("Testing delete by creator, should work.", ldelete.reason)
     ldelete = LedgerDelete.delete_records([ledger_posts(:lpost_two)],

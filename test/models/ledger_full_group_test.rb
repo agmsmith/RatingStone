@@ -8,19 +8,11 @@ class LedgerFullGroupTest < ActiveSupport::TestCase
     @settings = @group.group_setting
   end
 
-  test "Owner and creator should have group access" do
-    assert @group.creator_owner?(ledger_users(:group_creator_user))
-    assert @group.creator_owner?(ledger_users(:group_owner_user))
-    assert_not @group.creator_owner?(ledger_users(:message_moderator_user))
-    assert_not @group.creator_owner?(ledger_users(:member_moderator_user))
-    assert_not @group.creator_owner?(ledger_users(:member_user))
-    assert_not @group.creator_owner?(ledger_users(:someone_user))
-    assert_not @group.creator_owner?(ledger_users(:root_ledger_user))
-    assert_raise(RatingStoneErrors, "Passing in a Post, not LedgerUser") do
-      @group.creator_owner?(ledger_posts(:lpost_one))
-    end
-    assert_raise(RatingStoneErrors, "Passing in nil instead of LedgerUser") do
-      @group.creator_owner?(nil)
+  test "Banned should have no access" do
+    luser = ledger_users(:undesirable_user)
+    assert_not @group.creator_owner?(luser)
+    LinkRole::ROLE_NAMES.each do |role_priority, role_name|
+      assert_not(@group.permission?(luser, role_priority), role_name)
     end
   end
 end
