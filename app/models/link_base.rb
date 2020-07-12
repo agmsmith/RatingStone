@@ -1,6 +1,9 @@
 # frozen_string_literal: true
 
 class LinkBase < ApplicationRecord
+  before_save :check_original_versions_referenced
+  before_save :do_automatic_approvals
+
   belongs_to :parent, class_name: :LedgerBase, optional: false
   belongs_to :child, class_name: :LedgerBase, optional: false
   belongs_to :creator, class_name: :LedgerBase, optional: false
@@ -51,3 +54,27 @@ class LinkBase < ApplicationRecord
     update_attribute(:deleted, do_delete)
   end
 end
+
+private
+
+  ##
+  # Make sure that the original version of objects are used when saving, since
+  # the original ID is what we use to find all versions of an object.  This
+  # is mostly a sanity check and may be removed if it's never triggered.
+  def check_original_versions_referenced
+    raise RatingStoneErrors,
+      "Parent #{parent.class.name} ##{parent.id} isn't the original version." \
+      if parent.original_version_id != parent.id
+
+    raise RatingStoneErrors,
+      "Child #{child.class.name} ##{child.id} isn't the original version." \
+      if child.original_version_id != child.id
+  end
+
+  ##
+  # Automatically approve the end of the link where the creator is the owner or
+  # creator of the object at that end of the link.
+  def do_automatic_approvals
+    self.approved_parent = true if parent.latest_version.creator_owner?(creator)
+    self.approved_child = true if child.latest_version.creator_owner?(creator)
+  end

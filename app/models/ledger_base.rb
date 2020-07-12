@@ -91,7 +91,10 @@ class LedgerBase < ApplicationRecord
   ##
   # See if the given user is allowed to delete and otherwise modify this
   # record.  Has to be the creator or the owner of the object.  Returns
-  # true if they have permission.
+  # true if they have permission.  Be careful if you're testing an older/newer
+  # version of this object where the creator has changed (best to ask for the
+  # latest version of the object to do the test against to get the current
+  # creator).
   def creator_owner?(ledger_user)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{ledger_user.class.name} " \

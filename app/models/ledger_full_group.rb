@@ -21,7 +21,7 @@ class LedgerFullGroup < LedgerSubgroup
 
     # The normal permissions level test.
     high_role = roles.last
-    return true if high_role && high_role.role_priority >= test_role
+    return true if high_role && test_role <= high_role.role_priority
 
     # If looking for the owner.
     if creator_owner?(luser)

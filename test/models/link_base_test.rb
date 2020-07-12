@@ -3,7 +3,74 @@
 require 'test_helper'
 
 class LinkBaseTest < ActiveSupport::TestCase
-  # test "the truth" do
-  #   assert true
-  # end
+  test "Automatic Approval" do
+    lgroup = ledger_full_groups(:group_all)
+    lpost = ledger_posts(:lpost_one)
+    luser_group_creator = ledger_users(:group_creator_user)
+    luser_group_owner = ledger_users(:group_owner_user)
+    luser_post_creator = lpost.creator.latest_version
+    luser_someone = ledger_users(:someone_user)
+
+    # See if creator of parent is approved.
+    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost,
+      creator: luser_group_creator)
+    assert_not(link_group_content.approved_parent)
+    assert_not(link_group_content.approved_child)
+    link_group_content.save
+    assert(link_group_content.approved_parent)
+    assert_not(link_group_content.approved_child)
+
+    # See if owner of parent is approved.
+    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost,
+      creator: luser_group_owner)
+    assert_not(link_group_content.approved_parent)
+    assert_not(link_group_content.approved_child)
+    link_group_content.save
+    assert(link_group_content.approved_parent)
+    assert_not(link_group_content.approved_child)
+
+    # See if unrelated to parent is not approved, and child owner is.
+    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost,
+      creator: luser_post_creator)
+    assert_not(link_group_content.approved_parent)
+    assert_not(link_group_content.approved_child)
+    link_group_content.save
+    assert_not(link_group_content.approved_parent)
+    assert(link_group_content.approved_child)
+
+    # Should cause an error if saving a non-original version.
+    lpost2 = lpost.append_ledger
+    lpost2.content = "This is an edited post."
+    lpost2.save
+    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost2,
+      creator: luser_post_creator)
+    assert_not(link_group_content.approved_parent)
+    assert_not(link_group_content.approved_child)
+    assert_raise(RatingStoneErrors) do
+      link_group_content.save
+    end
+
+    # Should be able to change the creator of the object in a later version.
+    lpost3 = lpost.append_ledger
+    lpost3.content = "This post has a new creator."
+    lpost3.creator = luser_someone
+    lpost3.save
+    lpost.reload # Has been amended.
+
+    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost,
+      creator: luser_post_creator, string1: "Testing post with new creator.")
+    assert_not(link_group_content.approved_parent)
+    assert_not(link_group_content.approved_child)
+    link_group_content.save
+    assert_not(link_group_content.approved_parent)
+    assert_not(link_group_content.approved_child, "Someone else now is creator")
+
+    link_group_content = LinkGroupContent.new(parent: lgroup,
+      child: lpost3.original_version, creator: luser_someone)
+    assert_not(link_group_content.approved_parent)
+    assert_not(link_group_content.approved_child)
+    link_group_content.save
+    assert_not(link_group_content.approved_parent)
+    assert(link_group_content.approved_child)
+  end
 end

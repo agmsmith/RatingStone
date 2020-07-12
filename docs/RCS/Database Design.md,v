@@ -1,9 +1,14 @@
-head	1.36;
+head	1.37;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.37
+date	2020.07.12.01.00.19;	author agmsmith;	state Exp;
+branches;
+next	1.36;
 
 1.36
 date	2020.07.10.19.35.35;	author agmsmith;	state Exp;
@@ -191,14 +196,14 @@ desc
 @
 
 
-1.36
+1.37
 log
-@Mention that the original version's id number is stored in various records.
+@Both ends of the link need to be approved before points awarded.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.35 2020/07/07 21:35:52 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.36 2020/07/10 19:35:35 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -799,7 +804,7 @@ B, object A is a list header and B is in the list, etc).
 * approved_child boolean False if a particular end of the link hasn't been
   approved.  The link record exists but it can't be traversed by ordinary users
   until both ends have been approved.  Like being deleted, the points for
-  parent or child aren't awarded until that end of the link has been approved.
+  parent or child aren't awarded until all ends of the link have been approved.
   The typical use case will be someone posting a message to a discussion group
   by adding a link between their post and the group.  The approved_child end
   (assuming the post is the child) is set to true when it is created since the
@@ -856,7 +861,7 @@ Also by using a LinkOwner, rather than having an implied LinkCreator with a
 fixed 1.0 fee, we can charge a larger and variable fee for more resource
 consuming objects, such as big media files.
 
-Only the creator or an existing owner can add new owners to an object.
+Only the creator or an existing owner can approve new owners of an object.
 
 Adding an owner to a LedgerUser currently doesn't do much, but in future it
 could be a way of letting multiple people control a person or company account.
@@ -1270,9 +1275,12 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.35 2020/07/07 21:35:52 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.36 2020/07/10 19:35:35 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.36  2020/07/10 19:35:35  agmsmith
+Mention that the original version's id number is stored in various records.
+
 Revision 1.35  2020/07/07 21:35:52  agmsmith
 Put some of the exploratory explanations near the beginning, leaving
 the class definitions at the end.
@@ -1385,6 +1393,27 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.36
+log
+@Mention that the original version's id number is stored in various records.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.35 2020/07/07 21:35:52 agmsmith Exp agmsmith $</SMALL>
+d604 1
+a604 1
+  parent or child aren't awarded until that end of the link has been approved.
+d661 1
+a661 1
+Only the creator or an existing owner can add new owners to an object.
+d1075 1
+a1075 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.35 2020/07/07 21:35:52 agmsmith Exp agmsmith $
+d1078 3
 @
 
 
