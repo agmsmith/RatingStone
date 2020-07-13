@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class LinkBase < ApplicationRecord
+  before_create :do_automatic_approvals
   before_save :check_original_versions_referenced
-  before_save :do_automatic_approvals
 
   belongs_to :parent, class_name: :LedgerBase, optional: false
   belongs_to :child, class_name: :LedgerBase, optional: false
@@ -53,9 +53,8 @@ class LinkBase < ApplicationRecord
     aux_record.save
     update_attribute(:deleted, do_delete)
   end
-end
 
-private
+  private
 
   ##
   # Make sure that the original version of objects are used when saving, since
@@ -78,3 +77,4 @@ private
     self.approved_parent = true if parent.latest_version.creator_owner?(creator)
     self.approved_child = true if child.latest_version.creator_owner?(creator)
   end
+end
