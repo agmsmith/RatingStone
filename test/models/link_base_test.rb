@@ -38,7 +38,7 @@ class LinkBaseTest < ActiveSupport::TestCase
     assert_not(link_group_content.approved_parent)
     assert(link_group_content.approved_child)
 
-    # Should cause an error if saving a non-original version.
+    # Should cause a validation error if saving a non-original version.
     lpost2 = lpost.append_ledger
     lpost2.content = "This is an edited post."
     lpost2.save
@@ -46,11 +46,12 @@ class LinkBaseTest < ActiveSupport::TestCase
       creator: luser_post_creator)
     assert_not(link_group_content.approved_parent)
     assert_not(link_group_content.approved_child)
-    assert_raise(RatingStoneErrors) do
-      link_group_content.save
-    end
+    assert_not(link_group_content.valid?)
+    assert_equal(link_group_content.errors[:unoriginal_child].first,
+      "Child LedgerPost ##{lpost2.id} isn't the original version.")
 
-    # Should be able to change the creator of the object in a later version.
+    # Should be able to change the creator of the object in a later version,
+    # and have tests use that new creator.
     lpost3 = lpost.append_ledger
     lpost3.content = "This post has a new creator."
     lpost3.creator = luser_someone

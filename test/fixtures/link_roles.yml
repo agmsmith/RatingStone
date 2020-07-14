@@ -7,6 +7,8 @@ role_banned:
   parent: group_all
   child: undesirable_user
   string1: 'Undesirable user is banned.'
+  approved_parent: true
+  approved_child: true
 
 role_reader:
   type: 'LinkRole'
@@ -15,6 +17,8 @@ role_reader:
   parent: group_all
   child: someone_user
   string1: 'Someone is just a reader.'
+  approved_parent: true
+  approved_child: true
 
 role_member:
   type: 'LinkRole'
@@ -23,6 +27,8 @@ role_member:
   parent: group_all
   child: member_user
   string1: 'Member is a member.'
+  approved_parent: true
+  approved_child: true
 
 role_message_moderator:
   type: 'LinkRole'
@@ -31,6 +37,28 @@ role_message_moderator:
   parent: group_all
   child: message_moderator_user
   string1: 'Message moderator is a message moderator.'
+  approved_parent: true
+  approved_child: true
+
+role_message_moderator2:
+  type: 'LinkRole'
+  creator: message_moderator2_user
+  number1: <%= LinkRole::MESSAGE_MODERATOR %>
+  parent: group_all
+  child: message_moderator2_user
+  string1: 'Message moderator 2 is a message moderator.'
+  approved_parent: true
+  approved_child: true
+
+role_message_moderator2_banned:
+  type: 'LinkRole'
+  creator: message_moderator2_user
+  number1: <%= LinkRole::BANNED %>
+  parent: group_all
+  child: message_moderator2_user
+  string1: 'Message moderator 2 is banned.'
+  approved_parent: true
+  approved_child: true
 
 role_meta_moderator:
   type: 'LinkRole'
@@ -39,6 +67,8 @@ role_meta_moderator:
   parent: group_all
   child: meta_moderator_user
   string1: 'Meta moderator user is a meta moderator.'
+  approved_parent: true
+  approved_child: true
 
 role_member_moderator:
   type: 'LinkRole'
@@ -47,4 +77,6 @@ role_member_moderator:
   parent: group_all
   child: member_moderator_user
   string1: 'Member moderator user is a member moderator.'
+  approved_parent: true
+  approved_child: true
 

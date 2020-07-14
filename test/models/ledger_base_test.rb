@@ -23,6 +23,16 @@ class LedgerBaseTest < ActiveSupport::TestCase
     end
   end
 
+  test "creator must be original version" do
+    later_creator = ledger_users(:someone_user).append_ledger
+    later_creator.email = "SomeLaterVersion@Somewhere.com"
+    assert(later_creator.save)
+    lbase = LedgerBase.new(creator: later_creator, string1: "Just One")
+    assert_not(lbase.save)
+    assert_equal(lbase.errors[:unoriginal_creator].first,
+      "Creator LedgerUser ##{later_creator.id} isn't the original version.")
+  end
+
   test "amended record fields" do
     original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String Four")
     original_lbase.deleted = true

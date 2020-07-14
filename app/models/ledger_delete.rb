@@ -35,18 +35,22 @@ class LedgerDelete < LedgerBase
     return nil if record_collection.nil? || record_collection.empty?
     ledger_record = nil
 
-    # Make a LedgerDelete or LedgerUndelete object as the hub for the operation.
+    # Make a LedgerDelete or LedgerUndelete object as the hub for the operation,
+    # and wrap it in a transaction in case an error exception (such as not
+    # having priviledges to delete something) happens.
     ledger_class = do_delete ? LedgerDelete : LedgerUndelete
     ledger_class.transaction do
-      ledger_record = ledger_class.new(creator_id: luser.original_version_id)
+      ledger_record = ledger_class.new(creator: luser)
       ledger_record.context = context if context
       ledger_record.reason = reason if reason
-      ledger_record.save
+      ledger_record.save!
 
       # Copy the records into sets of ID numbers.  That way if someone gave us
       # a relation as input, and deleting items modifies the relation as it is
       # being traversed, we won't get odd behaviour (doubled items etc).  Also
-      # being a Set means no duplicates.
+      # being a Set means no duplicates in case someone asked to delete several
+      # different versions of an object (we just delete the original and set
+      # flags on the others).
       ledger_ids = Set.new
       link_ids = Set.new
       record_collection.each do |a_record|

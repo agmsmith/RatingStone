@@ -2,6 +2,7 @@
 
 class LinkRole < LinkBase
   alias_attribute :role_priority, :number1
+  alias_attribute :role_description, :string1
 
   # The various different role priority numbers.  Separated by 10s so we have
   # space to insert future roles.  Each role usually includes functionality of

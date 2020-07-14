@@ -50,11 +50,14 @@ ActiveRecord::Schema.define(version: 2020_06_30_193857) do
   create_table "group_settings", force: :cascade do |t|
     t.integer "ledger_full_group_id", null: false
     t.boolean "auto_approve_non_member_posts", default: false
-    t.boolean "auto_approve_member_posts", default: false
+    t.boolean "auto_approve_member_posts", default: true
     t.boolean "auto_approve_members", default: false
-    t.float "min_points_non_member_post", default: 0.0
-    t.float "min_points_member_post", default: 0.0
-    t.float "min_points_membership", default: 0.0
+    t.float "min_points_non_member_post", default: -1.0
+    t.float "max_points_non_member_post", default: 2.0
+    t.float "min_points_member_post", default: -10.0
+    t.float "max_points_member_post", default: 10.0
+    t.float "min_points_membership", default: 1.0
+    t.float "max_points_membership", default: 100.0
     t.string "wildcard_role_banned", default: ""
     t.string "wildcard_role_reader", default: ""
     t.string "wildcard_role_member", default: ""

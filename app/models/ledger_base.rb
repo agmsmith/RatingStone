@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 class LedgerBase < ApplicationRecord
+  validate :validate_original_versions_referenced
   after_save :patch_original_id # Do this one first - lower level field init.
   after_save :amend_original_record
 
@@ -156,7 +157,7 @@ class LedgerBase < ApplicationRecord
   # version of this record).  If doing an undelete, the parameter "do_delete"
   # will be false.  All versions of this record will also be marked
   # as (un)deleted.  In the future we may mark individual versions as being
-  # deleted, if that's useful.
+  # deleted, if that's useful.  Returns the AuxLedger record if successful.
   def ledger_delete_append(ledger_delete_record, do_delete)
     luser = ledger_delete_record.creator.latest_version # Get most recent name.
     raise RatingStoneErrors, "#{luser.class.name} ##{luser.id} " \
@@ -164,9 +165,10 @@ class LedgerBase < ApplicationRecord
       creator_owner?(luser)
     aux_record = AuxLedger.new(parent: ledger_delete_record,
       child_id: original_version_id)
-    aux_record.save
+    aux_record.save!
     LedgerBase.where(original_id: original_version_id)
       .update_all(deleted: do_delete)
+    aux_record
   end
 
   private
@@ -180,11 +182,21 @@ class LedgerBase < ApplicationRecord
     # Verify that there are no later amended version records than this one.
     latest = LedgerBase.where(original_id: original_id).order('created_at').last
     if latest.id != id
-      puts "Bug: some other amended record (#{latest.inspect}) is later than " \
-        "this (#{inspect}) new amended record."
+      logger.error("Bug: some other amended record (#{latest.inspect}) is " \
+        "later than this (#{inspect}) new amended record."
       throw(:abort) # Stop the ActiveRecord transaction.
     end
     original.update_attribute(:amended_id, id)
+  end
+
+  ##
+  # Make sure that the original version of objects are used when saving, since
+  # the original ID is what we use to find all versions of an object.  This
+  # is mostly a sanity check and may be removed if it's never triggered.
+  def validate_original_versions_referenced
+    errors.add(:unoriginal_creator,
+      "Creator #{creator.class.name} ##{creator.id} isn't the original " \
+      "version.") if creator && creator.original_version_id != creator.id
   end
 
   ##

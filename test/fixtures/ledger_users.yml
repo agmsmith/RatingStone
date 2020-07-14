@@ -22,6 +22,11 @@ message_moderator_user:
   creator_id: 0
   string1: 'Moderator of messages in a group.'
 
+message_moderator2_user:
+  type: 'LedgerUser'
+  creator_id: 0
+  string1: 'Second moderator of messages in a group.'
+
 member_moderator_user:
   type: 'LedgerUser'
   creator_id: 0

@@ -1,9 +1,19 @@
-head	1.37;
+head	1.39;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.39
+date	2020.07.14.00.22.05;	author agmsmith;	state Exp;
+branches;
+next	1.38;
+
+1.38
+date	2020.07.14.00.17.38;	author agmsmith;	state Exp;
+branches;
+next	1.37;
 
 1.37
 date	2020.07.12.01.00.19;	author agmsmith;	state Exp;
@@ -196,14 +206,14 @@ desc
 @
 
 
-1.37
+1.39
 log
-@Both ends of the link need to be approved before points awarded.
+@Better wording.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.36 2020/07/10 19:35:35 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.38 2020/07/14 00:17:38 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -926,6 +936,12 @@ the same group also need a LinkGroupContent record, since group inclusion can
 change from post to post as the users wish (user interface defaults to using
 the same groups as the original post when replying).
 
+Unlike most Links where only the owner or creator of the linked to thing can
+change the approval, group message moderators can change the approval of the
+parent (group) end of this link (since it's trying to connect to their group).
+As well, they can also delete this link (to get it out of their pending things
+to moderate list).
+
 * display_priority integer Importance of showing this object.  Higher numbers
   for content which is more likely to be an original post, the start of a chain
   of replies.  Saves having to hunt for top posts every time we display the
@@ -1275,9 +1291,16 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.36 2020/07/10 19:35:35 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.38 2020/07/14 00:17:38 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.38  2020/07/14 00:17:38  agmsmith
+Group message moderators have special powers over LinkGroupContent
+that links something to their group.
+
+Revision 1.37  2020/07/12 01:00:19  agmsmith
+Both ends of the link need to be approved before points awarded.
+
 Revision 1.36  2020/07/10 19:35:35  agmsmith
 Mention that the original version's id number is stored in various records.
 
@@ -1393,6 +1416,43 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.38
+log
+@Group message moderators have special powers over LinkGroupContent
+that links something to their group.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.37 2020/07/12 01:00:19 agmsmith Exp agmsmith $</SMALL>
+d726 5
+a730 3
+Unlike most Links, group message moderators can change the approval of this
+link (since it's trying to connect to their group).  As well, they can also
+delete this link (to get it out of their pending things to moderate list).
+d1081 1
+a1081 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.37 2020/07/12 01:00:19 agmsmith Exp agmsmith $
+d1084 4
+@
+
+
+1.37
+log
+@Both ends of the link need to be approved before points awarded.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.36 2020/07/10 19:35:35 agmsmith Exp agmsmith $</SMALL>
+d726 4
+d1079 1
+a1079 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.36 2020/07/10 19:35:35 agmsmith Exp agmsmith $
+d1082 3
 @
 
 
