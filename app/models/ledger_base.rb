@@ -159,13 +159,15 @@ class LedgerBase < ApplicationRecord
   # as (un)deleted.  In the future we may mark individual versions as being
   # deleted, if that's useful.  Returns the AuxLedger record if successful.
   def ledger_delete_append(ledger_delete_record, do_delete)
-    luser = ledger_delete_record.creator.latest_version # Get most recent name.
+    luser = ledger_delete_record.creator
     raise RatingStoneErrors, "#{luser.class.name} ##{luser.id} " \
-      "(#{luser.name}) not allowed to delete #{type} ##{id}." unless
-      creator_owner?(luser)
+      "(#{luser.latest_version.name}) not allowed to delete " \
+      "#{type} ##{id}." unless creator_owner?(luser)
     aux_record = AuxLedger.new(parent: ledger_delete_record,
       child_id: original_version_id)
     aux_record.save!
+    # Note update_all goes direct to the database, so callbacks and timestamps
+    # won't be used/updated.  Would have to iterate through records to do that.
     LedgerBase.where(original_id: original_version_id)
       .update_all(deleted: do_delete)
     aux_record
