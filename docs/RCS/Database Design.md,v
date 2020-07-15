@@ -1,9 +1,14 @@
-head	1.40;
+head	1.41;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.41
+date	2020.07.15.20.46.09;	author agmsmith;	state Exp;
+branches;
+next	1.40;
 
 1.40
 date	2020.07.15.01.21.50;	author agmsmith;	state Exp;
@@ -211,14 +216,14 @@ desc
 @
 
 
-1.40
+1.41
 log
-@Add a note about multipurpose class structure maybe better than separate object and links.
+@amended_id now used in later versions to detect race conditions.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.39 2020/07/14 00:22:05 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.40 2020/07/15 01:21:50 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -573,10 +578,15 @@ serious or distinct enough.
   after creation the original_id will be updated to be equal to id (there's a
   brief time when it is NULL, could cause timing bugs).  Happens to be
   write-once.
-* amended_id Points to the latest version of this record, or NULL if this is
-  not the original record.  Usually we delete or undelete all versions of an
-  object, but if we ever delete/undelete just some versions, this will point to
-  the latest not deleted version.  Changed as needed.
+* amended_id In the original record, this points to the latest version of this
+  record or is NULL if there are no other versions.  In later versions, it is
+  the ID of the previous version when this one was created, and is used for
+  detecting race conditions (when saving for the first time, it's a copy of the
+  original record's amended_id field, and that shouldn't have changed when it
+  comes time to save the new version, unless there is a race condition bug).
+  Usually we delete or undelete all versions of an object, but if we ever
+  delete/undelete just some versions, this will point to the latest not deleted
+  version.  Changed as needed.
 * deleted boolean True if there is a LedgerDelete record that is currently
   deleting this record, otherwise false (record is alive).  A deleted object
   just shows a warning message to the user when an attempt is made to display
@@ -1304,9 +1314,12 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.39 2020/07/14 00:22:05 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.40 2020/07/15 01:21:50 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.40  2020/07/15 01:21:50  agmsmith
+Add a note about multipurpose class structure maybe better than separate object and links.
+
 Revision 1.39  2020/07/14 00:22:05  agmsmith
 Better wording.
 
@@ -1432,6 +1445,27 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.40
+log
+@Add a note about multipurpose class structure maybe better than separate object and links.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.39 2020/07/14 00:22:05 agmsmith Exp agmsmith $</SMALL>
+d358 9
+a366 4
+* amended_id Points to the latest version of this record, or NULL if this is
+  not the original record.  Usually we delete or undelete all versions of an
+  object, but if we ever delete/undelete just some versions, this will point to
+  the latest not deleted version.  Changed as needed.
+d1094 1
+a1094 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.39 2020/07/14 00:22:05 agmsmith Exp agmsmith $
+d1097 3
 @
 
 

@@ -149,9 +149,9 @@ class User < ApplicationRecord
     return if ledger_user_id.nil?
     luser = ledger_user # Gets latest version of the data.
     return if (luser.name == name) && (luser.email == email)
-    new_luser = luser.append_ledger
+    new_luser = luser.append_version
     new_luser.name = name
     new_luser.email = email
-    new_luser.save
+    new_luser.save!
   end
 end

@@ -3,7 +3,7 @@
 class LedgerBase < ApplicationRecord
   validate :validate_original_versions_referenced
   after_save :patch_original_id # Do this one first - lower level field init.
-  after_save :amend_original_record
+  after_create :amend_original_record
 
   # Always have a creator, but "optional: false" makes it reload the creator
   # object every time we do something with an object.  So just require it to
@@ -39,11 +39,11 @@ class LedgerBase < ApplicationRecord
   # data (doesn't include cached and calculated data).  Modify it as you will,
   # then when you save it, it will update the original record to point to the
   # newest record as the latest one.  If someone else appended to the ledger
-  # first, the save will fail with an error.
-  def append_ledger
+  # first, the save will fail with an exception.
+  def append_version
     new_entry = latest_version.dup
-    new_entry.amended_id = nil
     new_entry.original_id = original_version_id # In case original_id is nil.
+    new_entry.amended_id = original_version.amended_id
     new_entry.deleted = false
     # Cached values not used (see original record) in amended, set to defaults.
     new_entry.current_down_points = 0.0
@@ -115,7 +115,8 @@ class LedgerBase < ApplicationRecord
     # Hunt for LinkOwner records that include the mentioned user and this
     # object. Use the original_id as key, since we can be using amended
     # versions for data but we want the canonical base version for references.
-    LinkOwner.exists?(parent_id: ledger_user_id, child_id: original_version_id)
+    LinkOwner.exists?(parent_id: ledger_user_id, child_id: original_version_id,
+      deleted: false, approved_parent: true, approved_child: true)
   end
 
   ##
@@ -153,29 +154,38 @@ class LedgerBase < ApplicationRecord
     aux_record = AuxLedger.new(parent: ledger_delete_record,
       child_id: original_version_id)
     aux_record.save!
+
     # Note update_all goes direct to the database, so callbacks and timestamps
-    # won't be used/updated.  Would have to iterate through records to do that.
-    LedgerBase.where(original_id: original_version_id)
-      .update_all(deleted: do_delete)
+    # won't be used/updated.  Instead iterate through records to update.  Or we
+    # could use update_all and also set the updated_at date.
+    LedgerBase.where(original_id: original_version_id).order('created_at')
+      .each do |x|
+      x.deleted = do_delete
+      x.save!
+    end
     aux_record
   end
 
   private
 
   ##
-  # If this is an amended ledger record, once it has been saved, go back and
-  # update the original record to point to the newly saved amended data.  Check
-  # that this is indeed the latest amendment by date, fail if it is not.
+  # If this is an amended ledger record, now that it has been created, go back
+  # and update the original record to point to the newly saved amended data.
+  # Check that this is indeed the latest amendment, raise exception if not.
   def amend_original_record
-    return if (original_id == id) || original_id.nil?
-    # Verify that there are no later amended version records than this one.
-    latest = LedgerBase.where(original_id: original_id).order('created_at').last
-    if latest.id != id
-      logger.error("Bug: some other amended record (#{latest.inspect}) is " \
-        "later than this (#{inspect}) new amended record.")
-      throw(:abort) # Stop the ActiveRecord transaction.
+    return if (original_id == id) || original_id.nil? # We are the original.
+
+    # Wrap this critical section (read and modify amended_id) in a transaction.
+    self.class.transaction do
+      if original.amended_id != amended_id
+        raise RatingStoneErrors,
+          "Race condition?  Some other amended record (#{original.amended}) " \
+          "was added before this (#{self}) new amended record.  " \
+          "Original: #{original}"
+      end
+      original.amended_id = id
+      original.save!
     end
-    original.update_attribute(:amended_id, id)
   end
 
   ##
@@ -184,8 +194,8 @@ class LedgerBase < ApplicationRecord
   # is mostly a sanity check and may be removed if it's never triggered.
   def validate_original_versions_referenced
     errors.add(:unoriginal_creator,
-      "Creator #{creator.class.name} ##{creator.id} isn't the original " \
-      "version.") if creator && creator.original_version_id != creator.id
+      "Creator #{creator.class.name} ##{creator_id} isn't the original " \
+      "version.") if creator && creator.original_version_id != creator_id
   end
 
   ##

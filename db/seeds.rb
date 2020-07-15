@@ -40,7 +40,7 @@ if User.where(name: "System Operator").empty?
     activated_at: Time.zone.now)
   sysop_ledger = sysop_user.ledger_user # Will create ledger record.
   sysop_ledger.birthday = DateTime.new(2020,2,20,20,20,20) # Palindromic date.
-  sysop_ledger.save
+  sysop_ledger.save!
 end
 
 # Create a dummy user to represent anonymous Internet browsers and search engines.
@@ -55,7 +55,7 @@ if User.where(name: "Anonymous Internet Browser").empty?
     activated_at: Time.zone.now)
   internet_ledger = internet_user.ledger_user # Will create ledger record.
   internet_ledger.birthday = DateTime.new(2020,2,2,2,2,2)
-  internet_ledger.save
+  internet_ledger.save!
 end
 
 # Generate a bunch of additional users, but not in test mode.
@@ -91,12 +91,13 @@ if !Rails.env.test?
     content = Faker::Markdown.random
     users.each do |user|
       post = LedgerPost.create!(content: content, creator: user.ledger_user)
-      post2 = post.append_ledger
+      post2 = post.append_version
       post2.content = "Sorry, I meant " + Faker::Lorem.sentence(word_count: 8)
-      post2.save
-      post3 = post.append_ledger
+      post2.save!
+      post.reload
+      post3 = post.append_version
       post3.content = "Oops, that was " + Faker::Lorem.sentence(word_count: 6)
-      post3.save
+      post3.save!
     end
   end
 

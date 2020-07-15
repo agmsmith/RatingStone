@@ -8,5 +8,5 @@ lpost_one:
 lpost_two:
   type: 'LedgerPost'
   creator: member_user
-  text1: 'The second ledger post, used for testing ownership.'
+  text1: 'The second ledger post by a member, used for testing ownership.'
 

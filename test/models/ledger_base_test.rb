@@ -15,16 +15,16 @@ class LedgerBaseTest < ActiveSupport::TestCase
   test "creator always required" do
     assert_raise(ActiveRecord::NotNullViolation, "Can't have a NULL creator") do
       lbase = LedgerBase.new(creator_id: nil, string1: "String Two")
-      lbase.save
+      lbase.save!
     end
     assert_raise(ActiveRecord::InvalidForeignKey, "Creator must exist") do
       lbase = LedgerBase.new(creator_id: 123456, string1: "String Three")
-      lbase.save
+      lbase.save!
     end
   end
 
   test "creator must be original version" do
-    later_creator = ledger_users(:someone_user).append_ledger
+    later_creator = ledger_users(:someone_user).append_version
     later_creator.email = "SomeLaterVersion@Somewhere.com"
     assert(later_creator.save)
     lbase = LedgerBase.new(creator: later_creator, string1: "Just One")
@@ -39,9 +39,9 @@ class LedgerBaseTest < ActiveSupport::TestCase
     original_lbase.current_down_points = 1.0
     original_lbase.current_meh_points = 2.0
     original_lbase.current_up_points = 3.0
-    original_lbase.save
+    original_lbase.save!
     assert_equal(original_lbase.latest_version.id, original_lbase.id)
-    amended_lbase = original_lbase.append_ledger
+    amended_lbase = original_lbase.append_version
     # Nothing should change in the original record until saved.
     assert_nil(original_lbase.amended_id)
     assert_equal(original_lbase.id, original_lbase.original_id)
@@ -59,18 +59,44 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert_equal(amended_lbase.current_up_points, 0.0)
     # After another amend.
     original_lbase.deleted = false
-    original_lbase.save
-    another_amend_lbase = original_lbase.append_ledger
+    original_lbase.save!
+    another_amend_lbase = original_lbase.append_version
     assert_equal(another_amend_lbase.string1, "An Amended string.")
     another_amend_lbase.string1 = "Amended a second time."
-    another_amend_lbase.save
+    another_amend_lbase.save!
     original_lbase.reload
     assert_equal(original_lbase.id, another_amend_lbase.original_id)
     assert_equal(original_lbase.amended_id, another_amend_lbase.id)
-    assert_nil(another_amend_lbase.amended_id)
+    assert_equal(amended_lbase.id, another_amend_lbase.amended_id)
     assert_not(another_amend_lbase.deleted)
     assert_equal(original_lbase.latest_version.id, another_amend_lbase.id)
     assert_equal(original_lbase.id, another_amend_lbase.original_version.id)
+  end
+
+  test "amended record race detection" do
+    original_lbase = LedgerBase.new(creator_id: 0, string1: "It's a Race")
+    original_lbase.save!
+    amended_lbase1 = original_lbase.append_version
+    amended_lbase1.string1 = "First One"
+    amended_lbase2 = original_lbase.append_version
+    amended_lbase2.string1 = "Second One"
+    amended_lbase2.save!
+    assert_raise(RatingStoneErrors, "Out of order appending versions") do
+      amended_lbase1.save!
+    end
+    original_lbase.reload
+    assert_equal("Second One", original_lbase.latest_version.string1)
+    # Do it again, so the previous version isn't the original.
+    amended_lbase1 = original_lbase.append_version
+    amended_lbase1.string1 = "First One Again"
+    amended_lbase2 = original_lbase.append_version
+    amended_lbase2.string1 = "Second One Again"
+    amended_lbase2.save!
+    assert_raise(RatingStoneErrors, "Out of order appending versions again") do
+      amended_lbase1.save!
+    end
+    original_lbase.reload
+    assert_equal("Second One Again", original_lbase.latest_version.string1)
   end
 
   test "creator_owner? function" do

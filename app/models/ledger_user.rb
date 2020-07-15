@@ -10,7 +10,7 @@ class LedgerUser < LedgerBase
     if original_version.amended
       latest = latest_version
       (super + " (##{original_version_id}-#{latest.id} " \
-        "{latest.name.truncate(25)})").truncate(255)
+        "#{latest.name.truncate(25)})").truncate(255)
     else
       (super + " (#{name.truncate(25)})").truncate(255)
     end

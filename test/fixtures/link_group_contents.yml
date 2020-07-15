@@ -1,2 +1,11 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
+group_dogs_content_post2:
+  type: 'LinkGroupContent'
+  creator: group_owner_user
+  parent: group_dogs
+  child: lpost_two
+  string1: 'Post 2 is in Group Dogs.'
+  approved_parent: true
+  approved_child: true
+

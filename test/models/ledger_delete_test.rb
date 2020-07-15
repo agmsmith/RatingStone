@@ -5,21 +5,22 @@ require 'test_helper'
 class LedgerDeleteTest < ActiveSupport::TestCase
   test "deleting records" do
     original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String One")
-    original_lbase.save
-    amended_lbase = original_lbase.append_ledger
+    original_lbase.save!
+    amended_lbase = original_lbase.append_version
     amended_lbase.string1 = "An Amended string."
-    amended_lbase.save
-    amended_lbase = original_lbase.append_ledger
+    amended_lbase.save!
+    original_lbase.reload # Has been amended.
+    amended_lbase = original_lbase.append_version
     amended_lbase.string1 = "The string changed a second time."
-    amended_lbase.save
+    amended_lbase.save!
     second_lbase = LedgerPost.new(creator_id: 0,
       content: "A second LedgerBase record, actually a post.")
-    second_lbase.save
+    second_lbase.save!
     link_original_second = LinkBase.new(creator_id: 0, parent: original_lbase,
       child: second_lbase, rating_points_spent: 1,
       rating_points_boost_child: 0.5, rating_points_boost_parent: 0.25,
       rating_direction: 'U')
-    link_original_second.save
+    link_original_second.save!
     original_lbase.reload
 
     # Note that no matter what version of a record we ask to delete, only the
@@ -31,6 +32,8 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     all_deleted_records = original_lbase.all_versions.to_a
     all_deleted_records.push(second_lbase, link_original_second)
     all_deleted_records.each do |x|
+      assert_not(x.deleted)
+      x.reload
       assert_not(x.deleted)
     end
     ledger_delete = LedgerDelete.delete_records(records_to_delete,
@@ -119,5 +122,43 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     ldelete = LedgerDelete.delete_records([ledger_posts(:lpost_two)],
       ledger_users(:someone_user), "Testing delete by owner, should work.")
     assert_equal(ldelete.class.name, "LedgerDelete")
+  end
+
+  # Test permission to delete for special kinds of links.
+
+  test "delete permission for special links" do
+    # A normal one without extra people, though parent is a group.
+    link = link_subgroups(:linkgroup_all_animals)
+    assert_raise(RatingStoneErrors) do
+      LedgerDelete.delete_records([link], ledger_users(:group_creator_user))
+    end
+    assert_not(link.deleted)
+    luser = link.creator.append_version # Testing with a later version id.
+    luser.name = "Later #{link.creator.name}"
+    luser.save!
+    assert_equal(LedgerDelete.delete_records([link], luser).class.name,
+      "LedgerDelete")
+    link.reload
+    assert(link.deleted)
+
+    # Linking a post to a group lets group moderators and the post owner also
+    # delete the link, as well as the usual link creator.
+    link = link_group_contents(:group_dogs_content_post2)
+    assert_raise(RatingStoneErrors) do
+      LedgerDelete.delete_records([link], ledger_users(:undesirable_user))
+    end
+    assert_not(link.deleted)
+    luser = ledger_posts(:lpost_two).creator.latest_version
+    assert_not_equal(luser.original_version_id, link.creator_id)
+    assert_equal("LedgerDelete",
+      LedgerDelete.delete_records([link], luser).class.name)
+    link.reload
+    assert(link.deleted)
+    luser = ledger_users(:message_moderator_user)
+    assert_not_equal(luser.original_version_id, link.creator_id)
+    assert_equal("LedgerUndelete",
+      LedgerUndelete.undelete_records([link], luser).class.name)
+    link.reload
+    assert_not(link.deleted)
   end
 end

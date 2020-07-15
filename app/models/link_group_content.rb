@@ -8,15 +8,18 @@ class LinkGroupContent < LinkBase
   ##
   # Besides the creator of the link, the message moderator in the linked to
   # group can also delete this link (rather than having it hang around as
-  # a post waiting for moderation).
+  # a post waiting for moderation).  And the linked-to content owner can
+  # also delete the link.
   def creator_owner?(luser)
     return true if super
-    parent.role_test?(luser, LinkRole::MESSAGE_MODERATOR)
+    return true if parent.role_test?(luser, LinkRole::MESSAGE_MODERATOR)
+    child.creator_owner?(luser)
   end
 
   ##
   # Return true if the given user is allowed to make changes to the approval of
-  # the parent end (a group) of this link to a post or other content.
+  # the parent end (a group) of this link to a post or other content.  Note that
+  # role_test includes creator_owner functionality so we skip that test.
   def permission_to_change_parent_approval(luser)
     parent.role_test?(luser, LinkRole::MESSAGE_MODERATOR)
   end

@@ -27,7 +27,8 @@ class LinkBase < ApplicationRecord
   # Has to be the creator of the object.  You can't have owners of a link,
   # though owners do get involved for approvals of link ends, but that's a
   # separate concept.  Returns true if they have permission.  Subclasses may
-  # override this to add more people.
+  # override this to add more people.  The policy is that if someone needs to
+  # approve a link, they should also be able to delete it.
   def creator_owner?(luser)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{luser.class.name} " \
@@ -141,15 +142,15 @@ class LinkBase < ApplicationRecord
   def validate_original_versions_referenced
     errors.add(:unoriginal_parent,
       "Parent isn't the original version: #{parent}") \
-      if parent && parent.original_version_id != parent.id
+      if parent && parent.original_version_id != parent_id
 
     errors.add(:unoriginal_child,
       "Child isn't the original version: #{child}") \
-      if child && child.original_version_id != child.id
+      if child && child.original_version_id != child_id
 
     errors.add(:unoriginal_creator,
       "Creator isn't the original version: #{creator}") \
-        if creator && creator.original_version_id != creator.id
+        if creator && creator.original_version_id != creator_id
   end
 
   ##
