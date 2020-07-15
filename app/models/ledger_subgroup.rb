@@ -20,16 +20,12 @@ class LedgerSubgroup < LedgerBase
   # Returns false if nobody to delegate to or nobody returns true.
   # Look into define_method if this becomes a performance bottleneck.
   def method_missing(method_name, *args, &block)
-    puts "TestIt in LedgerSubgroup missing method for #{method_name}."
     if REDIRECTED_METHODS.include?(method_name)
-      group_links = LinkGroupRoleDelegation.where(
-        child_id: original_version_id, deleted: false)
+      group_links = LinkGroupRoleDelegation.where(child_id: original_version_id,
+        deleted: false)
       group_links.each do |a_link|
         delegate_to = a_link.parent.latest_version
-puts "TestIt started method_missing in #{self} delegating to #{delegate_to}."
-        result = delegate_to.send(method_name, *args, &block)
-puts "TestIt finished method_missing in #{self} delegating to #{delegate_to} result is #{result}."
-        return true if result
+        return true if delegate_to.send(method_name, *args, &block)
       end
       return false
     end

@@ -17,7 +17,6 @@ class LinkGroupContentTest < ActiveSupport::TestCase
     link_group = LinkGroupContent.new(parent: lpost, child: lsubgroup,
       creator: luser_post_creator)
     assert_not(link_group.valid?)
-puts "TestIt Errors are #{link_group.errors}."
     assert_equal(link_group.errors.count, 2)
   end
 end

@@ -11,20 +11,14 @@ class LinkGroupContent < LinkBase
   # a post waiting for moderation).
   def creator_owner?(luser)
     return true if super
-puts "TestIt #{self} starting special creator_owner test for #{luser}."
-result =    parent.role_test?(luser, LinkRole::MESSAGE_MODERATOR)
-puts "TestIt #{self} result of special creator_owner test for #{luser} is #{result}."
-result
+    parent.role_test?(luser, LinkRole::MESSAGE_MODERATOR)
   end
 
   ##
   # Return true if the given user is allowed to make changes to the approval of
   # the parent end (a group) of this link to a post or other content.
   def permission_to_change_parent_approval(luser)
-puts "TestIt Special LinkGroupContent case starting #{self} permission_to_change_parent_approval for #{luser}."
-result =    parent.role_test?(luser, LinkRole::MESSAGE_MODERATOR)
-puts "TestIt Special LinkGroupContent case finishing #{self} permission_to_change_parent_approval for #{luser} result #{result}."
-result
+    parent.role_test?(luser, LinkRole::MESSAGE_MODERATOR)
   end
 
   private
@@ -36,7 +30,6 @@ result
     super # Do the usual owner and creator approvals.
     return if approved_parent # Already approved, skip group role test.
 
-puts "TestIt #{self} do_automatic_approvals extra test for #{creator}."
     # Check if the creator is a member of the parent group with enough
     # priviledge and points spent to add posts to the group.
     errors = []
@@ -45,7 +38,6 @@ puts "TestIt #{self} do_automatic_approvals extra test for #{creator}."
     else
       self.disapproval_messages = errors.join("  ").truncate(255)
     end
-puts "TestIt #{self} do_automatic_approval extra test for #{creator} result is #{approved_parent}."
   end
 
   def validate_parent_and_child_types

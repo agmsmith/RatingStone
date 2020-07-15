@@ -13,7 +13,6 @@ class LedgerFullGroup < LedgerSubgroup
   # appended if false is returned.  Of course, false just means a moderator
   # will need to approve the post.
   def can_post?(luser, points_spent, error_messages = nil)
-puts "TestIt in can_post? #{self}, user: #{luser.latest_version}, points: #{points_spent}."
     # Creator of group can always do anything.
     return true if creator_id == luser.original_version_id
 
@@ -69,7 +68,6 @@ puts "TestIt in can_post? #{self}, user: #{luser.latest_version}, points: #{poin
   ##
   # Returns the role the given user has in this group.
   def get_role(luser)
-puts "TestIt get_role(#{luser}) inside #{self}."
     return LinkRole::CREATOR if creator_id == luser.original_version_id
 
     # See which roles the user has been assigned, lowest priority one first.
@@ -105,8 +103,6 @@ puts "TestIt get_role(#{luser}) inside #{self}."
     # Creator has all permissions.
     return true if creator_id == luser.original_version_id
 
-    best_role = get_role(luser) # Easier debugging if we store it in a variable.
-puts "TestIt LedgerFullGroup role_test? for #{luser} got role #{best_role}, test against #{test_role}."
-    test_role <= best_role
+    test_role <= get_role(luser)
   end
 end

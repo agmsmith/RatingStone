@@ -40,20 +40,14 @@ class LinkBase < ApplicationRecord
   # Return true if the given user is allowed to make changes to the approval of
   # the parent end of this link.  Subclasses may override this.
   def permission_to_change_parent_approval(luser)
-puts "TestIt starting #{self} permission_to_change_parent_approval for #{luser}."
     parent.creator_owner?(luser)
-puts "TestIt finished #{self} permission_to_change_parent_approval for #{luser}, result #{result}."
-result
   end
 
   ##
   # Return true if the given user is allowed to make changes to the approval of
   # the child end of this link.  Subclasses probably won't override this.
   def permission_to_change_child_approval(luser)
-puts "TestIt starting #{self} permission_to_change_child_approval for #{luser}."
-result =    child.creator_owner?(luser)
-puts "TestIt finished #{self} permission_to_change_child_approval for #{luser}, result #{result}."
-result
+    child.creator_owner?(luser)
   end
 
   ##
@@ -93,7 +87,6 @@ result
   # don't have any permission, an AuxLink isn't created and an exception thrown.
   def ledger_approve_append(ledger_approve_record, do_approve)
     luser = ledger_approve_record.creator
-puts "TestIt Starting #{self} ledger_approve_append for user: #{luser}."
     changes_permitted = false
 
     if permission_to_change_parent_approval(luser)
@@ -112,7 +105,6 @@ puts "TestIt Starting #{self} ledger_approve_append for user: #{luser}."
     aux_record = AuxLink.new(parent: ledger_approve_record, child: self)
     aux_record.save!
     save!
-puts "TestIt Finished #{self} ledger_approve_append for user: #{luser} successfully."
     aux_record
   end
 
@@ -167,6 +159,5 @@ puts "TestIt Finished #{self} ledger_approve_append for user: #{luser} successfu
   def do_automatic_approvals
     self.approved_parent = true if parent.latest_version.creator_owner?(creator)
     self.approved_child = true if child.latest_version.creator_owner?(creator)
-puts "TestIt #{self} base do_automatic_approvals parent: #{approved_parent} child: #{approved_child}."
   end
 end
