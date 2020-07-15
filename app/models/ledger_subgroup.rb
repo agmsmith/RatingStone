@@ -11,10 +11,6 @@ class LedgerSubgroup < LedgerBase
     (super + " (#{name})").truncate(255)
   end
 
-  # Want to delegate permission checks to the parent LedgerFullGroup(s), so
-  # need to disable the default role_test? method in the base class.
-  undef role_test?
-
   ##
   # Delegate some operations to the parent LedgerFullGroup(s), if they exist.
   # Returns false if nobody to delegate to or nobody returns true.

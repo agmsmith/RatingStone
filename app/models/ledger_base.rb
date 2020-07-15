@@ -119,28 +119,6 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
-  # Return true if the user has permission to do the things implied by the role.
-  # Since this is a plain object, it delegates to a group if it can.
-  def role_test?(luser, test_role)
-    # Creator has all permissions.
-    return true if creator_id == luser.original_version_id
-
-    # If looking for the owner.
-    if creator_owner?(luser)
-      return true if test_role <= LinkRole::OWNER
-    end
-
-    # See if we are linked to a group by a LinkGroupContent record.
-    LedgerBase.joins(:link_downs)
-      .where({
-        link_bases: { child_id: original_version_id, type: :LinkGroupContent },
-      }).each do |a_group|
-      return true if a_group.role_test?(luser, test_role)
-    end
-    false
-  end
-
-  ##
   # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
   # records, with the most recent first.  Works by searching the AuxLedger
   # records for references to this particular record and also to the original
