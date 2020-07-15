@@ -48,7 +48,8 @@ class LinkBaseTest < ActiveSupport::TestCase
     assert_not(link_group_content.approved_child)
     assert_not(link_group_content.valid?)
     assert_equal(link_group_content.errors[:unoriginal_child].first,
-      "Child LedgerPost ##{lpost2.id} isn't the original version.")
+      "Child isn't the original version: LedgerPost ##{lpost2.id} " \
+      "(by: #0 Root User Object ..., This is an edited post.)")
 
     # Should be able to change the creator of the object in a later version,
     # and have tests use that new creator.

@@ -12,6 +12,17 @@ class LinkBase < ApplicationRecord
   has_many :aux_link_ancestors, through: :aux_link_ups, source: :parent
 
   ##
+  # Return a user readable description of the object.  Besides some unique
+  # identification so we can find it in the database, have some readable
+  # text so the user can guess which object it is (like the content of a post).
+  # Usually used in error messages, which the user may see.  Max 255 characters.
+  def to_s
+    "#{self.class.name} ##{id} (parent #{approved_parent.to_s[0].upcase}: " \
+      "#{parent}, child #{approved_child.to_s[0].upcase}: #{child}, " \
+      "number: #{number1}, notes: #{string1})".truncate(255)
+  end
+
+  ##
   # See if the given user is allowed to delete and otherwise modify this record.
   # Has to be the creator of the object.  You can't have owners of a link,
   # though owners do get involved for approvals of link ends, but that's a
@@ -20,7 +31,8 @@ class LinkBase < ApplicationRecord
   def creator_owner?(luser)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{luser.class.name} " \
-      "object to test against." unless luser.is_a?(LedgerUser)
+      "object to test against.  Self: #{self}, supposed user: #{luser}" \
+      unless luser.is_a?(LedgerUser)
     creator_id == luser.original_version_id
   end
 
@@ -28,14 +40,20 @@ class LinkBase < ApplicationRecord
   # Return true if the given user is allowed to make changes to the approval of
   # the parent end of this link.  Subclasses may override this.
   def permission_to_change_parent_approval(luser)
+puts "TestIt starting #{self} permission_to_change_parent_approval for #{luser}."
     parent.creator_owner?(luser)
+puts "TestIt finished #{self} permission_to_change_parent_approval for #{luser}, result #{result}."
+result
   end
 
   ##
   # Return true if the given user is allowed to make changes to the approval of
   # the child end of this link.  Subclasses probably won't override this.
   def permission_to_change_child_approval(luser)
-    child.creator_owner?(luser)
+puts "TestIt starting #{self} permission_to_change_child_approval for #{luser}."
+result =    child.creator_owner?(luser)
+puts "TestIt finished #{self} permission_to_change_child_approval for #{luser}, result #{result}."
+result
   end
 
   ##
@@ -75,6 +93,7 @@ class LinkBase < ApplicationRecord
   # don't have any permission, an AuxLink isn't created and an exception thrown.
   def ledger_approve_append(ledger_approve_record, do_approve)
     luser = ledger_approve_record.creator
+puts "TestIt Starting #{self} ledger_approve_append for user: #{luser}."
     changes_permitted = false
 
     if permission_to_change_parent_approval(luser)
@@ -87,14 +106,13 @@ class LinkBase < ApplicationRecord
       self.approved_child = do_approve
     end
 
-    raise RatingStoneErrors, "#{luser.class.name} ##{luser.id} " \
-      "(#{luser.latest_version.name}) not allowed to change approval of " \
-      "both #{parent.type} ##{parent.id} and #{child.type} ##{child.id} " \
-      "linked together by #{type} ##{id}." unless changes_permitted
+    raise RatingStoneErrors, "Not allowed to change any approvals, " \
+      "user: #{luser}, record: #{self}." unless changes_permitted
 
     aux_record = AuxLink.new(parent: ledger_approve_record, child: self)
     aux_record.save!
     save!
+puts "TestIt Finished #{self} ledger_approve_append for user: #{luser} successfully."
     aux_record
   end
 
@@ -110,10 +128,9 @@ class LinkBase < ApplicationRecord
   def ledger_delete_append(ledger_delete_record, do_delete)
     # Check for permission to delete a Ledger object.
     luser = ledger_delete_record.creator
-    unless creator_owner?(luser)
-      raise RatingStoneErrors, "#{luser.class.name} ##{luser.id} " \
-        "(#{luser.latest_version.name}) not allowed to delete #{type} ##{id}."
-    end
+    raise RatingStoneErrors,
+      "Not allowed to delete record #{self}, user: #{luser}." \
+      unless creator_owner?(luser)
 
     # Make the AuxLink record showing what's being deleted.
     aux_record = AuxLink.new(parent: ledger_delete_record, child: self)
@@ -131,16 +148,16 @@ class LinkBase < ApplicationRecord
   # is mostly a sanity check and may be removed if it's never triggered.
   def validate_original_versions_referenced
     errors.add(:unoriginal_parent,
-      "Parent #{parent.class.name} ##{parent.id} isn't the original version.") \
+      "Parent isn't the original version: #{parent}") \
       if parent && parent.original_version_id != parent.id
 
     errors.add(:unoriginal_child,
-      "Child #{child.class.name} ##{child.id} isn't the original version.") \
+      "Child isn't the original version: #{child}") \
       if child && child.original_version_id != child.id
 
     errors.add(:unoriginal_creator,
-      "Creator #{creator.class.name} ##{creator.id} isn't the original " \
-      "version.") if creator && creator.original_version_id != creator.id
+      "Creator isn't the original version: #{creator}") \
+        if creator && creator.original_version_id != creator.id
   end
 
   ##
@@ -150,5 +167,6 @@ class LinkBase < ApplicationRecord
   def do_automatic_approvals
     self.approved_parent = true if parent.latest_version.creator_owner?(creator)
     self.approved_child = true if child.latest_version.creator_owner?(creator)
+puts "TestIt #{self} base do_automatic_approvals parent: #{approved_parent} child: #{approved_child}."
   end
 end

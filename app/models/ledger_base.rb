@@ -26,6 +26,15 @@ class LedgerBase < ApplicationRecord
   has_many :aux_link_descendants, through: :aux_link_downs, source: :child
 
   ##
+  # Return a user readable description of the object.  Besides some unique
+  # identification so we can find it in the database, have some readable
+  # text so the user can guess which object it is (like the content of a post).
+  # Usually used in error messages, which the user may see.  Max 255 characters.
+  def to_s
+    "#{self.class.name} ##{id}".truncate(255)
+  end
+
+  ##
   # Returns a new Ledger record with a copy of this record's latest version's
   # data (doesn't include cached and calculated data).  Modify it as you will,
   # then when you save it, it will update the original record to point to the
@@ -112,7 +121,7 @@ class LedgerBase < ApplicationRecord
   ##
   # Return true if the user has permission to do the things implied by the role.
   # Since this is a plain object, it delegates to a group if it can.
-  def permission?(luser, test_role)
+  def role_test?(luser, test_role)
     # Creator has all permissions.
     return true if creator_id == luser.original_version_id
 
@@ -126,7 +135,7 @@ class LedgerBase < ApplicationRecord
       .where({
         link_bases: { child_id: original_version_id, type: :LinkGroupContent },
       }).each do |a_group|
-      return true if a_group.permission?(luser, test_role)
+      return true if a_group.role_test?(luser, test_role)
     end
     false
   end
@@ -185,7 +194,7 @@ class LedgerBase < ApplicationRecord
     latest = LedgerBase.where(original_id: original_id).order('created_at').last
     if latest.id != id
       logger.error("Bug: some other amended record (#{latest.inspect}) is " \
-        "later than this (#{inspect}) new amended record."
+        "later than this (#{inspect}) new amended record.")
       throw(:abort) # Stop the ActiveRecord transaction.
     end
     original.update_attribute(:amended_id, id)

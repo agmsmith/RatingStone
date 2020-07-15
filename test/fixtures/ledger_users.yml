@@ -32,6 +32,11 @@ member_moderator_user:
   creator_id: 0
   string1: 'Moderator of members in a group.'
 
+meta_moderator_user:
+  type: 'LedgerUser'
+  creator_id: 0
+  string1: 'Moderator of opinions in a group.'
+
 member_user:
   type: 'LedgerUser'
   creator_id: 0

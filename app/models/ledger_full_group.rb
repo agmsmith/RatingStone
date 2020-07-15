@@ -13,10 +13,16 @@ class LedgerFullGroup < LedgerSubgroup
   # appended if false is returned.  Of course, false just means a moderator
   # will need to approve the post.
   def can_post?(luser, points_spent, error_messages = nil)
-    # Creator of group can always post without moderation.  But not owners.
+puts "TestIt in can_post? #{self}, user: #{luser.latest_version}, points: #{points_spent}."
+    # Creator of group can always do anything.
     return true if creator_id == luser.original_version_id
 
+    # Test the various roles, starting with higher priority ones first, so
+    # moderators can always approve a post even though they're also members.
     role = get_role(luser)
+
+    # Message moderators can always post/approve a message.
+    return true if role >= LinkRole::MESSAGE_MODERATOR
 
     # Membership has priviledges.
     if role >= LinkRole::MEMBER
@@ -35,7 +41,7 @@ class LedgerFullGroup < LedgerSubgroup
       return false
     end
 
-    # Non-members are sometimes allowed to read posts.
+    # Non-member readers are sometimes allowed to write posts.
     if role >= LinkRole::READER
       unless group_setting.auto_approve_non_member_posts
         error_messages&.push(
@@ -55,13 +61,15 @@ class LedgerFullGroup < LedgerSubgroup
     end
 
     error_messages&.push(
-      "You are not allowed to even read the \"#{name}\" group, let alone post.")
+      "You (#{luser.latest_version}) are not allowed to even read the " \
+      "\"#{name}\" group, let alone post.")
     false
   end
 
   ##
   # Returns the role the given user has in this group.
   def get_role(luser)
+puts "TestIt get_role(#{luser}) inside #{self}."
     return LinkRole::CREATOR if creator_id == luser.original_version_id
 
     # See which roles the user has been assigned, lowest priority one first.
@@ -93,11 +101,12 @@ class LedgerFullGroup < LedgerSubgroup
 
   ##
   # Return true if the user has permission to do the things implied by the role.
-  def permission?(luser, test_role)
+  def role_test?(luser, test_role)
     # Creator has all permissions.
     return true if creator_id == luser.original_version_id
 
     best_role = get_role(luser) # Easier debugging if we store it in a variable.
+puts "TestIt LedgerFullGroup role_test? for #{luser} got role #{best_role}, test against #{test_role}."
     test_role <= best_role
   end
 end

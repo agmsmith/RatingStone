@@ -1,2 +1,20 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
+group_delegate_animals:
+  type: 'LinkGroupRoleDelegation'
+  creator: group_owner_user
+  parent: group_all
+  child: group_animals
+  string1: 'Animals delegates to Group All.'
+  approved_parent: true
+  approved_child: true
+
+group_delegate_dogs:
+  type: 'LinkGroupRoleDelegation'
+  creator: group_owner_user
+  parent: group_all
+  child: group_dogs
+  string1: 'Dogs delegates to Group All.'
+  approved_parent: true
+  approved_child: true
+
