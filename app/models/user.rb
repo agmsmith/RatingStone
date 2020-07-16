@@ -89,19 +89,12 @@ class User < ApplicationRecord
   end
 
   # Returns the latest version LedgerUser record corresponding to this user,
-  # if none then creates one, preferably reusing the id number of the User
-  # (mostly important for low numbered sysop accounts where the id value
-  # is used to determine their priviledge).
+  # if none then creates one.
   def ledger_user
     lu = LedgerUser.find_by(id: ledger_user_id) if ledger_user_id
     if lu.nil?
-      lu = if LedgerUser.exists?(id: id)
-        LedgerUser.create!(creator_id: 0, name: name,
+      lu = LedgerUser.create!(creator_id: 0, name: name,
           email: email, user_id: id)
-      else # Can force a specific ID number for new record.
-        LedgerUser.create!(id: id, creator_id: 0, name: name,
-          email: email, user_id: id)
-      end
       self.ledger_user_id = lu.id # Need self.attr here to make it work.
       save!
     else

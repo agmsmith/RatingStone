@@ -24,27 +24,28 @@ if LedgerBase.all.empty?
     activated_at: Time.zone.now)
   root_luser = root_user.ledger_user
   if (root_luser.id != 0)
-    raise "Bug: Root User doesn't have LedgerUser #0."
+    raise "Bug: Root User doesn't have LedgerUser #0 #{root_luser}."
   end
 end
 
 # Create system operators, they are users with ID less than 10 (no need to do
 # a database lookup to see if someone is a sysop).  Will have less priviledges
-# than root.
-(1..9).each do |i|
-  unless User.exists?(name: "System Operator #{i}")
-    sysop_user = User.create!(
-      id: i,
-      name:  "System Operator #{i}",
-      email: "sysop#{i}@example.com",
-      password: "SomePassword",
-      password_confirmation: "SomePassword",
-      admin: true,
-      activated: false)
-    sysop_user.reload
-    sysop_luser = sysop_user.ledger_user
-    if (sysop_luser.original_version_id != i)
-      raise "Bug: Sysop User #{i} #{sysop_luser} doesn't have LedgerUser ##{i}."
+# than root.  Don't do in test mode, where record IDs are random numbers.
+if !Rails.env.test?
+  (1..9).each do |i|
+    unless User.exists?(name: "System Operator #{i}")
+      sysop_user = User.create!(
+        name:  "System Operator #{i}",
+        email: "sysop#{i}@example.com",
+        password: "SomePassword",
+        password_confirmation: "SomePassword",
+        admin: true,
+        activated: false)
+      sysop_user.reload
+      sysop_luser = sysop_user.ledger_user
+      if (sysop_luser.original_version_id != i)
+        raise "Bug: Sysop User #{i} #{sysop_luser} doesn't have LedgerUser ##{i}."
+      end
     end
   end
 end
