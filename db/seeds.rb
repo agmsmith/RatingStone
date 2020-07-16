@@ -24,23 +24,29 @@ if LedgerBase.all.empty?
     activated_at: Time.zone.now)
   root_luser = root_user.ledger_user
   if (root_luser.id != 0)
-    p "Bug: Root User doesn't have LedgerUser #0."
+    raise "Bug: Root User doesn't have LedgerUser #0."
   end
 end
 
-# Create a system operator if needed.  Will have less priviledges than root.
-if User.where(name: "System Operator").empty?
-  sysop_user = User.create!(
-    name:  "System Operator",
-    email: "sysop@example.com",
-    password: "SomePassword",
-    password_confirmation: "SomePassword",
-    admin: true,
-    activated: true,
-    activated_at: Time.zone.now)
-  sysop_ledger = sysop_user.ledger_user # Will create ledger record.
-  sysop_ledger.birthday = DateTime.new(2020,2,20,20,20,20) # Palindromic date.
-  sysop_ledger.save!
+# Create system operators, they are users with ID less than 10 (no need to do
+# a database lookup to see if someone is a sysop).  Will have less priviledges
+# than root.
+(1..9).each do |i|
+  unless User.exists?(name: "System Operator #{i}")
+    sysop_user = User.create!(
+      id: i,
+      name:  "System Operator #{i}",
+      email: "sysop#{i}@example.com",
+      password: "SomePassword",
+      password_confirmation: "SomePassword",
+      admin: true,
+      activated: false)
+    sysop_user.reload
+    sysop_luser = sysop_user.ledger_user
+    if (sysop_luser.original_version_id != i)
+      raise "Bug: Sysop User #{i} #{sysop_luser} doesn't have LedgerUser ##{i}."
+    end
+  end
 end
 
 # Create a dummy user to represent anonymous Internet browsers and search engines.
