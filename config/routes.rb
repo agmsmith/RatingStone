@@ -19,12 +19,32 @@ Rails.application.routes.draw do
   resources :account_activations, only: [:edit]
   resources :password_resets, only: [:new, :create, :edit, :update]
   resources :microposts, only: [:create, :destroy]
-  resources :ledger_posts, except: [:new]
-  # Note can't use "/ledger_posts/:id" since that confuses the CSRF token
-  # validation because that combines the action with the posting method to
-  # generate the token.  So we use a slightly different action name in the URL.
-  post '/ledger_posts_undelete/:id', to: 'ledger_posts#undelete',
-    as: :ledger_post_undelete
   resources :relationships, only: [:create, :destroy]
+
+  # The usual actions for displaying/editing posts, plus a RESTful undelete.
+  resources :ledger_posts do
+    member do
+      post 'undelete'
+    end
+  end
+
+  # Low level interface for debugging ledger objects in general.
+  resources :ledger_objects do
+    member do
+      post 'undelete'
+    end
+  end
+
+  # Low level interface for debugging link objects in general.
+  resources :link_objects do
+    member do
+      post 'undelete'
+    end
+  end
+
+  # Clipboard for saving objects to use later.
+  resources :clips, only: [:new, :index, :edit, :update, :destroy]
+  post '/clip_ledger/:id', to: 'clips#create_ledger'
+  post '/clip_link/:id', to: 'clips#create_link'
 end
 

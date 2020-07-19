@@ -47,7 +47,7 @@ class LedgerPostControllerTest < ActionDispatch::IntegrationTest
   test "should redirect undelete for wrong LedgerPost owner" do
     log_in_as(users(:michael))
     assert_no_difference 'LedgerBase.count' do
-      post ledger_post_undelete_path(@ledger_post)
+      post undelete_ledger_post_path(@ledger_post)
     end
     assert_redirected_to root_url
   end

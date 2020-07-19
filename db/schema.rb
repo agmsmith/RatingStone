@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_06_30_193857) do
+ActiveRecord::Schema.define(version: 2020_07_19_164951) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -45,6 +45,17 @@ ActiveRecord::Schema.define(version: 2020_06_30_193857) do
     t.integer "child_id", null: false
     t.index ["child_id"], name: "index_aux_links_on_child_id"
     t.index ["parent_id"], name: "index_aux_links_on_parent_id"
+  end
+
+  create_table "clips", force: :cascade do |t|
+    t.integer "ledger_user_id_id", null: false
+    t.string "object_type", default: ""
+    t.integer "ledger_object_id_id"
+    t.integer "link_object_id_id"
+    t.string "description", default: ""
+    t.index ["ledger_object_id_id"], name: "index_clips_on_ledger_object_id_id"
+    t.index ["ledger_user_id_id"], name: "index_clips_on_ledger_user_id_id"
+    t.index ["link_object_id_id"], name: "index_clips_on_link_object_id_id"
   end
 
   create_table "group_settings", force: :cascade do |t|
@@ -158,6 +169,9 @@ ActiveRecord::Schema.define(version: 2020_06_30_193857) do
   add_foreign_key "aux_ledgers", "ledger_bases", column: "parent_id"
   add_foreign_key "aux_links", "ledger_bases", column: "parent_id"
   add_foreign_key "aux_links", "link_bases", column: "child_id"
+  add_foreign_key "clips", "ledger_bases", column: "ledger_object_id_id"
+  add_foreign_key "clips", "ledger_bases", column: "ledger_user_id_id"
+  add_foreign_key "clips", "link_bases", column: "link_object_id_id"
   add_foreign_key "group_settings", "ledger_bases", column: "ledger_full_group_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "amended_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "creator_id"
