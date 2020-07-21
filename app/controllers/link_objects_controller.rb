@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class LinkObjectController < ApplicationController
+class LinkObjectsController < ApplicationController
   def new
   end
 

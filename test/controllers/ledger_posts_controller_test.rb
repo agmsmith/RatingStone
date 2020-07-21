@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-class LedgerPostControllerTest < ActionDispatch::IntegrationTest
+class LedgerPostsControllerTest < ActionDispatch::IntegrationTest
   def setup
     @ledger_post = ledger_posts(:lpost_one)
   end

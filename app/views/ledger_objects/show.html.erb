@@ -1,0 +1,38 @@
+<li id="ledgerobject-<%= ledger_object.id %>">
+<% if ledger_object.deleted %>
+  <span class="deleted">
+    <% if ledger_object.creator_owner?(current_ledger_user) %>
+      <%= button_to "Undelete", ledger_object_undelete_path(ledger_object),
+          method: :post,
+          data: { confirm: "Sure you want to undelete this post?" },
+          form_class: 'undeletebutton', class: 'btn btn-info'
+        %>
+      <ul>
+      <% ledger_object.deleted_by.each do |x| %>
+        <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
+        <%= x.creator.name %> (#<%= x.creator_id %>) on
+        <%= x.created_at.getlocal %><BR>
+        <small><%= x.reason %></small></li>
+      <% end %>
+      </ul>
+    <% else %>
+      This post has been deleted.
+    <% end %>
+  </span>
+<% else %>
+  <%= link_to gravatar_for(ledger_object.creator.user, size: 50), ledger_object.creator.user %>
+  <% if current_ledger_user?(ledger_object.creator) %>
+  <%= button_to "Delete", ledger_object, method: :delete,
+      data: { confirm: "Really delete this post?" },
+      form_class: 'deletebutton', class: 'btn btn-danger'
+    %>
+  <% end %>
+  <span class="user"><%= link_to ledger_object.creator.name, ledger_object.creator.user %></span>
+  <span class="content">
+    <%= Kramdown::Document.new(ledger_object.content).to_html.html_safe -%>
+  </span>
+<% end %>
+  <span class="timestamp"><%= link_to "##{ledger_object.id}",
+    ledger_object %> posted <%= time_ago_in_words(ledger_object.created_at)
+    %> ago&nbsp;- <small><%= ledger_object.created_at.getlocal %></small>.</span>
+</li>
