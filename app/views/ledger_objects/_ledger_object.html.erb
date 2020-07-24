@@ -30,16 +30,13 @@
       form_class: 'deletebutton', class: 'btn btn-danger'
     %>
   <% end %>
-  <span class="user"><%= link_to ledger_object.creator.name,
-    ledger_object.creator.user %></span>
   <span class="content">
     <%= ledger_object.to_s %>
   </span>
 <% end %>
 <% if ledger_object %>
   <span class="timestamp"><%= link_to "##{ledger_object.id}",
-    ledger_object_path(ledger_object) %> created <%=
-    time_ago_in_words(ledger_object.created_at) %> ago&nbsp;- <small><%=
+    ledger_object_path(ledger_object) %> <small><%=
     ledger_object.created_at.getlocal %></small>.</span>
 <% end %>
 </li>

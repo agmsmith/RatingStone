@@ -4,8 +4,8 @@
 
 <%= will_paginate %>
 <ul class="ledger_objects">
-<% @ledger_objects.each do |an_object|
-  render "ledger_objects/ledger_object", { ledger_object: an_object }
-end %>
+<% @ledger_objects.each do |an_object| %>
+<%= render 'ledger_objects/ledger_object', { ledger_object: an_object } %>
+<% end %>
 </ul>
 <%= will_paginate %>

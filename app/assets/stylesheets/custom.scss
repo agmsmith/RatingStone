@@ -259,6 +259,24 @@ aside {
       display: block;
       float: right;
     }
+    .deleted {
+      color: red;
+      display: block;
+      margin-left: 60px;
+    }
+    .nil_warning {
+      color: $gray-light;
+      display: block;
+      margin-left: 60px;
+    }
+    .deletebutton {
+      display: block;
+      float: right;
+    }
+    .undeletebutton {
+      display: block;
+      float: right;
+    }
   }
 }
 
