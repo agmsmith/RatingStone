@@ -29,9 +29,28 @@ class LedgerBase < ApplicationRecord
   # Return a user readable description of the object.  Besides some unique
   # identification so we can find it in the database, have some readable
   # text so the user can guess which object it is (like the content of a post).
-  # Usually used in error messages, which the user may see.  Max 255 characters.
+  # Usually used in error messages, which the user may see.  Format is
+  # record ID[s], class name, (optional context text in brackets).
+  # Max 255 characters.
   def to_s
-    "#{self.class.name} ##{id}".truncate(255)
+    base_string = "##{id} ".dup # dup to unfreeze, silly for expanded strings.
+    if original_version.amended_id
+      base_string << "[#{original_version_id}-#{latest_version.id}] "
+    end
+    base_string << self.class.name
+
+    extra_info = context_s
+    base_string << " (#{extra_info})" if !extra_info.empty?
+
+    base_string.truncate(255)
+  end
+
+  ##
+  # Return some user readable context for the object.  Things like the name of
+  # the user if this is a user object.  Used in error messages.  Empty string
+  # for none.
+  def context_s
+    ""
   end
 
   ##

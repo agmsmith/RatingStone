@@ -17,9 +17,9 @@ class LinkBase < ApplicationRecord
   # text so the user can guess which object it is (like the content of a post).
   # Usually used in error messages, which the user may see.  Max 255 characters.
   def to_s
-    "#{self.class.name} ##{id} (parent #{approved_parent.to_s[0].upcase}: " \
-      "#{parent}, child #{approved_child.to_s[0].upcase}: #{child}, " \
-      "number: #{number1}, notes: #{string1})".truncate(255)
+    "##{id} #{self.class.name} (num1: #{number1}, notes: #{string1}, " \
+      "parent #{approved_parent.to_s[0].upcase}: #{parent}, " \
+      "child #{approved_child.to_s[0].upcase}: #{child})".truncate(255)
   end
 
   ##

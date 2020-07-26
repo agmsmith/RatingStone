@@ -7,8 +7,12 @@ class LedgerSubgroup < LedgerBase
   # Methods we pass on to the parent LedgerFullGroup(s).
   REDIRECTED_METHODS = %i[can_post? role_test?].to_set
 
-  def to_s
-    (super + " (#{name})").truncate(255)
+  ##
+  # Return some user readable context for the object.  Things like the name of
+  # the user if this is a user object.  Used in error messages.  Empty string
+  # for none.
+  def context_s
+    name
   end
 
   ##

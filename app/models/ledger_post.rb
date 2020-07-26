@@ -4,9 +4,12 @@ class LedgerPost < LedgerContent
   alias_attribute :content, :text1
   validates :content, presence: true
 
-  def to_s
-    (super + " (by: ##{creator_id} " \
-      "#{creator.latest_version.name.truncate(20)}, " \
-      "#{content.truncate(40)})").truncate(255)
+  ##
+  # Return some user readable context for the object.  Things like the name of
+  # the user if this is a user object.  Used in error messages.  Empty string
+  # for none.
+  def context_s
+    "#{content.truncate(40)}, " \
+      "by: ##{creator_id} #{creator.latest_version.name.truncate(20)}"
   end
 end

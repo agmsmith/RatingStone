@@ -6,14 +6,8 @@ class LedgerUser < LedgerBase
   alias_attribute :birthday, :date1
   alias_attribute :user_id, :number1
 
-  def to_s
-    if original_version.amended
-      latest = latest_version
-      (super + " (##{original_version_id}-#{latest.id} " \
-        "#{latest.name.truncate(25)})").truncate(255)
-    else
-      (super + " (#{name.truncate(25)})").truncate(255)
-    end
+  def context_s
+    "#{latest_version.name.truncate(25)}"
   end
 
   def user

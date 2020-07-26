@@ -5,6 +5,17 @@ class LedgerApprove < LedgerBase
   alias_attribute :context, :string2
 
   ##
+  # Return some user readable context for the object.  Things like the name of
+  # the user if this is a user object.  Used in error messages.  Empty string
+  # for none.
+  def context_s
+    ledger_count = AuxLedger.where(parent: self).count
+    link_count = AuxLink.where(parent: self).count
+    "#{ledger_count} Ledger #{'Object'.pluralize(ledger_count)}, " \
+      "#{link_count} Link #{'Object'.pluralize(link_count)}"
+  end
+
+  ##
   # Class function to approve a bunch of link records.  Each end of the link
   # that the user has permission to approve will be approved.  A single
   # LedgerApprove record will be created identifying all the records to be
