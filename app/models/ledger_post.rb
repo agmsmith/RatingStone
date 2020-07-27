@@ -9,7 +9,7 @@ class LedgerPost < LedgerContent
   # the user if this is a user object.  Used in error messages.  Empty string
   # for none.
   def context_s
-    "#{content.truncate(40)}, " \
+    "#{content.truncate(40).tr("\n", ' ')}, " \
       "by: ##{creator_id} #{creator.latest_version.name.truncate(20)}"
   end
 end

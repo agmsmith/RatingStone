@@ -4,6 +4,8 @@ class LedgerFullGroup < LedgerSubgroup
   # Extra group properties too big to fit here are in a GroupSetting record.
   has_one :group_setting, dependent: :destroy, autosave: true
 
+  after_create :create_default_settings_if_needed
+
   ##
   # Return true if the user can add posts to this group.  They may need to
   # spend some rating points on the group end of the link too.  Though note
@@ -100,9 +102,18 @@ class LedgerFullGroup < LedgerSubgroup
   ##
   # Return true if the user has permission to do the things implied by the role.
   def role_test?(luser, test_role)
-    # Creator has all permissions.
+    # Creator has all permissions, even ones beyond LinkRole::CREATOR.
     return true if creator_id == luser.original_version_id
 
     test_role <= get_role(luser)
+  end
+
+  private
+
+  def create_default_settings_if_needed
+    unless group_setting
+      self.group_setting = GroupSetting.create!(ledger_full_group_id: id)
+      save!
+    end
   end
 end

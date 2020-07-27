@@ -7,7 +7,7 @@ class LedgerUser < LedgerBase
   alias_attribute :user_id, :number1
 
   def context_s
-    "#{latest_version.name.truncate(25)}"
+    latest_version.name.truncate(25)
   end
 
   def user

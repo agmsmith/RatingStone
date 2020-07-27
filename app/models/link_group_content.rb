@@ -5,6 +5,8 @@ class LinkGroupContent < LinkBase
 
   validate :validate_parent_and_child_types
 
+  before_create :set_default_description
+
   ##
   # Besides the creator of the link, the message moderator in the linked to
   # group can also delete this link (rather than having it hang around as
@@ -41,6 +43,12 @@ class LinkGroupContent < LinkBase
     else
       self.disapproval_messages = errors.join("  ").truncate(255)
     end
+  end
+
+  def set_default_description
+    return unless string1.empty?
+    self.string1 = "#{child.latest_version} is content in group " \
+      "#{parent.latest_version.name}.".truncate(255)
   end
 
   def validate_parent_and_child_types

@@ -40,7 +40,7 @@ class LedgerBase < ApplicationRecord
     base_string << self.class.name
 
     extra_info = context_s
-    base_string << " (#{extra_info})" if !extra_info.empty?
+    base_string << " (#{extra_info})" unless extra_info.empty?
 
     base_string.truncate(255)
   end
@@ -136,6 +136,19 @@ class LedgerBase < ApplicationRecord
     # versions for data but we want the canonical base version for references.
     LinkOwner.exists?(parent_id: ledger_user_id, child_id: original_version_id,
       deleted: false, approved_parent: true, approved_child: true)
+  end
+
+  ##
+  # Returns true if the given user is allowed to view the object.  Needs to be
+  # creator/owner, or a group member, or it's an object attached to a group
+  # where the user is a member.
+  def allowed_to_view(ledger_user)
+    return true if creator_owner?(ledger_user)
+    return role_test?(ledger_user, LinkRole::READER) if is_a?(LedgerSubgroup)
+    LinkGroupContent.where(child_id: original_version_id).each do |a_group|
+      return true if a_group.role_test?(ledger_user, LinkRole::READER)
+    end
+    false
   end
 
   ##

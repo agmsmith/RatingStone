@@ -3,6 +3,10 @@
   <span class="nil_warning">
     No object specified (nil).
   </span>
+<% elif !ledger_object.allowed_to_view %>
+  <span class="not_allowed_to_view">
+    You don't have permission to view this object.
+  </span>
 <% elif ledger_object.deleted %>
   <span class="deleted">
     <% if ledger_object.creator_owner?(@current_ledger_user) %>

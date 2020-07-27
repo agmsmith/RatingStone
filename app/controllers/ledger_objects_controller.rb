@@ -1,9 +1,8 @@
 # frozen_string_literal: true
 
 class LedgerObjectsController < ApplicationController
-  before_action :logged_in_user, only: [:new, :create, :index]
+  before_action :logged_in_user, only: [:new, :create, :index, :show]
   before_action :correct_user, only: [:destroy, :undelete, :edit, :update]
-  before_action :reader_user, only: [:show]
 
   def new
   end
@@ -19,7 +18,7 @@ class LedgerObjectsController < ApplicationController
   end
 
   def show
-    # @ledger_object has already been set by before_actions.
+    @ledger_object = LedgerBase.find(params[:id])
   end
 
   def edit
@@ -38,16 +37,6 @@ class LedgerObjectsController < ApplicationController
     unless @ledger_object.creator_owner?(current_ledger_user)
       flash[:error] = "You're not the owner of that ledger object, " \
         "so you can't modify or delete it."
-      redirect_to(root_url)
-    end
-  end
-
-  def reader_user
-    @ledger_object = LedgerBase.find(params[:id])
-    # Can only be a reader if this is a group or a post/content.
-    unless @ledger_object.role_test?(current_ledger_user, LinkRole::READER)
-      flash[:error] = "You don't have permission to read that ledger object, " \
-        "so you can't see it."
       redirect_to(root_url)
     end
   end

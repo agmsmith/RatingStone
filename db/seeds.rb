@@ -65,8 +65,26 @@ if User.where(name: "Anonymous Internet Browser").empty?
   internet_ledger.save!
 end
 
-# Generate a bunch of additional users, but not in test mode.
+# Generate a bunch of additional users and data, but not in test mode.
 if !Rails.env.test?
+  # Make four groups.  GOne, GTwo, GThree, and GMany a subgroup of GTwo & GThree.
+  group_names = %w[GOne GTwo GThree GMany]
+  group_records = []
+  3.times do |i|
+    group_records.push (LedgerFullGroup.create!(name: group_names[i],
+      description: "Group number #{i + 1}.", creator_id: 0))
+  end
+  group_records.push (LedgerSubgroup.create!(name: group_names.last,
+    description: "A Subgroup, under GTwo and GThree, delegates to GThree",
+    creator_id: 0))
+  # Put the subgroup under GTwo and GThree.  But delegate members to GThree.
+  LinkSubgroup.create!(parent: group_records[1], child: group_records[3],
+    creator_id: 0)
+  LinkSubgroup.create!(parent: group_records[2], child: group_records[3],
+    creator_id: 0)
+  LinkGroupRoleDelegation.create!(parent: group_records[2],
+    child: group_records[3], creator_id: 0)
+
   12.times do |n|
     name  = Faker::Name.name
     email = "example-#{n+1}@railstutorial.org"
@@ -78,7 +96,10 @@ if !Rails.env.test?
       password_confirmation: password,
       activated: true,
       activated_at: Time.zone.now)
-    a_user.ledger_user
+    luser = a_user.ledger_user
+    # Add the person to one of three groups.  Role based on iteration level.
+    LinkRole.create!(parent: group_records[n % 3], child: luser,
+      role_priority: n / 3 * 10 + 10, creator_id: 0)
   end
 
   # Generate microposts for a subset of users.
@@ -94,10 +115,12 @@ if !Rails.env.test?
 
   # Make some LedgerPosts for some users.  Use Markdown formatting.
   users = User.order(:created_at).take(4)
-  3.times do
+  4.times do |i|
     content = Faker::Markdown.random
     users.each do |user|
       post = LedgerPost.create!(content: content, creator: user.ledger_user)
+      LinkGroupContent.create!(parent: group_records[i], child: post,
+        creator: user.ledger_user)
       post2 = post.append_version
       post2.content = "Sorry, I meant " + Faker::Lorem.sentence(word_count: 8)
       post2.save!
