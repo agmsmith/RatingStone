@@ -1,41 +1,71 @@
 <% provide(:page_title, "Ledger Object ##{@ledger_object.id}") %>
 <div class="row">
-  <div class="col-md-8">
-<% if @ledger_object.deleted %>
-  <span class="deleted">
-    <% if @ledger_object.creator_owner?(current_ledger_user) %>
-      <%= button_to "Undelete", ledger_object_undelete_path(@ledger_object),
-          method: :post,
-          data: { confirm: "Sure you want to undelete this post?" },
-          form_class: 'undeletebutton', class: 'btn btn-info'
-        %>
-      <ul>
-      <% @ledger_object.deleted_by.each do |x| %>
+  <div class="col-sm-10">
+    <!-- Content of the object, creator first -->
+    <span class="user">Created by <%=
+      link_to @ledger_object.creator.latest_version.name,
+      @ledger_object.creator.user %><BR></span>
+    <span class="object_content">
+      <%= @ledger_object.base_s %><BR>
+      Bool1: <%= @ledger_object.bool1 %><BR>
+      Number1: <%= @ledger_object.number1 %><BR>
+      String1: <%= @ledger_object.string1 %><BR>
+      String2: <%= @ledger_object.string2 %><BR>
+      Text1: <%= @ledger_object.text1 %><BR>
+      Date1: <%= @ledger_object.date1 %><BR>
+      Deleted: <%= @ledger_object.deleted %><BR>
+      Down points: <%= @ledger_object.current_down_points %><BR>
+      Meh points: <%= @ledger_object.current_meh_points %><BR>
+      Up points: <%= @ledger_object.current_up_points %><BR>
+    </span>
+
+<% delete_list = @ledger_object.deleted_by
+  unless delete_list.empty? %>
+    <span class="delete_history">
+      Delete and undelete reverse history:
+      <ul class="delete_list">
+      <% delete_list.each do |x| %>
         <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
         <%= x.creator.name %> (#<%= x.creator_id %>) on
         <%= x.created_at.getlocal %><BR>
-        <small><%= x.reason %></small></li>
+        <small>Reason: <%= x.reason %></small><BR>
+        <small>Context: <%= x.context %></small></li>
       <% end %>
       </ul>
-    <% else %>
-      This post has been deleted.
-    <% end %>
-  </span>
+    </span>
+
+<% end %>
+    <span class="timestamp">
+      Created <%= time_ago_in_words(@ledger_object.created_at)
+      %> ago&nbsp;- <small><%= @ledger_object.created_at.getlocal
+      %></small>.<BR>
+      Last updated <%= time_ago_in_words(@ledger_object.updated_at)
+      %> ago&nbsp;- <small><%= @ledger_object.updated_at.getlocal
+      %></small>.
+    </span>
+  </div>
+
+  <!-- Delete or undelete button -->
+  <div class="col-sm-2">
+    <span class="deleted">
+<% if @ledger_object.deleted %>
+  <% if @ledger_object.creator_owner?(current_ledger_user) %>
+      <%= button_to "Undelete", undelete_ledger_object_path(@ledger_object),
+        method: :post,
+        data: { confirm: "Sure you want to undelete this object?" },
+        form_class: 'undeletebutton', class: 'btn btn-info'
+      %>
+  <% end %>
 <% else %>
   <% if current_ledger_user?(@ledger_object.creator) %>
-  <%= button_to "Delete", ledger_object_path(@ledger_object), method: :delete,
-      data: { confirm: "Really delete this object?" },
-      form_class: 'deletebutton', class: 'btn btn-danger'
-    %>
+      <%= button_to "Delete", ledger_object_path(@ledger_object),
+        method: :delete,
+        data: { confirm: "Really delete this object?" },
+        form_class: 'deletebutton', class: 'btn btn-danger'
+      %>
   <% end %>
-  <span class="user"><%= link_to @ledger_object.creator.name, @ledger_object.creator.user %></span>
-  <span class="content">
-    <%= @ledger_object.context_s %>
-  </span>
 <% end %>
-  <span class="timestamp"><%= link_to "##{@ledger_object.id}",
-    ledger_object_path(@ledger_object) %> posted <%= time_ago_in_words(@ledger_object.created_at)
-    %> ago&nbsp;- <small><%= @ledger_object.created_at.getlocal %></small>.</span>
+    </span>
   </div>
 </div>
 

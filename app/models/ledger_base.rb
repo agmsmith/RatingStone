@@ -33,16 +33,18 @@ class LedgerBase < ApplicationRecord
   # record ID[s], class name, (optional context text in brackets).
   # Max 255 characters.
   def to_s
+    base_string = base_s
+    extra_info = context_s
+    base_string << " (#{extra_info})" unless extra_info.empty?
+    base_string.truncate(255)
+  end
+
+  def base_s
     base_string = "##{id} ".dup # dup to unfreeze, silly for expanded strings.
     if original_version.amended_id
       base_string << "[#{original_version_id}-#{latest_version.id}] "
     end
-    base_string << self.class.name
-
-    extra_info = context_s
-    base_string << " (#{extra_info})" unless extra_info.empty?
-
-    base_string.truncate(255)
+    base_string + self.class.name
   end
 
   ##
@@ -146,7 +148,7 @@ class LedgerBase < ApplicationRecord
     return true if creator_owner?(ledger_user)
     return role_test?(ledger_user, LinkRole::READER) if is_a?(LedgerSubgroup)
     LinkGroupContent.where(child_id: original_version_id).each do |a_group|
-      return true if a_group.role_test?(ledger_user, LinkRole::READER)
+      return true if a_group.parent.role_test?(ledger_user, LinkRole::READER)
     end
     false
   end

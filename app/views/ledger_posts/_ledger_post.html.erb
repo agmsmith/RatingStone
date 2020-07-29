@@ -2,7 +2,7 @@
 <% if ledger_post.deleted %>
   <span class="deleted">
     <% if current_ledger_user?(ledger_post.creator) %>
-      <%= button_to "Undelete", ledger_post_undelete_path(ledger_post),
+      <%= button_to "Undelete", undelete_ledger_post_path(ledger_post),
           method: :post,
           data: { confirm: "Sure you want to undelete this post?" },
           form_class: 'undeletebutton', class: 'btn btn-info'

@@ -18,13 +18,13 @@
       <ul>
       <% ledger_object.deleted_by.each do |x| %>
         <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
-        <%= x.creator.name %> (#<%= x.creator_id %>) on
-        <%= x.created_at.getlocal %><BR>
-        <small><%= x.reason %></small></li>
+        <%= x.to_s %> on <%= x.created_at.getlocal %><BR>
+        <small><%= x.reason %></small><BR>
+        <small><%= x.context %></small></li>
       <% end %>
       </ul>
     <% else %>
-      This post has been deleted.
+      This object has been deleted.
     <% end %>
   </span>
 <% else %>
@@ -35,7 +35,7 @@
     %>
   <% end %>
   <span class="content">
-    <%= ledger_object.to_s %>
+    <%= ledger_object.context_s %>
   </span>
 <% end %>
 <% if ledger_object %>
