@@ -47,8 +47,7 @@ class LinkGroupContent < LinkBase
 
   def set_default_description
     return unless string1.empty?
-    self.string1 = "#{child.latest_version} is content in group " \
-      "#{parent.latest_version.name}.".truncate(255)
+    self.string1 = "#{child} is content in group #{parent}.".truncate(255)
   end
 
   def validate_parent_and_child_types

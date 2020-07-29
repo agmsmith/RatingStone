@@ -10,7 +10,6 @@ class LinkOwner < LinkBase
 
   def set_default_description
     return unless string1.empty?
-    self.string1 = "#{child.latest_version.name} is an owner of " \
-      "#{parent}.".truncate(255)
+    self.string1 = "#{child} is an owner of #{parent}.".truncate(255)
   end
 end

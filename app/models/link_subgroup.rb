@@ -7,7 +7,7 @@ class LinkSubgroup < LinkBase
 
   def set_default_description
     return unless string1.empty?
-    self.string1 = "#{child.latest_version.name} is a subgroup of " \
-      "#{parent.latest_version.name}.".truncate(255)
+    self.string1 = "#{child} is a subgroup of " \
+      "#{parent}.".truncate(255)
   end
 end

@@ -41,7 +41,7 @@ class LinkRole < LinkBase
     index = CREATOR if index > CREATOR
     desc = ROLE_NAMES[index]
     desc += " (#{role_priority})" if index != role_priority
-    self.role_description = "#{child.latest_version.name} is a #{desc} in " \
-      "the #{parent.latest_version.name} group.".truncate(255)
+    self.role_description = "#{child} is a #{desc} in " \
+      "group #{parent}.".truncate(255)
   end
 end
