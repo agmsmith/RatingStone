@@ -23,7 +23,9 @@ class LedgerFullGroupTest < ActiveSupport::TestCase
   end
 
   test "Various users have certain roles" do
-    luser = ledger_users(:someone_user)
+    luser = ledger_users(:outsider_user)
+    assert_equal(@group.get_role(luser), LinkRole::READER)
+    luser = ledger_users(:reader_user)
     assert_equal(@group.get_role(luser), LinkRole::READER)
     luser = ledger_users(:undesirable_user)
     assert_equal(@group.get_role(luser), LinkRole::BANNED)

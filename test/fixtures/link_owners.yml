@@ -13,12 +13,12 @@ linkowner_owner_all:
   rating_points_boost_parent: 0.5
   rating_direction: "U"
 
-linkowner_someone_post:
+linkowner_outsider_post:
   type: "LinkOwner"
-  creator: someone_user
-  parent: someone_user
+  creator: outsider_user
+  parent: outsider_user
   child: lpost_two
-  string1: "Giving ownership of post lpost_two to someone_user."
+  string1: "Giving ownership of post lpost_two to outsider_user."
   approved_parent: true
   approved_child: true
   rating_points_spent: 1.0

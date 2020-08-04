@@ -10,11 +10,11 @@ class LedgerApproveTest < ActiveSupport::TestCase
     luser_group_moderator = ledger_users(:message_moderator_user)
     luser_group_moderator2 = ledger_users(:message_moderator2_user)
     luser_post_creator = lpost.creator
-    luser_someone = ledger_users(:someone_user)
+    luser_outsider = ledger_users(:outsider_user)
 
-    # Make an unapproved link; someone else makes the link.
+    # Make an unapproved link; someone else unrelated makes the link.
     link_group1 = LinkGroupContent.new(parent: lgroup, child: lpost,
-      creator: luser_someone)
+      creator: luser_outsider)
     link_group1.save!
     assert_not(link_group1.approved_parent)
     assert_not(link_group1.approved_child)
@@ -62,11 +62,11 @@ class LedgerApproveTest < ActiveSupport::TestCase
     assert(approved_links.first.child == link_group2)
 
     # Approval in a subgroup.
-    lpost2 = LedgerPost.new(creator: luser_someone,
+    lpost2 = LedgerPost.new(creator: luser_outsider,
       content: "This is a subgroup post.")
     lpost2.save!
     link_group5 = LinkGroupContent.new(parent: lsubgroup, child: lpost2,
-      creator: luser_someone)
+      creator: luser_outsider)
     link_group5.save!
     assert_not(link_group5.approved_parent)
     assert(link_group5.approved_child)

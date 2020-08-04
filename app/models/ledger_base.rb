@@ -39,6 +39,8 @@ class LedgerBase < ApplicationRecord
     base_string.truncate(255)
   end
 
+  ##
+  # Return a basic user readable identification of an object (ID and class).
   def base_s
     base_string = "##{id} ".dup # dup to unfreeze, silly for expanded strings.
     if original_version.amended_id
@@ -49,8 +51,8 @@ class LedgerBase < ApplicationRecord
 
   ##
   # Return some user readable context for the object.  Things like the name of
-  # the user if this is a user object.  Used in error messages.  Empty string
-  # for none.
+  # the user if this is a user object.  Used in error messages and debugging.
+  # Empty string for none.
   def context_s
     ""
   end
@@ -125,7 +127,7 @@ class LedgerBase < ApplicationRecord
   # true if they have permission.  Be careful if you're testing an older/newer
   # version of this object where the creator has changed (best to ask for the
   # latest version of the object to do the test against to get the current
-  # creator).
+  # creator).  Here we test the creator of this particular object.
   def creator_owner?(ledger_user)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{ledger_user.class.name} " \
@@ -134,7 +136,7 @@ class LedgerBase < ApplicationRecord
     return true if creator_id == ledger_user_id
 
     # Hunt for LinkOwner records that include the mentioned user and this
-    # object. Use the original_id as key, since we can be using amended
+    # object. Use our original id as key, since we can be using amended
     # versions for data but we want the canonical base version for references.
     LinkOwner.exists?(parent_id: ledger_user_id, child_id: original_version_id,
       deleted: false, approved_parent: true, approved_child: true)
@@ -142,13 +144,18 @@ class LedgerBase < ApplicationRecord
 
   ##
   # Returns true if the given user is allowed to view the object.  Needs to be
-  # creator/owner, or a group member, or it's an object attached to a group
-  # where the user is a member.
-  def allowed_to_view(ledger_user)
+  # creator/owner, or a group reader if it is a group, or a group reader of a
+  # group that the test object is in.  If the object is in multiple groups, the
+  # user just has to be a group reader in one of them.
+  def allowed_to_view?(ledger_user)
     return true if creator_owner?(ledger_user)
     return role_test?(ledger_user, LinkRole::READER) if is_a?(LedgerSubgroup)
-    LinkGroupContent.where(child_id: original_version_id).each do |a_group|
-      return true if a_group.parent.role_test?(ledger_user, LinkRole::READER)
+    # Test the user's status in groups for things attached to groups.
+    if is_a?(LedgerContent)
+      LinkGroupContent.where(child_id: original_version_id, deleted: false,
+        approved_parent: true, approved_child: true).each do |a_group|
+        return true if a_group.parent.role_test?(ledger_user, LinkRole::READER)
+      end
     end
     false
   end
@@ -182,8 +189,7 @@ class LedgerBase < ApplicationRecord
   # deleted, if that's useful.  Returns the AuxLedger record if successful.
   def ledger_delete_append(ledger_delete_record, do_delete)
     luser = ledger_delete_record.creator
-    raise RatingStoneErrors, "#{luser.class.name} ##{luser.id} " \
-      "(#{luser.latest_version.name}) not allowed to delete " \
+    raise RatingStoneErrors, "#{luser} not allowed to delete " \
       "#{type} ##{id}." unless creator_owner?(luser)
     aux_record = AuxLedger.new(parent: ledger_delete_record,
       child_id: original_version_id)

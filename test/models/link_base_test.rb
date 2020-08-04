@@ -9,7 +9,7 @@ class LinkBaseTest < ActiveSupport::TestCase
     luser_group_creator = ledger_users(:group_creator_user)
     luser_group_owner = ledger_users(:group_owner_user)
     luser_post_creator = lpost.creator.latest_version
-    luser_someone = ledger_users(:someone_user)
+    luser_outsider = ledger_users(:outsider_user)
 
     # See if creator of parent is approved.
     link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost,
@@ -57,12 +57,12 @@ class LinkBaseTest < ActiveSupport::TestCase
     # and have tests use that new creator.
     lpost3 = lpost.append_version
     lpost3.content = "This post has a new creator."
-    lpost3.creator = luser_someone
+    lpost3.creator = luser_outsider
     lpost3.save!
     lpost.reload # Has been amended.
 
     link_group_content = LinkGroupContent.new(parent: lgroup,
-      child: lpost3.original_version, creator: luser_someone)
+      child: lpost3.original_version, creator: luser_outsider)
     assert_not(link_group_content.approved_parent)
     assert_not(link_group_content.approved_child)
     link_group_content.save!
@@ -78,7 +78,7 @@ class LinkBaseTest < ActiveSupport::TestCase
     assert_not(link_group_content.approved_child)
     # Usually don't modify link records, but check that approvals don't change
     # if we change the creator of a link.  Should only be set for new records.
-    link_group_content.creator = luser_someone
+    link_group_content.creator = luser_outsider
     link_group_content.save!
     assert_not(link_group_content.approved_child)
   end

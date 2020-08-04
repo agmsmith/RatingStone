@@ -12,11 +12,11 @@ role_banned:
 
 role_reader:
   type: 'LinkRole'
-  creator: someone_user
+  creator: reader_user
   number1: <%= LinkRole::READER %>
   parent: group_all
-  child: someone_user
-  string1: 'Someone is just a reader.'
+  child: reader_user
+  string1: 'Not a full member, but just a reader.'
   approved_parent: true
   approved_child: true
 

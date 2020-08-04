@@ -2,4 +2,18 @@
 
 group_all_settings:
   ledger_full_group: group_all
-
+  auto_approve_non_member_posts: false
+  auto_approve_member_posts: true
+  auto_approve_members: false
+  min_points_non_member_post: -1.0
+  max_points_non_member_post: 2.0
+  min_points_member_post: -10.0
+  max_points_member_post: 10.0
+  min_points_membership: 1.0
+  max_points_membership: 100.0
+  wildcard_role_banned: ""
+  wildcard_role_reader: ""
+  wildcard_role_member: ""
+  wildcard_role_message_moderator: ""
+  wildcard_role_meta_moderator: ""
+  wildcard_role_member_moderator: ""

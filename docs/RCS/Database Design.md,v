@@ -1,9 +1,14 @@
-head	1.41;
+head	1.42;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.42
+date	2020.08.02.20.46.02;	author agmsmith;	state Exp;
+branches;
+next	1.41;
 
 1.41
 date	2020.07.15.20.46.09;	author agmsmith;	state Exp;
@@ -216,14 +221,14 @@ desc
 @
 
 
-1.41
+1.42
 log
-@amended_id now used in later versions to detect race conditions.
+@Move class structure retrospective regrets to later in the introduction.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.40 2020/07/15 01:21:50 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.41 2020/07/15 20:46:09 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -273,14 +278,6 @@ setup.  There will be one actual database table for objects and another one for
 links between objects, both have the Rails magic "type" field in each row to
 specify the particular subclass used for that row.
 
-Though in retrospect it may be simpler with a class structure based on a single
-multipurpose object.  Currently we have records for linking things together
-(such as linking a user and a thing together with a rating to say that that
-user has an opinion about that thing) and object records representing things
-(posts, pictures, etc).  A multipurpose object design would make it simpler to
-have an opinion about an opinion, which is needed for meta-moderation.  And we
-need meta-moderation to keep the quality of opinions up.
-
 #### Reusing Generic Fields to Avoid Space Explosion
 
 To avoid the common complaint about single table inheritance adding too many
@@ -317,6 +314,17 @@ defined lists which will use the list header with a name technique, and plain
 references where that makes sense.  If the number of subclasses gets too big,
 this decision will have to be reconsidered.
 
+### Retrospect
+
+In retrospect it may be simpler to combine objects and links into a class
+structure based on a single multipurpose object.  Currently we have records for
+linking things together (such as linking a user and a thing together with a
+rating to say that that user has an opinion about that thing) and object
+records representing things (posts, pictures, etc).  The links transfer
+reputation points.  The objects contain reputation points.  A multipurpose
+object design would make it simpler to have an opinion about an opinion, which
+is needed for meta-moderation.  And we need meta-moderation to keep the quality
+of opinions up.
 
 ## About Posts and Groups
 
@@ -1314,9 +1322,12 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.40 2020/07/15 01:21:50 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.41 2020/07/15 20:46:09 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.41  2020/07/15 20:46:09  agmsmith
+amended_id now used in later versions to detect race conditions.
+
 Revision 1.40  2020/07/15 01:21:50  agmsmith
 Add a note about multipurpose class structure maybe better than separate object and links.
 
@@ -1445,6 +1456,31 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.41
+log
+@amended_id now used in later versions to detect race conditions.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.40 2020/07/15 01:21:50 agmsmith Exp agmsmith $</SMALL>
+a52 8
+Though in retrospect it may be simpler with a class structure based on a single
+multipurpose object.  Currently we have records for linking things together
+(such as linking a user and a thing together with a rating to say that that
+user has an opinion about that thing) and object records representing things
+(posts, pictures, etc).  A multipurpose object design would make it simpler to
+have an opinion about an opinion, which is needed for meta-moderation.  And we
+need meta-moderation to keep the quality of opinions up.
+
+d89 11
+d1097 1
+a1097 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.40 2020/07/15 01:21:50 agmsmith Exp agmsmith $
+d1100 3
 @
 
 

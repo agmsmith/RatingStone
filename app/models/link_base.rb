@@ -39,7 +39,8 @@ class LinkBase < ApplicationRecord
 
   ##
   # Return true if the given user is allowed to make changes to the approval of
-  # the parent end of this link.  Subclasses may override this.
+  # the parent end of this link.  Subclasses (like links from groups to posts)
+  # may override this.
   def permission_to_change_parent_approval(luser)
     parent.creator_owner?(luser)
   end

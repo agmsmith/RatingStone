@@ -25,7 +25,7 @@ message_moderator_user:
 message_moderator2_user:
   type: 'LedgerUser'
   creator_id: 0
-  string1: 'Second moderator of messages in a group.'
+  string1: 'Second moderator of messages in a group, banned.'
 
 member_moderator_user:
   type: 'LedgerUser'
@@ -42,13 +42,18 @@ member_user:
   creator_id: 0
   string1: 'Member of a group.'
 
-someone_user:
+reader_user:
   type: 'LedgerUser'
   creator_id: 0
-  string1: 'Someone who is a generic LedgerUser made by the fixture system.'
+  string1: 'Reader of a group.'
 
 undesirable_user:
   type: 'LedgerUser'
   creator_id: 0
   string1: 'An undesirable user who gets banned.'
+
+outsider_user:
+  type: 'LedgerUser'
+  creator_id: 0
+  string1: 'A user not in any groups.'
 

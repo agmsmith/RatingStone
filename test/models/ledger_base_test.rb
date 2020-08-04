@@ -24,7 +24,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
   end
 
   test "creator must be original version" do
-    later_creator = ledger_users(:someone_user).append_version
+    later_creator = ledger_users(:outsider_user).append_version
     later_creator.email = "SomeLaterVersion@Somewhere.com"
     assert(later_creator.save)
     lbase = LedgerBase.new(creator: later_creator, string1: "Just One")
@@ -106,13 +106,73 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert_not lgroup.creator_owner?(ledger_users(:message_moderator_user))
     assert_not lgroup.creator_owner?(ledger_users(:member_moderator_user))
     assert_not lgroup.creator_owner?(ledger_users(:member_user))
-    assert_not lgroup.creator_owner?(ledger_users(:someone_user))
+    assert_not lgroup.creator_owner?(ledger_users(:outsider_user))
     assert_not lgroup.creator_owner?(ledger_users(:root_ledger_user))
     assert_raise(RatingStoneErrors, "Passing in a Post, not LedgerUser") do
       lgroup.creator_owner?(ledger_posts(:lpost_one))
     end
     assert_raise(RatingStoneErrors, "Passing in nil instead of LedgerUser") do
       lgroup.creator_owner?(nil)
+    end
+  end
+
+  test "allowed_to_view? function" do
+    # Creator, owner should be allowed to view, nobody else for a stand-alone
+    # object.  Then see if you have access to a group if you are a member.
+    # Then see if you can access a content object (a post) if you are a member
+    # of the group it is in.
+    luser = ledger_users(:outsider_user)
+    lpost = LedgerPost.create!(creator: luser,
+      content: "This is a test post to see if people can view it.")
+    assert(lpost.allowed_to_view?(luser))
+    user_ins = [ledger_users(:group_creator_user),
+      ledger_users(:group_owner_user),
+      ledger_users(:message_moderator_user),
+      ledger_users(:member_moderator_user),
+      ledger_users(:member_user),
+      ledger_users(:reader_user),
+      ledger_users(:root_ledger_user),
+      users(:malory).ledger_user]
+    user_outs = [ledger_users(:message_moderator2_user),
+      ledger_users(:undesirable_user)]
+    (user_ins + user_outs).each do |x|
+      assert_not(lpost.allowed_to_view?(x), "#{x} should not be able to view.")
+    end
+
+    # See who can view the group description.  Currently default role is Reader
+    # until we get wildcards working, so everbody can see it.
+    lgroup = ledger_subgroups(:group_dogs)
+    user_ins.each do |x|
+      assert(lgroup.allowed_to_view?(x), "#{x} should be able to view.")
+    end
+    user_outs.each do |x|
+      assert_not(lgroup.allowed_to_view?(x), "#{x} should not be able to view.")
+    end
+    
+    # Add the post to a subgroup.  First with a partially unapproved group link.
+    group_content = LinkGroupContent.create!(parent: lgroup, child: lpost,
+      creator: luser)
+    (user_ins + user_outs).each do |x|
+      assert_not(lpost.allowed_to_view?(x), "#{x} should not be able to view.")
+    end
+
+    # Now approve the group end of the link between post and group.
+    assert_equal("LedgerApprove", LedgerApprove.approve_records([group_content],
+      ledger_users(:message_moderator_user), "Inside a test.",
+      "Because we want to see who can view an approved post.").class.name)
+    user_ins.each do |x|
+      assert(lpost.allowed_to_view?(x), "#{x} should be able to view.")
+    end
+    user_outs.each do |x|
+      assert_not(lpost.allowed_to_view?(x), "#{x} should not be able to view.")
+    end
+
+    # Now delete the approval.
+    assert_equal("LedgerDelete", LedgerDelete.delete_records([group_content],
+      ledger_users(:message_moderator_user), "Inside a test again.",
+      "Want to see if deleting a group content link works.").class.name)
+    (user_ins + user_outs).each do |x|
+      assert_not(lpost.allowed_to_view?(x), "#{x} should not be able to view.")
     end
   end
 end

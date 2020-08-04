@@ -115,12 +115,13 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     assert_equal("Testing delete by creator, should work.", ldelete.reason)
     assert_equal("My Context", ldelete.context)
     lundelete = LedgerUndelete.undelete_records([ledger_posts(:lpost_two)],
-      ledger_users(:someone_user), "That Context",
+      ledger_users(:outsider_user), "That Context",
       "Testing undelete by owner, should work.")
     assert_equal(lundelete.class.name, "LedgerUndelete")
     assert_equal("Testing delete by creator, should work.", ldelete.reason)
     ldelete = LedgerDelete.delete_records([ledger_posts(:lpost_two)],
-      ledger_users(:someone_user), "Testing delete by owner, should work.")
+      ledger_users(:outsider_user),
+      "Testing delete by owner (not creator), should work.")
     assert_equal(ldelete.class.name, "LedgerDelete")
   end
 

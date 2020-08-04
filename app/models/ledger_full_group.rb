@@ -70,6 +70,7 @@ class LedgerFullGroup < LedgerSubgroup
   ##
   # Returns the role the given user has in this group.
   def get_role(luser)
+    # Creator is always valid; can't ban the creator.
     return LinkRole::CREATOR if creator_id == luser.original_version_id
 
     # See which roles the user has been assigned, lowest priority one first.
@@ -90,7 +91,7 @@ class LedgerFullGroup < LedgerSubgroup
     if high_role
       priority = high_role.role_priority
       # Don't allow silly levels of priority.
-      priority = LinkRole::OWNER - 10 if priority >= LinkRole::OWNER
+      priority = LinkRole::OWNER - 1 if priority >= LinkRole::OWNER
       return priority
     end
 
