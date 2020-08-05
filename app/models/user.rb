@@ -89,20 +89,16 @@ class User < ApplicationRecord
   end
 
   # Returns the latest version LedgerUser record corresponding to this user,
-  # if none then creates one.
+  # if none then creates one and sets up a new user.
   def ledger_user
     lu = LedgerUser.find_by(id: ledger_user_id) if ledger_user_id
     if lu.nil?
-      lu = LedgerUser.create!(creator_id: 0, name: name,
-          email: email, user_id: id)
+      lu = LedgerUser.create!(creator_id: 0, name: name, email: email)
       self.ledger_user_id = lu.id # Need self.attr here to make it work.
       save!
+      lu.set_up_new_user
     else
       lu = lu.latest_version
-    end
-    if (ledger_user_id != lu.original_version_id) || (lu.user_id != id)
-      raise "Database problem - reference not bidirectional between " \
-        "User ##{id} and #{lu}.  Database corrupt?"
     end
     lu
   end

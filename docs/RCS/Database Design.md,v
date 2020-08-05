@@ -1,9 +1,14 @@
-head	1.42;
+head	1.43;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.43
+date	2020.08.04.21.18.02;	author agmsmith;	state Exp;
+branches;
+next	1.42;
 
 1.42
 date	2020.08.02.20.46.02;	author agmsmith;	state Exp;
@@ -221,14 +226,14 @@ desc
 @
 
 
-1.42
+1.43
 log
-@Move class structure retrospective regrets to later in the introduction.
+@Add LinkHomeGroup, for user's home page.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.41 2020/07/15 20:46:09 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.42 2020/08/02 20:46:02 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -749,7 +754,7 @@ both in a subgroup for North America and a subgroup for Year 2020.  You could
 even make subgroups for each family member and classify the photos by who is in
 them.
 
-There's an optional home post (see LinkHomePost) that describes the group in
+There's an optional home post (see LinkHomeContent) that describes the group in
 more detail.  The home post usually will have a list of recent additions in the
 group displayed after it.
 
@@ -923,16 +928,24 @@ the text of the post (grid order determined by the order of datestamps of these
 link records).  The user can click on individual ones to play them.
 
 
-### *LinkHomePost* < LinkBase
+### *LinkHomeContent* < LinkBase
 
-Parent is a LedgerUser or Ledger(Full/Sub)group and child is usually a
-LedgerPost.  That post will be used as the home post (home page, status page,
-profile page, same thing) for the person or the group.  If there are several,
-the latest one will be used and the others considered to be previous ones,
-visible if someone asks for the history of home pages.  Or maybe we show them
-all, kind of like a list of announcements or pinned posts.  Delete the
-LinkHomePost to unpin them.
+Parent is a Ledger(Full/Sub)group and child is usually a LedgerPost.  That post
+will be used as the home post (home page, status page, profile page, same thing)
+for the group.  If there are several, the latest one will be used and the others
+considered to be previous ones, visible if someone asks for the history of home
+pages.  Or maybe we show them all, kind of like a list of announcements or
+pinned posts.  Delete the LinkHomeContent to unpin them.
 
+### *LinkHomeGroup* < LinkBase
+
+Parent is a LedgerUser and child is a LedgerFullGroup.  That group will be used
+as the home page for the user, combined with some user related information
+(like a list of all their posts, time of last logon, etc).  Normally the group
+will be created when the user is created, with the user listed as the group's
+creator.  That way they'll be able to control who can see their personal posts.
+If someone wants to follow that user, they will simply subscribe to the group
+as a reader.  If there are several records, only the latest one will be used.
 
 ### *LinkRole* < LinkBase
 
@@ -1322,9 +1335,12 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.41 2020/07/15 20:46:09 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.42 2020/08/02 20:46:02 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.42  2020/08/02 20:46:02  agmsmith
+Move class structure retrospective regrets to later in the introduction.
+
 Revision 1.41  2020/07/15 20:46:09  agmsmith
 amended_id now used in later versions to detect race conditions.
 
@@ -1456,6 +1472,36 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.42
+log
+@Move class structure retrospective regrets to later in the introduction.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.41 2020/07/15 20:46:09 agmsmith Exp agmsmith $</SMALL>
+d524 1
+a524 1
+There's an optional home post (see LinkHomePost) that describes the group in
+d698 1
+a698 9
+### *LinkHomePost* < LinkBase
+
+Parent is a LedgerUser or Ledger(Full/Sub)group and child is usually a
+LedgerPost.  That post will be used as the home post (home page, status page,
+profile page, same thing) for the person or the group.  If there are several,
+the latest one will be used and the others considered to be previous ones,
+visible if someone asks for the history of home pages.  Or maybe we show them
+all, kind of like a list of announcements or pinned posts.  Delete the
+LinkHomePost to unpin them.
+d700 16
+d1105 1
+a1105 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.41 2020/07/15 20:46:09 agmsmith Exp agmsmith $
+d1108 3
 @
 
 

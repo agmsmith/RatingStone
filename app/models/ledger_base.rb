@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class LedgerBase < ApplicationRecord
-  validate :validate_original_versions_referenced
+  validate :validate_ledger_original_versions_referenced
   after_save :patch_original_id # Do this one first - lower level field init.
   after_create :amend_original_record
 
@@ -232,7 +232,7 @@ class LedgerBase < ApplicationRecord
   # Make sure that the original version of objects are used when saving, since
   # the original ID is what we use to find all versions of an object.  This
   # is mostly a sanity check and may be removed if it's never triggered.
-  def validate_original_versions_referenced
+  def validate_ledger_original_versions_referenced
     errors.add(:unoriginal_creator,
       "Creator #{creator.class.name} ##{creator_id} isn't the original " \
       "version.") if creator && creator.original_version_id != creator_id

@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 class LinkBase < ApplicationRecord
+  validate :validate_link_original_versions_referenced
   before_create :do_automatic_approvals
-  validate :validate_original_versions_referenced
 
   belongs_to :parent, class_name: :LedgerBase, optional: false
   belongs_to :child, class_name: :LedgerBase, optional: false
@@ -140,7 +140,7 @@ class LinkBase < ApplicationRecord
   # Make sure that the original version of objects are used when saving, since
   # the original ID is what we use to find all versions of an object.  This
   # is mostly a sanity check and may be removed if it's never triggered.
-  def validate_original_versions_referenced
+  def validate_link_original_versions_referenced
     errors.add(:unoriginal_parent,
       "Parent isn't the original version: #{parent}") \
       if parent && parent.original_version_id != parent_id
