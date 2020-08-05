@@ -22,15 +22,17 @@ class LedgerUserTest < ActiveSupport::TestCase
       name:  "Test Regular User",
       email: "SomeEMail@SomeDomain.com",
       password: "SomePassword",
-      password_confirmation: "SomePassword",
-      activated: true,
-      activated_at: Time.zone.now
+      password_confirmation: "SomePassword"
     )
+    user.activate
     luser = user.ledger_user
     luser.birthday = Time.new(2020, 2, 20, 20, 20, 20) # Palindromic date.
-    luser.save
-    assert_equal(user.id, luser.user_id, "User id should be in LedgerUser")
+    luser.save!
     assert_equal(luser.id, user.ledger_user_id, "LedgerUser should be in User")
+    assert_equal(luser.id, luser.creator_id)
+    assert(luser.creator_owner?(luser), "Users need to own self.")
+    personal_group = luser.home_group
+    assert_equal(personal_group.name, luser.name)
   end
 
   test "Changes in name and e-mail in a User should show up in LedgerUser" do
@@ -50,7 +52,7 @@ class LedgerUserTest < ActiveSupport::TestCase
     assert_equal(luser.email, user.email) # Note email is by now downcased.
 
     user.name = new_name
-    user.save
+    user.save!
     luser.reload # Old ledger version record here, should still have old name.
     assert_equal(luser.name, old_name)
     luser = luser.latest_version
@@ -59,7 +61,7 @@ class LedgerUserTest < ActiveSupport::TestCase
 
     new_email = "newmail@somewhere.com"
     user.email = new_email
-    user.save
+    user.save!
     luser = user.ledger_user
     assert_equal(new_email, luser.email)
   end

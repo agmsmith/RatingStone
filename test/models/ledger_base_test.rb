@@ -125,16 +125,18 @@ class LedgerBaseTest < ActiveSupport::TestCase
     lpost = LedgerPost.create!(creator: luser,
       content: "This is a test post to see if people can view it.")
     assert(lpost.allowed_to_view?(luser))
-    user_ins = [ledger_users(:group_creator_user),
+    user_ins = [
+      ledger_users(:group_creator_user),
       ledger_users(:group_owner_user),
       ledger_users(:message_moderator_user),
       ledger_users(:member_moderator_user),
       ledger_users(:member_user),
       ledger_users(:reader_user),
       ledger_users(:root_ledger_user),
-      users(:malory).ledger_user]
+      users(:malory).ledger_user,
+    ]
     user_outs = [ledger_users(:message_moderator2_user),
-      ledger_users(:undesirable_user)]
+                 ledger_users(:undesirable_user)]
     (user_ins + user_outs).each do |x|
       assert_not(lpost.allowed_to_view?(x), "#{x} should not be able to view.")
     end
@@ -148,7 +150,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
     user_outs.each do |x|
       assert_not(lgroup.allowed_to_view?(x), "#{x} should not be able to view.")
     end
-    
+
     # Add the post to a subgroup.  First with a partially unapproved group link.
     group_content = LinkGroupContent.create!(parent: lgroup, child: lpost,
       creator: luser)

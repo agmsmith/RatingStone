@@ -16,7 +16,7 @@ class LedgerUser < LedgerBase
     return user_record if user_record
     # Need to make a new User record, an unusual procedure.  Set it up so
     # a password reset to the user's email is needed for access.
-    logger.warn "Creating a User for #{self}, an unusual reversed procedure."
+    logger.warn("Creating a User for #{self}, an unusual reversed procedure.")
     pw = SecureRandom.hex
     user_record = User.create!(ledger_user_id: original_version_id,
       name: name, email: email, password: pw, password_confirmation: pw,
