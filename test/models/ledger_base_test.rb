@@ -107,13 +107,39 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert_not lgroup.creator_owner?(ledger_users(:member_moderator_user))
     assert_not lgroup.creator_owner?(ledger_users(:member_user))
     assert_not lgroup.creator_owner?(ledger_users(:outsider_user))
-    assert_not lgroup.creator_owner?(ledger_users(:root_ledger_user))
+    assert_not lgroup.creator_owner?(ledger_users(:root_ledger_user_fixture))
     assert_raise(RatingStoneErrors, "Passing in a Post, not LedgerUser") do
       lgroup.creator_owner?(ledger_posts(:lpost_one))
     end
     assert_raise(RatingStoneErrors, "Passing in nil instead of LedgerUser") do
       lgroup.creator_owner?(nil)
     end
+
+    # Avoiding fixtures, make our own owner record so post-create callback gets
+    # run, test has_owners field, also test with a versioned user and post.
+    lpost = ledger_posts(:lpost_one).append_version
+    lpost.content = "Some edited content here, new version."
+    lpost.creator = ledger_users(:reader_user) # Change creator.
+    lpost.save!
+    lpost.reload
+    assert_equal(ledger_users(:reader_user).id, lpost.current_creator_id)
+    assert_equal(0, lpost.original_version.creator_id)
+    luser = ledger_users(:outsider_user).append_version
+    luser.email = "NewVersionOfUser@example.com"
+    luser.save!
+    luser.reload
+    assert_not(lpost.original_version.has_owners)
+    assert_not(lpost.creator_owner?(luser))
+    lowner = LinkOwner.create!(parent: luser.original_version,
+      child: lpost.original_version, creator: luser.original_version)
+    assert(lpost.original_version.has_owners)
+    assert_not(lpost.creator_owner?(luser),
+      "Permission not approved yet in #{lowner}.")
+    LedgerApprove.approve_records([lowner],
+      ledger_users(:reader_user), "Testing creator_owner?",
+      "Creator of post approving ownership change.")
+    assert(lpost.creator_owner?(luser),
+      "Should now have permission in #{lowner.reload}.")
   end
 
   test "allowed_to_view? function" do
@@ -132,7 +158,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
       ledger_users(:member_moderator_user),
       ledger_users(:member_user),
       ledger_users(:reader_user),
-      ledger_users(:root_ledger_user),
+      ledger_users(:root_ledger_user_fixture),
       users(:malory).ledger_user,
     ]
     user_outs = [ledger_users(:message_moderator2_user),

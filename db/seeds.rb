@@ -15,7 +15,7 @@ if LedgerBase.all.empty?
   root_user = User.create!(
     id: 0,
     ledger_user_id: 0,
-    name:  root_luser.string1,
+    name: root_luser.string1,
     email: root_luser.string2,
     password: "SomePassword",
     password_confirmation: "SomePassword",

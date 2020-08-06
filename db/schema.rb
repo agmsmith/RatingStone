@@ -80,19 +80,20 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
 
   create_table "ledger_bases", force: :cascade do |t|
     t.string "type", default: "LedgerBase"
+    t.integer "original_id"
+    t.integer "amended_id"
+    t.boolean "deleted", default: false
+    t.boolean "has_owners", default: false
+    t.integer "creator_id", null: false
     t.boolean "bool1", default: false
     t.integer "number1", default: 0
     t.string "string1", default: ""
     t.string "string2", default: ""
     t.text "text1", default: ""
-    t.integer "creator_id", null: false
-    t.integer "amended_id"
-    t.boolean "deleted", default: false
-    t.integer "original_id"
+    t.datetime "date1"
     t.float "current_down_points", default: 0.0
     t.float "current_meh_points", default: 0.0
     t.float "current_up_points", default: 0.0
-    t.datetime "date1"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["amended_id"], name: "index_ledger_bases_on_amended_id"
@@ -105,11 +106,11 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
 
   create_table "link_bases", force: :cascade do |t|
     t.string "type", default: "LinkBase"
-    t.integer "number1", default: 0
-    t.string "string1", default: ""
     t.integer "parent_id", null: false
     t.integer "child_id", null: false
     t.integer "creator_id", null: false
+    t.integer "number1", default: 0
+    t.string "string1", default: ""
     t.boolean "deleted", default: false
     t.boolean "approved_parent", default: false
     t.boolean "approved_child", default: false

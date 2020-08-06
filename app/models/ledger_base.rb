@@ -62,13 +62,15 @@ class LedgerBase < ApplicationRecord
   # data (doesn't include cached and calculated data).  Modify it as you will,
   # then when you save it, it will update the original record to point to the
   # newest record as the latest one.  If someone else appended to the ledger
-  # first, the save will fail with an exception.
+  # first, the save will fail with an exception.  No permissions checks done,
+  # should usually test if user doing this is creator_owner?
   def append_version
     new_entry = latest_version.dup
     new_entry.original_id = original_version_id # In case original_id is nil.
-    new_entry.amended_id = original_version.amended_id
+    new_entry.amended_id = original_version.amended_id # For consistency check.
     new_entry.deleted = false
     # Cached values not used (see original record) in amended, set to defaults.
+    new_entry.has_owners = false
     new_entry.current_down_points = 0.0
     new_entry.current_meh_points = 0.0
     new_entry.current_up_points = 0.0
@@ -122,24 +124,38 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # Returns the current creator of the object.  It's the creator field in the
+  # latest version of the object.  Yes, besides adding owners, you can change
+  # the creator; needed for handing over full control of a group to a different
+  # person.
+  def current_creator
+    latest_version.creator.latest_version
+  end
+
+  def current_creator_id
+    latest_version.creator_id
+  end
+
+  ##
   # See if the given user is allowed to delete and otherwise modify this
-  # record.  Has to be the creator or the owner of the object.  Returns
-  # true if they have permission.  Be careful if you're testing an older/newer
-  # version of this object where the creator has changed (best to ask for the
-  # latest version of the object to do the test against to get the current
-  # creator).  Here we test the creator of this particular object.
+  # record.  Has to be the creator or the owner of the object.  Returns true
+  # if they have permission.  Will use the newest version of this object to
+  # get the latest creator.
   def creator_owner?(ledger_user)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{ledger_user.class.name} " \
       "object to test against." unless ledger_user.is_a?(LedgerUser)
     ledger_user_id = ledger_user.original_version_id
-    return true if creator_id == ledger_user_id
+    return true if current_creator_id == ledger_user_id
 
     # Hunt for LinkOwner records that include the mentioned user and this
     # object. Use our original id as key, since we can be using amended
     # versions for data but we want the canonical base version for references.
-    LinkOwner.exists?(parent_id: ledger_user_id, child_id: original_version_id,
-      deleted: false, approved_parent: true, approved_child: true)
+    # Can save time by skipping the owner search if we know there are no owners.
+    return LinkOwner.exists?(parent_id: ledger_user_id,
+      child_id: original_version_id, deleted: false, approved_parent: true,
+      approved_child: true) if original_version.has_owners
+    false
   end
 
   ##

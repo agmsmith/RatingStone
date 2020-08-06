@@ -19,6 +19,11 @@ class LedgerObjectsController < ApplicationController
 
   def show
     @ledger_object = LedgerBase.find(params[:id])
+    unless @ledger_object.allowed_to_view?(current_ledger_user)
+      flash[:error] = "You are not allowed to view ledger object " \
+        "##{@ledger_object.id}."
+      redirect_to(root_url)
+    end
   end
 
   def edit

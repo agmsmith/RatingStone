@@ -1,59 +1,68 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
-root_ledger_user:
+# Note that users need to own themselves for auto-approval of links that
+# mention the user at one end of the link.
+
+root_ledger_user_fixture:
   type: 'LedgerUser'
   id: 0
-  original_id: 0
   creator_id: 0
-  string1: 'Root User Object created by the Fixture system.'
+  string1: 'Fixture created Root User Object'
 
 group_creator_user:
   type: 'LedgerUser'
-  creator_id: 0
-  string1: 'Creator of a group.'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:group_creator_user) %>
+  string1: 'Creator of a group'
 
 group_owner_user:
   type: 'LedgerUser'
-  creator_id: 0
-  string1: 'Owner of a group.'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:group_owner_user) %>
+  string1: 'Owner of a group'
 
 message_moderator_user:
   type: 'LedgerUser'
-  creator_id: 0
-  string1: 'Moderator of messages in a group.'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:message_moderator_user) %>
+  string1: 'Moderator of messages in a group'
 
 message_moderator2_user:
   type: 'LedgerUser'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:message_moderator2_user) %>
   creator_id: 0
-  string1: 'Second moderator of messages in a group, banned.'
+  string1: 'Second moderator of messages in a group, banned'
 
 member_moderator_user:
   type: 'LedgerUser'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:member_moderator_user) %>
   creator_id: 0
-  string1: 'Moderator of members in a group.'
+  string1: 'Moderator of members in a group'
 
 meta_moderator_user:
   type: 'LedgerUser'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:meta_moderator_user) %>
   creator_id: 0
-  string1: 'Moderator of opinions in a group.'
+  string1: 'Moderator of opinions in a group'
 
 member_user:
   type: 'LedgerUser'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:member_user) %>
   creator_id: 0
-  string1: 'Member of a group.'
+  string1: 'Member of a group'
 
 reader_user:
   type: 'LedgerUser'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:reader_user) %>
   creator_id: 0
-  string1: 'Reader of a group.'
+  string1: 'Reader of a group'
 
 undesirable_user:
   type: 'LedgerUser'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:undesirable_user) %>
   creator_id: 0
-  string1: 'An undesirable user who gets banned.'
+  string1: 'An undesirable user who gets banned'
 
 outsider_user:
   type: 'LedgerUser'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:outsider_user) %>
   creator_id: 0
-  string1: 'A user not in any groups.'
+  string1: 'A user not in any groups'
 

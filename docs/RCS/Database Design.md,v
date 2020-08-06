@@ -1,9 +1,14 @@
-head	1.43;
+head	1.44;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.44
+date	2020.08.05.20.42.14;	author agmsmith;	state Exp;
+branches;
+next	1.43;
 
 1.43
 date	2020.08.04.21.18.02;	author agmsmith;	state Exp;
@@ -226,14 +231,14 @@ desc
 @
 
 
-1.43
+1.44
 log
-@Add LinkHomeGroup, for user's home page.
+@Added has_owners field to LedgerBase.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.42 2020/08/02 20:46:02 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.43 2020/08/04 21:18:02 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -573,13 +578,6 @@ serious or distinct enough.
 * type string The name of the subclass to use for this object record.  "type"
   is the magic word Rails recognises to name a class and turn on single table
   inheritance mode.  Write-once.
-* creator_id Identifies the user who created this record.  Store the id of the
-  original version of the user's LedgerUser record.  The root object is
-  considered to have created itself.  If you want to change the creator of an
-  object, you have to make a new version of the record with the new creator.
-  Conceptually there is a LinkCreator record that links the object to the
-  creator, with zero reference points allocated.  To cut down on such a common
-  record, it's implied by the creator_id field.  Write-once.
 * original_id Points to the original version of this record, or equal to id if
   this is the original one.  When someone creates a link to the object, by
   default it's linked to by the original id.  The original record is still used
@@ -605,6 +603,17 @@ serious or distinct enough.
   just shows a warning message to the user when an attempt is made to display
   it.  Rating points are accumulated as usual.  That way we can undelete this
   record if needed.  Changed as needed.
+* has_owners boolean True if there is one or more LinkOwner records (even
+  deleted ones) that references this record.  False if there are none, which
+  means we can skip searching for LinkOwner records every time we check
+  permissions, which saves a lot of database queries!
+* creator_id Identifies the user who created this record.  Store the id of the
+  original version of the user's LedgerUser record.  The root object is
+  considered to have created itself.  If you want to change the creator of an
+  object, you have to make a new version of the record with the new creator.
+  Conceptually there is a LinkCreator record that links the object to the
+  creator, with zero reference points allocated.  To cut down on such a common
+  record, it's implied by the creator_id field.  Write-once.
 * current_down_points float  Changed as needed.
 * current_meh_points float  Changed as needed.
 * current_up_points float Changed as needed.  Number of rating points in each
@@ -1335,9 +1344,12 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.42 2020/08/02 20:46:02 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.43 2020/08/04 21:18:02 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.43  2020/08/04 21:18:02  agmsmith
+Add LinkHomeGroup, for user's home page.
+
 Revision 1.42  2020/08/02 20:46:02  agmsmith
 Move class structure retrospective regrets to later in the introduction.
 
@@ -1472,6 +1484,30 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.43
+log
+@Add LinkHomeGroup, for user's home page.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.42 2020/08/02 20:46:02 agmsmith Exp agmsmith $</SMALL>
+a342 7
+* creator_id Identifies the user who created this record.  Store the id of the
+  original version of the user's LedgerUser record.  The root object is
+  considered to have created itself.  If you want to change the creator of an
+  object, you have to make a new version of the record with the new creator.
+  Conceptually there is a LinkCreator record that links the object to the
+  creator, with zero reference points allocated.  To cut down on such a common
+  record, it's implied by the creator_id field.  Write-once.
+d368 11
+d1109 1
+a1109 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.42 2020/08/02 20:46:02 agmsmith Exp agmsmith $
+d1112 3
 @
 
 
