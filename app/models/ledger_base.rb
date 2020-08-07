@@ -42,7 +42,7 @@ class LedgerBase < ApplicationRecord
   ##
   # Return a basic user readable identification of an object (ID and class).
   def base_s
-    base_string = "##{id} ".dup # dup to unfreeze, silly for expanded strings.
+    base_string = "##{id} ".dup # dup to unfreeze, silly for #{} strings.
     if original_version.amended_id
       base_string << "[#{original_version_id}-#{latest_version.id}] "
     end
@@ -63,7 +63,7 @@ class LedgerBase < ApplicationRecord
   # then when you save it, it will update the original record to point to the
   # newest record as the latest one.  If someone else appended to the ledger
   # first, the save will fail with an exception.  No permissions checks done,
-  # should usually test if user doing this is creator_owner?
+  # should usually test if the user doing this is creator_owner?
   def append_version
     new_entry = latest_version.dup
     new_entry.original_id = original_version_id # In case original_id is nil.
@@ -98,7 +98,8 @@ class LedgerBase < ApplicationRecord
   ##
   # Finds the latest version of this record (could be a deleted one).  Note
   # that non-ledger fields (cached calculated values like rating points) are
-  # stored elsewhere, in the original ledger record.
+  # stored elsewhere, in the original ledger record.  However, the content and
+  # the creator are most up to date in this latest version record.
   def latest_version
     latest = original_version.amended
     return latest unless latest.nil?
@@ -127,11 +128,15 @@ class LedgerBase < ApplicationRecord
   # Returns the current creator of the object.  It's the creator field in the
   # latest version of the object.  Yes, besides adding owners, you can change
   # the creator; needed for handing over full control of a group to a different
-  # person.
+  # person.  Also this will be the latest version of the creator's record, so
+  # you get their current name etc.
   def current_creator
     latest_version.creator.latest_version
   end
 
+  ##
+  # Returns the original ID of the current creator of this object.  Or at least
+  # it should, if the database is correctly used.
   def current_creator_id
     latest_version.creator_id
   end
@@ -139,20 +144,19 @@ class LedgerBase < ApplicationRecord
   ##
   # See if the given user is allowed to delete and otherwise modify this
   # record.  Has to be the creator or the owner of the object.  Returns true
-  # if they have permission.  Will use the newest version of this object to
-  # get the latest creator.
-  def creator_owner?(ledger_user)
+  # if they have permission.
+  def creator_owner?(luser)
     raise RatingStoneErrors,
-      "Need a LedgerUser, not a #{ledger_user.class.name} " \
-      "object to test against." unless ledger_user.is_a?(LedgerUser)
-    ledger_user_id = ledger_user.original_version_id
-    return true if current_creator_id == ledger_user_id
+      "Need a LedgerUser, not a #{luser.class.name} " \
+      "object to test against." unless luser.is_a?(LedgerUser)
+    luser_original_id = luser.original_version_id
+    return true if current_creator_id == luser_original_id
 
     # Hunt for LinkOwner records that include the mentioned user and this
     # object. Use our original id as key, since we can be using amended
     # versions for data but we want the canonical base version for references.
     # Can save time by skipping the owner search if we know there are no owners.
-    return LinkOwner.exists?(parent_id: ledger_user_id,
+    return LinkOwner.exists?(parent_id: luser_original_id,
       child_id: original_version_id, deleted: false, approved_parent: true,
       approved_child: true) if original_version.has_owners
     false
@@ -163,14 +167,14 @@ class LedgerBase < ApplicationRecord
   # creator/owner, or a group reader if it is a group, or a group reader of a
   # group that the test object is in.  If the object is in multiple groups, the
   # user just has to be a group reader in one of them.
-  def allowed_to_view?(ledger_user)
-    return true if creator_owner?(ledger_user)
-    return role_test?(ledger_user, LinkRole::READER) if is_a?(LedgerSubgroup)
-    # Test the user's status in groups for things attached to groups.
+  def allowed_to_view?(luser)
+    return true if creator_owner?(luser)
+    return role_test?(luser, LinkRole::READER) if is_a?(LedgerSubgroup)
+    # Test the user's status in groups for things (content) attached to groups.
     if is_a?(LedgerContent)
       LinkGroupContent.where(child_id: original_version_id, deleted: false,
-        approved_parent: true, approved_child: true).each do |a_group|
-        return true if a_group.parent.role_test?(ledger_user, LinkRole::READER)
+        approved_parent: true, approved_child: true).each do |a_link|
+        return true if a_link.group.role_test?(luser, LinkRole::READER)
       end
     end
     false
@@ -179,14 +183,11 @@ class LedgerBase < ApplicationRecord
   ##
   # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
   # records, with the most recent first.  Works by searching the AuxLedger
-  # records for references to this particular record and also to the original
-  # record if this one is a later version (theoretically don't have to do that).
+  # records for references to our original record ID.
   def deleted_by
-    deleted_ids = [id]
-    deleted_ids.push(original_version_id) if id != original_version_id
     LedgerBase.joins(:aux_ledger_downs)
       .where({
-        aux_ledgers: { child_id: deleted_ids },
+        aux_ledgers: { child_id: original_version_id },
         type: [:LedgerDelete, :LedgerUndelete],
       })
       .order(created_at: :desc)
@@ -204,9 +205,9 @@ class LedgerBase < ApplicationRecord
   # as (un)deleted.  In the future we may mark individual versions as being
   # deleted, if that's useful.  Returns the AuxLedger record if successful.
   def ledger_delete_append(ledger_delete_record, do_delete)
-    luser = ledger_delete_record.creator
-    raise RatingStoneErrors, "#{luser} not allowed to delete " \
-      "#{type} ##{id}." unless creator_owner?(luser)
+    luser = ledger_delete_record.creator # Already original version.
+    raise RatingStoneErrors, "#{luser} not allowed to delete record " \
+      "#{self}." unless creator_owner?(luser)
     aux_record = AuxLedger.new(parent: ledger_delete_record,
       child_id: original_version_id)
     aux_record.save!
@@ -259,7 +260,8 @@ class LedgerBase < ApplicationRecord
   # an original_id, it is an original record itself.  For future queries for
   # all versions convenience, we want original_id to point to self.  Since we
   # can't know the id value until after the save, update original_id after the
-  # save.
+  # save.  Also as a side effect, fixes Fixture created records which don't
+  # run callbacks when they're created, but do when they're changed.
   def patch_original_id
     return unless original_id.nil?
     update_attribute(:original_id, id) # Doing "save" here would be recursive!

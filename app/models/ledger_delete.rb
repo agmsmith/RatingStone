@@ -38,9 +38,10 @@ class LedgerDelete < LedgerBase
   ##
   # Internal function that adds the auxiliary records to connect deleted or
   # undeleted things to a LedgerDelete or LedgerUndelete record, as specified
-  # by the "do_delete" parameter.  Returns the LedgerDelete/Undelete record on
-  # success, nil on doing nothing, raises a RuntimeError exception (will roll
-  # back the whole deletion operation in that case) when something goes wrong.
+  # by the "do_delete" parameter.  luser is the original version of the user.
+  # Returns the LedgerDelete/Undelete record on success, nil on doing nothing,
+  # raises a RuntimeError exception (will roll back the whole deletion operation
+  # in that case) when something goes wrong.
   private_class_method def self.add_aux_records(record_collection, luser,
     context, reason, do_delete)
     return nil if record_collection.nil? || record_collection.empty?
@@ -67,8 +68,10 @@ class LedgerDelete < LedgerBase
       record_collection.each do |a_record|
         if a_record.is_a?(LedgerBase)
           ledger_ids.add(a_record.original_version_id)
-        else
+        elsif a_record.is_a?(LinkBase)
           link_ids.add(a_record.id)
+        else
+          logger.warn("#add_aux_records Unknown kind of record: #{a_record}.")
         end
       end
       ledger_ids.each do |an_id|
@@ -79,7 +82,7 @@ class LedgerDelete < LedgerBase
         a_record = LinkBase.find(an_id)
         a_record.ledger_delete_append(ledger_record, do_delete)
       end
-    end
+    end # End transaction.
     ledger_record
   end
 end

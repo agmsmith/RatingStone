@@ -1,9 +1,14 @@
-head	1.44;
+head	1.45;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.45
+date	2020.08.06.22.53.07;	author agmsmith;	state Exp;
+branches;
+next	1.44;
 
 1.44
 date	2020.08.05.20.42.14;	author agmsmith;	state Exp;
@@ -231,14 +236,14 @@ desc
 @
 
 
-1.44
+1.45
 log
-@Added has_owners field to LedgerBase.
+@Update database migration example with current version.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.43 2020/08/04 21:18:02 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.44 2020/08/05 20:42:14 agmsmith Exp agmsmith $</SMALL>
 
 ## Basic Ideas
 
@@ -1221,21 +1226,22 @@ details like this:
 
 <PRE>class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
   def change
-    create_table :ledger_bases, force: false, comment: "Ledger objects base class and record.  Don't force: cascade deletes since this is a write-once ledger." do |t|
+    create_table :ledger_bases, force: false, comment: "Ledger objects base class and record.  Don't force: cascade deletes since this is a write-once ledger where usually nothing gets deleted (except during points expired object garbage collection)." do |t|
       t.string :type, default: "LedgerBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
+      t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one.  NULL if not initialised (should be a copy of the id of this record)."
+      t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
+      t.boolean :has_owners, default: false, comment: "True if there is one or more LinkOwner records (even deleted ones) that references this record.  False if there are none, which means we can skip searching for LinkOwner records every time we check permissions, which saves a lot of database queries!"
+      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record, using their original ID."
       t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
       t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.string :string2, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.text :text1, default: "", comment: "Generic text (lots of characters), defined by subclasses."
-      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record."
-      t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
-      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
-      t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one.  NULL if not initialised (should be a copy of the id of the record)."
+      t.datetime :date1, null: true, comment: "Generic date and time from year 0 to year 9999, defined by subclasses."
       t.float :current_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_meh_points, default: 0.0, comment: "Number of rating points in the meh non-direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
-      t.datetime :date1, null: true, comment: "Generic date and time from year 0 to year 9999, defined by subclasses."
       t.timestamps
     end
 
@@ -1245,11 +1251,11 @@ details like this:
 
     create_table :link_bases, force: false, comment: "LinkBase base class and record for linking LedgerObjects together." do |t|
       t.string :type, default: "LinkBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
+      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the parent LedgerBase object (or subclass) which is usually the main one or older one in the association.  Uses the original ID of the parent."
+      t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the child LedgerBase object (or subclass) which is the child in the association.  Uses the original ID of the child."
+      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link, using their original ID."
       t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
-      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the LedgerBase object (or subclass) which is usually the main one in the association."
-      t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the LedgerBase object (or subclass) which is the child in the association."
-      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link."
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
       t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
       t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
@@ -1274,14 +1280,17 @@ details like this:
       t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerchild"}, comment: "Points to the child LedgerBase object (or subclass) which is being modified by the parent."
     end
 
-    create_table :group_settings do |t|
+    create_table :group_settings, comment: "Extra information for each LedgerFullGroup object is stored in this table." do |t|
       t.references :ledger_full_group, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_groupsettingsgroup"}, comment: "Points to the LedgerFullGroup (a LedgerBase subclass) that this record contains the extra settings for."
       t.boolean :auto_approve_non_member_posts, default: false, comment: "True if posts attached to the group by a non-member are automatically approved (if they have enough points).  False means a moderator will need to approve them."
-      t.boolean :auto_approve_member_posts, default: false, comment: "True if posts attached to the group by a member are automatically approved (if they have enough points).  False means a moderator will need to approve them."
+      t.boolean :auto_approve_member_posts, default: true, comment: "True if posts attached to the group by a member are automatically approved (if they have enough points).  False means a moderator will need to approve them.  Weird if you only auto-approve non-members."
       t.boolean :auto_approve_members, default: false, comment: "True if new member applications are automatically approved (if they have enough points).  False requires approval by a member moderator."
-      t.float :min_points_non_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a non-member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
-      t.float :min_points_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
-      t.float :min_points_membership, default: 0.0, comment: "Minimum number of Up rating points needed when applying to be a member to get automatic approval.  Ignored if automatic approval is turned off.  If they don't get automatically approved, a moderator will need to approve their request."
+      t.float :min_points_non_member_post, default: -1.0, comment: "Minimum number of net rating points needed when posting as a non-member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :max_points_non_member_post, default: 2.0, comment: "Maximum number of net rating points allowed when posting as a non-member to get automatic approval.  If they have too many, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :min_points_member_post, default: -10.0, comment: "Minimum number of net rating points needed when posting as a member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :max_points_member_post, default: 10.0, comment: "Maximum number of net rating points allowed when posting as a member to get automatic approval.  If they have too many, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :min_points_membership, default: 1.0, comment: "Minimum number of net rating points needed when applying to be a member to get automatic approval.  Ignored if automatic approval is turned off.  If they don't get automatically approved, a moderator will need to approve their request."
+      t.float :max_points_membership, default: 100.0, comment: "Maximum number of net rating points allowed when applying to be a member to get automatic approval.  Ignored if automatic approval is turned off.  If they don't get automatically approved, a moderator will need to approve their request."
       t.string :wildcard_role_banned, default: "", comment: "Wildcard expression to identify people who are banned, in addition to explicit LinkRole records.  So we can ban friends of banned people, etc."
       t.string :wildcard_role_reader, default: "", comment: "Relationship expression specifying additional people who are allowed to read the group."
       t.string :wildcard_role_member, default: "", comment: "Relationship expression specifying additional people who are considered members of the group, even if they didn't apply."
@@ -1293,14 +1302,38 @@ details like this:
 end
 </PRE>
 
-
-Flesh out link_base.rb with a few associations too:
+Flesh out ledger_base.rb and link_base.rb with a few associations too:
 
 <PRE>
+class LedgerBase < ApplicationRecord
+  # Always have a creator, but "optional: false" makes it reload the creator
+  # object every time we do something with an object.  So just require it to
+  # be non-NULL in the database definition.
+  belongs_to :creator, class_name: :LedgerBase, optional: true
+
+  belongs_to :original, class_name: :LedgerBase, optional: true
+  belongs_to :amended, class_name: :LedgerBase, optional: true
+
+  has_many :link_downs, class_name: :LinkBase, foreign_key: :parent_id
+  has_many :descendants, through: :link_downs, source: :child
+  has_many :link_ups, class_name: :LinkBase, foreign_key: :child_id
+  has_many :ancestors, through: :link_ups, source: :parent
+
+  has_many :aux_ledger_downs, class_name: :AuxLedger, foreign_key: :parent_id
+  has_many :aux_ledger_descendants, through: :aux_ledger_downs, source: :child
+  has_many :aux_ledger_ups, class_name: :AuxLedger, foreign_key: :child_id
+  has_many :aux_ledger_ancestors, through: :aux_ledger_ups, source: :parent
+  has_many :aux_link_downs, class_name: :AuxLink, foreign_key: :parent_id
+  has_many :aux_link_descendants, through: :aux_link_downs, source: :child
+end
+
 class LinkBase < ApplicationRecord
   belongs_to :parent, class_name: :LedgerBase, optional: false
   belongs_to :child, class_name: :LedgerBase, optional: false
   belongs_to :creator, class_name: :LedgerBase, optional: false
+
+  has_many :aux_link_ups, class_name: :AuxLink, foreign_key: :child_id
+  has_many :aux_link_ancestors, through: :aux_link_ups, source: :parent
 end
 </PRE>
 
@@ -1344,9 +1377,12 @@ What are their points?
 {:toc}
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.43 2020/08/04 21:18:02 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.44 2020/08/05 20:42:14 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.44  2020/08/05 20:42:14  agmsmith
+Added has_owners field to LedgerBase.
+
 Revision 1.43  2020/08/04 21:18:02  agmsmith
 Add LinkHomeGroup, for user's home page.
 
@@ -1484,6 +1520,56 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.44
+log
+@Added has_owners field to LedgerBase.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.43 2020/08/04 21:18:02 agmsmith Exp agmsmith $</SMALL>
+d986 1
+a986 1
+    create_table :ledger_bases, force: false, comment: "Ledger objects base class and record.  Don't force: cascade deletes since this is a write-once ledger." do |t|
+d988 5
+d998 1
+a998 4
+      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record."
+      t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
+      t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one.  NULL if not initialised (should be a copy of the id of the record)."
+a1001 1
+      t.datetime :date1, null: true, comment: "Generic date and time from year 0 to year 9999, defined by subclasses."
+d1011 3
+a1015 3
+      t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the LedgerBase object (or subclass) which is usually the main one in the association."
+      t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the LedgerBase object (or subclass) which is the child in the association."
+      t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link."
+d1040 1
+a1040 1
+    create_table :group_settings do |t|
+d1043 1
+a1043 1
+      t.boolean :auto_approve_member_posts, default: false, comment: "True if posts attached to the group by a member are automatically approved (if they have enough points).  False means a moderator will need to approve them."
+d1045 6
+a1050 3
+      t.float :min_points_non_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a non-member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :min_points_member_post, default: 0.0, comment: "Minimum number of Up rating points needed when posting as a member to get automatic approval.  If they don't have enough, their post will need to be approved by a moderator.  Ignored if automatic approval is turned off."
+      t.float :min_points_membership, default: 0.0, comment: "Minimum number of Up rating points needed when applying to be a member to get automatic approval.  Ignored if automatic approval is turned off.  If they don't get automatically approved, a moderator will need to approve their request."
+d1062 1
+d1064 22
+a1085 1
+Flesh out link_base.rb with a few associations too:
+a1086 1
+<PRE>
+d1091 3
+d1137 1
+a1137 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.43 2020/08/04 21:18:02 agmsmith Exp agmsmith $
+d1140 3
 @
 
 

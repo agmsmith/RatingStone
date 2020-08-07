@@ -110,8 +110,8 @@ if !Rails.env.test?
       activated_at: Time.zone.now)
     luser = a_user.ledger_user
     # Add the person to one of three groups.  Role based on iteration level.
-    LinkRole.create!(parent: group_records[n % 3], child: luser,
-      role_priority: n / 3 * 10 + 10, creator_id: 0)
+    LinkRole.create!(group: group_records[n % 3], user: luser,
+      priority: n / 3 * 10 + 10, creator_id: 0)
   end
 
   # Generate microposts for a subset of users.

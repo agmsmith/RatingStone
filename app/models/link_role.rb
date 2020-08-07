@@ -1,8 +1,12 @@
 # frozen_string_literal: true
 
 class LinkRole < LinkBase
-  alias_attribute :role_priority, :number1
-  alias_attribute :role_description, :string1
+  alias_attribute :priority, :number1
+  alias_attribute :description, :string1
+  alias_attribute :group, :parent
+  alias_attribute :user, :child
+
+  validate :validate_parent_and_child_types
 
   before_create :set_default_role_description
 
@@ -33,15 +37,21 @@ class LinkRole < LinkBase
   private
 
   ##
-  # Convert the numerical role_priority into words if no description yet.
+  # Convert the numerical priority into words if no description yet.
   def set_default_role_description
-    return unless role_description.empty?
-    index = role_priority.to_i / 10 * 10
+    return unless description.empty?
+    index = priority.to_i / 10 * 10
     index = BANNED if index < BANNED
     index = CREATOR if index > CREATOR
     desc = ROLE_NAMES[index]
-    desc += " (#{role_priority})" if index != role_priority
-    self.role_description = "#{child} is a #{desc} in " \
-      "group #{parent}.".truncate(255)
+    desc += " (a nonstandard #{priority})" if index != priority
+    self.description = "#{child} is a #{desc} in group #{parent}.".truncate(255)
+  end
+
+  def validate_parent_and_child_types
+    errors.add(:nongroup, "Parent object needs to be a LedgerFullGroup " \
+      "for #{self}") unless group.is_a?(LedgerFullGroup)
+    errors.add(:nonuser, "Child object needs to be a LedgerUser for #{self}") \
+      unless user.is_a?(LedgerUser)
   end
 end

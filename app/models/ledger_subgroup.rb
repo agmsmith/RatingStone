@@ -4,7 +4,7 @@ class LedgerSubgroup < LedgerBase
   alias_attribute :name, :string1
   alias_attribute :description, :string2
 
-  # Methods we pass on to the parent LedgerFullGroup(s).
+  # Methods we delegate to the parent LedgerFullGroup(s).
   REDIRECTED_METHODS = %i[can_post? role_test?].to_set
 
   ##

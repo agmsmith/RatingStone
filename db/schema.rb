@@ -48,14 +48,13 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
   end
 
   create_table "clips", force: :cascade do |t|
-    t.integer "ledger_user_id_id", null: false
-    t.string "object_type", default: ""
-    t.integer "ledger_object_id_id"
-    t.integer "link_object_id_id"
+    t.integer "ledger_user_id", null: false
+    t.integer "ledger_object_id"
+    t.integer "link_object_id"
     t.string "description", default: ""
-    t.index ["ledger_object_id_id"], name: "index_clips_on_ledger_object_id_id"
-    t.index ["ledger_user_id_id"], name: "index_clips_on_ledger_user_id_id"
-    t.index ["link_object_id_id"], name: "index_clips_on_link_object_id_id"
+    t.index ["ledger_object_id"], name: "index_clips_on_ledger_object_id"
+    t.index ["ledger_user_id"], name: "index_clips_on_ledger_user_id"
+    t.index ["link_object_id"], name: "index_clips_on_link_object_id"
   end
 
   create_table "group_settings", force: :cascade do |t|
@@ -170,9 +169,9 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
   add_foreign_key "aux_ledgers", "ledger_bases", column: "parent_id"
   add_foreign_key "aux_links", "ledger_bases", column: "parent_id"
   add_foreign_key "aux_links", "link_bases", column: "child_id"
-  add_foreign_key "clips", "ledger_bases", column: "ledger_object_id_id"
-  add_foreign_key "clips", "ledger_bases", column: "ledger_user_id_id"
-  add_foreign_key "clips", "link_bases", column: "link_object_id_id"
+  add_foreign_key "clips", "ledger_bases", column: "ledger_object_id"
+  add_foreign_key "clips", "ledger_bases", column: "ledger_user_id"
+  add_foreign_key "clips", "link_bases", column: "link_object_id"
   add_foreign_key "group_settings", "ledger_bases", column: "ledger_full_group_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "amended_id"
   add_foreign_key "ledger_bases", "ledger_bases", column: "creator_id"

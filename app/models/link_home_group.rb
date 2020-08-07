@@ -12,9 +12,9 @@ class LinkHomeGroup < LinkBase
   end
 
   def validate_parent_and_child_types
-    errors.add(:nongroup, "Child isn't a full group for #{self}") \
-      unless child.is_a?(LedgerFullGroup)
     errors.add(:nonuser, "Parent isn't a user object for #{self}") \
       unless parent.is_a?(LedgerUser)
+    errors.add(:nongroup, "Child isn't a full group for #{self}") \
+      unless child.is_a?(LedgerFullGroup)
   end
 end

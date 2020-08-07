@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class LinkGroupContent < LinkBase
+  alias_attribute :group, :parent
+  alias_attribute :content, :child
   alias_attribute :disapproval_messages, :string1
 
   validate :validate_parent_and_child_types

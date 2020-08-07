@@ -104,8 +104,8 @@ class LinkBase < ApplicationRecord
       self.approved_child = do_approve
     end
 
-    raise RatingStoneErrors, "Not allowed to change any approvals, " \
-      "user: #{luser}, record: #{self}." unless changes_permitted
+    raise RatingStoneErrors, "Doesn't have permission to change any " \
+      "approvals, user: #{luser}, record: #{self}." unless changes_permitted
 
     aux_record = AuxLink.new(parent: ledger_approve_record, child: self)
     aux_record.save!
@@ -120,11 +120,12 @@ class LinkBase < ApplicationRecord
   # a utility function in the LedgerDelete/Undelete class) by an AuxLink
   # record (parent field in AuxLink identifies the Ledger(Un)Delete) to this
   # record being deleted (child field in AuxLink).  If doing an undelete, the
-  # parameter "do_delete" will be false.  Returns the AuxLink record or nil
-  # or raises an error exception.
+  # parameter "do_delete" will be false.  Updates the cached deleted flag in
+  # this record.  Returns the AuxLink record or nil or raises an error
+  # exception.
   def ledger_delete_append(ledger_delete_record, do_delete)
     # Check for permission to delete a Ledger object.
-    luser = ledger_delete_record.creator
+    luser = ledger_delete_record.creator # Already original version.
     raise RatingStoneErrors,
       "Not allowed to delete record #{self}, user: #{luser}." \
       unless creator_owner?(luser)

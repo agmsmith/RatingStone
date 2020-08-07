@@ -13,10 +13,10 @@ class LedgerFullGroup < LedgerSubgroup
   # points (creator/owner of the subgroup can manually transfer them later).
   # ErrorMessages is an optional array which will have an error message
   # appended if false is returned.  Of course, false just means a moderator
-  # will need to approve the post.
+  # will need to approve the post.  luser can be any version of the user.
   def can_post?(luser, points_spent, error_messages = nil)
     # Creator of group can always do anything.
-    return true if creator_id == luser.original_version_id
+    return true if current_creator_id == luser.original_version_id
 
     # Test the various roles, starting with higher priority ones first, so
     # moderators can always approve a post even though they're also members.
@@ -68,20 +68,22 @@ class LedgerFullGroup < LedgerSubgroup
   end
 
   ##
-  # Returns the role the given user has in this group.
+  # Returns the role the given user has in this group.  luser can be any
+  # version of the user.
   def get_role(luser)
     # Creator is always valid; can't ban the creator.
-    return LinkRole::CREATOR if creator_id == luser.original_version_id
+    luser_original_id = luser.original_version_id
+    return LinkRole::CREATOR if current_creator_id == luser_original_id
 
     # See which roles the user has been assigned, lowest priority one first.
     roles = LinkRole.where(parent_id: original_version_id,
-      child_id: luser.original_version_id, deleted: false,
-      approved_parent: true, approved_child: true).order(role_priority: :asc)
+      child_id: luser_original_id, deleted: false,
+      approved_parent: true, approved_child: true).order(priority: :asc)
 
     # Banned takes precedence, even if other roles were assigned.
     low_role = roles.first
-    return low_role.role_priority if
-      low_role && low_role.role_priority <= LinkRole::BANNED
+    return low_role.priority if
+      low_role && low_role.priority <= LinkRole::BANNED
 
     # Now safe to check for owner, after banned, so we can ban an owner.
     return LinkRole::OWNER if creator_owner?(luser)
@@ -89,14 +91,14 @@ class LedgerFullGroup < LedgerSubgroup
     # Look up the highest normal role assigned to the user.
     high_role = roles.last
     if high_role
-      priority = high_role.role_priority
-      # Don't allow silly levels of priority.
+      priority = high_role.priority
+      # Don't allow silly levels of priority.  Only true owner or creator OK.
       priority = LinkRole::OWNER - 1 if priority >= LinkRole::OWNER
       return priority
     end
 
-    # A default until we get wildcards working (insert that code here),
-    # in which case the default becomes banned.
+    # A default until we get wildcards and group settings working (insert that
+    # code here), in which case the default becomes banned.
     LinkRole::READER
   end
 
@@ -104,7 +106,7 @@ class LedgerFullGroup < LedgerSubgroup
   # Return true if the user has permission to do the things implied by the role.
   def role_test?(luser, test_role)
     # Creator has all permissions, even ones beyond LinkRole::CREATOR.
-    return true if creator_id == luser.original_version_id
+    return true if current_creator_id == luser.original_version_id
 
     test_role <= get_role(luser)
   end

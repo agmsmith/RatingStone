@@ -22,6 +22,7 @@ class LedgerUser < LedgerBase
       name: name, email: email, password: pw, password_confirmation: pw,
       admin: false, activated: false)
     user_record.activate
+    user_record
   end
 
   ##
