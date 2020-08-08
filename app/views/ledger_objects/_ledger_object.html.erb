@@ -1,46 +1,35 @@
-<li id="ledger_object-<%= ledger_object.id %>">
+<li id="ledger_object_<%= ledger_object.id %>">
 <% if ledger_object.nil? %>
   <span class="nil_warning">
     No object specified (nil).
   </span>
-<% elif !ledger_object.allowed_to_view?(current_ledger_user) %>
+<% elsif !ledger_object.allowed_to_view?(current_ledger_user) %>
   <span class="not_allowed_to_view">
-    You don't have permission to view this object.
+    <%= "#{ledger_object.type} ##{ledger_object.id} You don't have " \
+      "permission to view this object." %>
   </span>
-<% elif ledger_object.deleted %>
-  <span class="deleted">
-    <% if ledger_object.creator_owner?(current_ledger_user) %>
+<% else %>
+  <% if ledger_object.creator_owner?(current_ledger_user) %>
+    <% if ledger_object.deleted %>
       <%= button_to "Undelete", undelete_ledger_object_path(ledger_object),
         method: :post,
         data: { confirm: "Sure you want to undelete this object?" },
         form_class: 'undeletebutton', class: 'btn btn-info'
       %>
-      <ul>
-      <% ledger_object.deleted_by.each do |x| %>
-        <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
-        <%= x.to_s %> on <%= x.created_at.getlocal %><BR>
-        <small><%= x.reason %></small><BR>
-        <small><%= x.context %></small></li>
-      <% end %>
-      </ul>
     <% else %>
-      This object has been deleted.
+      <%= button_to "Delete", ledger_object_path(ledger_object),
+        method: :delete, data: { confirm: "Really delete this object?" },
+        form_class: 'deletebutton', class: 'btn btn-danger'
+      %>
     <% end %>
-  </span>
-<% else %>
-  <% if ledger_object.creator_owner?(current_ledger_user) %>
-    <%= button_to "Delete", ledger_object_path(ledger_object), method: :delete,
-      data: { confirm: "Really delete this object?" },
-      form_class: 'deletebutton', class: 'btn btn-danger'
-    %>
   <% end %>
   <span class="content">
+    <%= link_to "#{ledger_object.type} ##{ledger_object.id}",
+      ledger_object_path(ledger_object) %>
     <%= ledger_object.context_s %>
   </span>
-<% end %>
-<% if ledger_object %>
-  <span class="timestamp"><%= link_to "##{ledger_object.id}",
-    ledger_object_path(ledger_object) %> <small><%=
-    ledger_object.created_at.getlocal %></small>.</span>
+  <span class="timestamp"><small><%=
+    ledger_object.created_at.getlocal %></small></span>
 <% end %>
 </li>
+

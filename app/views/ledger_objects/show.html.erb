@@ -3,7 +3,8 @@
   <div class="col-sm-10">
     <!-- Content of the object, creator first -->
     <span class="user">Created by <%=
-      link_to @ledger_object.creator.latest_version.name,
+      link_to "##{@ledger_object.creator.original_version_id} " \
+        "#{@ledger_object.creator.latest_version.name}",
       @ledger_object.creator.user %><BR></span>
     <span class="object_content">
       <%= @ledger_object.base_s %><BR>
@@ -19,22 +20,6 @@
       Up points: <%= @ledger_object.current_up_points %><BR>
     </span>
 
-<% delete_list = @ledger_object.deleted_by
-  unless delete_list.empty? %>
-    <span class="delete_history">
-      Delete and undelete reverse history:
-      <ul class="delete_list">
-      <% delete_list.each do |x| %>
-        <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
-        <%= x.creator.name %> (#<%= x.creator_id %>) on
-        <%= x.created_at.getlocal %><BR>
-        <small>Reason: <%= x.reason %></small><BR>
-        <small>Context: <%= x.context %></small></li>
-      <% end %>
-      </ul>
-    </span>
-
-<% end %>
     <span class="timestamp">
       Created <%= time_ago_in_words(@ledger_object.created_at)
       %> ago&nbsp;- <small><%= @ledger_object.created_at.getlocal
@@ -45,27 +30,63 @@
     </span>
   </div>
 
-  <!-- Delete or undelete button -->
+  <% if @ledger_object.creator_owner?(current_ledger_user) %>
+  <!-- Delete or undelete button, if user has permission -->
   <div class="col-sm-2">
     <span class="deleted">
-<% if @ledger_object.deleted %>
-  <% if @ledger_object.creator_owner?(current_ledger_user) %>
-      <%= button_to "Undelete", undelete_ledger_object_path(@ledger_object),
-        method: :post,
-        data: { confirm: "Sure you want to undelete this object?" },
-        form_class: 'undeletebutton', class: 'btn btn-info'
-      %>
-  <% end %>
-<% else %>
-  <% if current_ledger_user?(@ledger_object.creator) %>
-      <%= button_to "Delete", ledger_object_path(@ledger_object),
-        method: :delete,
-        data: { confirm: "Really delete this object?" },
-        form_class: 'deletebutton', class: 'btn btn-danger'
-      %>
-  <% end %>
-<% end %>
+      <% if @ledger_object.deleted %>
+        <%= button_to "Undelete", undelete_ledger_object_path(@ledger_object),
+          method: :post,
+          data: { confirm: "Sure you want to undelete this object?" },
+          form_class: 'undeletebutton', class: 'btn btn-info'
+        %>
+      <% else %>
+        <%= button_to "Delete", ledger_object_path(@ledger_object),
+          method: :delete,
+          data: { confirm: "Really delete this object?" },
+          form_class: 'deletebutton', class: 'btn btn-danger'
+        %>
+      <% end %>
     </span>
   </div>
+  <% end %>
 </div>
+
+<% delete_list = @ledger_object.deleted_by
+  unless delete_list.empty? %>
+  <div class="row">
+    <div class="col-sm-12">
+      <HR>
+      <span class="delete_history">
+        Delete and undelete history:
+        <ul class="delete_list">
+        <% delete_list.each do |x| %>
+          <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
+          <%= x.creator.name %> (#<%= x.creator_id %>) on
+          <%= x.created_at.getlocal %><BR>
+          <small>Reason: <%= x.reason %></small><BR>
+          <small>Context: <%= x.context %></small></li>
+        <% end %>
+        </ul>
+      </span>
+    </div>
+  </div>
+<% end %>
+
+<% version_list = @ledger_object.all_versions
+  unless version_list.count <= 1 %>
+  <div class="row">
+    <div class="col-sm-12">
+      <HR>
+      <span class="version_history">
+        Version history:
+        <ul class="version_list">
+        <% version_list.each do |x| %>
+          <li><%= link_to x.to_s, ledger_object_path(x) %></li>
+        <% end %>
+        </ul>
+      </span>
+    </div>
+  </div>
+<% end %>
 
