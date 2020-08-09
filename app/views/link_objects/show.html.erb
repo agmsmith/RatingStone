@@ -1,2 +1,96 @@
-<h1>LinkObject#show</h1>
-<p>Find me in app/views/link_object/show.html.erb</p>
+<% provide(:page_title,
+  "Link Object ##{@link_object.is_a?(LinkBase) ?
+    @link_object.id : "Unknown"}") %>
+<% if @link_object.nil? %>
+  <div class="row">
+    <div class="col-sm-4">
+      <span class="error-show">Link Object "<%=
+        params[:id] %>" does not exist.</span>
+    </div>
+  </div>
+<% elsif !@link_object.creator_owner?(current_ledger_user) %>
+  <div class="row">
+    <div class="col-sm-4">
+      <span class="error-show">You do not have permission to
+        view Link Object #<%= @link_object.id %>.</span>
+    </div>
+  </div>
+<% else %>
+  <div class="row">
+    <h3><%= "##{@link_object.id} #{@link_object.class.name}" %></H3>
+    <div class="col-sm-10">
+      <!-- Content of the object, creator first -->
+      <span class="object_content">
+        Created by <%= link_to "##{@link_object.creator.original_version_id} " \
+          "#{@link_object.creator.latest_version.name}",
+          @link_object.creator.user %><BR>
+        Parent: <%= link_to @link_object.parent.to_s,
+          ledger_object_path(@link_object.parent_id) %><BR>
+        Child: <%= link_to @link_object.child.to_s,
+          ledger_object_path(@link_object.child_id) %><BR>
+        Number1: <%= @link_object.number1 %><BR>
+        String1: <%= @link_object.string1 %><BR>
+        Deleted: <%= @link_object.deleted %><BR>
+        ApprovedParent: <%= @link_object.approved_parent %><BR>
+        ApprovedChild: <%= @link_object.approved_child %><BR>
+        RatingPointsSpent: <%= @link_object.rating_points_spent %><BR>
+        RatingPointsBoostChild: <%= @link_object.rating_points_boost_child %><BR>
+        RatingPointsBoostParent: <%= @link_object.rating_points_boost_parent %><BR>
+        RatingDirection: <%= @link_object.rating_direction %><BR>
+        AwardNumber: <%= @link_object.award_number %><BR>
+      </span>
+
+      <span class="timestamp">
+        Created <%= time_ago_in_words(@link_object.created_at)
+        %> ago&nbsp;- <small><%= @link_object.created_at.getlocal
+        %></small>.<BR>
+        Last updated <%= time_ago_in_words(@link_object.updated_at)
+        %> ago&nbsp;- <small><%= @link_object.updated_at.getlocal
+        %></small>.
+      </span>
+    </div>
+
+    <% if @link_object.creator_owner?(current_ledger_user) %>
+    <!-- Delete or undelete button, if user has permission -->
+    <div class="col-sm-2">
+      <span class="deleted">
+        <% if @link_object.deleted %>
+          <%= button_to "Undelete", undelete_link_object_path(@link_object),
+            method: :post,
+            data: { confirm: "Sure you want to undelete this object?" },
+            form_class: 'undeletebutton', class: 'btn btn-info'
+          %>
+        <% else %>
+          <%= button_to "Delete", link_object_path(@link_object),
+            method: :delete,
+            data: { confirm: "Really delete this object?" },
+            form_class: 'deletebutton', class: 'btn btn-danger'
+          %>
+        <% end %>
+      </span>
+    </div>
+    <% end %>
+  </div>
+
+  <% delete_list = @link_object.deleted_by
+    unless delete_list.empty? %>
+    <div class="row">
+      <div class="col-sm-12">
+        <HR>
+        <span class="delete_history">
+          Delete and undelete history:
+          <ul class="delete_list">
+          <% delete_list.each do |x| %>
+            <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
+            <%= x.creator.name %> (#<%= x.creator_id %>) on
+            <%= x.created_at.getlocal %><BR>
+            <small>Reason: <%= x.reason %></small><BR>
+            <small>Context: <%= x.context %></small></li>
+          <% end %>
+          </ul>
+        </span>
+      </div>
+    </div>
+  <% end %>
+<% end %>
+

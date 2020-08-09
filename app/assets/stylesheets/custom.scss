@@ -248,29 +248,25 @@ aside {
 
 /* Ledger Objects index */
 
-.ledger_objects {
+.list-ledger-objects {
   list-style: none;
   margin: 0;
   li {
     overflow: auto;
     padding: 10px 0;
     border-bottom: 1px solid $gray-lighter;
-    .deletebutton {
-      display: block;
-      float: right;
-    }
     .deleted {
       color: red;
       display: block;
       margin-left: 60px;
     }
-    .nil_warning {
+    .not_allowed_to_view {
       color: $gray-light;
       display: block;
       margin-left: 60px;
     }
-    .not_allowed_to_view {
-      color: $gray-light;
+    .content {
+      color: black;
       display: block;
       margin-left: 60px;
     }

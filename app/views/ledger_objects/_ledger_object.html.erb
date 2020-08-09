@@ -1,12 +1,7 @@
 <li id="ledger_object_<%= ledger_object.id %>">
-<% if ledger_object.nil? %>
-  <span class="nil_warning">
-    No object specified (nil).
-  </span>
-<% elsif !ledger_object.allowed_to_view?(current_ledger_user) %>
+<% if !ledger_object.allowed_to_view?(current_ledger_user) %>
   <span class="not_allowed_to_view">
-    <%= "#{ledger_object.type} ##{ledger_object.id} You don't have " \
-      "permission to view this object." %>
+    <%= "#{ledger_object.base_s} You don't have permission to view this object." %>
   </span>
 <% else %>
   <% if ledger_object.creator_owner?(current_ledger_user) %>
@@ -23,7 +18,7 @@
       %>
     <% end %>
   <% end %>
-  <span class="content">
+  <span class="<%= ledger_object.deleted ? "deleted" : "content" %>">
     <%= link_to "#{ledger_object.type} ##{ledger_object.id}",
       ledger_object_path(ledger_object) %>
     <%= ledger_object.context_s %>

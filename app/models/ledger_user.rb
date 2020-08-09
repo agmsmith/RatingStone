@@ -33,7 +33,8 @@ class LedgerUser < LedgerBase
     if home_group.nil?
       latest_name = latest_version.name
       lfgroup = LedgerFullGroup.create!(creator_id: original_version_id,
-        name: latest_name, description: "Personal Posts by #{latest_name}")
+        name: latest_name,
+        description: "Personal Posts by #{latest_name}")
       LinkHomeGroup.create!(creator_id: original_version_id,
         parent_id: original_version_id, child: lfgroup)
     end

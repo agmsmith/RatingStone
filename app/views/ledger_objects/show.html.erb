@@ -1,92 +1,130 @@
-<% provide(:page_title, "Ledger Object ##{@ledger_object.id}") %>
-<div class="row">
-  <div class="col-sm-10">
-    <!-- Content of the object, creator first -->
-    <span class="user">Created by <%=
-      link_to "##{@ledger_object.creator.original_version_id} " \
-        "#{@ledger_object.creator.latest_version.name}",
-      @ledger_object.creator.user %><BR></span>
-    <span class="object_content">
-      <%= @ledger_object.base_s %><BR>
-      Bool1: <%= @ledger_object.bool1 %><BR>
-      Number1: <%= @ledger_object.number1 %><BR>
-      String1: <%= @ledger_object.string1 %><BR>
-      String2: <%= @ledger_object.string2 %><BR>
-      Text1: <%= @ledger_object.text1 %><BR>
-      Date1: <%= @ledger_object.date1 %><BR>
-      Deleted: <%= @ledger_object.deleted %><BR>
-      Down points: <%= @ledger_object.current_down_points %><BR>
-      Meh points: <%= @ledger_object.current_meh_points %><BR>
-      Up points: <%= @ledger_object.current_up_points %><BR>
-    </span>
+<% provide(:page_title,
+  "Ledger Object ##{@ledger_object.is_a?(LedgerBase) ?
+    @ledger_object.id : "Unknown"}") %>
+<% if @ledger_object.nil? %>
+  <div class="row">
+    <div class="col-sm-4">
+      <span class="error-show">Ledger Object "<%=
+        params[:id] %>" does not exist.</span>
+    </div>
+  </div>
+<% elsif !@ledger_object.allowed_to_view?(current_ledger_user) %>
+  <div class="row">
+    <div class="col-sm-4">
+      <span class="error-show">You do not have permission to
+        view Ledger Object #<%= @ledger_object.id %>.</span>
+    </div>
+  </div>
+<% else %>
+  <div class="row">
+    <H3><%= @ledger_object.base_s %></H3>
+    <div class="col-sm-10">
+      <!-- Content of the object, creator first -->
+      <span class="user">Created by <%=
+        link_to "##{@ledger_object.creator.original_version_id} " \
+          "#{@ledger_object.creator.latest_version.name}",
+        @ledger_object.creator.user %><BR></span>
+      <span class="object_content">
+        Bool1: <%= @ledger_object.bool1 %><BR>
+        Number1: <%= @ledger_object.number1 %><BR>
+        String1: <%= @ledger_object.string1 %><BR>
+        String2: <%= @ledger_object.string2 %><BR>
+        Text1: <%= @ledger_object.text1 %><BR>
+        Date1: <%= @ledger_object.date1 %><BR>
+        Deleted: <%= @ledger_object.deleted %><BR>
+        Down points: <%= @ledger_object.current_down_points %><BR>
+        Meh points: <%= @ledger_object.current_meh_points %><BR>
+        Up points: <%= @ledger_object.current_up_points %><BR>
+      </span>
 
-    <span class="timestamp">
-      Created <%= time_ago_in_words(@ledger_object.created_at)
-      %> ago&nbsp;- <small><%= @ledger_object.created_at.getlocal
-      %></small>.<BR>
-      Last updated <%= time_ago_in_words(@ledger_object.updated_at)
-      %> ago&nbsp;- <small><%= @ledger_object.updated_at.getlocal
-      %></small>.
-    </span>
+      <span class="timestamp">
+        Created <%= time_ago_in_words(@ledger_object.created_at)
+        %> ago&nbsp;- <small><%= @ledger_object.created_at.getlocal
+        %></small>.<BR>
+        Last updated <%= time_ago_in_words(@ledger_object.updated_at)
+        %> ago&nbsp;- <small><%= @ledger_object.updated_at.getlocal
+        %></small>.
+      </span>
+    </div>
+
+    <% if @ledger_object.creator_owner?(current_ledger_user) %>
+    <!-- Delete or undelete button, if user has permission -->
+    <div class="col-sm-2">
+      <span class="deleted">
+        <% if @ledger_object.deleted %>
+          <%= button_to "Undelete", undelete_ledger_object_path(@ledger_object),
+            method: :post,
+            data: { confirm: "Sure you want to undelete this object?" },
+            form_class: 'undeletebutton', class: 'btn btn-info'
+          %>
+        <% else %>
+          <%= button_to "Delete", ledger_object_path(@ledger_object),
+            method: :delete,
+            data: { confirm: "Really delete this object?" },
+            form_class: 'deletebutton', class: 'btn btn-danger'
+          %>
+        <% end %>
+      </span>
+    </div>
+    <% end %>
   </div>
 
-  <% if @ledger_object.creator_owner?(current_ledger_user) %>
-  <!-- Delete or undelete button, if user has permission -->
-  <div class="col-sm-2">
-    <span class="deleted">
-      <% if @ledger_object.deleted %>
-        <%= button_to "Undelete", undelete_ledger_object_path(@ledger_object),
-          method: :post,
-          data: { confirm: "Sure you want to undelete this object?" },
-          form_class: 'undeletebutton', class: 'btn btn-info'
-        %>
-      <% else %>
-        <%= button_to "Delete", ledger_object_path(@ledger_object),
-          method: :delete,
-          data: { confirm: "Really delete this object?" },
-          form_class: 'deletebutton', class: 'btn btn-danger'
-        %>
-      <% end %>
-    </span>
-  </div>
+  <% delete_list = @ledger_object.deleted_by
+    unless delete_list.empty? %>
+    <div class="row">
+      <div class="col-sm-12">
+        <HR>
+        <span class="delete_history">
+          Delete and undelete history:
+          <ul class="delete_list">
+          <% delete_list.each do |x| %>
+            <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
+            <%= x.creator.name %> (#<%= x.creator_id %>) on
+            <%= x.created_at.getlocal %><BR>
+            <small>Reason: <%= x.reason %></small><BR>
+            <small>Context: <%= x.context %></small></li>
+          <% end %>
+          </ul>
+        </span>
+      </div>
+    </div>
   <% end %>
-</div>
 
-<% delete_list = @ledger_object.deleted_by
-  unless delete_list.empty? %>
-  <div class="row">
-    <div class="col-sm-12">
-      <HR>
-      <span class="delete_history">
-        Delete and undelete history:
-        <ul class="delete_list">
-        <% delete_list.each do |x| %>
-          <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
-          <%= x.creator.name %> (#<%= x.creator_id %>) on
-          <%= x.created_at.getlocal %><BR>
-          <small>Reason: <%= x.reason %></small><BR>
-          <small>Context: <%= x.context %></small></li>
-        <% end %>
-        </ul>
-      </span>
+  <% version_list = @ledger_object.all_versions
+    unless version_list.count <= 1 %>
+    <div class="row">
+      <div class="col-sm-12">
+        <HR>
+        <span class="version_history">
+          Version history:
+          <ul class="version_list">
+          <% version_list.each do |x| %>
+            <li><%= link_to x.to_s, ledger_object_path(x) %></li>
+          <% end %>
+          </ul>
+        </span>
+      </div>
     </div>
-  </div>
-<% end %>
+  <% end %>
 
-<% version_list = @ledger_object.all_versions
-  unless version_list.count <= 1 %>
-  <div class="row">
-    <div class="col-sm-12">
-      <HR>
-      <span class="version_history">
-        Version history:
-        <ul class="version_list">
-        <% version_list.each do |x| %>
-          <li><%= link_to x.to_s, ledger_object_path(x) %></li>
-        <% end %>
-        </ul>
-      </span>
+  <% related_links = LinkBase.where(
+    parent_id: @ledger_object.original_version_id)
+      .or(LinkBase.where(child_id: @ledger_object.original_version_id))
+      .order(created_at: :asc)
+    unless related_links.empty? %>
+    <div class="row">
+      <div class="col-sm-12">
+        <HR>
+        <span class="related_links">
+          Related links:
+          <ul class="link_list">
+          <% related_links.each do |x| %>
+            <li><%= link_to x.to_s, link_object_path(x) %></li>
+          <% end %>
+          </ul>
+        </span>
+      </div>
     </div>
-  </div>
+  <% end %>
 <% end %>
 
