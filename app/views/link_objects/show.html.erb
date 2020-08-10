@@ -20,7 +20,7 @@
     <h3><%= "##{@link_object.id} #{@link_object.class.name}" %></H3>
     <div class="col-sm-10">
       <!-- Content of the object, creator first -->
-      <span class="object_content">
+      <span class="object-content">
         Created by <%= link_to "##{@link_object.creator.original_version_id} " \
           "#{@link_object.creator.latest_version.name}",
           @link_object.creator.user %><BR>
@@ -53,21 +53,19 @@
     <% if @link_object.creator_owner?(current_ledger_user) %>
     <!-- Delete or undelete button, if user has permission -->
     <div class="col-sm-2">
-      <span class="deleted">
-        <% if @link_object.deleted %>
-          <%= button_to "Undelete", undelete_link_object_path(@link_object),
-            method: :post,
-            data: { confirm: "Sure you want to undelete this object?" },
-            form_class: 'undeletebutton', class: 'btn btn-info'
-          %>
-        <% else %>
-          <%= button_to "Delete", link_object_path(@link_object),
-            method: :delete,
-            data: { confirm: "Really delete this object?" },
-            form_class: 'deletebutton', class: 'btn btn-danger'
-          %>
-        <% end %>
-      </span>
+      <% if @link_object.deleted %>
+        <%= button_to "Undelete", undelete_link_object_path(@link_object),
+          method: :post,
+          data: { confirm: "Sure you want to undelete this object?" },
+          form_class: 'undeletebutton', class: 'btn btn-info'
+        %>
+      <% else %>
+        <%= button_to "Delete", link_object_path(@link_object),
+          method: :delete,
+          data: { confirm: "Really delete this object?" },
+          form_class: 'deletebutton', class: 'btn btn-danger'
+        %>
+      <% end %>
     </div>
     <% end %>
   </div>
@@ -77,15 +75,35 @@
     <div class="row">
       <div class="col-sm-12">
         <HR>
-        <span class="delete_history">
+        <span class="history-block">
           Delete and undelete history:
-          <ul class="delete_list">
+          <ul class="list-ledger-objects">
           <% delete_list.each do |x| %>
             <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
             <%= x.creator.name %> (#<%= x.creator_id %>) on
             <%= x.created_at.getlocal %><BR>
             <small>Reason: <%= x.reason %></small><BR>
             <small>Context: <%= x.context %></small></li>
+          <% end %>
+          </ul>
+        </span>
+      </div>
+    </div>
+  <% end %>
+
+  <% auxiliary_links = AuxLink.where(child_id: @link_object.id)
+      .order(created_at: :asc)
+    unless auxiliary_links.empty? %>
+    <div class="row">
+      <div class="col-sm-12">
+        <HR>
+        <span class="history-block">
+          Related Auxiliary Link Objects:
+          <ul class="list-ledger-objects">
+          <% auxiliary_links.each do |x| %>
+            <li>#<%= x.id %> <%= link_to x.parent.to_s,
+              ledger_object_path(x.parent) %>, <%= link_to x.child.to_s,
+              link_object_path(x.child) %></li>
           <% end %>
           </ul>
         </span>

@@ -24,7 +24,7 @@
         link_to "##{@ledger_object.creator.original_version_id} " \
           "#{@ledger_object.creator.latest_version.name}",
         @ledger_object.creator.user %><BR></span>
-      <span class="object_content">
+      <span class="object-content">
         Bool1: <%= @ledger_object.bool1 %><BR>
         Number1: <%= @ledger_object.number1 %><BR>
         String1: <%= @ledger_object.string1 %><BR>
@@ -50,21 +50,19 @@
     <% if @ledger_object.creator_owner?(current_ledger_user) %>
     <!-- Delete or undelete button, if user has permission -->
     <div class="col-sm-2">
-      <span class="deleted">
-        <% if @ledger_object.deleted %>
-          <%= button_to "Undelete", undelete_ledger_object_path(@ledger_object),
-            method: :post,
-            data: { confirm: "Sure you want to undelete this object?" },
-            form_class: 'undeletebutton', class: 'btn btn-info'
-          %>
-        <% else %>
-          <%= button_to "Delete", ledger_object_path(@ledger_object),
-            method: :delete,
-            data: { confirm: "Really delete this object?" },
-            form_class: 'deletebutton', class: 'btn btn-danger'
-          %>
-        <% end %>
-      </span>
+      <% if @ledger_object.deleted %>
+        <%= button_to "Undelete", undelete_ledger_object_path(@ledger_object),
+          method: :post,
+          data: { confirm: "Sure you want to undelete this object?" },
+          form_class: 'undeletebutton', class: 'btn btn-info'
+        %>
+      <% else %>
+        <%= button_to "Delete", ledger_object_path(@ledger_object),
+          method: :delete,
+          data: { confirm: "Really delete this object?" },
+          form_class: 'deletebutton', class: 'btn btn-danger'
+        %>
+      <% end %>
     </div>
     <% end %>
   </div>
@@ -74,9 +72,9 @@
     <div class="row">
       <div class="col-sm-12">
         <HR>
-        <span class="delete_history">
+        <span class="history-block">
           Delete and undelete history:
-          <ul class="delete_list">
+          <ul class="list-ledger-objects">
           <% delete_list.each do |x| %>
             <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
             <%= x.creator.name %> (#<%= x.creator_id %>) on
@@ -95,9 +93,9 @@
     <div class="row">
       <div class="col-sm-12">
         <HR>
-        <span class="version_history">
+        <span class="history-block">
           Version history:
-          <ul class="version_list">
+          <ul class="list-ledger-objects">
           <% version_list.each do |x| %>
             <li><%= link_to x.to_s, ledger_object_path(x) %></li>
           <% end %>
@@ -115,11 +113,54 @@
     <div class="row">
       <div class="col-sm-12">
         <HR>
-        <span class="related_links">
+        <span class="history-block">
           Related links:
-          <ul class="link_list">
+          <ul class="list-ledger-objects">
           <% related_links.each do |x| %>
             <li><%= link_to x.to_s, link_object_path(x) %></li>
+          <% end %>
+          </ul>
+        </span>
+      </div>
+    </div>
+  <% end %>
+
+  <% auxiliary_ledgers = AuxLedger.where(
+      parent_id: @ledger_object.original_version_id)
+      .or(AuxLedger.where(child_id: @ledger_object.original_version_id))
+      .order(created_at: :asc)
+    unless auxiliary_ledgers.empty? %>
+    <div class="row">
+      <div class="col-sm-12">
+        <HR>
+        <span class="history-block">
+          Related Auxiliary Ledger Objects:
+          <ul class="list-ledger-objects">
+          <% auxiliary_ledgers.each do |x| %>
+            <li>#<%= x.id %> <%= link_to x.parent.to_s,
+              ledger_object_path(x.parent) %>, <%= link_to x.child.to_s,
+              ledger_object_path(x.child) %></li>
+          <% end %>
+          </ul>
+        </span>
+      </div>
+    </div>
+  <% end %>
+
+  <% auxiliary_links = AuxLink.where(
+      parent_id: @ledger_object.original_version_id)
+      .order(created_at: :asc)
+    unless auxiliary_links.empty? %>
+    <div class="row">
+      <div class="col-sm-12">
+        <HR>
+        <span class="history-block">
+          Related Auxiliary Link Objects:
+          <ul class="list-ledger-objects">
+          <% auxiliary_links.each do |x| %>
+            <li>#<%= x.id %> <%= link_to x.parent.to_s,
+              ledger_object_path(x.parent) %>, <%= link_to x.child.to_s,
+              link_object_path(x.child) %></li>
           <% end %>
           </ul>
         </span>
