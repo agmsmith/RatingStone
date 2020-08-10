@@ -257,24 +257,14 @@ aside {
     border-bottom: 1px solid $gray-lighter;
     .deleted {
       color: red;
-      display: block;
-      margin-left: 60px;
     }
     .not_allowed_to_view {
       color: $gray-light;
-      display: block;
-      margin-left: 60px;
     }
     .content {
       color: black;
-      display: block;
-      margin-left: 60px;
     }
-    .deletebutton {
-      display: block;
-      float: right;
-    }
-    .undeletebutton {
+    .delete-button {
       display: block;
       float: right;
     }

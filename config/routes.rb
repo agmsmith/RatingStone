@@ -29,16 +29,18 @@ Rails.application.routes.draw do
   end
 
   # Low level interface for debugging ledger objects in general.
-  resources :ledger_objects do
+  resources :ledger_objects, only: [:index, :show, :edit, :update, :destroy] do
     member do
       post 'undelete'
     end
   end
 
   # Low level interface for debugging link objects in general.
-  resources :link_objects do
+  resources :link_objects, only: [:index, :show, :edit, :update, :destroy] do
     member do
       post 'undelete'
+      post 'approve'
+      post 'unapprove'
     end
   end
 

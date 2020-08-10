@@ -1,16 +1,20 @@
 # frozen_string_literal: true
 
 class LedgerObjectsController < ApplicationController
-  before_action :logged_in_user, only: [:new, :create, :index, :show]
+  before_action :logged_in_user, only: [:index, :show]
   before_action :correct_user, only: [:destroy, :undelete, :edit, :update]
 
-  def new
-  end
-
-  def create
-  end
-
   def destroy
+    LedgerDelete.delete_records([@ledger_object], current_ledger_user,
+      "Web site manual delete by user logged in from IP address " \
+      "#{request.env['REMOTE_ADDR']}.", params[:reason]) # Reason can be nil.
+    feedback_text = "Ledger Object " +
+      @ledger_object.to_s.truncate(50, separator: ' ') +
+      " deleted"
+    vcount = @ledger_object.all_versions.count
+    feedback_text += " (#{vcount} versions included)" if vcount > 1
+    flash[:success] = feedback_text + "."
+    redirect_back(fallback_location: root_url)
   end
 
   def index
@@ -28,6 +32,16 @@ class LedgerObjectsController < ApplicationController
   end
 
   def undelete
+    LedgerUndelete.undelete_records([@ledger_object], current_ledger_user,
+      "Web site manual undelete by user logged in from IP address " \
+      "#{request.env['REMOTE_ADDR']}.", params[:reason]) # Reason can be nil.
+    feedback_text = "Ledger Object " +
+      @ledger_object.to_s.truncate(50, separator: ' ') +
+      " undeleted"
+    vcount = @ledger_object.all_versions.count
+    feedback_text += " (#{vcount} versions included)" if vcount > 1
+    flash[:success] = feedback_text + "."
+    redirect_back(fallback_location: root_url)
   end
 
   private

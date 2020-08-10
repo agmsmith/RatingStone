@@ -4,27 +4,14 @@
     <%= "#{ledger_object.base_s} You don't have permission to view this object." %>
   </span>
 <% else %>
-  <% if ledger_object.creator_owner?(current_ledger_user) %>
-    <% if ledger_object.deleted %>
-      <%= button_to "Undelete", undelete_ledger_object_path(ledger_object),
-        method: :post,
-        data: { confirm: "Sure you want to undelete this object?" },
-        form_class: 'undeletebutton', class: 'btn btn-info'
-      %>
-    <% else %>
-      <%= button_to "Delete", ledger_object_path(ledger_object),
-        method: :delete, data: { confirm: "Really delete this object?" },
-        form_class: 'deletebutton', class: 'btn btn-danger'
-      %>
-    <% end %>
-  <% end %>
+  <%= render 'ledger_objects/ledger_delete_button',
+    { ledger_object: ledger_object } %>
   <span class="<%= ledger_object.deleted ? "deleted" : "content" %>">
     <%= link_to "#{ledger_object.type} ##{ledger_object.id}",
       ledger_object_path(ledger_object) %>
-    <%= ledger_object.context_s %>
+    <%= ledger_object.context_s %><BR>
+    <small><%= ledger_object.created_at.getlocal %></small>
   </span>
-  <span class="timestamp"><small><%=
-    ledger_object.created_at.getlocal %></small></span>
 <% end %>
 </li>
 
