@@ -1,25 +1,12 @@
-<li id="link_object_<%= link_object.id %>">
+<li id="link-object-<%= link_object.id %>" class="row">
 <% if !link_object.creator_owner?(current_ledger_user) %>
-  <span class="not_allowed_to_view">
+  <div class="col-xs-12 not-allowed-to-view">
     <%= "##{link_object.id} #{link_object.class.name} You don't have " \
-      "permission to view this object." %>
-  </span>
+      "permission to view or modify this object." %>
+  </div>
 <% else %>
-  <% if link_object.creator_owner?(current_ledger_user) %>
-    <% if link_object.deleted %>
-      <%= button_to "Undelete", undelete_link_object_path(link_object),
-        method: :post,
-        data: { confirm: "Sure you want to undelete this link?" },
-        form_class: 'undeletebutton', class: 'btn btn-info'
-      %>
-    <% else %>
-      <%= button_to "Delete", link_object_path(link_object),
-        method: :delete, data: { confirm: "Really delete this link?" },
-        form_class: 'deletebutton', class: 'btn btn-danger'
-      %>
-    <% end %>
-  <% end %>
-  <span class="<%= link_object.deleted ? "deleted" : "content" %>">
+  <div class="col-xs-9 col-sm-10 col-lg-11 <%=
+    link_object.deleted ? "deleted" : "content" %>">
     <%= link_to "##{link_object.id} #{link_object.type}",
       link_object_path(link_object) %>
       Parent: <%= link_to link_object.parent.base_s,
@@ -27,7 +14,24 @@
       Child: <%= link_to link_object.child.base_s,
         ledger_object_path(link_object.child_id) %><BR>
     <small><%= link_object.created_at.getlocal %></small>
-  </span>
+  </div>
+  <div class="col-xs-3 col-sm-2 col-lg-1">
+    <% if link_object.deleted %>
+      <%= form_with(url: undelete_link_object_path(link_object),
+        local: true, action: :undelete, method: :post) do |f| %>
+        <%= f.submit "Undelete #{link_object.to_s}", class: "btn btn-info" %>
+        <%= f.text_area :reason, placeholder: "Reason why...",
+          class: "delete-reason" %>
+      <% end %>
+    <% else %>
+      <%= form_with(url: link_object_path(link_object),
+        local: true, action: :delete, method: :delete) do |f| %>
+        <%= f.submit "Delete #{link_object.to_s}", class: "btn btn-danger" %>
+        <%= f.text_area :reason, placeholder: "Reason why...",
+          class: "delete-reason" %>
+      <% end %>
+    <% end %>
+  </div>
 <% end %>
 </li>
 

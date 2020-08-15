@@ -1,38 +1,25 @@
-<li id="ledgerpost-<%= ledger_post.id %>">
-<% if ledger_post.deleted %>
-  <span class="deleted">
-    <% if current_ledger_user?(ledger_post.creator) %>
-      <%= button_to "Undelete", undelete_ledger_post_path(ledger_post),
-          method: :post,
-          data: { confirm: "Sure you want to undelete this post?" },
-          form_class: 'undeletebutton', class: 'btn btn-info'
-        %>
-      <ul>
-      <% ledger_post.deleted_by.each do |x| %>
-        <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
-        <%= x.creator.name %> (#<%= x.creator_id %>) on
-        <%= x.created_at.getlocal %><BR>
-        <small><%= x.reason %></small></li>
-      <% end %>
-      </ul>
-    <% else %>
-      This post has been deleted.
-    <% end %>
-  </span>
+<li id="ledger-post-<%= ledger_post.id %>" class="row">
+<% if !ledger_post.allowed_to_view?(current_ledger_user) %>
+  <div class="col-xs-12 not-allowed-to-view">
+    <%= "#{ledger_post.base_s} You don't have permission to view this object." %>
+  </div>
 <% else %>
-  <%= link_to gravatar_for(ledger_post.creator.user, size: 50), ledger_post.creator.user %>
-  <% if current_ledger_user?(ledger_post.creator) %>
-  <%= button_to "Delete", ledger_post, method: :delete,
-      data: { confirm: "Really delete this post?" },
-      form_class: 'deletebutton', class: 'btn btn-danger'
-    %>
-  <% end %>
-  <span class="user"><%= link_to ledger_post.creator.name, ledger_post.creator.user %></span>
-  <span class="content">
+  <div class="col-xs-3 col-sm-2 col-lg-1">
+    <%= link_to gravatar_for(ledger_post.creator.user, size: 50),
+      ledger_post.creator.user %>
+    <span class="user"><%= link_to ledger_post.creator.name,
+      ledger_post.creator.user %></span>
+  </div>
+  <div class="col-xs-6 col-sm-8 col-lg-10 <%=
+    ledger_post.deleted ? "deleted" : "content" %>">
     <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
-  </span>
+    <span class="timestamp"><%= link_to "##{ledger_post.id}",
+      ledger_object_path(ledger_post) %> posted <%=
+        time_ago_in_words(ledger_post.created_at)
+      %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.</span>
+  </div>
+  <%= render 'shared/ledger_delete_button_div',
+    { ledger_object: ledger_post } %>
 <% end %>
-  <span class="timestamp"><%= link_to "##{ledger_post.id}",
-    ledger_post %> posted <%= time_ago_in_words(ledger_post.created_at)
-    %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.</span>
 </li>
+

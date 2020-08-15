@@ -1,6 +1,8 @@
 <% if @ledger_feed_items&.any? %>
-  <ol class="microposts">
-    <%= render @ledger_feed_items %>
+  <ol class="list-ledger-objects">
+<% @ledger_feed_items.each do |an_object| %>
+<%= render 'ledger_objects/ledger_object', { ledger_object: an_object } %>
+<% end %>
   </ol>
   <%= will_paginate @ledger_feed_items,
     params: { controller: :static_pages, action: :home, param_name: :ledger_pageno } %>

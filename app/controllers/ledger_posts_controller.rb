@@ -27,6 +27,10 @@ class LedgerPostsController < ApplicationController
     redirect_back(fallback_location: root_url)
   end
 
+  def index
+    @ledger_posts = LedgerPost.all.paginate(page: params[:page])
+  end
+
   def show
     # Slightly more complex code to show an empty list when ID not found.
     @ledger_post = LedgerPost.where(id: params[:id])
