@@ -5,7 +5,7 @@ class ApplicationController < ActionController::Base
 
   private
 
-  # Confirms a logged-in user.
+  # Confirms a logged-in user.  Otherwise redirects to error page.
   def logged_in_user
     unless logged_in?
       store_location # Come back here (if this is a GET) after login done.

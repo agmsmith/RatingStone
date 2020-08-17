@@ -29,8 +29,9 @@ end
 
 # Create system operators, they are users with ID less than 10 (no need to do
 # a database lookup to see if someone is a sysop).  Will have less priviledges
-# than root.  Start off as unuseable users.  Don't do in test mode, where
-# record IDs are random numbers, not sequential.
+# than root.  Start off as unuseable (unactivated and no way to send an
+# activation e-mail) users.  Don't do in test mode, where record IDs are random
+# numbers (hashes actually, see Fixture system), not sequential.
 if !Rails.env.test?
   (1..9).each do |i|
     unless User.exists?(name: "System Operator #{i}")
@@ -45,12 +46,11 @@ if !Rails.env.test?
         admin: true)
       sysop_user.ledger_user_id = sysop_luser.id
       sysop_user.save!
-      sysop_user.activate
     end
   end
 
   # Check that we got the right ID numbers for the sysops, and now create the
-  # extra new user records, which would have interfered with sequentially
+  # associated new user records, which would have interfered with sequentially
   # creating LedgerUser records.
   (1..9).each do |i|
     sysop_user = User.find_by(name: "System Operator #{i}")

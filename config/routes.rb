@@ -21,22 +21,21 @@ Rails.application.routes.draw do
   resources :microposts, only: [:create, :destroy]
   resources :relationships, only: [:create, :destroy]
 
-  # The usual actions for displaying/editing posts, plus a RESTful undelete.
-  resources :ledger_posts do
+  # Generic ledger_objects actions, subclasses use it for destroy and undelete.
+  resources :ledger_objects, only: [:index, :show, :destroy] do
     member do
       post 'undelete'
     end
   end
 
-  # Low level interface for debugging ledger objects in general.
-  resources :ledger_objects, only: [:index, :show, :edit, :update, :destroy] do
-    member do
-      post 'undelete'
-    end
-  end
+  # The usual actions for displaying/editing posts.
+  resources :ledger_posts, only: [:new, :create, :index, :show, :edit, :update]
 
-  # Low level interface for debugging link objects in general.
-  resources :link_objects, only: [:index, :show, :edit, :update, :destroy] do
+  # The usual actions for displaying/editing groups.
+  resources :ledger_groups, only: [:new, :create, :index, :show, :edit, :update]
+
+  # Low level interface for debugging generic link objects.
+  resources :link_objects, only: [:index, :show, :destroy] do
     member do
       post 'undelete'
       post 'approve'

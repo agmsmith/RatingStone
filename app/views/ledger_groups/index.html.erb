@@ -1,11 +1,11 @@
-<% provide(:page_title, 'All Ledger Posts') %>
+<% provide(:page_title, 'All Ledger Groups') %>
 
-<h1>All Ledger Posts</h1>
+<h1>All Ledger Groups</h1>
 
 <%= will_paginate @ledger_objects %>
 <ul class="list-ledger-objects">
 <% @ledger_objects.each do |an_object| %>
-<%= render 'ledger_posts/ledger_post', { ledger_post: an_object } %>
+<%= render 'ledger_objects/ledger_object', { ledger_object: an_object } %>
 <% end %>
 </ul>
 <%= will_paginate @ledger_objects %>

@@ -13,42 +13,4 @@ class LedgerPostsControllerTest < ActionDispatch::IntegrationTest
     end
     assert_redirected_to login_url
   end
-
-  test "should redirect destroy when not logged in" do
-    assert_no_difference 'LedgerBase.count' do
-      delete ledger_post_path(@ledger_post)
-    end
-    assert(!@ledger_post.deleted)
-    assert_redirected_to login_url
-  end
-
-  test "should redirect destroy for wrong LedgerPost owner" do
-    log_in_as(users(:michael))
-    assert_no_difference 'LedgerBase.count' do
-      delete ledger_post_path(@ledger_post)
-    end
-    assert(!@ledger_post.deleted)
-    assert_redirected_to root_url
-  end
-
-  test "should destroy for right LedgerPost owner" do
-    log_in_as(users(:michael))
-    lpost = LedgerPost.new(creator: users(:michael).ledger_user,
-      content: "A test post from Michael.")
-    lpost.save
-    assert_difference 'LedgerBase.count', 1 do
-      delete ledger_post_path(lpost)
-    end
-    lpost.reload
-    assert(lpost.deleted)
-    assert_redirected_to root_url
-  end
-
-  test "should redirect undelete for wrong LedgerPost owner" do
-    log_in_as(users(:michael))
-    assert_no_difference 'LedgerBase.count' do
-      post undelete_ledger_post_path(@ledger_post)
-    end
-    assert_redirected_to root_url
-  end
 end
