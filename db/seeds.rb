@@ -84,11 +84,17 @@ if !Rails.env.test?
   group_records = []
   3.times do |i|
     group_records.push (LedgerFullGroup.create!(name: group_names[i],
-      description: "Group number #{i + 1}.", creator_id: 0))
+      description: "Group number *#{i + 1}*.", creator_id: 0))
   end
   group_records.push (LedgerSubgroup.create!(name: group_names.last,
-    description: "A Subgroup, under GTwo and GThree, delegates to GThree",
-    creator_id: 0))
+    description: "A _Subgroup_, under GTwo and GThree, delegates to GThree.  " \
+    "This one also has a very long description so we can see how well it " \
+    "gets formatted in the group listings.  Note that groups have their " \
+    "description in Kramdown markup format.  Line break in Kramdown:  \n" \
+    "![RatingStone Icon](apple-touch-icon.png){:align=\"left\"}That should " \
+    "make it more interesting.  There should also be a pinned post to more " \
+    "graphically describe the group, though I think Kramdown also lets you " \
+    "embed pictures.", creator_id: 0))
   # Put the subgroup under GTwo and GThree.  But delegate members to GThree.
   LinkSubgroup.create!(parent: group_records[1], child: group_records[3],
     creator_id: 0)
@@ -100,12 +106,12 @@ if !Rails.env.test?
   12.times do |n|
     name  = Faker::Name.name
     email = "example-#{n+1}@railstutorial.org"
-    password = "password"
+    pw = SecureRandom.hex(35)
     a_user= User.create!(
       name: name,
       email: email,
-      password: password,
-      password_confirmation: password,
+      password: pw,
+      password_confirmation: pw,
       activated: true,
       activated_at: Time.zone.now)
     luser = a_user.ledger_user
@@ -121,7 +127,7 @@ if !Rails.env.test?
     users.each { |user| user.microposts.create!(content: content) }
   end
   user = User.last
-  40.times do
+  5.times do
     user.microposts.create!(content: Faker::Company.catch_phrase)
   end
 
@@ -141,6 +147,19 @@ if !Rails.env.test?
       post3.content = "Oops, that was " + Faker::Lorem.sentence(word_count: 6)
       post3.save!
     end
+  end
+  post = LedgerPost.create!(content:
+    "![RatingStone Icon](apple-touch-icon.png){:align=\"right\"}Here is a " \
+    "post with Kramdown markup containing an image, set to float to the right.",
+    creator_id: 0)
+  LinkGroupContent.create!(parent: group_records[3], child: post, creator_id: 0)
+
+  # Make all links approved, not the usual case.
+  LinkBase.where(approved_parent: false)
+    .or(LinkBase.where(approved_child: false)).each do |x|
+    x.approved_parent = true
+    x.approved_child = true
+    x.save!
   end
 
   # Create following relationships.

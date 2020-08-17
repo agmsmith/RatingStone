@@ -1,0 +1,21 @@
+<li id="ledger-group-<%= ledger_group.id %>" class="row">
+<% if !ledger_group.allowed_to_view?(current_ledger_user) %>
+  <div class="col-xs-12 not-allowed-to-view">
+    <%= "#{ledger_group.base_s} You don't have permission to view this object." %>
+  </div>
+<% else %>
+  <div class="col-xs-6 col-sm-8 col-lg-10 <%=
+    ledger_group.deleted ? "deleted" : "content" %>">
+    <%= link_to "#{ledger_group.type} ##{ledger_group.id}",
+      ledger_object_path(ledger_group) %>
+    <span class="group-name"><%= ledger_group.name %></span>
+    <div class="description-box">
+      <%= Kramdown::Document.new(ledger_group.description).to_html.html_safe -%>
+    </div>
+    <small><%= ledger_group.created_at.getlocal %></small>
+  </div>
+  <%= render 'shared/ledger_delete_button_div',
+    { ledger_object: ledger_group } %>
+<% end %>
+</li>
+

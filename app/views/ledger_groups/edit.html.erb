@@ -1,2 +1,11 @@
-<h1>LedgerGroups#edit</h1>
-<p>Find me in app/views/ledger_groups/edit.html.erb</p>
+<% provide(:page_title, 'Edit Group') %>
+<% provide(:button_text, 'Save Changes') %>
+
+<h1>Editing Group "<%= @ledger_object.name %>"</h1>
+
+<div class="row">
+  <div class="col-xs-12">
+    <%= render 'name_description_settings_form' %>
+  </div>
+</div>
+

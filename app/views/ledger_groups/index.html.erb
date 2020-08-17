@@ -5,7 +5,7 @@
 <%= will_paginate @ledger_objects %>
 <ul class="list-ledger-objects">
 <% @ledger_objects.each do |an_object| %>
-<%= render 'ledger_objects/ledger_object', { ledger_object: an_object } %>
+<%= render 'ledger_groups/ledger_group', { ledger_group: an_object } %>
 <% end %>
 </ul>
 <%= will_paginate @ledger_objects %>

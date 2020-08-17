@@ -2,7 +2,7 @@
 
 class LedgerObjectsController < ApplicationController
   # Note that some before actions are only used by subclasses.
-  before_action :logged_in_user, only: [:show, :index, :new, :create]
+  before_action :logged_in_user
   before_action :correct_user, only: [:destroy, :undelete, :edit, :update]
 
   def destroy # Also usually used by subclass controllers.
@@ -53,19 +53,12 @@ class LedgerObjectsController < ApplicationController
 
   private
 
-  ##
-  # Verify that the user is logged in, then get the ledger object and make
-  # sure that they have permission to modify it.  Sets @ledger_object
   def correct_user
-    if logged_in?
-      @ledger_object = LedgerBase.find(params[:id])
-      unless @ledger_object&.creator_owner?(current_ledger_user)
-        flash[:error] = "You're not the owner of that ledger object, " \
-          "so you can't modify or delete it."
-        redirect_to(root_url)
-      end
-    else # Redirect to an error message about not being logged in.
-      logged_in_user
+    @ledger_object = LedgerBase.find(params[:id])
+    unless @ledger_object&.creator_owner?(current_ledger_user)
+      flash[:error] = "You're not the owner of that ledger object, " \
+        "so you can't modify or delete it."
+      redirect_to(root_url)
     end
   end
 end

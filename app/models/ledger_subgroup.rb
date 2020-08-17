@@ -2,7 +2,9 @@
 
 class LedgerSubgroup < LedgerBase
   alias_attribute :name, :string1
-  alias_attribute :description, :string2
+  alias_attribute :description, :text1
+
+  validates :name, presence: true, length: { maximum: 255 }
 
   # Methods we delegate to the parent LedgerFullGroup(s).
   REDIRECTED_METHODS = %i[can_post? role_test?].to_set

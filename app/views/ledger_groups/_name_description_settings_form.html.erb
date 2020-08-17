@@ -1,0 +1,17 @@
+<%= form_with(model: @ledger_object, scope: :ledger_subgroup,
+  url: ledger_group_path, local: true, class: "form-group") do |f| %>
+      <%= render 'shared/error_messages', object: f.object %>
+      <%= f.label :name %>
+      <%= f.text_field :name, class: 'form-control' %>
+
+      <%= f.label :description %>
+      <%= f.text_area :description, class: 'form-control' %>
+      <div class="description-form-box">
+        <%= f.submit "Update Preview", name: "preview",
+          class: "btn btn-primary float-right" %>
+        <%= Kramdown::Document.new(@ledger_object.description)
+          .to_html.html_safe -%>
+      </div>
+
+      <%= f.submit yield(:button_text), class: "btn btn-primary button-full-width" %>
+<% end %>

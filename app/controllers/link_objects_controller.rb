@@ -34,7 +34,7 @@ class LinkObjectsController < ApplicationController
 
   def correct_user
     @link_object = LinkBase.find(params[:id])
-    unless @link_object.creator_owner?(current_ledger_user)
+    unless @link_object&.creator_owner?(current_ledger_user)
       flash[:error] = "You're not the owner of that link object, " \
         "so you can't modify or delete it."
       redirect_to(root_url)
