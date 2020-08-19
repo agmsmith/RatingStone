@@ -44,8 +44,10 @@
         %></small>.
       </span>
     </div>
-    <%= render 'shared/ledger_delete_button_div',
-      { ledger_object: @ledger_object } %>
+    <div class="col-xs-3 col-sm-2 col-lg-1 delete-button">
+      <%= render 'shared/ledger_delete_button',
+        { ledger_object: @ledger_object } %>
+    </div>
   </div>
 
   <% delete_list = @ledger_object.deleted_by

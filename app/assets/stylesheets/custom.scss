@@ -46,6 +46,7 @@ section {
 
 /* forms */
 
+/* Users can resize the text boxes to make them larger if needed. */
 textarea {
   resize: vertical;
 }
@@ -60,7 +61,14 @@ input {
   height: auto !important;
 }
 
+/* Full width also means it shrinks (crops) width when small, rather than
+   making a scroll bar appear. */
 .button-full-width {
+  width: 100%;
+}
+
+/* Reason text area for (un)delete, make it 100% so it shrinks. */
+.delete-reason {
   width: 100%;
 }
 
@@ -310,7 +318,7 @@ aside {
 /* Ledger Objects index */
 
 .list-ledger-objects {
-  /* list-style: none; */
+  list-style: none;
   margin: 0;
   li {
     overflow: auto;

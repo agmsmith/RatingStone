@@ -4,15 +4,17 @@
     <%= "#{ledger_object.base_s} You don't have permission to view this object." %>
   </div>
 <% else %>
-  <div class="col-xs-6 col-sm-8 col-lg-10 <%=
+  <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10 <%=
     ledger_object.deleted ? "deleted" : "content" %>">
     <%= link_to "#{ledger_object.type} ##{ledger_object.id}",
       ledger_object_path(ledger_object) %>
     <%= ledger_object.context_s %><BR>
     <small><%= ledger_object.created_at.getlocal %></small>
   </div>
-  <%= render 'shared/ledger_delete_button_div',
-    { ledger_object: ledger_object } %>
+  <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 delete-button">
+    <%= render 'shared/ledger_delete_button',
+      { ledger_object: ledger_object } %>
+  </div>
 <% end %>
 </li>
 
