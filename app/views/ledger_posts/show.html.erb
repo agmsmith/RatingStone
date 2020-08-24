@@ -2,13 +2,29 @@
 
 <h1>All Versions of Post #<%= params[:id] %></h1>
 
-<div class="row">
-<% if @ledger_object&.any? %>
-  <%= will_paginate @ledger_object %>
-  <ol class="list-ledger-objects">
-    <%= render @ledger_object %>
-  </ol>
-  <%= will_paginate @ledger_object %>
+<% if @ledger_objects&.any?
+  last_post = @ledger_objects.last # Most recent version is last. %>
+  <%= will_paginate @ledger_objects %>
+  <ul class="list-ledger-objects">
+    <% @ledger_objects.each do |an_object| %>
+      <%= render 'ledger_posts/ledger_just_the_post',
+        { ledger_post: an_object } %>
+    <% end %>
+  </ul>
+  <%= will_paginate @ledger_objects %>
+
+  <div class="row">
+    <% if last_post.creator_owner?(current_ledger_user) %>
+      <div class="col-xs-12 col-sm-6">
+        <%= button_to "Edit", edit_ledger_post_path(last_post),
+          method: :get, class: 'btn btn-success button-full-width' %><br>
+      </div>
+    <% end %>
+    <div class="col-xs-12 col-sm-6">
+      <%= render 'shared/ledger_delete_button',
+        { ledger_object: last_post } %>
+    </div>
+  </div>
 <% else %>
   <p>Sorry, no versions of post "<%= params[:id] %>" exist.</p>
 <% end %>

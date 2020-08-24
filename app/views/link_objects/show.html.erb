@@ -48,7 +48,7 @@
         %></small>.
       </span>
     </div>
-    <div class="col-xs-3 col-sm-2 col-lg-1 delete-button">
+    <div class="col-xs-3 col-sm-2 col-lg-1">
     <% if @link_object.creator_owner?(current_ledger_user) %>
       <% if @link_object.deleted %>
         <%= form_with(url: undelete_link_object_path(@link_object),

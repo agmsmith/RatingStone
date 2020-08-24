@@ -7,6 +7,15 @@ class LedgerFullGroup < LedgerSubgroup
   after_create :create_default_settings_if_needed
 
   ##
+  # Besides making a new ledger record when making a new version, copy the
+  # group settings record too, into a new one.
+  def append_version
+    new_entry = super
+    new_entry.group_setting = group_setting.dup
+    new_entry
+  end
+
+  ##
   # Return true if the user can add posts to this group.  They may need to
   # spend some rating points on the group end of the link too.  Though note
   # that if the user is adding to a subgroup, this full group won't get the
@@ -113,10 +122,15 @@ class LedgerFullGroup < LedgerSubgroup
 
   private
 
+  ##
+  # Creates the default settings record, if there isn't one.  And then sets
+  # the back-ID field of that group settings record if it is incorrect.
   def create_default_settings_if_needed
-    unless group_setting
+    if group_setting.nil?
       self.group_setting = GroupSetting.create!(ledger_full_group_id: id)
-      save!
+    elsif group_setting.ledger_full_group_id != id
+      group_setting.ledger_full_group_id = id
+      group_setting.save!
     end
   end
 end

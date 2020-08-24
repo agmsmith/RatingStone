@@ -318,8 +318,9 @@ aside {
 /* Ledger Objects index */
 
 .list-ledger-objects {
-  list-style: none;
-  margin: 0;
+  list-style: none inside;
+  margin: 0; /* Remove bullet indent, Opera browser. */
+  padding: 0; /* Remove bullet indent, Mozilla and Safari browsers. */
   li {
     overflow: auto;
     padding: 10px 0;

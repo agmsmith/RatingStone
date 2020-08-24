@@ -1,0 +1,17 @@
+<li id="ledger-post-<%= ledger_post.id %>">
+<% if !ledger_post.allowed_to_view?(current_ledger_user) %>
+  <div class="not-allowed-to-view">
+    <%= "#{ledger_post.base_s} You don't have permission to view this object." %>
+  </div>
+<% else %>
+  <div class="description-box <%=
+    ledger_post.deleted ? "deleted" : "content" %>">
+    <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
+  </div>
+  <span class="timestamp"><%= link_to "##{ledger_post.id}",
+    ledger_object_path(ledger_post) %> posted <%=
+    time_ago_in_words(ledger_post.created_at)
+    %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.</span>
+<% end %>
+</li>
+

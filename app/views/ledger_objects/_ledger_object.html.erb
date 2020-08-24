@@ -11,7 +11,7 @@
     <%= ledger_object.context_s %><BR>
     <small><%= ledger_object.created_at.getlocal %></small>
   </div>
-  <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2 delete-button">
+  <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
     <%= render 'shared/ledger_delete_button',
       { ledger_object: ledger_object } %>
   </div>

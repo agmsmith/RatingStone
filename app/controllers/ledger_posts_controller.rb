@@ -13,16 +13,35 @@ class LedgerPostsController < LedgerObjectsController
     end
   end
 
+  def edit
+    # Object to be edited already loaded into @ledger_object.
+  end
+
   def index
     @ledger_objects = LedgerPost.all.paginate(page: params[:page])
   end
 
   def show
     # Slightly more complex code to show an empty list when ID not found.
-    @ledger_object = LedgerPost.where(id: params[:id])
-    if @ledger_object.any?
-      @ledger_object = @ledger_object.first.all_versions
+    @ledger_objects = LedgerPost.where(id: params[:id])
+    if @ledger_objects.any?
+      @ledger_objects = @ledger_objects.first.all_versions
         .paginate(page: params[:page])
+    end
+  end
+
+  def update
+    # Object to be edited already loaded into @ledger_object.
+    if params[:preview]
+      # Set the new values but don't save it.  So you can preview markdown text.
+      @ledger_object = @ledger_object.append_version
+      @ledger_object.assign_attributes(ledger_post_params)
+      render('edit')
+    elsif @ledger_object.update(ledger_post_params)
+      flash[:success] = "#{@ledger_object.base_s} updated."
+      redirect_to(ledger_post_path(@ledger_object))
+    else # Failed to save, show error messages for field editing problems.
+      render('edit')
     end
   end
 
