@@ -2,7 +2,7 @@
 
 class LedgerPostsController < LedgerObjectsController
   def create
-    @new_ledger_post = LedgerPost.new(ledger_post_params
+    @new_ledger_post = LedgerPost.new(sanitised_params
       .merge(creator_id: current_ledger_user.original_version_id,
       type: :LedgerPost))
     if @new_ledger_post.save
