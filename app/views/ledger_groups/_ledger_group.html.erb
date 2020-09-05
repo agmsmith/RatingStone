@@ -15,10 +15,11 @@
     <small><%= ledger_group.created_at.getlocal %></small>
   </div>
   <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
-    <% if ledger_group.role_test?(current_ledger_user,
-      LinkRole::READER) %>
-      <%= button_to "Details", ledger_group_path(ledger_group),
-        method: :get, class: 'btn btn-default button-full-width' %><br>
+    <% if ledger_group.role_test?(current_ledger_user, LinkRole::READER) %>
+      <% if params[:action] != "show" %>
+        <%= button_to "Details", ledger_group_path(ledger_group),
+          method: :get, class: 'btn btn-default button-full-width' %><br>
+      <% end %>
       <% if ledger_group.role_test?(current_ledger_user,
         LinkRole::MEMBER_MODERATOR) # Nested test to avoid DB lookups %>
         <%= button_to "Edit", edit_ledger_group_path(ledger_group),

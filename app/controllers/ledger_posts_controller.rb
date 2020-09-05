@@ -13,10 +13,6 @@ class LedgerPostsController < LedgerObjectsController
     end
   end
 
-  def edit
-    # Object to be edited already loaded into @ledger_object.
-  end
-
   def index
     @ledger_objects = LedgerPost.all.paginate(page: params[:page])
   end
@@ -30,24 +26,9 @@ class LedgerPostsController < LedgerObjectsController
     end
   end
 
-  def update
-    # Object to be edited already loaded into @ledger_object.
-    if params[:preview]
-      # Set the new values but don't save it.  So you can preview markdown text.
-      @ledger_object = @ledger_object.append_version
-      @ledger_object.assign_attributes(ledger_post_params)
-      render('edit')
-    elsif @ledger_object.update(ledger_post_params)
-      flash[:success] = "#{@ledger_object.base_s} updated."
-      redirect_to(ledger_post_path(@ledger_object))
-    else # Failed to save, show error messages for field editing problems.
-      render('edit')
-    end
-  end
-
   private
 
-  def ledger_post_params
+  def sanitised_params
     params.require(:ledger_post).permit(:content)
   end
 end

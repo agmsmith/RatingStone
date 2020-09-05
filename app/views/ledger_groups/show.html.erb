@@ -1,2 +1,8 @@
-<h1>LedgerGroups#show</h1>
-<p>Find me in app/views/ledger_groups/show.html.erb</p>
+<% provide(:page_title, 'Show Group') %>
+
+<h1>View Group "<%= @ledger_object.name %>"</h1>
+
+<ul class="list-ledger-objects">
+<%= render 'ledger_groups/ledger_group', { ledger_group: @ledger_object } %>
+</ul>
+
