@@ -1,20 +1,9 @@
 # frozen_string_literal: true
 
 class UsersController < ApplicationController
-  before_action :logged_in_user,
-    only: [:edit, :index, :update, :following, :followers]
+  before_action :logged_in_user, only: [:edit, :index, :update]
   before_action :correct_user, only: [:edit, :update]
   before_action :admin_user, only: :destroy
-
-  def show
-    @user = User.find(params[:id])
-    redirect_to(root_url) unless @user.activated
-    @microposts = @user.microposts.paginate(page: params[:page])
-  end
-
-  def new
-    @user = User.new
-  end
 
   def create
     @user = User.new(user_params)
@@ -41,22 +30,19 @@ class UsersController < ApplicationController
   def edit
   end
 
-  def followers
-    @title = "Followers"
-    @user  = User.find(params[:id])
-    @users = @user.followers.paginate(page: params[:page])
-    render('show_follow')
-  end
-
-  def following
-    @title = "Following"
-    @user  = User.find(params[:id])
-    @users = @user.following.paginate(page: params[:page])
-    render('show_follow')
-  end
-
   def index
     @users = User.where(activated: true).paginate(page: params[:page])
+  end
+
+  def new
+    @user = User.new
+  end
+
+  def show
+    @user = User.find(params[:id])
+    redirect_to(root_url) unless @user.activated
+    @lposts = LedgerPost.where(creator_id: @user.ledger_user_id,
+      deleted: false).order(:id).paginate(page: params[:page])
   end
 
   def update

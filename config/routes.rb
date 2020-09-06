@@ -11,15 +11,9 @@ Rails.application.routes.draw do
   get '/logout', to: 'sessions#destroy' # For older browsers without Javascript.
   get '/signup', to: 'users#new'
 
-  resources :users do
-    member do
-      get :following, :followers
-    end
-  end
+  resources :users
   resources :account_activations, only: [:edit]
   resources :password_resets, only: [:new, :create, :edit, :update]
-  resources :microposts, only: [:create, :destroy]
-  resources :relationships, only: [:create, :destroy]
 
   # Generic ledger_objects actions, subclasses use it for destroy and undelete.
   resources :ledger_objects, only: [:index, :show, :destroy] do

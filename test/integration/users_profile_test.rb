@@ -7,6 +7,11 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
 
   def setup
     @user = users(:michael)
+    log_in_as(@user)
+    40.times do |i|
+      LedgerPost.create!(creator: @user.ledger_user,
+        content: "This is a test post ##{i} by Michael.")
+    end
   end
 
   test "profile display" do
@@ -15,14 +20,11 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
     assert_select 'title', full_title(@user.name)
     assert_select 'h1', text: @user.name
     assert_select 'img.gravatar'
-    assert_match @user.microposts.count.to_s, response.body
-    assert_select 'div.pagination', count: 1
-    @user.microposts.paginate(page: 1).each do |micropost|
-      assert_match micropost.content, response.body
+    lposts = LedgerPost.where(creator_id: @user.ledger_user_id, deleted: false)
+    assert_match "(#{lposts.count})", response.body
+    assert_select 'div.pagination', count: 2
+    lposts.paginate(page: 1).each do |lpost|
+      assert_match lpost.content, response.body
     end
-    assert @user.following.count != @user.followers.count,
-      "Plese pick a user that has different followers and following counts."
-    assert_select 'strong#following', text: @user.following.count.to_s
-    assert_select 'strong#followers', text: @user.followers.count.to_s
   end
 end

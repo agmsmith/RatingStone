@@ -127,26 +127,6 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
     t.index ["string1"], name: "index_link_bases_on_string1"
   end
 
-  create_table "microposts", force: :cascade do |t|
-    t.text "content"
-    t.integer "user_id", null: false
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.integer "images_number", default: 0
-    t.index ["user_id", "created_at"], name: "index_microposts_on_user_id_and_created_at"
-    t.index ["user_id"], name: "index_microposts_on_user_id"
-  end
-
-  create_table "relationships", force: :cascade do |t|
-    t.integer "follower_id"
-    t.integer "followed_id"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
-    t.index ["followed_id"], name: "index_relationships_on_followed_id"
-    t.index ["follower_id", "followed_id"], name: "index_relationships_on_follower_id_and_followed_id", unique: true
-    t.index ["follower_id"], name: "index_relationships_on_follower_id"
-  end
-
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -179,5 +159,4 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
   add_foreign_key "link_bases", "ledger_bases", column: "child_id"
   add_foreign_key "link_bases", "ledger_bases", column: "creator_id"
   add_foreign_key "link_bases", "ledger_bases", column: "parent_id"
-  add_foreign_key "microposts", "users"
 end

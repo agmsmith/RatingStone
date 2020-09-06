@@ -5,16 +5,6 @@ class User < ApplicationRecord
   before_create :create_activation_digest
   after_save :update_ledger_user
 
-  has_many :microposts, dependent: :destroy
-
-  # Relationship things...
-  has_many :active_relationships, class_name: :Relationship,
-    foreign_key: :follower_id, dependent: :destroy
-  has_many :passive_relationships, class_name: :Relationship,
-    foreign_key: :followed_id, dependent: :destroy
-  has_many :following, through: :active_relationships, source: :followed
-  has_many :followers, through: :passive_relationships, source: :follower
-
   attr_accessor :activation_token, :remember_token, :reset_token
 
   validates :name, presence: true, length: { maximum: 50 }
@@ -101,29 +91,6 @@ class User < ApplicationRecord
       lu = lu.latest_version
     end
     lu
-  end
-
-  # Returns a collection of all the Microposts the user should see in their
-  # feed.  Currently it's posts from followed users and their own posts.
-  def feed
-    Micropost.where(user: id).or(Micropost.where(
-      user: Relationship.where(follower: id).select(:followed_id)
-    ))
-  end
-
-  # Follows a user.
-  def follow(other_user)
-    following << other_user
-  end
-
-  # Unfollows a user.
-  def unfollow(other_user)
-    following.delete(other_user)
-  end
-
-  # Returns true if the current user is following the other user.
-  def following?(other_user)
-    following.include?(other_user)
   end
 
   private

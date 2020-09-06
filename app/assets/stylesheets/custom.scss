@@ -210,29 +210,6 @@ aside {
   margin-top: 15px;
 }
 
-.user_follow_stats {
-  overflow: auto;
-  margin-top: 0;
-  padding: 0;
-  a {
-    float: left;
-    padding: 0 10px;
-    border-left: 1px solid $gray-lighter;
-    color: gray;
-    &:first-child {
-      padding-left: 0;
-      border: 0;
-    }
-    &:hover {
-      text-decoration: none;
-      color: blue;
-    }
-  }
-  strong {
-    display: block;
-  }
-}
-
 .user_avatars {
   overflow: auto;
   margin-top: 10px;
@@ -242,10 +219,6 @@ aside {
   a {
     padding: 0;
   }
-}
-
-.users.follow {
-  padding: 0;
 }
 
 /* Users index */
@@ -258,57 +231,6 @@ aside {
     padding: 10px 0;
     border-bottom: 1px solid $gray-lighter;
     .deletebutton {
-      display: block;
-      float: right;
-    }
-  }
-}
-
-/* microposts */
-
-.microposts {
-  list-style: none;
-  padding: 0;
-  li {
-    padding: 10px 0;
-    border-top: 1px solid #e8e8e8;
-    .user {
-      margin-top: 5em;
-      padding-top: 0;
-    }
-    .content {
-      display: block;
-      margin-left: 60px;
-    }
-    .deleted {
-      color: red;
-      display: block;
-      margin-left: 60px;
-    }
-    .tiled-pictures {
-      display: block;
-      margin-left: 60px;
-      img {
-        display: inline-block;
-        margin: 0;
-        padding: 1%;
-      }
-    }
-    .timestamp {
-      color: $gray-light;
-      display: block;
-      margin-left: 60px;
-    }
-    .gravatar {
-      float: left;
-      margin-right: 10px;
-      margin-top: 0;
-    }
-    .deletebutton {
-      display: block;
-      float: right;
-    }
-    .undeletebutton {
       display: block;
       float: right;
     }

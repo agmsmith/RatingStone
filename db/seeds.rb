@@ -120,17 +120,6 @@ if !Rails.env.test?
       priority: n / 3 * 10 + 10, creator_id: 0)
   end
 
-  # Generate microposts for a subset of users.
-  users = User.order(:created_at).take(6)
-  5.times do
-    content = Faker::Lorem.sentence(word_count: 5)
-    users.each { |user| user.microposts.create!(content: content) }
-  end
-  user = User.last
-  5.times do
-    user.microposts.create!(content: Faker::Company.catch_phrase)
-  end
-
   # Make some LedgerPosts for some users.  Use Markdown formatting.
   users = User.order(:created_at).take(4)
   4.times do |i|
@@ -161,12 +150,4 @@ if !Rails.env.test?
     x.approved_child = true
     x.save!
   end
-
-  # Create following relationships.
-  users = User.all
-  user  = users.first
-  following = users[2..5]
-  followers = users[3..6]
-  following.each { |followed| user.follow(followed) }
-  followers.each { |follower| follower.follow(user) }
 end
