@@ -14,16 +14,7 @@ class LedgerPostsController < LedgerObjectsController
   end
 
   def index
-    @ledger_objects = LedgerPost.all.paginate(page: params[:page])
-  end
-
-  def show
-    # Slightly more complex code to show an empty list when ID not found.
-    @ledger_objects = LedgerPost.where(id: params[:id])
-    if @ledger_objects.any?
-      @ledger_objects = @ledger_objects.first.all_versions
-        .paginate(page: params[:page])
-    end
+    @ledger_objects = LedgerPost.all.order(:id).paginate(page: params[:page])
   end
 
   private

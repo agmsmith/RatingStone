@@ -107,6 +107,12 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # Returns true if this record is the latest version.
+  def latest_version?
+    id == latest_version_id
+  end
+
+  ##
   # Finds the id of the latest version of this record.
   def latest_version_id
     latest_id = original_version.amended_id

@@ -91,7 +91,7 @@ if !Rails.env.test?
     "This one also has a very long description so we can see how well it " \
     "gets formatted in the group listings.  Note that groups have their " \
     "description in Kramdown markup format.  Line break in Kramdown:  \n" \
-    "![RatingStone Icon](apple-touch-icon.png){:align=\"left\"}That should " \
+    "![RatingStone Icon](/apple-touch-icon.png){:align=\"left\"}That should " \
     "make it more interesting.  There should also be a pinned post to more " \
     "graphically describe the group, though I think Kramdown also lets you " \
     "embed pictures.", creator_id: 0))
@@ -149,7 +149,7 @@ if !Rails.env.test?
     end
   end
   post = LedgerPost.create!(content:
-    "![RatingStone Icon](apple-touch-icon.png){:align=\"right\"}Here is a " \
+    "![RatingStone Icon](/apple-touch-icon.png){:align=\"right\"}Here is a " \
     "post with Kramdown markup containing an image, set to float to the right.",
     creator_id: 0)
   LinkGroupContent.create!(parent: group_records[3], child: post, creator_id: 0)

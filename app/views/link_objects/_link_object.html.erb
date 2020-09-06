@@ -1,13 +1,13 @@
 <li id="link-object-<%= link_object.id %>" class="row">
 <% if !link_object.creator_owner?(current_ledger_user) %>
   <div class="col-xs-12 not-allowed-to-view">
-    <%= "##{link_object.id} #{link_object.class.name} You don't have " \
+    <%= "#{link_object.base_s} You don't have " \
       "permission to view or modify this object." %>
   </div>
 <% else %>
   <div class="col-xs-9 col-sm-10 col-lg-11 <%=
     link_object.deleted ? "deleted" : "content" %>">
-    <%= link_to "##{link_object.id} #{link_object.type}",
+    <%= link_to "#{link_object.base_s}",
       link_object_path(link_object) %>
       Parent: <%= link_to link_object.parent.base_s,
         ledger_object_path(link_object.parent_id) %>
@@ -19,14 +19,14 @@
     <% if link_object.deleted %>
       <%= form_with(url: undelete_link_object_path(link_object),
         local: true, action: :undelete, method: :post) do |f| %>
-        <%= f.submit "Undelete #{link_object.to_s}", class: "btn btn-info" %>
+        <%= f.submit "Undelete #{link_object.base_s}", class: "btn btn-info" %>
         <%= f.text_area :reason, placeholder: "Reason why...",
           class: "delete-reason" %>
       <% end %>
     <% else %>
       <%= form_with(url: link_object_path(link_object),
         local: true, action: :delete, method: :delete) do |f| %>
-        <%= f.submit "Delete #{link_object.to_s}", class: "btn btn-danger" %>
+        <%= f.submit "Delete #{link_object.base_s}", class: "btn btn-danger" %>
         <%= f.text_area :reason, placeholder: "Reason why...",
           class: "delete-reason" %>
       <% end %>

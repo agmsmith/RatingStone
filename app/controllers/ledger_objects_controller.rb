@@ -62,7 +62,7 @@ class LedgerObjectsController < ApplicationController
         flash[:success] = "#{@ledger_object.base_s} updated, " \
           "new version is #{new_object.base_s}."
         @ledger_object = new_object
-        render('edit')
+        render('show')
       else # Failed to save, show error messages for field editing problems.
         new_object.id = @ledger_object.id
         @ledger_object = new_object

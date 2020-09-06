@@ -1,32 +1,41 @@
-<% provide(:page_title, "All Versions of Post #" + params[:id]) %>
+<% provide(:page_title, "Post #" + params[:id]) %>
 
-<h1>All Versions of Post #<%= params[:id] %></h1>
+<h1>Post #<%= params[:id] %></h1>
 
-<% if @ledger_objects&.any?
-  last_post = @ledger_objects.last # Most recent version is last. %>
-  <%= will_paginate @ledger_objects %>
+<% if @ledger_object %>
   <ul class="list-ledger-objects">
-    <% @ledger_objects.each do |an_object| %>
-      <%= render 'ledger_posts/ledger_just_the_post',
-        { ledger_post: an_object } %>
-    <% end %>
+    <%= render 'ledger_posts/ledger_just_the_post',
+      { ledger_post: @ledger_object } %>
   </ul>
-  <%= will_paginate @ledger_objects %>
 
   <div class="row">
-    <% if last_post.creator_owner?(current_ledger_user) %>
+    <% if @ledger_object.creator_owner?(current_ledger_user) %>
       <div class="col-xs-12 col-sm-6">
-        <%= button_to "Edit", edit_ledger_post_path(last_post),
+        <%= button_to "Edit", edit_ledger_post_path(@ledger_object),
           method: :get, class: 'btn btn-success button-full-width' %><br>
       </div>
     <% end %>
     <div class="col-xs-12 col-sm-6">
       <%= render 'shared/ledger_delete_button',
-        { ledger_object: last_post } %>
+        { ledger_object: @ledger_object } %>
     </div>
   </div>
+  <% # List all versions of the post.
+    @ledger_objects = @ledger_object.all_versions.paginate(page: params[:page])
+    if @ledger_objects.count > 1 %>
+      <hr>
+      <h2>All Versions of <%= @ledger_object.base_s %></h2>
+      <%= will_paginate @ledger_objects %>
+      <ul class="list-ledger-objects">
+        <% @ledger_objects.each do |an_object| %>
+          <%= render 'ledger_posts/ledger_just_the_post',
+            { ledger_post: an_object } %>
+        <% end %>
+      </ul>
+      <%= will_paginate @ledger_objects %>
+  <% end %>
 <% else %>
-  <p>Sorry, no versions of post "<%= params[:id] %>" exist.</p>
+  <p>Sorry, post "<%= params[:id] %>" does not exist.</p>
 <% end %>
 </div>
 

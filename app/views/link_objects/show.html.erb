@@ -53,14 +53,14 @@
       <% if @link_object.deleted %>
         <%= form_with(url: undelete_link_object_path(@link_object),
           local: true, action: :undelete, method: :post) do |f| %>
-          <%= f.submit "Undelete #{@link_object.to_s}", class: "btn btn-info" %>
+          <%= f.submit "Undelete #{@link_object.base_s}", class: "btn btn-info" %>
           <%= f.text_area :reason, placeholder: "Reason why...",
             class: "delete-reason" %>
         <% end %>
       <% else %>
         <%= form_with(url: link_object_path(@link_object),
           local: true, action: :delete, method: :delete) do |f| %>
-          <%= f.submit "Delete #{@link_object.to_s}", class: "btn btn-danger" %>
+          <%= f.submit "Delete #{@link_object.base_s}", class: "btn btn-danger" %>
           <%= f.text_area :reason, placeholder: "Reason why...",
             class: "delete-reason" %>
         <% end %>

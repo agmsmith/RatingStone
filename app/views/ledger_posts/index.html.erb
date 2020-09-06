@@ -4,8 +4,17 @@
 
 <%= will_paginate @ledger_objects %>
 <ul class="list-ledger-objects">
-<% @ledger_objects.each do |an_object| %>
-<%= render 'ledger_posts/ledger_post', { ledger_post: an_object } %>
-<% end %>
+<% hidden_count = 0
+  @ledger_objects.each do |an_object|
+    if an_object.is_a?(LedgerPost) && an_object.latest_version? %>
+      <%= render 'ledger_posts/ledger_post', { ledger_post: an_object } %>
+    <% else
+      hidden_count += 1
+    end
+  end %>
 </ul>
+<% if hidden_count != 0 %>
+  <p><%= hidden_count %> posts were hidden (not latest version or not valid).</p>
+<% end %>
 <%= will_paginate @ledger_objects %>
+
