@@ -120,23 +120,28 @@ if !Rails.env.test?
       priority: n / 3 * 10 + 10, creator_id: 0)
   end
 
-  # Make some LedgerPosts for some users.  Use Markdown formatting.
-  users = User.order(:created_at).take(4)
-  4.times do |i|
+  # Make some LedgerPosts for some users.  Use Markdown formatting.  Arrange
+  # them as a graph of replies.
+  users = User.order(created_at: :desc).take(10)
+  posts = []
+  40.times do |i|
     content = Faker::Markdown.random
-    users.each do |user|
-      post = LedgerPost.create!(content: content, creator: user.ledger_user)
-      LinkGroupContent.create!(parent: group_records[i], child: post,
-        creator: user.ledger_user)
-      post2 = post.append_version
-      post2.content = "Sorry, I meant " + Faker::Lorem.sentence(word_count: 8)
-      post2.save!
-      post.reload
-      post3 = post.append_version
-      post3.content = "Oops, that was " + Faker::Lorem.sentence(word_count: 6)
-      post3.save!
+    user = users.sample
+    luser = user.ledger_user
+    lgroup = luser.home_group
+    lpost = LedgerPost.create!(content: content, creator: user.ledger_user)
+    LinkGroupContent.create!(parent: lgroup, child: lpost, creator: luser)
+    previous_lpost = posts.sample
+    if previous_lpost # Make this a reply to some previous post.
+      LinkReply.create!(parent: previous_lpost, child: lpost, creator: luser)
     end
+    posts << lpost
   end
+  # Add a cycle to the reply graph; first post is a reply to the last post.
+  LinkReply.create!(parent: posts.last, child: posts.first, creator_id: 0)
+
+  # Graphical post.  Need to use URL that starts with a slash, or it won't work
+  # when viewed in some sub-pages.
   post = LedgerPost.create!(content:
     "![RatingStone Icon](/apple-touch-icon.png){:align=\"right\"}Here is a " \
     "post with Kramdown markup containing an image, set to float to the right.",

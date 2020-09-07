@@ -1,18 +1,21 @@
 <% provide(:page_title, @user.name) %>
-<div class="row">
-  <aside class="col-md-4">
-    <section class="user_info">
-      <%= gravatar_for @user %>
-      <h1><%= @user.name %></h1>
-    </section>
-  </aside>
-  <% if @lposts.any? %>
-    <h3>Ledger Posts (<%= @lposts.count %>) by <%= @user.name %></h3>
-    <%= will_paginate @lposts %>
-    <ol class="list-ledger-objects">
-      <%= render @lposts %>
-    </ol>
-    <%= will_paginate @lposts %>
-  <% end %>
-</div>
+
+<aside class="col-md-4">
+  <section class="user_info">
+    <%= gravatar_for @user %>
+    <h1><%= @user.name %></h1>
+  </section>
+</aside>
+<% if @lposts.any?
+  post_count = @lposts.count %>
+  <h3><%=
+    "#{post_count} Ledger #{'Post'.pluralize(post_count)} by #{@user.name}"
+  %></h3>
+  <br clear="all">
+  <%= will_paginate @lposts %>
+  <ol class="list-ledger-objects">
+    <%= render @lposts %>
+  </ol>
+  <%= will_paginate @lposts %>
+<% end %>
 

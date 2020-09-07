@@ -3,10 +3,8 @@
 <h1>Post #<%= params[:id] %></h1>
 
 <% if @ledger_object %>
-  <ul class="list-ledger-objects">
-    <%= render 'ledger_posts/ledger_just_the_post',
-      { ledger_post: @ledger_object } %>
-  </ul>
+  <%= render 'ledger_posts/ledger_just_the_post',
+    { ledger_post: @ledger_object } %>
 
   <div class="row">
     <% if @ledger_object.creator_owner?(current_ledger_user) %>
@@ -28,8 +26,10 @@
       <%= will_paginate @ledger_objects %>
       <ul class="list-ledger-objects">
         <% @ledger_objects.each do |an_object| %>
-          <%= render 'ledger_posts/ledger_just_the_post',
-            { ledger_post: an_object } %>
+          <li id="ledger-post-<%= an_object.id %>">
+            <%= render 'ledger_posts/ledger_just_the_post',
+              { ledger_post: an_object } %>
+          </li>
         <% end %>
       </ul>
       <%= will_paginate @ledger_objects %>

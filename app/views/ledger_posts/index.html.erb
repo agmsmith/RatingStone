@@ -14,7 +14,8 @@
   end %>
 </ul>
 <% if hidden_count != 0 %>
-  <p><%= hidden_count %> posts were hidden (not latest version or not valid).</p>
+  <p><%= "#{hidden_count} #{'post'.pluralize(hidden_count)} " \
+    "#{(hidden_count == 1) ? 'was' : 'were'}" %> hidden (not latest version).</p>
 <% end %>
 <%= will_paginate @ledger_objects %>
 
