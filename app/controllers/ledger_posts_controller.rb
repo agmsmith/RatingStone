@@ -2,19 +2,13 @@
 
 class LedgerPostsController < LedgerObjectsController
   def create
-    @new_ledger_post = LedgerPost.new(sanitised_params
-      .merge(creator_id: current_ledger_user.original_version_id,
-      type: :LedgerPost))
-    if @new_ledger_post.save
-      flash[:success] = "LedgerPost created!"
-      redirect_to(root_url)
-    else # Show error messages in the data entry form.
-      render('static_pages/home')
-    end
+    @ledger_object = LedgerPost.new
+    super
   end
 
   def index
-    @ledger_objects = LedgerPost.all.order(:id).paginate(page: params[:page])
+    @ledger_objects = LedgerPost.where(deleted: false).order(:created_at)
+      .paginate(page: params[:page])
   end
 
   private

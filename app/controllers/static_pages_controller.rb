@@ -12,8 +12,9 @@ class StaticPagesController < ApplicationController
 
   def home
     if logged_in?
-      @new_ledger_post = LedgerPost.new(creator: current_ledger_user)
-      @ledger_feed_items = current_ledger_user.feed.paginate(page: params[:ledger_pageno])
+      @ledger_post = LedgerPost.new(creator: current_ledger_user)
+      @ledger_feed_items = current_ledger_user.feed
+        .paginate(page: params[:page])
     end
   end
 end

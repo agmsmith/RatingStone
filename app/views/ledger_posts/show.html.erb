@@ -1,4 +1,5 @@
-<% provide(:page_title, "Post #" + params[:id]) %>
+<% params[:id] = @ledger_object.id.to_s unless params[:id]
+  provide(:page_title, "Post #" + params[:id]) %>
 
 <h1>Post #<%= params[:id] %></h1>
 

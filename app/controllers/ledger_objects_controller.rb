@@ -40,6 +40,15 @@ class LedgerObjectsController < ApplicationController
   end
 
   def create
+    # Subclasses create their object then call super, with @ledger_object set.
+    @ledger_object.update(sanitised_params
+      .merge(creator_id: current_ledger_user.original_version_id))
+    if @ledger_object.save
+      flash[:success] = "#{@ledger_object.base_s} created!"
+      render('show')
+    else # Show error messages in the data entry form.
+      render('static_pages/home')
+    end
   end
 
   def new
@@ -53,7 +62,8 @@ class LedgerObjectsController < ApplicationController
     # Object to be edited already loaded into @ledger_object.
     if params[:preview]
       # Set the new values but don't save it, keep same ID.  So you can
-      # preview markdown text.
+      # preview markdown text.  Hope it doesn't accidentally get saved due
+      # to caching.  Well, we always save to a new appended version.
       @ledger_object.assign_attributes(sanitised_params)
       render('edit')
     else # Change the object by making a new version of it, new ID too.

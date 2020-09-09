@@ -11,8 +11,8 @@
   <h3><%=
     "#{post_count} Ledger #{'Post'.pluralize(post_count)} by #{@user.name}"
   %></h3>
-  <br clear="all">
   <%= will_paginate @lposts %>
+  <br clear="all">
   <ol class="list-ledger-objects">
     <%= render @lposts %>
   </ol>

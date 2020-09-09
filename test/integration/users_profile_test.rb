@@ -21,7 +21,7 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
     assert_select 'h1', text: @user.name
     assert_select 'img.gravatar'
     lposts = LedgerPost.where(creator_id: @user.ledger_user_id, deleted: false)
-    assert_match "(#{lposts.count})", response.body
+    assert_match "#{lposts.count} Ledger Posts by #{@user.name}", response.body
     assert_select 'div.pagination', count: 2
     lposts.paginate(page: 1).each do |lpost|
       assert_match lpost.content, response.body
