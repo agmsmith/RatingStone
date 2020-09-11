@@ -4,7 +4,7 @@ class LedgerFullGroup < LedgerSubgroup
   # Extra group properties too big to fit here are in a GroupSetting record.
   has_one :group_setting, dependent: :destroy, autosave: true
 
-  after_create :create_default_settings_if_needed
+  after_create :my_after_create
 
   ##
   # Besides making a new ledger record when making a new version, copy the
@@ -125,7 +125,8 @@ class LedgerFullGroup < LedgerSubgroup
   ##
   # Creates the default settings record, if there isn't one.  And then sets
   # the back-ID field of that group settings record if it is incorrect.
-  def create_default_settings_if_needed
+  def my_after_create
+    super # Rails loses parent's after_create methods, manually call them.
     if group_setting.nil?
       self.group_setting = GroupSetting.create!(ledger_full_group_id: id)
     elsif group_setting.ledger_full_group_id != id

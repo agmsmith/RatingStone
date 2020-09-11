@@ -99,6 +99,36 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert_equal("Second One Again", original_lbase.latest_version.string1)
   end
 
+  test "latest version flag" do
+    original_lbase = LedgerBase.new(creator_id: 0, string1: "The original.")
+    original_lbase.save!
+    assert(original_lbase.latest_version?)
+    amended_lbase = original_lbase.append_version
+    amended_lbase.string1 = "The first amendment."
+    assert(original_lbase.latest_version?)
+    amended_lbase.save!
+    assert(original_lbase.latest_version?)
+    original_lbase.reload
+    assert_not(original_lbase.latest_version?)
+    assert(amended_lbase.latest_version?)
+    reamended_lbase = amended_lbase.append_version
+    reamended_lbase.string1 = "The second amendment."
+    assert_not(original_lbase.latest_version?)
+    assert(amended_lbase.latest_version?)
+    reamended_lbase.save!
+    amended_lbase.reload
+    assert_not(original_lbase.latest_version?)
+    assert_not(amended_lbase.latest_version?)
+    assert(reamended_lbase.latest_version?)
+    lastamended_lbase = original_lbase.append_version
+    lastamended_lbase.string1 = "The third amendment."
+    lastamended_lbase.save!
+    assert_not(original_lbase.latest_version?)
+    assert_not(amended_lbase.latest_version?)
+    assert_not(reamended_lbase.latest_version?)
+    assert(lastamended_lbase.latest_version?)
+  end
+
   test "creator_owner? function" do
     lgroup = ledger_full_groups(:group_all)
     assert lgroup.creator_owner?(ledger_users(:group_creator_user))

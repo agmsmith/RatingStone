@@ -1,9 +1,24 @@
-head	1.45;
+head	1.48;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.48
+date	2020.09.11.01.26.12;	author agmsmith;	state Exp;
+branches;
+next	1.47;
+
+1.47
+date	2020.09.10.21.58.31;	author agmsmith;	state Exp;
+branches;
+next	1.46;
+
+1.46
+date	2020.09.10.21.57.02;	author agmsmith;	state Exp;
+branches;
+next	1.45;
 
 1.45
 date	2020.08.06.22.53.07;	author agmsmith;	state Exp;
@@ -236,14 +251,17 @@ desc
 @
 
 
-1.45
+1.48
 log
-@Update database migration example with current version.
+@Make the default of is_latest_version true, since new records are usually latest.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.44 2020/08/05 20:42:14 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.47 2020/09/10 21:58:31 agmsmith Exp agmsmith $</SMALL>
+
+1. Table of Contents
+{:toc}
 
 ## Basic Ideas
 
@@ -612,6 +630,10 @@ serious or distinct enough.
   deleted ones) that references this record.  False if there are none, which
   means we can skip searching for LinkOwner records every time we check
   permissions, which saves a lot of database queries!
+* is_latest_version boolean True if the record is the latest version of the
+  object.  False otherwise.  Caches the result of looking up the original
+  object and seeing which record is the latest, so we have less overhead when
+  displaying only the latest versions in a list of posts.
 * creator_id Identifies the user who created this record.  Store the id of the
   original version of the user's LedgerUser record.  The root object is
   considered to have created itself.  If you want to change the creator of an
@@ -1232,6 +1254,7 @@ details like this:
       t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
       t.boolean :has_owners, default: false, comment: "True if there is one or more LinkOwner records (even deleted ones) that references this record.  False if there are none, which means we can skip searching for LinkOwner records every time we check permissions, which saves a lot of database queries!"
+      t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record, using their original ID."
       t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
       t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
@@ -1373,13 +1396,21 @@ appreciation.  Second user awards some down points to first user, declaring
 their disgust.  What are their total points?  Another weekly batch run happens.
 What are their points?
 
-1. Table of Contents
-{:toc}
+## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.44 2020/08/05 20:42:14 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.47 2020/09/10 21:58:31 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.47  2020/09/10 21:58:31  agmsmith
+Add change log to index.
+
+Revision 1.46  2020/09/10 21:57:02  agmsmith
+Add is_latest_version field, to optimise version checking.
+
+Revision 1.45  2020/08/06 22:53:07  agmsmith
+Update database migration example with current version.
+
 Revision 1.44  2020/08/05 20:42:14  agmsmith
 Added has_owners field to LedgerBase.
 
@@ -1520,6 +1551,61 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.47
+log
+@Add change log to index.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.46 2020/09/10 21:57:02 agmsmith Exp agmsmith $</SMALL>
+d999 1
+a999 1
+      t.boolean :is_latest_version, default: false, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts."
+d1144 1
+a1144 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.46 2020/09/10 21:57:02 agmsmith Exp agmsmith $
+d1147 3
+@
+
+
+1.46
+log
+@Add is_latest_version field, to optimise version checking.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.45 2020/08/06 22:53:07 agmsmith Exp agmsmith $</SMALL>
+d1141 2
+d1144 1
+a1144 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.45 2020/08/06 22:53:07 agmsmith Exp agmsmith $
+d1147 3
+@
+
+
+1.45
+log
+@Update database migration example with current version.
+@
+text
+@d3 4
+a6 1
+<SMALL>$Id: Database\040Design.md,v 1.44 2020/08/05 20:42:14 agmsmith Exp agmsmith $</SMALL>
+d375 4
+d999 1
+a1140 3
+1. Table of Contents
+{:toc}
+
+d1142 1
+a1142 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.44 2020/08/05 20:42:14 agmsmith Exp agmsmith $
+d1145 3
 @
 
 

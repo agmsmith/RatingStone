@@ -3,7 +3,7 @@
 class LedgerBase < ApplicationRecord
   validate :validate_ledger_original_versions_referenced
   after_save :patch_original_id # Do this one first - lower level field init.
-  after_create :amend_original_record
+  after_create :my_after_create
 
   # Always have a creator, but "optional: false" makes it reload the creator
   # object every time we do something with an object.  So just require it to
@@ -235,8 +235,12 @@ class LedgerBase < ApplicationRecord
   # If this is an amended ledger record, now that it has been created, go back
   # and update the original record to point to the newly saved amended data.
   # Check that this is indeed the latest amendment, raise exception if not.
-  def amend_original_record
-    return if (original_id == id) || original_id.nil? # We are the original.
+  # Remember to call this from subclasses with an after_create of their own.
+  def my_after_create
+    if (original_id == id) || original_id.nil? # We are the original.
+      update_attribute(:is_latest_version, true)
+      return
+    end
 
     # Wrap this critical section (read and modify amended_id) in a transaction.
     self.class.transaction do
@@ -246,8 +250,15 @@ class LedgerBase < ApplicationRecord
           "was added before this (#{self}) new amended record.  " \
           "Original: #{original}"
       end
-      original.amended_id = id
-      original.save!
+      # Previous latest one isn't the most recent any more.
+      if original.amended
+        original.amended.update_attribute(:is_latest_version, false)
+      else
+        original.update_attribute(:is_latest_version, false)
+      end
+      # We are the latest one now.
+      original.update_attribute(:amended_id, id)
+      update_attribute(:is_latest_version, true)
     end
   end
 
