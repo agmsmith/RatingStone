@@ -3,7 +3,7 @@
 
 <h1>Post #<%= params[:id] %></h1>
 
-<% if @ledger_object %>
+<% if @ledger_object.is_a?(LedgerPost) %>
   <%= render 'ledger_posts/ledger_just_the_post',
     { ledger_post: @ledger_object } %>
 

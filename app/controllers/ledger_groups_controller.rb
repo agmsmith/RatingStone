@@ -9,6 +9,10 @@ class LedgerGroupsController < LedgerObjectsController
     @ledger_object = LedgerSubgroup.find_by(id: params[:id]) # Can be nil.
   end
 
+  # See parent class for generic edit() method.
+
+  # See parent class for generic update() method.
+
   private
 
   def sanitised_params # Sanitise the inputs from the submitted form data.

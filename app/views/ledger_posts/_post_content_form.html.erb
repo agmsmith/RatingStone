@@ -1,7 +1,6 @@
 <%= form_with(model: @ledger_object, scope: :ledger_post,
   url: ledger_post_path, local: true, class: "form-group") do |f| %>
       <%= render 'shared/error_messages', object: f.object %>
-
       <%= f.label :content %>
       <%= f.text_area :content, class: 'form-control' %>
       <div class="description-form-box">
