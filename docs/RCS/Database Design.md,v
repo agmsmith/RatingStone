@@ -1,9 +1,14 @@
-head	1.48;
+head	1.49;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.49
+date	2020.09.13.20.48.36;	author agmsmith;	state Exp;
+branches;
+next	1.48;
 
 1.48
 date	2020.09.11.01.26.12;	author agmsmith;	state Exp;
@@ -251,14 +256,14 @@ desc
 @
 
 
-1.48
+1.49
 log
-@Make the default of is_latest_version true, since new records are usually latest.
+@Add note to is_latest_version as being useful in SQL queries too.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.47 2020/09/10 21:58:31 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.48 2020/09/11 01:26:12 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -633,7 +638,8 @@ serious or distinct enough.
 * is_latest_version boolean True if the record is the latest version of the
   object.  False otherwise.  Caches the result of looking up the original
   object and seeing which record is the latest, so we have less overhead when
-  displaying only the latest versions in a list of posts.
+  displaying only the latest versions in a list of posts.  Also lets us skip
+  older versions directly in an SQL query.
 * creator_id Identifies the user who created this record.  Store the id of the
   original version of the user's LedgerUser record.  The root object is
   considered to have created itself.  If you want to change the creator of an
@@ -1254,7 +1260,7 @@ details like this:
       t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
       t.boolean :has_owners, default: false, comment: "True if there is one or more LinkOwner records (even deleted ones) that references this record.  False if there are none, which means we can skip searching for LinkOwner records every time we check permissions, which saves a lot of database queries!"
-      t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts."
+      t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts.  Also lets us skip older versions directly in an SQL query."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record, using their original ID."
       t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
       t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
@@ -1399,9 +1405,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.47 2020/09/10 21:58:31 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.48 2020/09/11 01:26:12 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.48  2020/09/11 01:26:12  agmsmith
+Make the default of is_latest_version true, since new records are usually latest.
+
 Revision 1.47  2020/09/10 21:58:31  agmsmith
 Add change log to index.
 
@@ -1551,6 +1560,27 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.48
+log
+@Make the default of is_latest_version true, since new records are usually latest.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.47 2020/09/10 21:58:31 agmsmith Exp agmsmith $</SMALL>
+d378 2
+a379 1
+  displaying only the latest versions in a list of posts.
+d1000 1
+a1000 1
+      t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts."
+d1145 1
+a1145 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.47 2020/09/10 21:58:31 agmsmith Exp agmsmith $
+d1148 3
 @
 
 

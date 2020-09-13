@@ -9,7 +9,8 @@ class LedgerPostsController < LedgerObjectsController
   # See parent class for generic edit() method.
 
   def index
-    @ledger_objects = LedgerPost.where(deleted: false).order(:created_at)
+    @ledger_objects = LedgerPost.where(deleted: false,
+      is_latest_version: true).order(:created_at)
       .paginate(page: params[:page])
   end
 

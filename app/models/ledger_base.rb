@@ -109,7 +109,7 @@ class LedgerBase < ApplicationRecord
   ##
   # Returns true if this record is the latest version.
   def latest_version?
-    id == latest_version_id
+    is_latest_version # Use cached value, avoids looking up original record.
   end
 
   ##

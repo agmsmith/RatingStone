@@ -125,6 +125,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert(reamended_lbase.latest_version?)
     lastamended_lbase = original_lbase.append_version
     lastamended_lbase.string1 = "The third amendment."
+    lastamended_lbase.is_latest_version = false
     lastamended_lbase.save!
     original_lbase.reload
     amended_lbase.reload

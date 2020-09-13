@@ -6,6 +6,7 @@ class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
       t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
       t.boolean :has_owners, default: false, comment: "True if there is one or more LinkOwner records (even deleted ones) that references this record.  False if there are none, which means we can skip searching for LinkOwner records every time we check permissions, which saves a lot of database queries!"
+      t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts.  Also lets us skip older versions directly in an SQL query."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record, using their original ID."
       t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
       t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
