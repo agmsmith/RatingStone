@@ -107,22 +107,28 @@ class LedgerBaseTest < ActiveSupport::TestCase
     amended_lbase.string1 = "The first amendment."
     assert(original_lbase.latest_version?)
     amended_lbase.save!
+    assert(amended_lbase.latest_version?)
     assert(original_lbase.latest_version?)
     original_lbase.reload
     assert_not(original_lbase.latest_version?)
     assert(amended_lbase.latest_version?)
+
     reamended_lbase = amended_lbase.append_version
     reamended_lbase.string1 = "The second amendment."
     assert_not(original_lbase.latest_version?)
     assert(amended_lbase.latest_version?)
     reamended_lbase.save!
     amended_lbase.reload
+    original_lbase.reload
     assert_not(original_lbase.latest_version?)
     assert_not(amended_lbase.latest_version?)
     assert(reamended_lbase.latest_version?)
     lastamended_lbase = original_lbase.append_version
     lastamended_lbase.string1 = "The third amendment."
     lastamended_lbase.save!
+    original_lbase.reload
+    amended_lbase.reload
+    reamended_lbase.reload
     assert_not(original_lbase.latest_version?)
     assert_not(amended_lbase.latest_version?)
     assert_not(reamended_lbase.latest_version?)

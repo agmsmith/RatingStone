@@ -235,6 +235,7 @@ class LedgerBase < ApplicationRecord
   # If this is an amended ledger record, now that it has been created, go back
   # and update the original record to point to the newly saved amended data.
   # Check that this is indeed the latest amendment, raise exception if not.
+  #
   # Remember to call this from subclasses with an after_create of their own.
   def my_after_create
     if (original_id == id) || original_id.nil? # We are the original.
