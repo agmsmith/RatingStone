@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2020_09_10_214431) do
+ActiveRecord::Schema.define(version: 2020_07_19_164951) do
 
   create_table "active_storage_attachments", force: :cascade do |t|
     t.string "name", null: false
@@ -83,6 +83,7 @@ ActiveRecord::Schema.define(version: 2020_09_10_214431) do
     t.integer "amended_id"
     t.boolean "deleted", default: false
     t.boolean "has_owners", default: false
+    t.boolean "is_latest_version", default: true
     t.integer "creator_id", null: false
     t.boolean "bool1", default: false
     t.integer "number1", default: 0
@@ -95,7 +96,6 @@ ActiveRecord::Schema.define(version: 2020_09_10_214431) do
     t.float "current_up_points", default: 0.0
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
-    t.boolean "is_latest_version", default: true
     t.index ["amended_id"], name: "index_ledger_bases_on_amended_id"
     t.index ["creator_id"], name: "index_ledger_bases_on_creator_id"
     t.index ["number1"], name: "index_ledger_bases_on_number1"
