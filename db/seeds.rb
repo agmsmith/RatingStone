@@ -140,6 +140,10 @@ if !Rails.env.test?
   # Add a cycle to the reply graph; first post is a reply to the last post.
   LinkReply.create!(parent: posts.last, child: posts.first, creator_id: 0)
 
+  # And for extra fun, make it a reply to a second post too.
+  LinkReply.create!(parent: posts.second_to_last, child: posts.first,
+    creator_id: 0)
+
   # Graphical post.  Need to use URL that starts with a slash, or it won't work
   # when viewed in some sub-pages.
   post = LedgerPost.create!(content:

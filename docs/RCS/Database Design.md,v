@@ -1,9 +1,14 @@
-head	1.49;
+head	1.50;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.50
+date	2020.09.20.23.45.52;	author agmsmith;	state Exp;
+branches;
+next	1.49;
 
 1.49
 date	2020.09.13.20.48.36;	author agmsmith;	state Exp;
@@ -256,14 +261,14 @@ desc
 @
 
 
-1.49
+1.50
 log
-@Add note to is_latest_version as being useful in SQL queries too.
+@Need to have a subject for posts, add a string for generic content classes.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.48 2020/09/11 01:26:12 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.49 2020/09/13 20:48:36 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -752,6 +757,11 @@ to a category list to identify what the topic of the content is, have rating
 points awarded to it, and so on.  It is also usually visible to users and even
 external web sites, unless permissions (determined by the groups it is in) make
 it private.
+
+* subject string A short bit of text identifying the content, in plain UTF-8.
+  For a post this will be the subject line.  For a picture, this will be a
+  description of it (also used as the HTML alternative text for the picture).
+  Write-once.
 
 
 #### *LedgerPost* < LedgerContent
@@ -1405,9 +1415,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.48 2020/09/11 01:26:12 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.49 2020/09/13 20:48:36 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.49  2020/09/13 20:48:36  agmsmith
+Add note to is_latest_version as being useful in SQL queries too.
+
 Revision 1.48  2020/09/11 01:26:12  agmsmith
 Make the default of is_latest_version true, since new records are usually latest.
 
@@ -1560,6 +1573,22 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.49
+log
+@Add note to is_latest_version as being useful in SQL queries too.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.48 2020/09/11 01:26:12 agmsmith Exp agmsmith $</SMALL>
+d493 5
+d1150 1
+a1150 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.48 2020/09/11 01:26:12 agmsmith Exp agmsmith $
+d1153 3
 @
 
 

@@ -46,8 +46,10 @@ class LedgerObjectsController < ApplicationController
     if @ledger_object.save
       flash[:success] = "#{@ledger_object.base_s} created!"
       render('show')
-    else # Show error messages in the data entry form.
-      render('static_pages/home')
+    else # Since we may be coming from a non-data-entry page, expand errors.
+      flash[:danger] = "Failed to create #{@ledger_object.type}: " +
+        @ledger_object.errors.full_messages.join(', ') + '.'
+      redirect_back(fallback_location: root_url)
     end
   end
 

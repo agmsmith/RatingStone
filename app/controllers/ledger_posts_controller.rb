@@ -21,6 +21,6 @@ class LedgerPostsController < LedgerObjectsController
   private
 
   def sanitised_params # Sanitise the inputs from the submitted form data.
-    params.require(:ledger_post).permit(:content)
+    params.require(:ledger_post).permit(:content, :subject)
   end
 end
