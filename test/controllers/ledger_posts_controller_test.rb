@@ -9,7 +9,8 @@ class LedgerPostsControllerTest < ActionDispatch::IntegrationTest
 
   test "should redirect create when not logged in" do
     assert_no_difference 'LedgerBase.count' do
-      post ledger_posts_path, params: { ledger_post: { content: "Lorem ipsum" } }
+      post ledger_posts_path, params:
+        { ledger_post: { content: "Lorem ipsum", subject: "My Subject" } }
     end
     assert_redirected_to login_url
   end

@@ -44,7 +44,8 @@ class LedgerUser < LedgerBase
   # Returns a collection of all the LedgerPosts the user should see in their
   # feed.  Currently it's just their own posts.
   def feed
-    LedgerPost.where(creator_id: original_version_id).order(created_at: :desc)
+    LedgerPost.where(creator_id: original_version_id,
+      is_latest_version: true).order(created_at: :desc)
   end
 
   ##

@@ -10,7 +10,7 @@ class LedgerPostsController < LedgerObjectsController
 
   def index
     @ledger_objects = LedgerPost.where(deleted: false,
-      is_latest_version: true).order(:created_at)
+      is_latest_version: true).order(created_at: :desc)
       .paginate(page: params[:page])
   end
 

@@ -185,7 +185,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
     # Then see if you can access a content object (a post) if you are a member
     # of the group it is in.
     luser = ledger_users(:outsider_user)
-    lpost = LedgerPost.create!(creator: luser,
+    lpost = LedgerPost.create!(creator: luser, subject: "Some Subject",
       content: "This is a test post to see if people can view it.")
     assert(lpost.allowed_to_view?(luser))
     user_ins = [

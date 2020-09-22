@@ -62,7 +62,7 @@ class LedgerApproveTest < ActiveSupport::TestCase
     assert(approved_links.first.child == link_group2)
 
     # Approval in a subgroup.
-    lpost2 = LedgerPost.new(creator: luser_outsider,
+    lpost2 = LedgerPost.new(creator: luser_outsider, subject: "Subgroup Test",
       content: "This is a subgroup post.")
     lpost2.save!
     link_group5 = LinkGroupContent.new(parent: lsubgroup, child: lpost2,

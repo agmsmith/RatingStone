@@ -3,11 +3,13 @@
 lpost_one:
   type: 'LedgerPost'
   creator_id: 0
+  string1: "First Fixture Subject"
   text1: 'The first ledger post, used for testing.'
 
 lpost_two:
   type: 'LedgerPost'
   creator: member_user
+  string1: "Second Fixture Subject"
   text1: 'The second ledger post by a member, used for testing ownership.'
   has_owners: true
 

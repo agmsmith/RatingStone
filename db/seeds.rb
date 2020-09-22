@@ -125,11 +125,13 @@ if !Rails.env.test?
   users = User.order(created_at: :desc).take(10)
   posts = []
   40.times do |i|
+    subject = Faker::Book.title
     content = Faker::Markdown.random
     user = users.sample
     luser = user.ledger_user
     lgroup = luser.home_group
-    lpost = LedgerPost.create!(content: content, creator: user.ledger_user)
+    lpost = LedgerPost.create!(subject: subject, content: content,
+      creator: user.ledger_user)
     LinkGroupContent.create!(parent: lgroup, child: lpost, creator: luser)
     previous_lpost = posts.sample
     if previous_lpost # Make this a reply to some previous post.
@@ -146,7 +148,7 @@ if !Rails.env.test?
 
   # Graphical post.  Need to use URL that starts with a slash, or it won't work
   # when viewed in some sub-pages.
-  post = LedgerPost.create!(content:
+  post = LedgerPost.create!(subject: "Embedded Picture Test", content:
     "![RatingStone Icon](/apple-touch-icon.png){:align=\"right\"}Here is a " \
     "post with Kramdown markup containing an image, set to float to the right.",
     creator_id: 0)

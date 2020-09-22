@@ -13,7 +13,7 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     amended_lbase = original_lbase.append_version
     amended_lbase.string1 = "The string changed a second time."
     amended_lbase.save!
-    second_lbase = LedgerPost.new(creator_id: 0,
+    second_lbase = LedgerPost.new(creator_id: 0, subject: "Second Test",
       content: "A second LedgerBase record, actually a post.")
     second_lbase.save!
     link_original_second = LinkBase.new(creator_id: 0, parent: original_lbase,
