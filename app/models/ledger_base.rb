@@ -14,8 +14,10 @@ class LedgerBase < ApplicationRecord
   belongs_to :amended, class_name: :LedgerBase, optional: true
 
   has_many :link_downs, class_name: :LinkBase, foreign_key: :parent_id
+  accepts_nested_attributes_for :link_downs
   has_many :descendants, through: :link_downs, source: :child
   has_many :link_ups, class_name: :LinkBase, foreign_key: :child_id
+  accepts_nested_attributes_for :link_ups
   has_many :ancestors, through: :link_ups, source: :parent
 
   has_many :aux_ledger_downs, class_name: :AuxLedger, foreign_key: :parent_id
@@ -41,10 +43,11 @@ class LedgerBase < ApplicationRecord
 
   ##
   # Return a basic user readable identification of an object (ID and class).
+  # Though ID can be nil for unsaved new records.
   def base_s
     base_string = "##{id} ".dup # dup to unfreeze, silly for #{} strings.
     if original_version.amended_id
-      base_string << "[#{original_version_id}-#{latest_version.id}] "
+      base_string << "[#{original_version_id}-#{latest_version_id}] "
     end
     base_string + self.class.name
   end

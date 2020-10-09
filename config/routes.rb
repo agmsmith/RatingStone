@@ -22,8 +22,14 @@ Rails.application.routes.draw do
     end
   end
 
-  # The usual actions for displaying/editing posts.
-  resources :ledger_posts, only: [:new, :create, :index, :show, :edit, :update]
+  # The usual actions for displaying/editing posts, plus reply.
+  resources :ledger_posts,
+   only: [:new, :create, :index, :show, :edit, :update] do
+    member do
+      get 'reply'
+    end
+  end
+  patch '/ledger_posts', to: 'ledger_posts#update' # For update without an ID.
 
   # The usual actions for displaying/editing groups.
   resources :ledger_groups, only: [:new, :create, :index, :show, :edit, :update]

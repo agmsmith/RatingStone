@@ -42,5 +42,18 @@
         <% end %>
       <% end %>
   <% end %>
+  <% # List the groups this post is in, if any.
+    my_groups = LinkGroupContent.where(content: ledger_post,
+      deleted: false, approved_parent: true, approved_child: true)
+    my_groups_count = my_groups.count
+    if my_groups_count > 0 %>
+      <BR>
+      <%= "In #{my_groups_count} #{'group'.pluralize(my_groups_count)}:" %>
+      <% my_groups.each do | a_group_link |
+        my_group = a_group_link.group %>
+        <%= link_to "##{my_group.id} (#{my_group.name})",
+          ledger_group_path(my_group.id) %>
+      <% end %>
+  <% end %>
 <% end %>
 

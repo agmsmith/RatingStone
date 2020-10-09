@@ -3,9 +3,56 @@
 
 <h1>Editing <%= @ledger_object.base_s %></h1>
 
-<div class="row">
-  <div class="col-xs-12">
-    <%= render 'post_content_form' %>
+<%= form_with(model: @ledger_object, scope: :ledger_post,
+  # Use URL without ID for new records, with ID for editing existing record.
+  url: @ledger_object.id.nil? ? ledger_posts_path : ledger_post_path,
+  method: :patch, local: true, class: "form-group") do |f| %>
+  <div class="row">
+    <div class="col-xs-12">
+      <%= render 'shared/error_messages', object: f.object %>
+      <%= f.label :subject %>
+      <%= f.text_field :subject, class: 'form-control' %>
+      <%= f.label :content %>
+      <%= f.text_area :content, class: 'form-control' %>
+      <div class="description-form-box">
+        <%= f.submit "Update Preview", name: "preview",
+          class: "btn btn-primary float-right" %>
+        <%= Kramdown::Document.new(@ledger_object.content)
+          .to_html.html_safe -%>
+      </div>
+
+      <%= f.submit yield(:button_text), class: "btn btn-primary button-full-width" %>
+    </div>
+
+    <div class="col-xs-12">
+      <H2>Up Links</H2>
+      <ul>
+        <%= f.fields_for :link_ups do |up_form| %>
+          <li>
+            <%= up_form.label :type %>
+            <%= up_form.text_field :type %>
+
+            <%= up_form.label :parent_id %>
+            <%= up_form.text_field :parent_id %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+
+    <div class="col-xs-12">
+      <H2>Down Links</H2>
+      <ul>
+        <%= f.fields_for :link_downs do |down_form| %>
+          <li>
+            <%= down_form.label :type %>
+            <%= down_form.text_field :type %>
+
+            <%= down_form.label :child_id %>
+            <%= down_form.text_field :child_id %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
   </div>
-</div>
+<% end %>
 

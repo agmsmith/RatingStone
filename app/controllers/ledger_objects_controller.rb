@@ -40,9 +40,8 @@ class LedgerObjectsController < ApplicationController
   end
 
   def create
-    # Subclasses create their object then call super, with @ledger_object set.
-    @ledger_object.update(sanitised_params
-      .merge(creator_id: current_ledger_user.original_version_id))
+    # Subclasses create their specific class instance in @ledger_object first.
+    @ledger_object.update(sanitised_params)
     if @ledger_object.save
       flash[:success] = "#{@ledger_object.base_s} created!"
       render('show')
@@ -57,15 +56,23 @@ class LedgerObjectsController < ApplicationController
   end
 
   def edit
-    # Object to be edited already loaded into @ledger_object.
+    # Pre-existing object to be edited should be in @ledger_object.
+    if @ledger_object.nil?
+      flash[:danger] = "Can't find object ##{params[:id]} to edit."
+      redirect_back(fallback_location: root_url)
+    end
   end
 
   def update
-    # Object to be edited already loaded into @ledger_object.
+    # Subclasses create their specific class instance @ledger_object if needed
+    # (initial @ledger_object is nil if the user is editing a new record rather
+    # than an existing one) then call super.  Related link objects (like the
+    # link to the original post for a reply) can be created on the fly from
+    # values in params, see description of complex nested forms in:
+    # https://guides.rubyonrails.org/form_helpers.html#building-complex-forms
     if params[:preview]
-      # Set the new values but don't save it, keep same ID.  So you can
-      # preview markdown text.  Hope it doesn't accidentally get saved due
-      # to caching.  Well, we always save to a new appended version.
+      # Set the new values but don't save it, and keep same ID.  So you can
+      # preview markdown text and continue editing it.
       @ledger_object.assign_attributes(sanitised_params)
       render('edit')
     else # Change the object by making a new version of it, new ID too.
@@ -86,8 +93,8 @@ class LedgerObjectsController < ApplicationController
   private
 
   def correct_user
-    @ledger_object = LedgerBase.find(params[:id])
-    unless @ledger_object&.creator_owner?(current_ledger_user)
+    @ledger_object = LedgerBase.find_by(id: params[:id]) # Can be nil.
+    if @ledger_object && !@ledger_object.creator_owner?(current_ledger_user)
       flash[:error] = "You're not the owner of that ledger object, " \
         "so you can't modify or delete it."
       redirect_to(root_url)
@@ -95,8 +102,11 @@ class LedgerObjectsController < ApplicationController
   end
 
   ##
-  # Subclasses will replace this to get their particular field parameters.
-  def sanitised_params # Sanitise the inputs from the submitted form data.
+  # Subclasses will replace this to get their particular form field parameters.
+  # Indeed, when previewing new objects (ones not yet in the database), the
+  # parameters can include enough data to recreate related sub-objects (like
+  # reply links to an original post, or group links to place a post in a group).
+  def sanitised_params
     params.require(:ledger_object).permit(:string1, :string2)
   end
 end
