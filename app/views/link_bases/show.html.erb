@@ -24,9 +24,9 @@
           @link_object.creator.user %><BR></span>
       <span class="object-content">
         Parent: <%= link_to @link_object.parent.to_s,
-          ledger_object_path(@link_object.parent_id) %><BR>
+          ledger_base_path(@link_object.parent_id) %><BR>
         Child: <%= link_to @link_object.child.to_s,
-          ledger_object_path(@link_object.child_id) %><BR>
+          ledger_base_path(@link_object.child_id) %><BR>
         Number1: <%= @link_object.number1 %><BR>
         String1: <%= @link_object.string1 %><BR>
         Deleted: <%= @link_object.deleted %><BR>
@@ -51,14 +51,14 @@
     <div class="col-xs-3 col-sm-2 col-lg-1">
     <% if @link_object.creator_owner?(current_ledger_user) %>
       <% if @link_object.deleted %>
-        <%= form_with(url: undelete_link_object_path(@link_object),
+        <%= form_with(url: undelete_link_base_path(@link_object),
           local: true, action: :undelete, method: :post) do |f| %>
           <%= f.submit "Undelete #{@link_object.base_s}", class: "btn btn-info" %>
           <%= f.text_area :reason, placeholder: "Reason why...",
             class: "delete-reason" %>
         <% end %>
       <% else %>
-        <%= form_with(url: link_object_path(@link_object),
+        <%= form_with(url: link_base_path(@link_object),
           local: true, action: :delete, method: :delete) do |f| %>
           <%= f.submit "Delete #{@link_object.base_s}", class: "btn btn-danger" %>
           <%= f.text_area :reason, placeholder: "Reason why...",
@@ -101,8 +101,8 @@
           <ul class="list-ledger-objects">
           <% auxiliary_links.each do |x| %>
             <li>#<%= x.id %> <%= link_to x.parent.to_s,
-              ledger_object_path(x.parent) %>, <%= link_to x.child.to_s,
-              link_object_path(x.child) %></li>
+              ledger_base_path(x.parent) %>, <%= link_to x.child.to_s,
+              link_base_path(x.child) %></li>
           <% end %>
           </ul>
         </span>

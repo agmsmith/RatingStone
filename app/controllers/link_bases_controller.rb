@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class LinkObjectsController < ApplicationController
+class LinkBasesController < ApplicationController
   before_action :logged_in_user, only: [:new, :create, :index, :show]
   before_action :correct_user, only: [:destroy, :undelete, :edit, :update]
 

@@ -2,14 +2,14 @@
 
 require 'test_helper'
 
-class LedgerObjectsControllerTest < ActionDispatch::IntegrationTest
+class LedgerBasesControllerTest < ActionDispatch::IntegrationTest
   def setup
     @ledger_post = ledger_posts(:lpost_one)
   end
 
   test "should redirect destroy when not logged in" do
     assert_no_difference 'LedgerBase.count' do
-      delete ledger_object_path(@ledger_post)
+      delete ledger_base_path(@ledger_post)
     end
     assert(!@ledger_post.deleted)
     assert_redirected_to login_url
@@ -18,7 +18,7 @@ class LedgerObjectsControllerTest < ActionDispatch::IntegrationTest
   test "should redirect destroy for wrong LedgerPost owner" do
     log_in_as(users(:michael))
     assert_no_difference 'LedgerBase.count' do
-      delete ledger_object_path(@ledger_post)
+      delete ledger_base_path(@ledger_post)
     end
     assert(!@ledger_post.deleted)
     assert_redirected_to root_url
@@ -30,7 +30,7 @@ class LedgerObjectsControllerTest < ActionDispatch::IntegrationTest
       content: "A test post from Michael.", subject: "Michael's Post")
     lpost.save!
     assert_difference 'LedgerBase.count', 1 do
-      delete ledger_object_path(lpost)
+      delete ledger_base_path(lpost)
     end
     lpost.reload
     assert(lpost.deleted)
@@ -39,15 +39,14 @@ class LedgerObjectsControllerTest < ActionDispatch::IntegrationTest
 
   test "should fail to destroy unknown object" do
     log_in_as(users(:michael))
-    assert_raise(ActiveRecord::RecordNotFound) do
-      delete ledger_object_path(12345678)
-    end
+    delete ledger_base_path(12345678)
+    assert flash[:danger]
   end
 
   test "should redirect undelete for wrong LedgerPost owner" do
     log_in_as(users(:michael))
     assert_no_difference 'LedgerBase.count' do
-      post undelete_ledger_object_path(@ledger_post)
+      post undelete_ledger_base_path(@ledger_post)
     end
     assert_redirected_to root_url
   end

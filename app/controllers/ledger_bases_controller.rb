@@ -1,11 +1,16 @@
 # frozen_string_literal: true
 
-class LedgerObjectsController < ApplicationController
+class LedgerBasesController < ApplicationController
   # Note that some before actions are only used by subclasses.
   before_action :logged_in_user
   before_action :correct_user, only: [:destroy, :undelete, :edit, :update]
 
   def destroy # Also usually used by subclass controllers.
+    unless @ledger_object
+      flash[:danger] = "Can't find object ##{params[:id]} to delete."
+      return redirect_back(fallback_location: root_url)
+    end
+
     LedgerDelete.delete_records([@ledger_object], current_ledger_user,
       "Web site manual delete by user logged in from address " \
       "#{request.env['REMOTE_ADDR']}.", params[:reason]) # Reason can be nil.
@@ -19,6 +24,11 @@ class LedgerObjectsController < ApplicationController
   end
 
   def undelete # Also usually used by subclass controllers.
+    unless @ledger_object
+      flash[:danger] = "Can't find object ##{params[:id]} to undelete."
+      return redirect_back(fallback_location: root_url)
+    end
+
     LedgerUndelete.undelete_records([@ledger_object], current_ledger_user,
       "Web site manual undelete by user logged in from address " \
       "#{request.env['REMOTE_ADDR']}.", params[:reason]) # Reason can be nil.
@@ -41,7 +51,7 @@ class LedgerObjectsController < ApplicationController
 
   def create
     # Subclasses create their specific class instance in @ledger_object first.
-    @ledger_object.update(sanitised_params)
+    @ledger_object.assign_attributes(sanitised_params)
     if @ledger_object.save
       flash[:success] = "#{@ledger_object.base_s} created!"
       render('show')
@@ -57,7 +67,7 @@ class LedgerObjectsController < ApplicationController
 
   def edit
     # Pre-existing object to be edited should be in @ledger_object.
-    if @ledger_object.nil?
+    unless @ledger_object
       flash[:danger] = "Can't find object ##{params[:id]} to edit."
       redirect_back(fallback_location: root_url)
     end
@@ -68,8 +78,7 @@ class LedgerObjectsController < ApplicationController
     # (initial @ledger_object is nil if the user is editing a new record rather
     # than an existing one) then call super.  Related link objects (like the
     # link to the original post for a reply) can be created on the fly from
-    # values in params, see description of complex nested forms in:
-    # https://guides.rubyonrails.org/form_helpers.html#building-complex-forms
+    # values in params, see side_load_params method.
     if params[:preview]
       # Set the new values but don't save it, and keep same ID.  So you can
       # preview markdown text and continue editing it.
@@ -77,7 +86,8 @@ class LedgerObjectsController < ApplicationController
       render('edit')
     else # Change the object by making a new version of it, new ID too.
       new_object = @ledger_object.append_version
-      if new_object.update(sanitised_params)
+      new_object.assign_attributes(sanitised_params)
+      if new_object.save
         flash[:success] = "#{@ledger_object.base_s} updated, " \
           "new version is #{new_object.base_s}."
         @ledger_object = new_object

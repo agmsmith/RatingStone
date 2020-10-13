@@ -8,23 +8,23 @@
   <div class="col-xs-9 col-sm-10 col-lg-11 <%=
     link_object.deleted ? "deleted" : "content" %>">
     <%= link_to "#{link_object.base_s}",
-      link_object_path(link_object) %>
+      link_base_path(link_object) %>
       Parent: <%= link_to link_object.parent.base_s,
-        ledger_object_path(link_object.parent_id) %>
+        ledger_base_path(link_object.parent_id) %>
       Child: <%= link_to link_object.child.base_s,
-        ledger_object_path(link_object.child_id) %><BR>
+        ledger_base_path(link_object.child_id) %><BR>
     <small><%= link_object.created_at.getlocal %></small>
   </div>
   <div class="col-xs-3 col-sm-2 col-lg-1">
     <% if link_object.deleted %>
-      <%= form_with(url: undelete_link_object_path(link_object),
+      <%= form_with(url: undelete_link_base_path(link_object),
         local: true, action: :undelete, method: :post) do |f| %>
         <%= f.submit "Undelete #{link_object.base_s}", class: "btn btn-info" %>
         <%= f.text_area :reason, placeholder: "Reason why...",
           class: "delete-reason" %>
       <% end %>
     <% else %>
-      <%= form_with(url: link_object_path(link_object),
+      <%= form_with(url: link_base_path(link_object),
         local: true, action: :delete, method: :delete) do |f| %>
         <%= f.submit "Delete #{link_object.base_s}", class: "btn btn-danger" %>
         <%= f.text_area :reason, placeholder: "Reason why...",

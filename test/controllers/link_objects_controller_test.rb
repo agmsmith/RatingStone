@@ -2,7 +2,7 @@
 
 require 'test_helper'
 
-class LinkObjectsControllerTest < ActionDispatch::IntegrationTest
+class LinkBasesControllerTest < ActionDispatch::IntegrationTest
   test "should get new" do
   end
 

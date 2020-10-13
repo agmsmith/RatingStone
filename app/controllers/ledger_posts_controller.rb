@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class LedgerPostsController < LedgerObjectsController
+class LedgerPostsController < LedgerBasesController
   def create
     @ledger_object = LedgerPost.new(
       creator_id: current_ledger_user.original_version_id)
@@ -57,11 +57,12 @@ class LedgerPostsController < LedgerObjectsController
   ##
   # For parameters that aren't exactly part of this @ledger_object, side load
   # them into instance variables specific to a LedgerPost.  They get used later
-  # to create link objects when the main object is saved.
+  # to create link objects when the main object is saved.  No, for several
+  # reasons can't use nested attributes.
   def side_load_params
-    if params && params[:ledger_post] && params[:ledger_post][:groups]
-      params[:ledger_post][:groups].each do |key, value|
-        value_int = value.to_i
+    if params && params[:groups]
+      params[:groups].each do |key, value|
+        value_int = value.to_i # Non-numbers show up as zero and get ignored.
         @ledger_object.new_groups << value_int if value_int > 0
       end
     end

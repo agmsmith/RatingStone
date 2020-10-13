@@ -5,7 +5,7 @@
 <%= will_paginate %>
 <ul class="list-ledger-objects">
 <% @link_objects.each do |an_object| %>
-<%= render 'link_objects/link_object', { link_object: an_object } %>
+<%= render 'link_bases/link_base', { link_object: an_object } %>
 <% end %>
 </ul>
 <%= will_paginate %>

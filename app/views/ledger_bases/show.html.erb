@@ -80,7 +80,7 @@
           Version history:
           <ul class="list-ledger-objects">
           <% version_list.each do |x| %>
-            <li><%= link_to x.to_s, ledger_object_path(x) %></li>
+            <li><%= link_to x.to_s, ledger_base_path(x) %></li>
           <% end %>
           <% if @ledger_object.type == "LedgerPost" %>
             <li>*** <%= link_to "All versions of this Post",
@@ -104,7 +104,7 @@
           Related links:
           <ul class="list-ledger-objects">
           <% related_links.each do |x| %>
-            <li><%= link_to x.to_s, link_object_path(x) %></li>
+            <li><%= link_to x.to_s, link_base_path(x) %></li>
           <% end %>
           </ul>
         </span>
@@ -125,8 +125,8 @@
           <ul class="list-ledger-objects">
           <% auxiliary_ledgers.each do |x| %>
             <li>#<%= x.id %> <%= link_to x.parent.to_s,
-              ledger_object_path(x.parent) %>, <%= link_to x.child.to_s,
-              ledger_object_path(x.child) %></li>
+              ledger_base_path(x.parent) %>, <%= link_to x.child.to_s,
+              ledger_base_path(x.child) %></li>
           <% end %>
           </ul>
         </span>
@@ -146,8 +146,8 @@
           <ul class="list-ledger-objects">
           <% auxiliary_links.each do |x| %>
             <li>#<%= x.id %> <%= link_to x.parent.to_s,
-              ledger_object_path(x.parent) %>, <%= link_to x.child.to_s,
-              link_object_path(x.child) %></li>
+              ledger_base_path(x.parent) %>, <%= link_to x.child.to_s,
+              link_base_path(x.child) %></li>
           <% end %>
           </ul>
         </span>

@@ -27,8 +27,9 @@
     <div class="col-xs-12">
       <H2>Add to Groups</H2>
       <ul>
-        <% @ledger_object.new_groups.each_with_index do |group_id, group_index| %>
-          <%= f.fields :groups do |group_fields| %>
+        <%= fields_for :new_groups do |group_fields| %>
+          <% @ledger_object.new_groups.each_with_index do |group_id,
+            group_index| %>
             <li>
               <% a_group = LedgerSubgroup.find_by(id: group_id)
                 if a_group
@@ -36,8 +37,11 @@
                 else
                   group_name = :Unknown
                 end %>
-              <%= group_fields.text_field group_index, value: group_id %>
-              <%= group_name %>
+              <%= # Using an empty string for the object name so we get
+                # "new_groups[]" as the name, which becomes an array of values
+                # (not a hash) when converted back to params.
+                group_fields.text_field "", value: group_id %>
+              <strong><%= group_name %></strong>
             </li>
           <% end %>
         <% end %>

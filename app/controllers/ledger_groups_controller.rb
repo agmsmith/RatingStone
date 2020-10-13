@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class LedgerGroupsController < LedgerObjectsController
+class LedgerGroupsController < LedgerBasesController
   def index
     @ledger_objects = LedgerSubgroup.all.paginate(page: params[:page])
   end

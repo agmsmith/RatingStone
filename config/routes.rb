@@ -15,8 +15,8 @@ Rails.application.routes.draw do
   resources :account_activations, only: [:edit]
   resources :password_resets, only: [:new, :create, :edit, :update]
 
-  # Generic ledger_objects actions, subclasses use it for destroy and undelete.
-  resources :ledger_objects, only: [:index, :show, :destroy] do
+  # Generic ledger_base actions, subclasses use it for destroy and undelete.
+  resources :ledger_bases, only: [:index, :show, :destroy] do
     member do
       post 'undelete'
     end
@@ -35,7 +35,7 @@ Rails.application.routes.draw do
   resources :ledger_groups, only: [:new, :create, :index, :show, :edit, :update]
 
   # Low level interface for debugging generic link objects.
-  resources :link_objects, only: [:index, :show, :destroy] do
+  resources :link_bases, only: [:index, :show, :destroy] do
     member do
       post 'undelete'
       post 'approve'

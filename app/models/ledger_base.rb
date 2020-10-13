@@ -150,8 +150,8 @@ class LedgerBase < ApplicationRecord
 
   ##
   # See if the given user is allowed to delete and otherwise modify this
-  # record.  Has to be the creator or the owner of the object.  Returns true
-  # if they have permission.
+  # record.  Has to be the current (not necessarily original) creator or the
+  # owner of the object.  Returns true if they have permission.
   def creator_owner?(luser)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{luser.class.name} " \

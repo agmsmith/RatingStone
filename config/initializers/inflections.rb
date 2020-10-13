@@ -10,6 +10,11 @@
 #   inflect.uncountable %w( fish sheep )
 # end
 
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  # Avoid problem with ledger_bases being converted to ledger_basis
+  inflect.irregular 'base', 'bases'
+end
+
 # These inflection rules are supported but not enabled by default:
 # ActiveSupport::Inflector.inflections(:en) do |inflect|
 #   inflect.acronym 'RESTful'
