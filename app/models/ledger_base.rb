@@ -14,10 +14,8 @@ class LedgerBase < ApplicationRecord
   belongs_to :amended, class_name: :LedgerBase, optional: true
 
   has_many :link_downs, class_name: :LinkBase, foreign_key: :parent_id
-  accepts_nested_attributes_for :link_downs
   has_many :descendants, through: :link_downs, source: :child
   has_many :link_ups, class_name: :LinkBase, foreign_key: :child_id
-  accepts_nested_attributes_for :link_ups
   has_many :ancestors, through: :link_ups, source: :parent
 
   has_many :aux_ledger_downs, class_name: :AuxLedger, foreign_key: :parent_id
@@ -145,7 +143,7 @@ class LedgerBase < ApplicationRecord
 
   ##
   # Returns the original ID of the current creator of this object.  Or at least
-  # it should, if the database is correctly used.
+  # it should, if the database is correctly used.  Nil for unsaved new records.
   def current_creator_id
     latest_version.creator_id
   end

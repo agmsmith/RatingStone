@@ -25,34 +25,25 @@
     </div>
 
     <div class="col-xs-12">
-      <H2>Up Links</H2>
+      <H2>Add to Groups</H2>
       <ul>
-        <%= f.fields_for :link_ups do |up_form| %>
-          <li>
-            <%= up_form.label :type %>
-            <%= up_form.text_field :type %>
-
-            <%= up_form.label :parent_id %>
-            <%= up_form.text_field :parent_id %>
-          </li>
+        <% @ledger_object.new_groups.each_with_index do |group_id, group_index| %>
+          <%= f.fields :groups do |group_fields| %>
+            <li>
+              <% a_group = LedgerSubgroup.find_by(id: group_id)
+                if a_group
+                  group_name = a_group.name
+                else
+                  group_name = :Unknown
+                end %>
+              <%= group_fields.text_field group_index, value: group_id %>
+              <%= group_name %>
+            </li>
+          <% end %>
         <% end %>
       </ul>
     </div>
 
-    <div class="col-xs-12">
-      <H2>Down Links</H2>
-      <ul>
-        <%= f.fields_for :link_downs do |down_form| %>
-          <li>
-            <%= down_form.label :type %>
-            <%= down_form.text_field :type %>
-
-            <%= down_form.label :child_id %>
-            <%= down_form.text_field :child_id %>
-          </li>
-        <% end %>
-      </ul>
-    </div>
   </div>
 <% end %>
 
