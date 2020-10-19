@@ -83,16 +83,18 @@ class LedgerBase < ApplicationRecord
   # point for the cached calculated values.  May be slightly faster than just
   # using "original".  Also safer, for that brief moment when original_id is
   # nil since we can't easily have a transaction around record creation (also
-  # get a nil original_id in Fixture generated data used for testing).
+  # get a nil original_id in Fixture generated data used for testing and in
+  # new unsaved records (id is nil too in that case)).
   def original_version
-    return self if (original_id == id) || original_id.nil?
+    return self if id.nil? || original_id.nil? || (original_id == id)
     original
   end
 
   ##
   # Finds the id number of the original version of this record.
   def original_version_id
-    return id if (original_id == id) || original_id.nil?
+    return original_id if id.nil? # Partial save has original_id but id is nil.
+    return id if original_id.nil? || (original_id == id)
     original_id
   end
 

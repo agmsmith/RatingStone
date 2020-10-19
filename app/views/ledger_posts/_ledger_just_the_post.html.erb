@@ -16,43 +16,68 @@
     time_ago_in_words(ledger_post.created_at)
     %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.</span>
   <% # Count up replies and reply to entries.  Show links if any exist.
-    my_replies = LinkReply.where(parent: ledger_post,
-      deleted: false, approved_parent: true, approved_child: true)
+    my_replies = LinkReply.where(
+      original_post_id: ledger_post.original_version_id,
+      deleted: false).order(created_at: :asc)
     my_replies_count = my_replies.count
-    replied_to = LinkReply.where(child: ledger_post,
-      deleted: false, approved_parent: true, approved_child: true)
+    replied_to = LinkReply.where(
+      reply_post_id: ledger_post.original_version_id,
+      deleted: false).order(created_at: :asc)
     replied_to_count = replied_to.count
     if my_replies_count > 0 || replied_to_count > 0 %>
       <BR>
       <% if replied_to_count > 0 %>
-        replied to <%=
+        Replied to <%=
           "#{replied_to_count} #{'post'.pluralize(replied_to_count)}" %>:
-        <% replied_to.each do | a_reply_link | %>
-          <%= link_to "##{a_reply_link.parent_id}",
-            ledger_post_path(a_reply_link.parent_id) %><% end
+        <% replied_to.each do |a_reply_link|
+          reply_post = a_reply_link.original_post
+          reply_post = reply_post.latest_version if reply_post %>
+          <%= if reply_post
+            link_to "##{a_reply_link.original_post_id}",
+              ledger_post_path(reply_post), title: "#{reply_post}"
+          else
+            "##{a_reply_link.original_post_id}"
+          end %><%
+          if !a_reply_link.approved_child || !a_reply_link.approved_parent
+            %>-<%= link_to "unapproved", link_base_path(a_reply_link),
+            class: "unapproved-link" %><% end %>
+        <% end
         # Surprising that you can do this sort of convoluted thing in .erb
         # files, just for appending a comma without any spaces before it.
-        if my_replies_count > 0 %>,&nbsp;<% end %>
+        if my_replies_count > 0 %>,<% end %>
       <% end %>
       <% if my_replies_count > 0 %>
         <%= "#{my_replies_count} #{'reply'.pluralize(my_replies_count)}:" %>
-        <% my_replies.each do | a_reply_link | %>
-          <%= link_to "##{a_reply_link.child_id}",
-            ledger_post_path(a_reply_link.child_id) %>
+        <% my_replies.each do |a_reply_link|
+          reply_post = a_reply_link.reply_post
+          reply_post = reply_post.latest_version if reply_post %>
+          <%= if reply_post
+            link_to "##{a_reply_link.reply_post_id}",
+              ledger_post_path(reply_post), title: "#{reply_post}"
+          else
+            "##{a_reply_link.reply_post_id}"
+          end %><%
+          if !a_reply_link.approved_child || !a_reply_link.approved_parent
+            %>-<%= link_to "unapproved", link_base_path(a_reply_link),
+            class: "unapproved-link" %><% end %>
         <% end %>
       <% end %>
   <% end %>
   <% # List the groups this post is in, if any.
-    my_groups = LinkGroupContent.where(content: ledger_post,
-      deleted: false, approved_parent: true, approved_child: true)
+    my_groups = LinkGroupContent.where(
+      content_id: ledger_post.original_version_id,
+      deleted: false).order(created_at: :asc)
     my_groups_count = my_groups.count
     if my_groups_count > 0 %>
       <BR>
       <%= "In #{my_groups_count} #{'group'.pluralize(my_groups_count)}:" %>
-      <% my_groups.each do | a_group_link |
-        my_group = a_group_link.group %>
-        <%= link_to "##{my_group.id} (#{my_group.name})",
-          ledger_group_path(my_group.id) %>
+      <% my_groups.each do |a_group_link|
+        my_group = a_group_link.group.latest_version %>
+        <%= link_to "##{my_group.id}", ledger_group_path(my_group.id)
+          %>&nbsp;(<%= my_group.name %><%
+        if !a_group_link.approved_child || !a_group_link.approved_parent
+            %>-<%= link_to "unapproved", link_base_path(a_group_link),
+            class: "unapproved-link" %><% end %>)
       <% end %>
   <% end %>
 <% end %>

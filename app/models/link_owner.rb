@@ -2,7 +2,9 @@
 
 class LinkOwner < LinkBase
   alias_attribute :owner, :parent
+  alias_attribute :owner_id, :parent_id
   alias_attribute :thing, :child
+  alias_attribute :thing_id, :child_id
 
   validate :validate_parent_type
 

@@ -4,7 +4,9 @@ class LinkRole < LinkBase
   alias_attribute :priority, :number1
   alias_attribute :description, :string1
   alias_attribute :group, :parent
+  alias_attribute :group_id, :parent_id
   alias_attribute :user, :child
+  alias_attribute :user_id, :child_id
 
   validate :validate_parent_and_child_types
 

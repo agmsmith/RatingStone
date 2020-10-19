@@ -24,24 +24,60 @@
       <%= f.submit yield(:button_text), class: "btn btn-primary button-full-width" %>
     </div>
 
-    <div class="col-xs-12">
-      <H2>Add to Groups</H2>
+    <div class="col-xs-12 col-md-6">
+      <H2>Additional Groups</H2>
+      <p>Add your post to these groups.  Note that they may need to approve it
+        too (at some later time), depending on the group's rules and whether
+        you are a member of the group.</p>
       <ul>
         <%= fields_for :new_groups do |group_fields| %>
-          <% @ledger_object.new_groups.each_with_index do |group_id,
-            group_index| %>
+          <% LedgerFullGroup.name # Force load of subclass so SQL includes it.
+            @ledger_object.new_groups.each_with_index do |group_item,
+              group_index| %>
             <li>
-              <% a_group = LedgerSubgroup.find_by(id: group_id)
+              <% group_id = group_item.to_i
+                a_group = LedgerSubgroup.find_by(id: group_id)
                 if a_group
-                  group_name = a_group.name
+                  group_name = a_group.to_s
+                elsif group_id > 0
+                  group_name = "Unknown (#{group_id})"
                 else
-                  group_name = :Unknown
+                  group_name = ""
                 end %>
               <%= # Using an empty string for the object name so we get
                 # "new_groups[]" as the name, which becomes an array of values
                 # (not a hash) when converted back to params.
-                group_fields.text_field "", value: group_id %>
+                group_fields.text_field "", value: group_item %>
               <strong><%= group_name %></strong>
+            </li>
+          <% end %>
+        <% end %>
+      </ul>
+    </div>
+
+    <div class="col-xs-12 col-md-6">
+      <H2>Additional Reply-Tos</H2>
+      <p>In case you think your post is a good reply to some other existing
+        posts, you can add them here!</p>
+      <ul>
+        <%= fields_for :new_replytos do |replyto_fields| %>
+          <% @ledger_object.new_replytos.each_with_index do |replyto_item,
+              replyto_index| %>
+            <li>
+              <% replyto_id = replyto_item.to_i
+                a_post = LedgerPost.find_by(id: replyto_id)
+                if a_post
+                  replyto_name = a_post.to_s
+                elsif replyto_id > 0
+                  replyto_name = "Unknown (#{replyto_id})"
+                else
+                  replyto_name = ""
+                end %>
+              <%= # Using an empty string for the object name so we get
+                # "new_replytos[]" as the name, which becomes an array of values
+                # (not a hash) when converted back to params.
+                replyto_fields.text_field "", value: replyto_item %>
+              <strong><%= replyto_name %></strong>
             </li>
           <% end %>
         <% end %>

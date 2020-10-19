@@ -2,7 +2,9 @@
 
 class LinkGroupContent < LinkBase
   alias_attribute :group, :parent
+  alias_attribute :group_id, :parent_id
   alias_attribute :content, :child
+  alias_attribute :content_id, :child_id
   alias_attribute :disapproval_messages, :string1
 
   validate :validate_parent_and_child_types

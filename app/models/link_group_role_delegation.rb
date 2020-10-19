@@ -2,7 +2,9 @@
 
 class LinkGroupRoleDelegation < LinkBase
   alias_attribute :delegate_to, :parent
+  alias_attribute :delegate_to_id, :parent_id
   alias_attribute :subgroup, :child
+  alias_attribute :subgroup_id, :child_id
   validate :validate_parent_and_child_types
   before_create :set_default_description
 

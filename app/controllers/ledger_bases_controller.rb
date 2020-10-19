@@ -42,35 +42,35 @@ class LedgerBasesController < ApplicationController
   end
 
   def index
-    @ledger_objects = LedgerBase.all.paginate(page: params[:page])
+    @ledger_objects = LedgerBase.where(deleted: false,
+      is_latest_version: true).order(created_at: :desc)
+      .paginate(page: params[:page])
   end
 
   def show
-    @ledger_object = LedgerBase.find_by(id: params[:id]) # Result can be nil.
+    # Note @ledger_object can be nil for missing records or no ID specified.
+    @ledger_object = LedgerBase.find_by(id: params[:id]) if params[:id]
   end
 
+  # Don't really need this method, can use update without an ID to create a
+  # new object and display the editing form instead.  Stock HTML RESTful meets
+  # DRY!
   def create
-    # Subclasses create their specific class instance in @ledger_object first.
-    @ledger_object.assign_attributes(sanitised_params)
-    if @ledger_object.save
-      flash[:success] = "#{@ledger_object.base_s} created!"
-      render('show')
-    else # Since we may be coming from a non-data-entry page, expand errors.
-      flash[:danger] = "Failed to create #{@ledger_object.type}: " +
-        @ledger_object.errors.full_messages.join(', ') + '.'
-      redirect_back(fallback_location: root_url)
-    end
+    @ledger_object = nil
+    params[:preview] = true
+    update
   end
 
   def new
   end
 
   def edit
-    # Pre-existing object to be edited should be in @ledger_object.
+    # Pre-existing object to be edited should already be in @ledger_object.
     unless @ledger_object
       flash[:danger] = "Can't find object ##{params[:id]} to edit."
       redirect_back(fallback_location: root_url)
     end
+    side_load_params(@ledger_object)
   end
 
   def update
@@ -83,16 +83,28 @@ class LedgerBasesController < ApplicationController
       # Set the new values but don't save it, and keep same ID.  So you can
       # preview markdown text and continue editing it.
       @ledger_object.assign_attributes(sanitised_params)
+      side_load_params(@ledger_object)
       render('edit')
     else # Change the object by making a new version of it, new ID too.
-      new_object = @ledger_object.append_version
+      new_object = if @ledger_object.id # If this is an existing version.
+        @ledger_object.append_version
+      else # This is a new record, no previous version exists.
+        new_object = @ledger_object
+      end
       new_object.assign_attributes(sanitised_params)
-      if new_object.save
+      side_load_params(new_object)
+      success = true
+      new_object.class.transaction do
+        success = new_object.save if success
+        success = side_save(new_object) if success
+        raise ActiveRecord::Rollback unless success
+      end
+      if success
         flash[:success] = "#{@ledger_object.base_s} updated, " \
           "new version is #{new_object.base_s}."
         @ledger_object = new_object
         render('show')
-      else # Failed to save, show error messages for field editing problems.
+      else # Failed to save, preserve error messages for field editing display.
         new_object.id = @ledger_object.id
         @ledger_object = new_object
         render('edit')
@@ -102,8 +114,12 @@ class LedgerBasesController < ApplicationController
 
   private
 
+  ##
+  # See if the current user is allowed to modify the optional ID'd object.
   def correct_user
-    @ledger_object = LedgerBase.find_by(id: params[:id]) # Can be nil.
+    # Note that no ID specified or bad ID gives us a nil object.  We use the
+    # nil object case for creating new objects in update().
+    @ledger_object = LedgerBase.find_by(id: params[:id]) if params[:id]
     if @ledger_object && !@ledger_object.creator_owner?(current_ledger_user)
       flash[:error] = "You're not the owner of that ledger object, " \
         "so you can't modify or delete it."
@@ -112,11 +128,37 @@ class LedgerBasesController < ApplicationController
   end
 
   ##
-  # Subclasses will replace this to get their particular form field parameters.
+  # Subclasses will override this to get their particular form field parameters.
   # Indeed, when previewing new objects (ones not yet in the database), the
   # parameters can include enough data to recreate related sub-objects (like
-  # reply links to an original post, or group links to place a post in a group).
+  # group links to place a post in a group).  However, use side_load_params for
+  # those extra parameters; only ones related directly to @ledger_object should
+  # be filtered from params here (the result of this method is used in a
+  # assign_attributes() call on @ledger_object).
   def sanitised_params
-    params.require(:ledger_object).permit(:string1, :string2)
+  end
+
+  ##
+  # For parameters that aren't exactly part of this new_object, side load
+  # them into instance variables specific to the object class (such as which
+  # groups a post is in).  They get used later to create link objects when the
+  # main object is saved.  No, for several reasons we can't use nested
+  # attributes to make the related records.  Subclasses override this, call
+  # super and then do their work.
+  def side_load_params(_new_object)
+  end
+
+  ##
+  # For information that isn't exactly part of this @ledger_object, side save
+  # it into related records specific to the object class (such as a
+  # LinkGroupContent that specifies which group a post is in).  This will be
+  # called after the main @ledger_object (actually a new version copy) has been
+  # saved successfully (passed in as new_object), and inside a transaction, so
+  # throwing an exception will undo the new object save too.  Subclasses should
+  # override this and call super before doing their work.  Returns true if the
+  # save was successful.  If the save failed, returns false and sets errors on
+  # new_object using new_object.errors.add(fieldname, message).
+  def side_save(_new_object)
+    true
   end
 end

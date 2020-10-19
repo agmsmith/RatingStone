@@ -104,7 +104,9 @@
           Related links:
           <ul class="list-ledger-objects">
           <% related_links.each do |x| %>
-            <li><%= link_to x.to_s, link_base_path(x) %></li>
+            <li><%= link_to x.to_s, link_base_path(x),
+              class: ((!x.approved_parent || !x.approved_child) ?
+              "unapproved-link" : nil) %></li>
           <% end %>
           </ul>
         </span>

@@ -14,7 +14,8 @@ class LinkBasesController < ApplicationController
   end
 
   def index
-    @link_objects = LinkBase.all.paginate(page: params[:page])
+    @link_objects = LinkBase.where(deleted: false).order(created_at: :desc)
+      .paginate(page: params[:page])
   end
 
   def show

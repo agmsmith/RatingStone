@@ -50,6 +50,15 @@ section {
   margin-bottom: 10px;
 }
 
+/* When a post is a reply to some other post and that other post hasn't
+   authorised it, this is used for highlighting the other post.  Same if the
+   post has been put in a group but the group hasn't authorised it.  Usually
+   used as the class for a hypertext link to the offending link record, but
+   also gets applied to other things. */
+.unapproved-link {
+  color: red;
+}
+
 /* forms */
 
 /* Users can resize the text boxes to make them larger if needed. */

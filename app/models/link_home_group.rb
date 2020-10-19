@@ -1,6 +1,11 @@
 # frozen_string_literal: true
 
 class LinkHomeGroup < LinkBase
+  alias_attribute :user, :parent
+  alias_attribute :user_id, :parent_id
+  alias_attribute :group, :child
+  alias_attribute :group_id, :child_id
+
   validate :validate_parent_and_child_types
   before_create :set_default_description
 
