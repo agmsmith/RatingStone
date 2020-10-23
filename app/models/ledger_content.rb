@@ -5,7 +5,9 @@
 # They can all be displayed to the user and attached to groups.
 class LedgerContent < LedgerBase
   alias_attribute :subject, :string1
-  validates :subject, presence: true
+
+  # Have to repeat these validations for subclasses.  Ugh!
+  validates :subject, presence: true, length: { maximum: 255 }
 
   ##
   # Return some user readable context for the object.  Things like the name of

@@ -20,7 +20,8 @@
         <%= Kramdown::Document.new(@ledger_object.content)
           .to_html.html_safe -%>
       </div>
-
+      <%= f.label :summary_of_changes %>
+      <%= f.text_field :summary_of_changes, class: 'form-control' %>
       <%= f.submit yield(:button_text), class: "btn btn-primary button-full-width" %>
     </div>
 

@@ -55,7 +55,7 @@ class LedgerPostsController < LedgerBasesController
   private
 
   def sanitised_params # Sanitise the main inputs from the submitted form data.
-    params.require(:ledger_post).permit(:content, :subject)
+    params.require(:ledger_post).permit(:content, :subject, :summary_of_changes)
   end
 
   ##
@@ -120,8 +120,8 @@ class LedgerPostsController < LedgerBasesController
       original_post = LedgerPost.find_by(id: reply_id)
       if original_post
         link_post = LinkReply.new(
-          original_id: original_post.original_version_id,
-          reply_id: new_object.original_version_id,
+          original_post_id: original_post.original_version_id,
+          reply_post_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id
         )
         unless link_post.save

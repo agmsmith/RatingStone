@@ -57,7 +57,6 @@ class LedgerBasesController < ApplicationController
   # DRY!
   def create
     @ledger_object = nil
-    params[:preview] = true
     update
   end
 
@@ -86,10 +85,11 @@ class LedgerBasesController < ApplicationController
       side_load_params(@ledger_object)
       render('edit')
     else # Change the object by making a new version of it, new ID too.
-      new_object = if @ledger_object.id # If this is an existing version.
+      is_new = @ledger_object.id.nil?
+      new_object = if is_new
+        @ledger_object
+      else # Existing record, make a new version of it.
         @ledger_object.append_version
-      else # This is a new record, no previous version exists.
-        new_object = @ledger_object
       end
       new_object.assign_attributes(sanitised_params)
       side_load_params(new_object)
@@ -100,8 +100,11 @@ class LedgerBasesController < ApplicationController
         raise ActiveRecord::Rollback unless success
       end
       if success
-        flash[:success] = "#{@ledger_object.base_s} updated, " \
-          "new version is #{new_object.base_s}."
+        flash[:success] = if is_new
+          "New #{@ledger_object.base_s} created."
+        else
+          "#{@ledger_object.base_s} updated, new version is #{new_object.base_s}."
+        end
         @ledger_object = new_object
         render('show')
       else # Failed to save, preserve error messages for field editing display.

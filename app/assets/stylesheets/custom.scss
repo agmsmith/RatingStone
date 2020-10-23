@@ -39,6 +39,11 @@ section {
   font-weight: bold;
 }
 
+/* For displaying objects that have been deleted, could be a DIV or a LI etc. */
+.deleted {
+  color: red;
+}
+
 .description-box {
   border: 2px double #ddd;
   padding: 4px;

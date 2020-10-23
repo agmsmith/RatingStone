@@ -17,7 +17,7 @@
         { ledger_object: @ledger_object } %>
     </div>
   </div>
-  <% # List all versions of the post.
+  <% # List all versions of the post, including the summary of changes text.
     @ledger_objects = @ledger_object.all_versions.paginate(page: params[:page])
     if @ledger_objects.count >= 2 %>
       <hr>
@@ -27,7 +27,10 @@
         <% @ledger_objects.each do |an_object| %>
           <li id="ledger-post-<%= an_object.id %>">
             <%= render 'ledger_posts/ledger_just_the_post',
-              { ledger_post: an_object } %>
+              { ledger_post: an_object } %><%
+            unless an_object.summary_of_changes.empty? %>
+              <BR>Summary: <%= an_object.summary_of_changes %>
+            <% end %>
           </li>
         <% end %>
       </ul>
