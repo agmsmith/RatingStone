@@ -3,7 +3,7 @@
     <%= "#{ledger_post.base_s} You don't have permission to view this object." %>
   </div>
 <% else %>
-  <div class="<%=
+  <div class="<%= # Subject and content, in red via class "deleted" if deleted.
     ledger_post.deleted ? "deleted" : "post-subject" %>">
     <%= ledger_post.subject.empty? ? "<No Subject>" : ledger_post.subject %>
   </div>
@@ -15,7 +15,7 @@
     ledger_base_path(ledger_post) %> posted <%=
     time_ago_in_words(ledger_post.created_at)
     %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.</span>
-  <% # Count up replies and reply to entries.  Show links if any exist.
+  <% # Show replies both up and down, with links and unapproved flags.
     my_replies = LinkReply.where(
       original_post_id: ledger_post.original_version_id,
       deleted: false).order(created_at: :asc)
@@ -30,14 +30,13 @@
         Replied to <%=
           "#{replied_to_count} #{'post'.pluralize(replied_to_count)}" %>:
         <% replied_to.each do |a_reply_link|
-          reply_post = a_reply_link.original_post
-          reply_post = reply_post.latest_version if reply_post %>
+          reply_post = a_reply_link&.original_post&.latest_version %>
           <%= if reply_post
             link_to "##{a_reply_link.original_post_id}",
               ledger_post_path(reply_post), title: "#{reply_post}"
-          else
+          else # Post is missing or really deleted.
             "##{a_reply_link.original_post_id}"
-          end %><%
+          end %><% # Add "unapproved" after the reply number if not approved.
           if !a_reply_link.approved_child || !a_reply_link.approved_parent
             %>-<%= link_to "unapproved", link_base_path(a_reply_link),
             class: "unapproved-link" %><% end %>
@@ -49,8 +48,7 @@
       <% if my_replies_count > 0 %>
         <%= "#{my_replies_count} #{'reply'.pluralize(my_replies_count)}:" %>
         <% my_replies.each do |a_reply_link|
-          reply_post = a_reply_link.reply_post
-          reply_post = reply_post.latest_version if reply_post %>
+          reply_post = a_reply_link&.reply_post&.latest_version %>
           <%= if reply_post
             link_to "##{a_reply_link.reply_post_id}",
               ledger_post_path(reply_post), title: "#{reply_post}"
@@ -72,12 +70,17 @@
       <BR>
       <%= "In #{my_groups_count} #{'group'.pluralize(my_groups_count)}:" %>
       <% my_groups.each do |a_group_link|
-        my_group = a_group_link.group.latest_version %>
-        <%= link_to "##{my_group.id}", ledger_group_path(my_group.id)
-          %>&nbsp;(<%= my_group.name %><%
+        my_group = a_group_link&.group&.latest_version %>
+        <%= if my_group
+          link_to "##{a_group_link.group_id}", ledger_group_path(my_group),
+            title: "#{my_group}"
+        else # Record doesn't exist.
+          "##{a_group_link.group_id}"
+        end %><%
         if !a_group_link.approved_child || !a_group_link.approved_parent
             %>-<%= link_to "unapproved", link_base_path(a_group_link),
-            class: "unapproved-link" %><% end %>)
+            class: "unapproved-link" %><% end
+        %>&nbsp;(<%= my_group.name %>)
       <% end %>
   <% end %>
 <% end %>
