@@ -10,6 +10,8 @@ Rails.application.routes.draw do
   delete '/logout', to: 'sessions#destroy'
   get '/logout', to: 'sessions#destroy' # For older browsers without Javascript.
   get '/signup', to: 'users#new'
+  get '/wordcounter', to: 'word_counter#update'
+  post '/wordcounter', to: 'word_counter#update'
 
   resources :users
   resources :account_activations, only: [:edit]
