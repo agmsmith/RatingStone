@@ -3,47 +3,39 @@
 
 <H1>Numerical Word Counter</H1>
 
-<p>Paste your script into the box, select the word expansion options you want, and press the "<%= yield(:button_text) %>" button to do the count.  It also updates the expanded version of your script.  If you wish to, edit the script and repeat as needed.
-</p>
 
-<%= form_with local: true do %>
+<%= form_with(local: true) do %>
   <div class="row">
-    <div class="col-xs-12">
-      <%= label_tag(:vo_script, "Your voice-over script:") %>
+    <div class="col-xs-12 col-sm-6">
+      <H1><%= @word_count %> <%= 'Word'.pluralize(@word_count) %></H1>
+    </div>
+    <div class="col-xs-12 col-sm-6">
+      <%= submit_tag(yield(:button_text), class: "btn btn-primary button-full-width") %>
+
+      <p>Instructions: <small>Paste your script into the box, select the word expansion options you want, and press the "<%= yield(:button_text) %>" button to do the count, and create the expanded script below.</small></p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12"><a name="vo_script"></a>
+      <H3>Your Voice-Over Script:</H3>
       <%= text_area_tag(:vo_script, @vo_script, size: "80x6", class: 'form-control') %>
     </div>
   </div>
 
   <div class="row">
-  </div>
-
-  <div class="row">
-    <div class="col-xs-3">
-    </div>
-    <div class="col-xs-6">
-      <%= submit_tag(yield(:button_text), class: "btn btn-primary button-full-width") %>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-xs-12">
-      <H1><%= @word_count %> <%= 'Word'.pluralize(@word_count) %></H1>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-xs-12">
+    <div class="col-xs-12"><a name="vo_expanded"></a>
       <H3>Script with Numbers Expanded:</H3>
-      <p class="description-box"><%= safe_join(@vo_expanded.split(/\r*\n/), "<br />".html_safe) -%></p>
+      <p class="description-box"><%= safe_join(@vo_expanded.split(/\r*\n/), "<br />".html_safe) %></p>
     </div>
   </div>
 
   <div class="row">
-    <div class="col-xs-12">
-      <H3>Words:</H3>
+    <div class="col-xs-12"><a name="word_counts"></a>
+      <H3>Word Counts:</H3>
     </div>
     <% @word_list.each do |aword, acount| %>
-      <div class="col-xs-6 col-sm-4 col-md-2 col-lg-1"><%= aword %> - <%= acount %></div>
+      <div class="col-xs-6 col-sm-4 col-md-2 col-lg-1"><%= aword %> = <%= acount %></div>
     <% end %>
   </div>
 <% end %>
@@ -52,5 +44,5 @@
 
 <p>If you have ideas for counting features that you'd like to see, or notice a bug, please <a href="/contact">contact us</a>.</p>
 
-<p><small>Situation, legal and otherwise: You don't need to log in to do a word count, though that may be required later if we ever finish the rest of this less evil social media web site.  Since you aren't logging in, you don't need cookies (they're only used for identifying logged in people).  Every web page access is logged, though the logs are discarded whenever the web server is rebooted (typically weekly).  The server sees you script, but it isn't logged or stored, just processed and shown back to you.  Use of this experimental web site is at your own risk and expense; we don't guarantee anything.</small></p>
+<p><small>Situation, legal and otherwise: You don't need to log in to do a word count, though that may be required later if we ever finish the rest of this less evil social media web site or if we need to save word counter preferences in the future.  Since you aren't logging in, you don't need cookies (they're only used for identifying logged in people).  Every web page access is logged (network address, time, and inputs including the script), though the logs are discarded whenever the web server is rebooted (typically weekly).  Real logs are made of wood.  Use of this experimental web site is at your own risk and expense; we don't guarantee anything.</small></p>
 
