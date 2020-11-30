@@ -1,14 +1,54 @@
 <% provide(:page_title, 'Numerical Word Counter') %>
-<% provide(:button_text, 'Update Count') %>
+<% provide(:button_text, 'Update the Count') %>
 
-<h1>Numerical Word Counter</h1>
+<H1>Numerical Word Counter</H1>
 
-<p>Paste your script into the box, select the word expansion options you want, and press the Update Count button to do the count.  It also updates the expanded version of your script.  If you wish to, edit the script and repeat as needed.
+<p>Paste your script into the box, select the word expansion options you want, and press the "<%= yield(:button_text) %>" button to do the count.  It also updates the expanded version of your script.  If you wish to, edit the script and repeat as needed.
 </p>
 
-<%= form_with do %>
-  <p>some stuff</p>
+<%= form_with local: true do %>
+  <div class="row">
+    <div class="col-xs-12">
+      <%= label_tag(:vo_script, "Your voice-over script:") %>
+      <%= text_area_tag(:vo_script, @vo_script, size: "80x6", class: 'form-control') %>
+    </div>
+  </div>
+
+  <div class="row">
+  </div>
+
+  <div class="row">
+    <div class="col-xs-3">
+    </div>
+    <div class="col-xs-6">
+      <%= submit_tag(yield(:button_text), class: "btn btn-primary button-full-width") %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <H1><%= @word_count %> <%= 'Word'.pluralize(@word_count) %></H1>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <H3>Script with Numbers Expanded:</H3>
+      <p class="description-box"><%= safe_join(@vo_expanded.split(/\r*\n/), "<br />".html_safe) -%></p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12">
+      <H3>Words:</H3>
+    </div>
+    <% @word_list.each do |aword, acount| %>
+      <div class="col-xs-6 col-sm-4 col-md-2 col-lg-1"><%= aword %> - <%= acount %></div>
+    <% end %>
+  </div>
 <% end %>
+
+<HR>
 
 <p>If you have ideas for counting features that you'd like to see, or notice a bug, please <a href="/contact">contact us</a>.</p>
 
