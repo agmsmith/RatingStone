@@ -41,10 +41,13 @@ $ bundle install --without production
 $ yarn install --check-files
 ```
 
-Next, migrate the database:
+Next, create the database:
 
 ```
+$ rails db:drop
+$ rails db:create
 $ rails db:migrate
+$ rails db:seed
 ```
 
 Then compile the assets (CSS style sheets, pictures and other data).

@@ -32,103 +32,111 @@ class WordCounterController < ApplicationController
 
     @expanded_script = ' ' + @vo_script + ' ' # Spaces to avoid edge conditions.
 
-    # Expand dollar amounts.
-
-    if @selected_expansions[:exp_dollars]
-      # Look for $ 123,456.78 type things.  The .78 (two digits required) and
-      # commas and space are optional.
-      re = /\$\s*(?<number>[0-9][0-9,]*)(?<fraction>\.[0-9][0-9])?/
-      while (result = re.match(@expanded_script)) do
-        number = result[:number].delete(',').to_i
-        if number == 0 && result[:fraction]
-          expanded_text = '' # So that $0.23 comes out as "twenty-three cents".
-        else
-          expanded_text = NumbersInWords.in_words(number) + ' ' +
-            'dollar'.pluralize(number)
-        end
-        if result[:fraction]
-          fraction = result[:fraction].delete_prefix('.').to_i
-          expanded_text += " and " unless expanded_text.empty?
-          expanded_text += NumbersInWords.in_words(fraction) + ' ' +
-            'cent'.pluralize(fraction)
-        end
-        @expanded_script = result.pre_match + expanded_text + result.post_match
-      end
-    end
-
-    # Expand dashed numbers into numbers separated by the word "to".
-    # So "12-45" or "12 - 45" expands to "12 to 45".
-
-    if @selected_expansions[:exp_dash_numbers]
-      re = /(?<number1>[0-9]+)[[:space:]]*-[[:space:]]*(?<number2>[0-9]+)/
-      while (result = re.match(@expanded_script)) do
-        @expanded_script = result.pre_match + result[:number1] + ' to ' +
-          result[:number2] + result.post_match
-      end
-    end
-
-    # Expand 4 digit years, from 1000 to 2999 into two half numbers.  So 1969
-    # becomes nineteen sixty-nine.  Need spaces before and space or punctuation
-    # after.
-
-    if @selected_expansions[:exp_years]
-      re = /(?<space1>[[:space:]])(?<century>[12][0-9])(?<year>[0-9][0-9])(?<space2>[[:space:]]|[[:punct:]])/
-      while (result = re.match(@expanded_script)) do
-        century = result[:century].to_i
-        year = result[:year].to_i
-        if year == 0
-          if century % 10 == 0
-            expanded_text = NumbersInWords.in_words(century * 100)
-          else
-            expanded_text = NumbersInWords.in_words(century) + ' hundred'
-          end
-        else
-          expanded_text = NumbersInWords.in_words(century) + ' '
-          expanded_text += 'oh-' if year < 10
-          expanded_text += NumbersInWords.in_words(year)
-        end
-        @expanded_script = result.pre_match + result[:space1] +
-          expanded_text + result[:space2] + result.post_match
-      end
-    end
-
-    # Expand positive numbers, which can be decimal fractions.  Don't expand if
-    # followed by letters, like "22nd".  Punctuation or spaces are okay.
-
-    if @selected_expansions[:exp_numbers]
-      # Look for 123,456.78 type things.  Avoid ending in a comma.
-      re = /(?<number>[0-9](,?[0-9])*(\.[0-9]+)?)(?<after>[[:space:]]|[[:punct:]])/
-      while (result = re.match(@expanded_script)) do
-        number = result[:number].delete(',')
-        if number.include?('.')
-          expanded_text = NumbersInWords.in_words(number.to_f)
-        else
-          expanded_text = NumbersInWords.in_words(number.to_i)
-        end
-        @expanded_script = result.pre_match + expanded_text +
-          result[:after] + result.post_match
-      end
-    end
-
-    # Replace hyphens with spaces.  Need to have letters on both sides of the
-    # hyphen to avoid clobbering minus signs and other hyphen uses.
-
-    if @selected_expansions[:exp_hyphens]
-      re = /(?<letter1>[[:alpha:]])-(?<letter2>[[:alpha:]])/
-      while (result = re.match(@expanded_script)) do
-        @expanded_script = result.pre_match + result[:letter1] +
-          ' ' + result[:letter2] + result.post_match
-      end
-    end
+    expand_dollars if @selected_expansions[:exp_dollars]
+    expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
+    expand_years if @selected_expansions[:exp_years]
+    expand_numbers if @selected_expansions[:exp_numbers]
+    expand_hyphens if @selected_expansions[:exp_hyphens]
 
     # Calculate some statistics on the words.
-    @original_word_count = @vo_script.strip.split(/\s+/).length
-    words = @expanded_script.strip.downcase.split(/\s+/).sort
+    @original_word_count = @vo_script.strip.split(/[[:space:]]+/).length
+    words = @expanded_script.strip.downcase.split(/[[:space:]]+/).sort
     @expanded_word_count = words.length
     @word_list = Hash.new(0)
     words.each do |word|
       @word_list[word] += 1
     end
     render
+  end
+
+  private
+
+  # Various methods for expanding things.  Input and output is @expanded_script.
+
+  def expand_dollars
+    # Look for $ 123,456.78 type things.  The fractional .78 (two digits
+    # required) and commas and space after the dollar sign are optional.
+    # $12.34 becomes "twelve dollars and thirty four cents"
+    re = /\$[[:space:]]*(?<number>[0-9][0-9,]*)(?<fraction>\.[0-9][0-9])?/
+    while (result = re.match(@expanded_script))
+      number = result[:number].delete(',').to_i
+      expanded_text = if (number == 0) && result[:fraction]
+        '' # So that $0.23 comes out as just "twenty-three cents".
+      else
+        NumbersInWords.in_words(number) + ' ' + 'dollar'.pluralize(number)
+      end
+      if result[:fraction]
+        fraction = result[:fraction].delete_prefix('.').to_i
+        expanded_text += " and " unless expanded_text.empty?
+        expanded_text += NumbersInWords.in_words(fraction) + ' ' +
+          'cent'.pluralize(fraction)
+      end
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
+  def expand_dash_numbers
+    # Expand dashed numbers into numbers separated by the word "to".
+    # So "12-45" or "12 - 45" expands to "12 to 45".
+    re = /(?<number1>[0-9]+)[[:space:]]*-[[:space:]]*(?<number2>[0-9]+)/
+    while (result = re.match(@expanded_script))
+      @expanded_script = result.pre_match + result[:number1] + ' to ' +
+        result[:number2] + result.post_match
+    end
+  end
+
+  def expand_years
+    # Expand 4 digit years, from 1000 to 2999, usually into two half numbers
+    # (centuries and part of a century).  Need space before and space or
+    # punctuation after.  So 1969 becomes nineteen sixty-nine.  1901 becomes
+    # ninteen oh-one.  1900 becomes nineteen hundred.
+    # 2000 becomes two thousand, 1000 becomes one thousand.
+    re = /(?<space1>[[:space:]])(?<century>[12][0-9])(?<year>[0-9][0-9])(?<space2>[[:space:]]|[[:punct:]])/
+    while (result = re.match(@expanded_script))
+      century = result[:century].to_i
+      year = result[:year].to_i
+      if year == 0
+        expanded_text = if century % 10 == 0
+          NumbersInWords.in_words(century * 100) # Exact thousand year dates.
+        else
+          NumbersInWords.in_words(century) + ' hundred'
+        end
+      else # Not the year 00 start of a century, 01 to 99 possible.
+        expanded_text = NumbersInWords.in_words(century) + ' '
+        expanded_text += 'oh-' if year < 10
+        expanded_text += NumbersInWords.in_words(year)
+      end
+      @expanded_script = result.pre_match + result[:space1] +
+        expanded_text + result[:space2] + result.post_match
+    end
+  end
+
+  def expand_numbers
+    # Expand positive numbers, which can be decimal fractions.  The plus or
+    # minus sign in front will be left alone, and read normally, maybe.
+    # Don't expand if # followed by letters, like "22nd", would get the awkward
+    # "twenty twond".  Punctuation or spaces are expected after the number.
+    # Look for 123,456.789 type things.  Avoid ending in a comma.
+    re = /(?<number>[0-9](,?[0-9])*(\.[0-9]+)?)(?<after>[[:space:]]|[[:punct:]])/
+    while (result = re.match(@expanded_script))
+      number = result[:number].delete(',')
+      expanded_text = if number.include?('.')
+        NumbersInWords.in_words(number.to_f)
+      else
+        NumbersInWords.in_words(number.to_i)
+      end
+      @expanded_script = result.pre_match + expanded_text + result[:after] +
+        result.post_match
+    end
+  end
+
+  def expand_hyphens
+    # Replace hyphens with spaces.  Need to have letters on both sides of the
+    # hyphen to avoid clobbering minus signs and other hyphen uses.
+    re = /(?<letter1>[[:alpha:]])-(?<letter2>[[:alpha:]])/
+    while (result = re.match(@expanded_script))
+      @expanded_script = result.pre_match + result[:letter1] + ' ' +
+        result[:letter2] + result.post_match
+    end
   end
 end
