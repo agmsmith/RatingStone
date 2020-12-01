@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'numbers_in_words'
+require 'diffy'
 
 # Controller and model (it's just a string and this is a quickie coding project)
 # too.  It expands numbers and some other things in the way that someone reading
@@ -15,14 +16,16 @@ class WordCounterController < ApplicationController
     @vo_script = params[:vo_script]
     @selected_expansions = Hash.new(false)
     if @vo_script
-      @vo_script = @vo_script.strip # Form textarea adds a blank line at front.
+      @vo_script.strip! # Form textarea adds a blank line at front.
       @selected_expansions[:exp_dollars] = true if params[:exp_dollars]
       @selected_expansions[:exp_dash_numbers] = true if params[:exp_dash_numbers]
       @selected_expansions[:exp_years] = true if params[:exp_years]
       @selected_expansions[:exp_numbers] = true if params[:exp_numbers]
       @selected_expansions[:exp_hyphens] = true if params[:exp_hyphens]
     else
-      @vo_script = "Replace this text with your script..."
+      @vo_script = "Replace this text with your script.  Save $12.34 on " +
+        "word-costs in 2020, compared to 1990's fees.  Only 1,234.56 seconds " +
+        "remain before this offer expires!"
       @selected_expansions[:exp_dollars] = true
       @selected_expansions[:exp_dash_numbers] = false
       @selected_expansions[:exp_years] = true
@@ -38,9 +41,11 @@ class WordCounterController < ApplicationController
     expand_numbers if @selected_expansions[:exp_numbers]
     expand_hyphens if @selected_expansions[:exp_hyphens]
 
+    @expanded_script.strip! # Remove edge case workaround spaces, for display.
+
     # Calculate some statistics on the words.
-    @original_word_count = @vo_script.strip.split(/[[:space:]]+/).length
-    words = @expanded_script.strip.downcase.split(/[[:space:]]+/).sort
+    @original_word_count = @vo_script.split(/[[:space:]]+/).length
+    words = @expanded_script.downcase.split(/[[:space:]]+/).sort
     @expanded_word_count = words.length
     @word_list = Hash.new(0)
     words.each do |word|

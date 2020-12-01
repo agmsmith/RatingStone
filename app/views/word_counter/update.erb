@@ -3,7 +3,6 @@
 
 <H1>Numerical Word Counter</H1>
 
-
 <%= form_with(local: true) do %>
   <div class="row">
     <div class="col-xs-12 col-sm-6">
@@ -86,6 +85,19 @@
     <% @word_list.each do |aword, acount| %>
       <div class="col-xs-6 col-sm-4 col-md-2 col-lg-1"><%= aword %> = <%= acount %></div>
     <% end %>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12"><a name="differences"></a>
+      <H3>Expansion Differences:</H3>
+      <p>Avoid embarassing mistakes in the expansion (it's not perfect).  Look
+        for things like "$ 3.21 million" becoming "three dollars and twenty-one
+        cents million".  Rewrite the original script to avoid glitches like
+        that, or contact us if fixing it is worthy of becoming a new feature.</p>
+    </div>
+    <div class="col-xs-12">
+      <%= Diffy::Diff.new(@vo_script, @expanded_script).to_s(:html).html_safe %>
+    </div>
   </div>
 <% end %>
 
