@@ -40,8 +40,10 @@ gem 'image_processing', '~> 1'
 gem 'mini_magick', '~> 4'
 # For fancy text input language and formatting.
 gem 'kramdown', '~> 2'
-# For spelling out numbers as words (also vice versa).
+# For spelling out numbers as words (also vice versa) in Word Counter.
 gem 'numbers_in_words', '~> 1'
+# For showing the expansion changes made in Word Counter.
+gem 'diffy', '~> 3'
 
 group :development, :test do
   # Use sqlite3 as the database for Active Record
