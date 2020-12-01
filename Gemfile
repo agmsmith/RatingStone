@@ -38,7 +38,10 @@ gem 'active_storage_validations', '~> 0'
 # For resizing uploaded images.
 gem 'image_processing', '~> 1'
 gem 'mini_magick', '~> 4'
+# For fancy text input language and formatting.
 gem 'kramdown', '~> 2'
+# For spelling out numbers as words (also vice versa).
+gem 'numbers_in_words', '~> 1'
 
 group :development, :test do
   # Use sqlite3 as the database for Active Record
