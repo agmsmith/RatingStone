@@ -18,15 +18,21 @@ class WordCounterController < ApplicationController
     if @vo_script
       @vo_script.strip! # Form textarea adds a blank line at front.
       @selected_expansions[:exp_dollars] = true if params[:exp_dollars]
+      @selected_expansions[:exp_na_telephone] = true if params[:exp_na_telephone]
+      @selected_expansions[:exp_say_area_code] = true if params[:exp_say_area_code]
+      @selected_expansions[:exp_say_telephone_number] = true if params[:exp_say_telephone_number]
       @selected_expansions[:exp_dash_numbers] = true if params[:exp_dash_numbers]
       @selected_expansions[:exp_years] = true if params[:exp_years]
       @selected_expansions[:exp_numbers] = true if params[:exp_numbers]
       @selected_expansions[:exp_hyphens] = true if params[:exp_hyphens]
     else
-      @vo_script = "Replace this text with your script.  Save $12.34 on " +
-        "word-costs in 2020, compared to 1990's fees.  Only 1,234.56 seconds " +
-        "remain before this offer expires!"
+      @vo_script = "Replace this text with your script.  Save $12.34 on " \
+        "word-costs in 2020, compared to 1990's fees.  Only 1,234.56 seconds " \
+        "remain before this offer expires!  Give us a call at 1-800-555-1234."
       @selected_expansions[:exp_dollars] = true
+      @selected_expansions[:exp_na_telephone] = true
+      @selected_expansions[:exp_say_area_code] = false
+      @selected_expansions[:exp_say_telephone_number] = false
       @selected_expansions[:exp_dash_numbers] = false
       @selected_expansions[:exp_years] = true
       @selected_expansions[:exp_numbers] = true
@@ -36,6 +42,7 @@ class WordCounterController < ApplicationController
     @expanded_script = ' ' + @vo_script + ' ' # Spaces to avoid edge conditions.
 
     expand_dollars if @selected_expansions[:exp_dollars]
+    expand_na_telephone if @selected_expansions[:exp_na_telephone]
     expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
     expand_years if @selected_expansions[:exp_years]
     expand_numbers if @selected_expansions[:exp_numbers]
@@ -76,6 +83,63 @@ class WordCounterController < ApplicationController
         expanded_text += NumbersInWords.in_words(fraction) + ' ' +
           'cent'.pluralize(fraction)
       end
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
+  # Convert a string number to individual digits.  "0123" becomes
+  # "zero one two three", not "one two three" or "one hundred and twenty three".
+  def number_to_digits(number_string)
+    expanded_text = ''
+    number_string.each_char do |digit|
+      expanded_text += NumbersInWords.in_words(digit.to_i) + ' '
+    end
+    expanded_text.strip # Remove trailing space if any.
+  end
+
+  # Given an area code number as a string, say it as digits unless it's an even
+  # hundred, then say it as a hundreds number.  So it's "eight hundred" rather
+  # than "eight zero zero".  Common for "one eight hundred" toll free numbers.
+  def area_code_to_words(area_code_string)
+    if area_code_string[-2..-1] == '00'
+      NumbersInWords.in_words(area_code_string.to_i)
+    else
+      number_to_digits(area_code_string)
+    end
+  end
+
+  def expand_na_telephone
+    # Look for telephone numbers and convert them to digit by digit words.
+    # North American numbers look like 1-800-123-4567 for a long distance
+    # number, or 1 (800) 222-4567 or 800-222-4567 or 800 222-4567 or
+    # (800) 222-4567 or 613 555-1234 or just 222-4567 for a local number.
+    # The area code is 3 digits from 200 to 999.  Similarly the exchange number
+    # in the middle is also from 200 to 999.  For details, see Wikipedia's
+    # NANP article # https://en.wikipedia.org/wiki/North_American_Numbering_Plan
+    # If @selected_expansions[:exp_say_area_code] is true then the words
+    # "area code" are inserted before the area code if there is one.  To have
+    # it say "telephone number" before the last seven digits part, set
+    # @selected_expansions[:exp_say_telephone_number] to true.
+
+    # Leading long distance country code: ((?<leadingone>1)(-|[[:space:]]+))?
+    # Area code: (\(?(?<areacode>[2-9][0-9][0-9])(-|(\)?[[:space:]]+)))
+    # Number: (?<exchange>[2-9][0-9][0-9])(-|[[:space:]])(?<number>[0-9][0-9][0-9][0-9])
+    # If there's a leading 1, need an area code: (leadingone? areacode)? number
+    re = %r{(((?<leadingone>1)(-|[[:space:]]+))?
+      (\(?(?<areacode>[2-9][0-9][0-9])(-|(\)?[[:space:]]+))))?
+      (?<exchange>[2-9][0-9][0-9])(-|[[:space:]])
+      (?<number>[0-9][0-9][0-9][0-9])}x
+    while (result = re.match(@expanded_script))
+      expanded_text = ''
+      expanded_text += number_to_digits(result[:leadingone]) + ' ' if result[:leadingone]
+      if result[:areacode]
+        expanded_text += 'area code ' if @selected_expansions[:exp_say_area_code]
+        expanded_text += area_code_to_words(result[:areacode]) + ' '
+      end
+      expanded_text += 'telephone number ' if @selected_expansions[:exp_say_telephone_number]
+      expanded_text += number_to_digits(result[:exchange]) + ' ' +
+        number_to_digits(result[:number])
+
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
   end

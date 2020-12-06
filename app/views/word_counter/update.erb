@@ -1,7 +1,7 @@
-<% provide(:page_title, 'Numerical Word Counter') %>
+<% provide(:page_title, 'Numerical Expansion Word Counter') %>
 <% provide(:button_text, 'Update the Count') %>
 
-<H1>Numerical Word Counter</H1>
+<H1><%= yield(:page_title) %></H1>
 
 <%= form_with(local: true) do %>
   <div class="row">
@@ -10,7 +10,7 @@
       <H2>Was <%= @original_word_count %> <%= 'word'.pluralize(@original_word_count) %>
       unexpanded;
       <%= delta_count = @expanded_word_count - @original_word_count %> extra
-      <%= 'word'.pluralize(delta_count) %>!</H2>
+      <%= 'word'.pluralize(delta_count) %><%= if delta_count <= 0 then '?' elsif delta_count < 10 then '.' else '!' end %></H2>
     </div>
     <div class="col-xs-12 col-sm-6">
       <%= submit_tag(yield(:button_text), class: "btn btn-primary button-full-width") %>
@@ -39,6 +39,24 @@
       <%= check_box_tag(:exp_dollars, true, @selected_expansions[:exp_dollars]) %>
       <p>$ 123,456.78 becomes: one hundred and twenty-three thousand four
         hundred and fifty-six dollars and seventy-eight cents</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_na_telephone, "Expand North American Telephone Numbers") %>
+      <%= check_box_tag(:exp_na_telephone, true, @selected_expansions[:exp_na_telephone]) %>
+      <p>Long distance numbers start with 1 like 1 (800) 234 5678 or 1-800-234-5678 become: one eight hundred two three four five six seven eight.  Also does 10 digit and local 7 digit numbers with dashes or spaces separating the parts: 765-4321 becomes: seven six five four three two one.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_say_area_code, "Say Area Code") %>
+      <%= check_box_tag(:exp_say_area_code, true, @selected_expansions[:exp_say_area_code]) %>
+      <p>Says "area code" before the area code portion of a telephone number.  1 (800) 234-5678 or 1-800-234-5678 becomes: one area code eight hundred two three four five six seven eight.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_say_telephone_number, "Say Telephone Number") %>
+      <%= check_box_tag(:exp_say_telephone_number, true, @selected_expansions[:exp_say_telephone_number]) %>
+      <p>Says "telephone number" before the local portion of a telephone number.  (800) 234-5678 or 800-234-5678 becomes: eight hundred telephone number two three four five six seven eight.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
