@@ -39,7 +39,7 @@ class WordCounterController < ApplicationController
       @selected_expansions[:exp_na_telephone] = true
       @selected_expansions[:exp_say_area_code] = false
       @selected_expansions[:exp_say_telephone_number] = false
-      @selected_expansions[:exp_dash_numbers] = false
+      @selected_expansions[:exp_dash_numbers] = true
       @selected_expansions[:exp_years] = true
       @selected_expansions[:exp_numbers] = true
       @selected_expansions[:exp_hyphens] = true
@@ -132,12 +132,15 @@ class WordCounterController < ApplicationController
     # Area code: (\(?(?<areacode>[2-9][0-9][0-9])(-|(\)?[[:space:]]+)))
     # Number: (?<exchange>[2-9][0-9][0-9])(-|[[:space:]])(?<number>[0-9][0-9][0-9][0-9])
     # If there's a leading 1, need an area code: (leadingone? areacode)? number
-    re = %r{(((?<leadingone>1)(-|[[:space:]]+))?
+    re = %r{(?<spacebefore>[[:space:]])
+      (((?<leadingone>1)(-|[[:space:]]+))?
       (\(?(?<areacode>[2-9][0-9][0-9])(-|(\)?[[:space:]]+))))?
       (?<exchange>[2-9][0-9][0-9])(-|[[:space:]])
-      (?<number>[0-9][0-9][0-9][0-9])}x
+      (?<number>[0-9][0-9][0-9][0-9])
+      (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
+      }x
     while (result = re.match(@expanded_script))
-      expanded_text = ''
+      expanded_text = result[:spacebefore]
       expanded_text += number_to_digits(result[:leadingone]) + ' ' if result[:leadingone]
       if result[:areacode]
         expanded_text += 'area code ' if @selected_expansions[:exp_say_area_code]
@@ -146,6 +149,7 @@ class WordCounterController < ApplicationController
       expanded_text += 'telephone number ' if @selected_expansions[:exp_say_telephone_number]
       expanded_text += number_to_digits(result[:exchange]) + ' ' +
         number_to_digits(result[:number])
+      expanded_text += result[:spaceafter]
 
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
@@ -154,10 +158,16 @@ class WordCounterController < ApplicationController
   def expand_dash_numbers
     # Expand dashed numbers into numbers separated by the word "to".
     # So "12-45" or "12 - 45" expands to "12 to 45".
-    re = /(?<number1>[0-9]+)[[:space:]]*-[[:space:]]*(?<number2>[0-9]+)/
+    re = %r{(?<spacebefore>[[:space:]])
+      (?<number1>[0-9]+)[[:space:]]*
+      -
+      [[:space:]]*(?<number2>[0-9]+)
+      (?<spaceafter>[[[:space:]][[:punct:]]])
+      }x
     while (result = re.match(@expanded_script))
-      @expanded_script = result.pre_match + result[:number1] + ' to ' +
-        result[:number2] + result.post_match
+      @expanded_script = result.pre_match + result[:spacebefore] +
+        result[:number1] + ' to ' + result[:number2] + 
+        result[:spaceafter] + result.post_match
     end
   end
 
