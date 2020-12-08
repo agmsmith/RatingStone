@@ -1,7 +1,13 @@
-<% provide(:page_title, 'Numerical Expansion Word Counter') %>
+<% provide(:page_title, 'Real Count™ - Earn what you deserve!') %>
 <% provide(:button_text, 'Update the Count') %>
 
-<H1><%= yield(:page_title) %></H1>
+<div class="row">
+  <p class="center col-xs-12"><%= image_tag("RealCountLogoLandscape.png",
+    alt: "[Logo for Real Count - Earn what you deserve!  " \
+    "Courtesy of \"The Coach\" Dane Scot and Programmer Alexander G. M. Smith]",
+    width: "967px", height: "229px", style: "width: 100% ; height: auto ;",
+    align: "center") %></p>
+</div>
 
 <%= form_with(local: true) do %>
   <div class="row">
@@ -134,7 +140,21 @@
 
 <HR>
 
-<p>If you have ideas for counting features that you'd like to see, or notice a bug, please <a href="/contact">contact us</a>.</p>
+<p>If you have ideas for counting features that you'd like to see, or notice a
+bug, please <a href="/contact">contact us</a> or send a Tweet tagged with <a
+href="https://twitter.com/search?q=RealWordCount;f=live&amp;vertical=default">#RealWordCount</a> (#RealCount is
+currently overused for vote counting).</p>
 
-<p><small>Situation, legal and otherwise: You don't need to log in to do a word count, though that may be required later if we ever finish the rest of this less evil social media web site or if we need to save word counter preferences in the future.  Since you aren't logging in, you don't need cookies (they're only used for identifying logged in people).  Also no third party tracking (like Google or Facebook Analytics) is done on our web site.  Every web page access is logged (network address, time, and inputs including the script), though the logs are discarded whenever the web server is rebooted (typically weekly).  If you don't like logging, you can set up your own copy of this web site, possibly in a desktop virtual machine.  Real logs are made of wood.  Use of this experimental web site is at your own risk and expense; we don't guarantee anything.</small></p>
+<p><small>Situation, legal and otherwise: You don't need to log in to do a word
+count, though that may be required later if we ever finish the rest of this
+less evil social media web site or if we need to save word counter preferences
+in the future.  Since you aren't logging in, you don't need cookies (they're
+only used for identifying logged in people).  Also no third party tracking
+(like Google or Facebook Analytics) is done on our web site.  Every web page
+access is logged (network address, time, and inputs including the script),
+though the logs are discarded whenever the web server is rebooted (typically
+weekly).  If you don't like logging, you can set up your own copy of this web
+site, possibly in a desktop virtual machine.  Real logs are made of wood.  Use
+of this experimental web site is at your own risk and expense; we don't
+guarantee anything.</small></p>
 
