@@ -18,6 +18,7 @@ class WordCounterController < ApplicationController
     if @vo_script
       @vo_script.strip! # Form textarea adds a blank line at front.
       @selected_expansions[:exp_dollars] = true if params[:exp_dollars]
+      @selected_expansions[:exp_urls] = true if params[:exp_urls]
       @selected_expansions[:exp_na_telephone] = true if params[:exp_na_telephone]
       @selected_expansions[:exp_say_area_code] = true if params[:exp_say_area_code]
       @selected_expansions[:exp_say_telephone_number] = true if params[:exp_say_telephone_number]
@@ -27,9 +28,14 @@ class WordCounterController < ApplicationController
       @selected_expansions[:exp_hyphens] = true if params[:exp_hyphens]
     else
       @vo_script = "Replace this text with your script.  Save $12.34 on " \
-        "word-costs in 2020, compared to 1990's fees.  Only 1,234.56 seconds " \
-        "remain before this offer expires!  Give us a call at 1-800-555-1234."
+        "word-costs in 2020, compared to 1990's fees; that's a 50% savings!  " \
+        "Only 1,234.56 seconds remain before this offer expires!  Give us a " \
+        "call at 1-800-555-1234.  Act before 2020.12.07 11:01 p.m. or...  " \
+        "Alternatively, visit https://ratingstone.agmsmith.ca/server01/about " \
+        "for more information or search on www.google.com for hints & tips.  " \
+        "In emergencies, write to agmsrepsys@gmail.com."
       @selected_expansions[:exp_dollars] = true
+      @selected_expansions[:exp_urls] = true
       @selected_expansions[:exp_na_telephone] = true
       @selected_expansions[:exp_say_area_code] = false
       @selected_expansions[:exp_say_telephone_number] = false
@@ -42,6 +48,7 @@ class WordCounterController < ApplicationController
     @expanded_script = ' ' + @vo_script + ' ' # Spaces to avoid edge conditions.
 
     expand_dollars if @selected_expansions[:exp_dollars]
+    expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
     expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
     expand_years if @selected_expansions[:exp_years]
@@ -196,6 +203,28 @@ class WordCounterController < ApplicationController
       end
       @expanded_script = result.pre_match + expanded_text + result[:after] +
         result.post_match
+    end
+  end
+
+  def expand_urls
+    # Extract a whole URL from the text then apply several processing steps to
+    # it then put the expanded version back.  Needs to work for
+    # https://www.example.com/stuff/more/ and for mit.edu but not 2.3 or p.m.
+    re = %r{
+      (?<spacebefore>[[:space:]]) # Space before the URL required.
+      (?<http>[[:alpha:]]+://)? # Optional HTTP:// or HTTPS:// or FTP:// prefix.
+      (?<middle>[[:alpha:]] # No initial digit allowed, start with a letter.
+        [[:alnum:]]+ # Finish the first word, 2 or more letters.
+        ([./@:][[:alnum:]][[:alnum:]]+)+ # Need more separators and more words.
+        /?) # Optional trailing slash.
+      (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
+    }xi # x for ignore spaces in definition, i for case insensitive.
+    while (result = re.match(@expanded_script))
+      @expanded_script = result.pre_match + result[:spacebefore] +
+        (result[:http] ? result[:http].gsub(%r{://}, " colon slash slash ") : '') +
+        result[:middle].gsub(/\./, ' dot ').gsub(%r{/}, ' slash ').
+          gsub(%r{@}, ' at ').gsub(%r{:}, ' colon ').strip +
+        result[:spaceafter] + result.post_match
     end
   end
 
