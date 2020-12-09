@@ -8,3 +8,9 @@ pwd
 chmod -R -v og-rwx config | grep -i changed
 chmod -R -v og-rwx miscellaneous | grep -i changed
 
+for filename in ./log/*.log
+do
+  echo "Resetting log file $filename."
+  date > "$filename"
+done
+

@@ -16,7 +16,9 @@ class WordCounterController < ApplicationController
     @vo_script = params[:vo_script]
     @selected_expansions = Hash.new(false)
     if @vo_script
-      @vo_script.strip! # Form textarea adds a blank line at front.
+      # Use an empty script if Clear button pressed, otherwise remove the blank
+      # line that the Form textarea adds at front, depending on the browser.
+      @vo_script = params[:commit] == 'Clear' ? '' : @vo_script.strip
       @selected_expansions[:exp_dollars] = true if params[:exp_dollars]
       @selected_expansions[:exp_urls] = true if params[:exp_urls]
       @selected_expansions[:exp_na_telephone] = true if params[:exp_na_telephone]
@@ -26,14 +28,16 @@ class WordCounterController < ApplicationController
       @selected_expansions[:exp_years] = true if params[:exp_years]
       @selected_expansions[:exp_numbers] = true if params[:exp_numbers]
       @selected_expansions[:exp_hyphens] = true if params[:exp_hyphens]
-    else
-      @vo_script = "Replace this text with your script.  Save $12.34 on " \
-        "word-costs in 2020, compared to 1990's fees; that's a 50% savings!  " \
-        "Only 1,234.56 seconds remain before this offer expires!  Give us a " \
-        "call at 1-800-555-1234.  Act before 2020.12.07 11:01 p.m. or...  " \
-        "Alternatively, visit https://ratingstone.agmsmith.ca/server01/about " \
-        "for more information or search on www.google.com for hints & tips.  " \
-        "In emergencies, write to agmsrepsys@gmail.com."
+    else # First time run, use some demo text and default settings.
+      @vo_script = "Replace this text with your script.  For example, save " \
+        "$123.45 on word-costs in 2020, compared to 1990's fees; that's a " \
+        "50% savings!  Only 1,234.56 seconds remain before this offer " \
+        "expires!  Give us a call at 1-800-555-1234, but before 2020.12.07 " \
+        "6:01 a.m. (that's December 7th, 2020, 06:01) or...  Alternatively, " \
+        "visit https://ratingstone.agmsmith.ca/server01/about for more " \
+        "information or search on www.google.com for hints & tips (use " \
+        "#RealWordCount) or write to agmsrepsys@gmail.com.  On Facebook " \
+        "we're @RealCount."
       @selected_expansions[:exp_dollars] = true
       @selected_expansions[:exp_urls] = true
       @selected_expansions[:exp_na_telephone] = true
@@ -58,17 +62,48 @@ class WordCounterController < ApplicationController
     @expanded_script.strip! # Remove edge case workaround spaces, for display.
 
     # Calculate some statistics on the words.
-    @original_word_count = @vo_script.split(/[[:space:]]+/).length
-    words = @expanded_script.downcase.split(/[[:space:]]+/).sort
-    @expanded_word_count = words.length
-    @word_list = Hash.new(0)
-    words.each do |word|
-      @word_list[word] += 1
+
+    words = word_split(@vo_script.downcase)
+    @original_word_count = words.length
+    @original_word_list = Hash.new(0)
+    words.sort.each do |word|
+      @original_word_list[word] += 1
     end
+
+    words = word_split(@expanded_script.downcase)
+    @expanded_word_count = words.length
+    @expanded_word_list = Hash.new(0)
+    words.sort.each do |word|
+      @expanded_word_list[word] += 1
+    end
+
+    # Subtract counts of original words from counts of expanded words, so we
+    # can see how the count changed.
+    @hybrid_word_list = @expanded_word_list.dup
+    @original_word_list.each do |key, value|
+      @hybrid_word_list[key] -= value
+    end
+
     render
   end
 
   private
+
+  # Break the given string into an array of strings, one word in each.  Words
+  # are separated by spaces, or by commas when the commas are not inside a
+  # number.  Also strip punctuation from the beginning and end of the words.
+  def word_split(input_string)
+    # Add spaces after commas if none there, except for commas in numbers.
+    spaced = input_string
+      .gsub(/([^[[:space:]]]),([^[[:digit:]][[:space:]]])/, "\\1, \\2")
+      .gsub(/([^[[:space:]][[:digit:]]]),([^[[:space:]]])/, "\\1, \\2")
+    result = []
+    spaced.split(/[[:space:]]+/).each do |a_word|
+      depunct = a_word.sub(/^[,.?"“”!()]+/, '').sub(/[,.?"“”!()]+$/, '')
+      result.append(depunct) unless depunct.empty? # Happens for "..."
+    end
+    result
+  end
 
   # Various methods for expanding things.  Input and output is @expanded_script.
 
@@ -76,7 +111,7 @@ class WordCounterController < ApplicationController
     # Look for $ 123,456.78 type things.  The fractional .78 (two digits
     # required) and commas and space after the dollar sign are optional.
     # $12.34 becomes "twelve dollars and thirty four cents"
-    re = /\$[[:space:]]*(?<number>[0-9][0-9,]*)(?<fraction>\.[0-9][0-9])?/
+    re = /\$[[:space:]]*(?<number>[0-9][0-9,]*)(?<fraction>\.[0-9]+)?/
     while (result = re.match(@expanded_script))
       number = result[:number].delete(',').to_i
       expanded_text = if (number == 0) && result[:fraction]
@@ -166,7 +201,7 @@ class WordCounterController < ApplicationController
       }x
     while (result = re.match(@expanded_script))
       @expanded_script = result.pre_match + result[:spacebefore] +
-        result[:number1] + ' to ' + result[:number2] + 
+        result[:number1] + ' to ' + result[:number2] +
         result[:spaceafter] + result.post_match
     end
   end
@@ -232,8 +267,9 @@ class WordCounterController < ApplicationController
     while (result = re.match(@expanded_script))
       @expanded_script = result.pre_match + result[:spacebefore] +
         (result[:http] ? result[:http].gsub(%r{://}, " colon slash slash ") : '') +
-        result[:middle].gsub(/\./, ' dot ').gsub(%r{/}, ' slash ').
-          gsub(%r{@}, ' at ').gsub(%r{:}, ' colon ').strip +
+        result[:middle]
+          .gsub(/\./, ' dot ').gsub(%r{/}, ' slash ')
+          .gsub(/@/, ' at ').gsub(/:/, ' colon ').strip +
         result[:spaceafter] + result.post_match
     end
   end

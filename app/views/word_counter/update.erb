@@ -27,15 +27,20 @@
   </div>
 
   <div class="row">
-    <div class="col-xs-12"><a name="vo_script"></a>
-      <H3>Your Voice-Over Script:</H3>
+    <div class="col-xs-9"><a name="vo_script"></a>
+      <p class="wordcount-sectiontitle">Your Voice-Over Script:</p>
+    </div>
+    <div class="col-xs-3">
+      <p><%= submit_tag("Clear", class: "btn btn-primary button-full-width") %></p>
+    </div>
+    <div class="col-xs-12">
       <%= text_area_tag(:vo_script, @vo_script, size: "80x6", class: 'form-control') %>
     </div>
   </div>
 
   <div class="row">
     <div class="col-xs-12"><a name="expansion_options"></a>
-      <H3>Expansion Options:</H3>
+      <p class="wordcount-sectiontitle">Expansion Options:</p>
       <p>Note that they are processed in the order given here (make window
         narrower to see it in a single column).</p>
     </div>
@@ -110,23 +115,31 @@
 
   <div class="row">
     <div class="col-xs-12"><a name="expanded_script"></a>
-      <H3>Expanded Script:</H3>
+      <p class="wordcount-sectiontitle">Expanded Script:</p>
       <p class="description-box"><%= safe_join(@expanded_script.split(/\r*\n/), "<br />".html_safe) %></p>
     </div>
   </div>
 
   <div class="row">
     <div class="col-xs-12"><a name="word_counts"></a>
-      <H3>Word Counts:</H3>
+      <p class="wordcount-sectiontitle">Word Counts:</p>
     </div>
-    <% @word_list.each do |aword, acount| %>
-      <div class="col-xs-6 col-sm-4 col-md-2 col-lg-1"><%= aword %> = <%= acount %></div>
+    <% @hybrid_word_list.each do |a_word, a_count| %>
+      <div class="col-xs-6 col-sm-4 col-md-2 col-lg-1"><%= a_word %> = <%=
+        @expanded_word_list[a_word] %><%= if a_count > 0
+          " (+#{a_count})"
+        elsif a_count < 0
+          " (#{a_count})"
+        else
+          ""
+        end %></div>
     <% end %>
+    <p>&nbsp;</p>
   </div>
 
   <div class="row">
     <div class="col-xs-12"><a name="differences"></a>
-      <H3>Expansion Differences:</H3>
+      <p class="wordcount-sectiontitle">Expansion Differences:</p>
       <p>Avoid embarassing mistakes in the expansion (it's not perfect).  Look
         for things like "$ 3.21 million" becoming "three dollars and twenty-one
         cents million".  Rewrite the original script to avoid glitches like
@@ -141,7 +154,7 @@
 <HR>
 
 <p>If you have ideas for counting features that you'd like to see, or notice a
-bug, please <a href="/contact">contact us</a> or visit
+bug, please <%= link_to "contact us", contact_path %> or visit
 <a href="https://www.facebook.com/realcount">RealCount on Facebook</a> or send
 a Tweet tagged with <a href="https://twitter.com/search?q=RealWordCount&f=live&vertical=default">#RealWordCount</a>
 (#RealCount is over-used for vote counting).</p>
@@ -153,9 +166,10 @@ in the future.  Since you aren't logging in, you don't need cookies (they're
 only used for identifying logged in people).  Also no third party tracking
 (like Google or Facebook Analytics) is done on our web site.  Every web page
 access is logged (network address, time, and inputs including the script),
-though the logs are discarded whenever the web server is rebooted (typically
-weekly).  If you don't like logging, you can set up your own copy of this web
-site, possibly in a desktop virtual machine.  Real logs are made of wood.  Use
-of this experimental web site is at your own risk and expense; we don't
-guarantee anything.</small></p>
+and the system operator may see your script scrolling by in the log window, but
+we won't keep your data and the log files are discarded whenever the web server
+is rebooted (typically weekly).  If you don't like logging, you can set up your
+own copy of this web site, possibly in a desktop virtual machine.  Real logs
+are made of wood.  Use of this experimental web site is at your own risk and
+expense; we don't guarantee anything.</small></p>
 

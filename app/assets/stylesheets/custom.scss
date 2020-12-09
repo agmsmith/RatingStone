@@ -135,9 +135,18 @@ h1 {
 }
 
 h2 {
-  font-size: 1.2em;
+  font-size: 2em;
   letter-spacing: -1px;
   margin-bottom: 30px;
+  text-align: center;
+  font-weight: normal;
+  color: $gray-light;
+}
+
+h3 {
+  font-size: 1.5em;
+  letter-spacing: 0px;
+  margin-bottom: 20px;
   text-align: center;
   font-weight: normal;
   color: $gray-light;
@@ -284,6 +293,16 @@ aside {
   }
 }
 
+/* Word Counter page */
+
+.wordcount-sectiontitle {
+  color: black;
+  font-size: 1.5em;
+  font-weight: bold;
+  letter-spacing: 0px;
+  margin-bottom: 0px;
+  text-align: left;
+}
 
 /* Unidentified stuff */
 
