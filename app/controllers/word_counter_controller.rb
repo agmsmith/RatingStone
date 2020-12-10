@@ -30,12 +30,14 @@ class WordCounterController < ApplicationController
       @selected_expansions[:exp_hyphens] = true if params[:exp_hyphens]
     else # First time run, use some demo text and default settings.
       @vo_script = "Replace this text with your script.  For example, save " \
-        "$123.45 on word-costs in 2020, compared to 1990's fees; that's a " \
-        "50% savings!  Only 1,234.56 seconds remain before this offer " \
+        "$123.45 on word-costs in 2020, compared to 1990's fees of " \
+        "$1.125/word; that's a " \
+        "40-50% savings!  Only 1,234.56 seconds remain before this offer " \
         "expires!  Give us a call at 1-800-555-1234, but before 2020.12.07 " \
-        "6:01 a.m. (that's December 7th, 2020, 06:01) or...  Alternatively, " \
+        "6:01 a.m. (that's December 7th, 2020, 0601 military time) or...  " \
+        "Alternatively, " \
         "visit https://ratingstone.agmsmith.ca/server01/about for more " \
-        "information or search on www.google.com for hints & tips (use " \
+        "information or search on www.google.com for hints/tips (use " \
         "#RealWordCount) or write to agmsrepsys@gmail.com.  On Facebook " \
         "we're @RealCount."
       @selected_expansions[:exp_dollars] = true
@@ -109,21 +111,31 @@ class WordCounterController < ApplicationController
 
   def expand_dollars
     # Look for $ 123,456.78 type things.  The fractional .78 (two digits
-    # required) and commas and space after the dollar sign are optional.
+    # means cents, otherwise it's a decimal fraction) and commas and space
+    # after the dollar sign are optional.
     # $12.34 becomes "twelve dollars and thirty four cents"
+    # $1.234 becomes "one point two three four dollars"
     re = /\$[[:space:]]*(?<number>[0-9][0-9,]*)(?<fraction>\.[0-9]+)?/
     while (result = re.match(@expanded_script))
-      number = result[:number].delete(',').to_i
-      expanded_text = if (number == 0) && result[:fraction]
-        '' # So that $0.23 comes out as just "twenty-three cents".
+      number = result[:number].delete(',')
+      fraction = result[:fraction]
+      if fraction && fraction.length != 3 # More or less than 2 digits at end.
+        real_number = (number + fraction).to_f
+        expanded_text = NumbersInWords.in_words(real_number) + ' dollars'
       else
-        NumbersInWords.in_words(number) + ' ' + 'dollar'.pluralize(number)
-      end
-      if result[:fraction]
-        fraction = result[:fraction].delete_prefix('.').to_i
-        expanded_text += " and " unless expanded_text.empty?
-        expanded_text += NumbersInWords.in_words(fraction) + ' ' +
-          'cent'.pluralize(fraction)
+        int_number = number.to_i
+        expanded_text = if (int_number == 0) && fraction
+          '' # So that $0.23 comes out as just "twenty-three cents".
+        else
+          NumbersInWords.in_words(int_number) + ' ' +
+            'dollar'.pluralize(int_number)
+        end
+        if fraction
+          int_fraction = fraction.delete_prefix('.').to_i
+          expanded_text += " and " unless expanded_text.empty?
+          expanded_text += NumbersInWords.in_words(int_fraction) + ' ' +
+            'cent'.pluralize(int_fraction)
+        end
       end
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
@@ -255,12 +267,14 @@ class WordCounterController < ApplicationController
     # Extract a whole URL from the text then apply several processing steps to
     # it then put the expanded version back.  Needs to work for
     # https://www.example.com/stuff/more/ and for mit.edu but not 2.3 or p.m.
+    # or one/two.
     re = %r{
       (?<spacebefore>[[:space:]]) # Space before the URL required.
       (?<http>[[:alpha:]]+://)? # Optional HTTP:// or HTTPS:// or FTP:// prefix.
       (?<middle>[[:alpha:]] # No initial digit allowed, start with a letter.
         [[:alnum:]]+ # Finish the first word, 2 or more letters.
-        ([./@:][[:alnum:]][[:alnum:]]+)+ # Need more separators and more words.
+        ([.@:][[:alnum:]][[:alnum:]]+) # Password, userid, port but no slash.
+        ([./@:][[:alnum:]][[:alnum:]]+)* # Rest of the separators and words.
         /?) # Optional trailing slash.
       (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
     }xi # x for ignore spaces in definition, i for case insensitive.
