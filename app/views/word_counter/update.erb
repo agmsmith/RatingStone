@@ -9,9 +9,9 @@
     align: "center") %></p>
 </div>
 
-<%= form_with(local: true) do %>
+<%= form_with(url: wordcounter_path + '#main_count', local: true) do %>
   <div class="row">
-    <div class="col-xs-12 col-sm-6">
+    <div class="col-xs-12 col-sm-6"><a name="main_count"></a>
       <H1><%= @expanded_word_count %> <%= 'Word'.pluralize(@expanded_word_count) %></H1>
       <H2>Was <%= @original_word_count %> <%= 'word'.pluralize(@original_word_count) %>
       unexpanded;
