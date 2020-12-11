@@ -46,6 +46,20 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_atsignletter, "Expand @ At-sign + Word") %>
+      <%= check_box_tag(:exp_atsignletter, true, @selected_expansions[:exp_atsignletter]) %>
+      <p>An @ with a space in front and a letter immediately afterwards becomes
+        "at-sign".  @Twitter becomes: at-sign Twitter</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_atsignnumber, "Expand @ At + Number") %>
+      <%= check_box_tag(:exp_atsignnumber, true, @selected_expansions[:exp_atsignnumber]) %>
+      <p>An @ with a number or dollar sign somewhere afterwards becomes
+        "at".  Stock@$9.25 becomes: Stock at $9.25</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_dollars, "Expand Dollar Currency") %>
       <%= check_box_tag(:exp_dollars, true, @selected_expansions[:exp_dollars]) %>
       <p>$ 123,456.78 becomes: one hundred and twenty-three thousand four
@@ -81,6 +95,27 @@
       <%= label_tag(:exp_say_telephone_number, "Say Telephone Number") %>
       <%= check_box_tag(:exp_say_telephone_number, true, @selected_expansions[:exp_say_telephone_number]) %>
       <p>Says "telephone number" before the local portion of a telephone number.  (800) 234-5678 or 800-234-5678 becomes: eight hundred telephone number two three four five six seven eight.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_percent, "Expand % Percent") %>
+      <%= check_box_tag(:exp_percent, true, @selected_expansions[:exp_percent]) %>
+      <p>A % sign somewhere after a number is expanded to the word "percent".
+        12% becomes: 12 percent</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_hashtag, "Expand # Hashtag") %>
+      <%= check_box_tag(:exp_hashtag, true, @selected_expansions[:exp_hashtag]) %>
+      <p>A # sign with a space before and a letter immediately afterwards expands to
+         "hashtag".  #RealWordCount becomes: hashtag RealWordCount</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_number_of, "Expand # Number") %>
+      <%= check_box_tag(:exp_number_of, true, @selected_expansions[:exp_number_of]) %>
+      <p>A # sign with a space before and a digit somewhere afterwards expands to
+         "number".  #3 becomes: number 3</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">

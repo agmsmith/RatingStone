@@ -12,6 +12,12 @@ require 'diffy'
 # doing voice-over work and suggested this project.  AGMS20201130
 
 class WordCounterController < ApplicationController
+  EXPANSION_SYMBOLS = [ # In alphabetical order for easier manual additions.
+   :exp_atsignletter, :exp_atsignnumber, :exp_dash_numbers,
+   :exp_dollars, :exp_hashtag, :exp_hyphens, :exp_na_telephone,
+   :exp_number_of, :exp_numbers, :exp_percent, :exp_say_area_code,
+   :exp_say_telephone_number, :exp_urls, :exp_years]
+
   def update
     @vo_script = params[:vo_script]
     @selected_expansions = Hash.new(false)
@@ -19,19 +25,16 @@ class WordCounterController < ApplicationController
       # Use an empty script if Clear button pressed, otherwise remove the blank
       # line that the Form textarea adds at front, depending on the browser.
       @vo_script = params[:commit] == 'Clear' ? '' : @vo_script.strip
-      @selected_expansions[:exp_dollars] = true if params[:exp_dollars]
-      @selected_expansions[:exp_urls] = true if params[:exp_urls]
-      @selected_expansions[:exp_na_telephone] = true if params[:exp_na_telephone]
-      @selected_expansions[:exp_say_area_code] = true if params[:exp_say_area_code]
-      @selected_expansions[:exp_say_telephone_number] = true if params[:exp_say_telephone_number]
-      @selected_expansions[:exp_dash_numbers] = true if params[:exp_dash_numbers]
-      @selected_expansions[:exp_years] = true if params[:exp_years]
-      @selected_expansions[:exp_numbers] = true if params[:exp_numbers]
-      @selected_expansions[:exp_hyphens] = true if params[:exp_hyphens]
+
+      # Copy known expansion settings to our local storage.  If a checkbox
+      # isn't checked then the param is missing rather than false.
+      EXPANSION_SYMBOLS.each do |a_symbol|
+        @selected_expansions[a_symbol] = true if params[a_symbol]
+      end
     else # First time run, use some demo text and default settings.
       @vo_script = "Replace this text with your script.  For example, save " \
         "$123.45 on word-costs in 2020, compared to 1990's fees of " \
-        "$1.125/word; that's a " \
+        "$1.125/word; or 3@$0.75, that's a " \
         "40-50% savings!  Only 1,234.56 seconds remain before this offer " \
         "expires!  Give us a call at 1-800-555-1234, but before 2020.12.07 " \
         "6:01 a.m. (that's December 7th, 2020, 0601 military time) or...  " \
@@ -40,22 +43,24 @@ class WordCounterController < ApplicationController
         "information or search on www.google.com for hints/tips (use " \
         "#RealWordCount) or write to agmsrepsys@gmail.com.  On Facebook " \
         "we're @RealCount."
-      @selected_expansions[:exp_dollars] = true
-      @selected_expansions[:exp_urls] = true
-      @selected_expansions[:exp_na_telephone] = true
+      EXPANSION_SYMBOLS.each do |a_symbol|
+        @selected_expansions[a_symbol] = true
+      end
       @selected_expansions[:exp_say_area_code] = false
       @selected_expansions[:exp_say_telephone_number] = false
-      @selected_expansions[:exp_dash_numbers] = true
-      @selected_expansions[:exp_years] = true
-      @selected_expansions[:exp_numbers] = true
-      @selected_expansions[:exp_hyphens] = true
     end
 
     @expanded_script = ' ' + @vo_script + ' ' # Spaces to avoid edge conditions.
 
+    # Order of operations here is significant.
+    expand_at_sign_letter if @selected_expansions[:exp_atsignletter]
+    expand_at_sign_number if @selected_expansions[:exp_atsignnumber]
     expand_dollars if @selected_expansions[:exp_dollars]
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
+    expand_percent if @selected_expansions[:exp_percent]
+    expand_hashtag if @selected_expansions[:exp_hashtag]
+    expand_number_of if @selected_expansions[:exp_number_of]
     expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
     expand_years if @selected_expansions[:exp_years]
     expand_numbers if @selected_expansions[:exp_numbers]
@@ -109,6 +114,43 @@ class WordCounterController < ApplicationController
 
   # Various methods for expanding things.  Input and output is @expanded_script.
 
+  def expand_at_sign_letter
+    # An @ with a space in front and a letter immediately afterwards becomes
+    # "at-sign".  @Twitter becomes: at-sign Twitter
+    re = %r{(?<spacebefore>[[:space:]])
+      @ # The at sign we're looking for.
+      (?<letterafter>[[:alpha:]]) # Require a letter to start the next word.
+      }x
+    while (result = re.match(@expanded_script))
+      expanded_text = result[:spacebefore] + 'at-sign' + ' ' +
+        result[:letterafter]
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
+  def expand_at_sign_number
+    # An @ with a number or dollar sign somewhere afterwards becomes
+    # "at".  Stock@$9.25 becomes: Stock at $9.25
+    re = %r{
+      (?<spacebefore>[[:space:]]?) # Optional space before.
+      @ # The at sign we're looking for.
+      (?<spaceafter>[[:space:]]*) # Optional space after.
+      (?<letterafter>[0-9$]) # Require a number or dollar for the next word.
+      }x
+    while (result = re.match(@expanded_script))
+      expanded_text = if result[:spacebefore].nil? || result[:spacebefore].empty?
+        ' '
+      else
+        result[:spacebefore]
+      end
+      expanded_text += 'at' +
+        ((result[:spaceafter].nil? || result[:spaceafter].empty?) ? ' ' :
+        result[:spaceafter])
+      expanded_text += result[:letterafter]
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
   def expand_dollars
     # Look for $ 123,456.78 type things.  The fractional .78 (two digits
     # means cents, otherwise it's a decimal fraction) and commas and space
@@ -138,6 +180,31 @@ class WordCounterController < ApplicationController
         end
       end
       @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
+  def expand_urls
+    # Extract a whole URL from the text then apply several processing steps to
+    # it then put the expanded version back.  Needs to work for
+    # https://www.example.com/stuff/more/ and for mit.edu but not 2.3 or p.m.
+    # or one/two.
+    re = %r{
+      (?<spacebefore>[[:space:]]) # Space before the URL required.
+      (?<http>[[:alpha:]]+://)? # Optional HTTP:// or HTTPS:// or FTP:// prefix.
+      (?<middle>[[:alpha:]] # No initial digit allowed, start with a letter.
+        [[:alnum:]]+ # Finish the first word, 2 or more letters.
+        ([.@:][[:alnum:]][[:alnum:]]+) # Password, userid, port but no slash.
+        ([./@:][[:alnum:]][[:alnum:]]+)* # Rest of the separators and words.
+        /?) # Optional trailing slash.
+      (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
+    }xi # x for ignore spaces in definition, i for case insensitive.
+    while (result = re.match(@expanded_script))
+      @expanded_script = result.pre_match + result[:spacebefore] +
+        (result[:http] ? result[:http].gsub(%r{://}, " colon slash slash ") : '') +
+        result[:middle]
+          .gsub(/\./, ' dot ').gsub(%r{/}, ' slash ')
+          .gsub(/@/, ' at ').gsub(/:/, ' colon ').strip +
+        result[:spaceafter] + result.post_match
     end
   end
 
@@ -202,6 +269,54 @@ class WordCounterController < ApplicationController
     end
   end
 
+  def expand_percent
+    # A % sign after a number is expanded to the word "percent".
+    # 12% becomes: 12 percent.  Can have space so "13 %." becomes "13 percent."
+    re = %r{(?<digitbefore>[0-9]) # Starts with a digit.
+      (?<spacebefore>[[:space:]]*) # Optional spaces between digit and %.
+      % # The percent sign.
+      (?<letterafter>[^[[:space:]][[:punct:]]]?) # Stuff after needs distance?
+      }x
+    while (result = re.match(@expanded_script))
+      expanded_text = result[:digitbefore] +
+        (result[:spacebefore].nil? || result[:spacebefore].empty? ? ' ' :
+        result[:spacebefore]) + "percent"
+      if result[:letterafter] && !result[:letterafter].empty?
+        expanded_text += ' ' + result[:letterafter]
+      end
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
+  def expand_hashtag
+    # A # sign with a space before and a letter afterwards expands to
+    # "hashtag".  #RealWordCount becomes: hashtag RealWordCount
+    re = %r{(?<spacebefore>[[:space:]])
+      \# # The octothorpe number sign.
+      (?<letterafter>[[:alpha:]])
+      }x
+    while (result = re.match(@expanded_script))
+      expanded_text = result[:spacebefore] + 'hashtag ' + result[:letterafter]
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
+  def expand_number_of
+    # A #sign before number is expanded to the word "number".
+    # #12 becomes: number 12.  Can have space so "# 13." becomes "number 13."
+    re = %r{(?<spacebefore>[[:space:]]) # Need a space before the #.
+      \# # The octothorpe number sign.
+      (?<interspace>[[:space:]]*) # Optional spaces between # and digit.
+      (?<digitafter>[0-9]) # Ends with a digit.
+      }x
+    while (result = re.match(@expanded_script))
+      expanded_text = result[:spacebefore] + 'number' +
+        (result[:interspace].nil? || result[:interspace].empty? ? ' ' :
+        result[:interspace]) + result[:digitafter]
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
   def expand_dash_numbers
     # Expand dashed numbers into numbers separated by the word "to".
     # So "12-45" or "12 - 45" expands to "12 to 45".
@@ -260,31 +375,6 @@ class WordCounterController < ApplicationController
       end
       @expanded_script = result.pre_match + expanded_text + result[:after] +
         result.post_match
-    end
-  end
-
-  def expand_urls
-    # Extract a whole URL from the text then apply several processing steps to
-    # it then put the expanded version back.  Needs to work for
-    # https://www.example.com/stuff/more/ and for mit.edu but not 2.3 or p.m.
-    # or one/two.
-    re = %r{
-      (?<spacebefore>[[:space:]]) # Space before the URL required.
-      (?<http>[[:alpha:]]+://)? # Optional HTTP:// or HTTPS:// or FTP:// prefix.
-      (?<middle>[[:alpha:]] # No initial digit allowed, start with a letter.
-        [[:alnum:]]+ # Finish the first word, 2 or more letters.
-        ([.@:][[:alnum:]][[:alnum:]]+) # Password, userid, port but no slash.
-        ([./@:][[:alnum:]][[:alnum:]]+)* # Rest of the separators and words.
-        /?) # Optional trailing slash.
-      (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
-    }xi # x for ignore spaces in definition, i for case insensitive.
-    while (result = re.match(@expanded_script))
-      @expanded_script = result.pre_match + result[:spacebefore] +
-        (result[:http] ? result[:http].gsub(%r{://}, " colon slash slash ") : '') +
-        result[:middle]
-          .gsub(/\./, ' dot ').gsub(%r{/}, ' slash ')
-          .gsub(/@/, ' at ').gsub(/:/, ' colon ').strip +
-        result[:spaceafter] + result.post_match
     end
   end
 
