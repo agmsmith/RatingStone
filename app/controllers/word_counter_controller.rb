@@ -168,20 +168,19 @@ class WordCounterController < ApplicationController
     re = /\$[[:space:]]*(?<number>[0-9][0-9,]*)(?<fraction>\.[0-9]+)?/
     while (result = re.match(@expanded_script))
       number = result[:number].delete(',')
-      fraction = result[:fraction]
+      fraction = result[:fraction] # Remember it includes the period in front.
+      int_number = number.to_i
+      # Awkward code to avoid teensy limit of 3 nested blocks in Shopify rules.
+      expanded_text = if (int_number == 0) && fraction
+        '' # So that $0.23 comes out as just "twenty-three cents".
+      else
+        NumbersInWords.in_words(int_number) + ' ' +
+          'dollar'.pluralize(int_number)
+      end
       if fraction && fraction.length != 3 # More or less than 2 digits at end.
         real_number = (number + fraction).to_f
         expanded_text = NumbersInWords.in_words(real_number) + ' dollars'
-      else
-        int_number = number.to_i
-        expanded_text = if (int_number == 0) && fraction
-          '' # So that $0.23 comes out as just "twenty-three cents".
-        else
-          NumbersInWords.in_words(int_number) + ' ' +
-            'dollar'.pluralize(int_number)
-        end
-      end
-      if fraction && fraction.length == 2 # Avoid teensy limit of 3 nested blocks.
+      elsif fraction && fraction.length == 3
         int_fraction = fraction.delete_prefix('.').to_i
         expanded_text += ' and ' unless expanded_text.empty?
         expanded_text += NumbersInWords.in_words(int_fraction) + ' ' +
@@ -379,8 +378,9 @@ class WordCounterController < ApplicationController
     # Pure digit numbers (no commas or periods) starting with 0 get read
     # out as individual digits.  So 8:05 becomes 8:zero five
     # Zero becomes "oh" if :exp_leadingohs is on.
-    re = %r{(?<spacebefore>[[:space:]]?) # Test for space before number.
-      (?<number>[0-9]+)
+    re = %r{(?<spacebefore>[[[:space:]][[:punct:]]]?)
+      (?<![0-9]|[0-9],) # Make sure there isn't a number before the number!
+      (?<number>0[0-9]+) # Zero and at least one digit, single 0 not handled.
       (?<spaceafter>[[[:space:]][[:punct:]]]?) # Test for spaceish afterwards.
     }x
     while (result = re.match(@expanded_script))
