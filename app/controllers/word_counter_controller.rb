@@ -13,10 +13,12 @@ require 'diffy'
 
 class WordCounterController < ApplicationController
   EXPANSION_SYMBOLS = [ # In alphabetical order for easier manual additions.
-   :exp_atsignletter, :exp_atsignnumber, :exp_dash_numbers,
-   :exp_dollars, :exp_hashtag, :exp_hyphens, :exp_na_telephone,
-   :exp_number_of, :exp_numbers, :exp_percent, :exp_say_area_code,
-   :exp_say_telephone_number, :exp_urls, :exp_years]
+    :exp_atsignletter, :exp_atsignnumber, :exp_dash_numbers,
+    :exp_dollars, :exp_hashtag, :exp_hyphens,
+    :exp_leadingohs, :exp_leadingzeroes, :exp_na_telephone,
+    :exp_number_of, :exp_numbers, :exp_percent, :exp_say_area_code,
+    :exp_say_telephone_number, :exp_urls, :exp_years
+  ]
 
   def update
     @vo_script = params[:vo_script]
@@ -50,7 +52,9 @@ class WordCounterController < ApplicationController
       @selected_expansions[:exp_say_telephone_number] = false
     end
 
-    @expanded_script = ' ' + @vo_script + ' ' # Spaces to avoid edge conditions.
+    # Spaces to avoid edge conditions.  Three spaces so "9" at very end can have
+    # three characters after it for the st, th, rd plus space test.
+    @expanded_script = '   ' + @vo_script + '   '
 
     # Order of operations here is significant.
     expand_at_sign_letter if @selected_expansions[:exp_atsignletter]
@@ -63,6 +67,7 @@ class WordCounterController < ApplicationController
     expand_number_of if @selected_expansions[:exp_number_of]
     expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
     expand_years if @selected_expansions[:exp_years]
+    expand_leading_zeroes if @selected_expansions[:exp_leadingzeroes]
     expand_numbers if @selected_expansions[:exp_numbers]
     expand_hyphens if @selected_expansions[:exp_hyphens]
 
@@ -144,8 +149,11 @@ class WordCounterController < ApplicationController
         result[:spacebefore]
       end
       expanded_text += 'at' +
-        ((result[:spaceafter].nil? || result[:spaceafter].empty?) ? ' ' :
-        result[:spaceafter])
+        if result[:spaceafter].nil? || result[:spaceafter].empty?
+          ' '
+        else
+          result[:spaceafter]
+        end
       expanded_text += result[:letterafter]
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
@@ -172,12 +180,12 @@ class WordCounterController < ApplicationController
           NumbersInWords.in_words(int_number) + ' ' +
             'dollar'.pluralize(int_number)
         end
-        if fraction
-          int_fraction = fraction.delete_prefix('.').to_i
-          expanded_text += " and " unless expanded_text.empty?
-          expanded_text += NumbersInWords.in_words(int_fraction) + ' ' +
-            'cent'.pluralize(int_fraction)
-        end
+      end
+      if fraction && fraction.length == 2 # Avoid teensy limit of 3 nested blocks.
+        int_fraction = fraction.delete_prefix('.').to_i
+        expanded_text += ' and ' unless expanded_text.empty?
+        expanded_text += NumbersInWords.in_words(int_fraction) + ' ' +
+          'cent'.pluralize(int_fraction)
       end
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
@@ -279,8 +287,12 @@ class WordCounterController < ApplicationController
       }x
     while (result = re.match(@expanded_script))
       expanded_text = result[:digitbefore] +
-        (result[:spacebefore].nil? || result[:spacebefore].empty? ? ' ' :
-        result[:spacebefore]) + "percent"
+        if result[:spacebefore].nil? || result[:spacebefore].empty?
+          ' '
+        else
+          result[:spacebefore]
+        end
+      expanded_text += "percent"
       if result[:letterafter] && !result[:letterafter].empty?
         expanded_text += ' ' + result[:letterafter]
       end
@@ -311,8 +323,12 @@ class WordCounterController < ApplicationController
       }x
     while (result = re.match(@expanded_script))
       expanded_text = result[:spacebefore] + 'number' +
-        (result[:interspace].nil? || result[:interspace].empty? ? ' ' :
-        result[:interspace]) + result[:digitafter]
+        if result[:interspace].nil? || result[:interspace].empty?
+          ' '
+        else
+          result[:interspace]
+        end
+      expanded_text += result[:digitafter]
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
   end
@@ -359,22 +375,64 @@ class WordCounterController < ApplicationController
     end
   end
 
-  def expand_numbers
-    # Expand positive numbers, which can be decimal fractions.  The plus or
-    # minus sign in front will be left alone, and read normally, maybe.
-    # Don't expand if # followed by letters, like "22nd", would get the awkward
-    # "twenty twond".  Punctuation or spaces are expected after the number.
-    # Look for 123,456.789 type things.  Avoid ending in a comma.
-    re = /(?<number>[0-9](,?[0-9])*(\.[0-9]+)?)(?<after>[[:space:]]|[[:punct:]])/
+  def expand_leading_zeroes
+    # Pure digit numbers (no commas or periods) starting with 0 get read
+    # out as individual digits.  So 8:05 becomes 8:zero five
+    # Zero becomes "oh" if :exp_leadingohs is on.
+    re = %r{(?<spacebefore>[[:space:]]?) # Test for space before number.
+      (?<number>[0-9]+)
+      (?<spaceafter>[[[:space:]][[:punct:]]]?) # Test for spaceish afterwards.
+    }x
     while (result = re.match(@expanded_script))
+      expanded_text = if result[:spacebefore] && !result[:spacebefore].empty?
+        result[:spacebefore]
+      else # No space before, need to separate our new words from prior text.
+        ' '
+      end
+      number_text = number_to_digits(result[:number])
+      number_text = number_text.gsub(/zero/, 'oh') if @selected_expansions[:exp_leadingohs]
+      expanded_text += number_text
+      expanded_text += if result[:spaceafter] && !result[:spaceafter].empty?
+        result[:spaceafter]
+      else # No space after, need to separate our new words from following text.
+        ' '
+      end
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
+  def expand_numbers
+    # Positive numbers are expanded into words.  Note that the numbers can
+    # be anywhere, even inside a word, so X15 or 9a become X fifteen or
+    # nine a.  Though if it's followed by "st", "nd", "rd" or "th" then it
+    # won't be expanded (avoids 22nd -> twenty twond).  Numbers can have commas and
+    # decimal points, such as 123,456.78 which becomes: one hundred and
+    # twenty-three thousand four hundred and fifty-six point seven eight.
+    # The plus or minus sign in front will be left alone, and handled elsewhere.
+    # Avoid ending in a comma.
+    re = %r{
+      (?<before>[[[:space:]][[:punct:]]])? # Is there a space before the number?
+      (?<number>[0-9](,?[0-9])*(\.[0-9]+)?) # Number not ending in a comma.
+      (?!st[[[:space:]][[:punct:]]]| # Not followed by st for 1st.
+      nd[[[:space:]][[:punct:]]]| # Not followed by nd for 2nd.
+      rd[[[:space:]][[:punct:]]]| # Not followed by rd for 3rd.
+      th[[[:space:]][[:punct:]]]| # Not followed by th for 4th.
+      [0-9]) # Not followed by a digit, should be part of the number.
+    }x
+    while (result = re.match(@expanded_script))
+      expanded_text = if result[:before] && !result[:before].empty?
+        result[:before]
+      else
+        ' ' # Need to insert a space before our new number text.
+      end
       number = result[:number].delete(',')
-      expanded_text = if number.include?('.')
+      expanded_text += if number.include?('.')
         NumbersInWords.in_words(number.to_f)
       else
         NumbersInWords.in_words(number.to_i)
       end
-      @expanded_script = result.pre_match + expanded_text + result[:after] +
-        result.post_match
+      expanded_text += ' ' unless /^[[[:space:]][[:punct:]]]/.match(result.post_match)
+      @expanded_script = result.pre_match + expanded_text + result.post_match
     end
   end
 

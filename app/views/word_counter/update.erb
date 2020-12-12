@@ -133,10 +133,29 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_leadingzeroes, "Expand Leading Zero Numbers") %>
+      <%= check_box_tag(:exp_leadingzeroes, true, @selected_expansions[:exp_leadingzeroes]) %>
+      <p>Pure digit numbers (no commas or periods) starting with 0 get read
+        out as individual digits.  So 8:05 becomes 8:zero five</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_leadingohs, "Say Oh insead of Zero") %>
+      <%= check_box_tag(:exp_leadingohs, true, @selected_expansions[:exp_leadingohs]) %>
+      <p>Change Expand Leading Zeroes to use "oh" instead of "zero".
+        So 8:05 becomes 8:oh five</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_numbers, "Expand Numbers into Words") %>
       <%= check_box_tag(:exp_numbers, true, @selected_expansions[:exp_numbers]) %>
-      <p>Positive numbers like 123,456.78 become: one hundred and twenty-three
-        thousand four hundred and fifty-six point seven eight</p>
+      <p>Positive numbers are expanded into words.  Note that the numbers can
+        be anywhere, even inside a word, so X15 or 9a become X fifteen or
+        nine a.  Though if it's followed by "st", "nd", "rd" or "th" then it
+        won't be expanded (avoids 22nd -> twenty twond).  Numbers can have commas and
+        decimal points, such as 123,456.78 which
+        becomes: one hundred and twenty-three thousand four hundred and
+        fifty-six point seven eight.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
