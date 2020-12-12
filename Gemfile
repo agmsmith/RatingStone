@@ -10,6 +10,7 @@ gem 'rails', '~> 6'
 # Use a recent version of interactive ruby to
 # avoid duplicate loads with system's version of irb.
 gem 'irb', '~> 1'
+gem 'forwardable', '~> 1'
 # Use a recent version of stringio to avoid the default one.
 gem 'stringio', '~> 0.1'
 # Use Puma as the app server
