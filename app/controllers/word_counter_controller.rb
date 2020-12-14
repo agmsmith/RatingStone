@@ -44,16 +44,16 @@ class WordCounterController < ApplicationController
         Save $123.45 on word-costs in 2020, compared to 1990's fees of $1.125/word; or 3@$0.75, that's a 40-50% savings!  Much better than in the 1950s!
 
         Numbers, commas and minus signs:
-        Only -1,234.56 seconds remain before this offer expires!
+        Only -1,234.56 seconds remain before this offer expires!  Take the #14 bus and go to room #175, Industrial Avenue site.
 
         Telephone numbers:
         Give us a call at 1-800-555-1234, or (613) 555-7648 to save us a few dollars, or if you're in town, it's 555-2911.  In an emergency call 911.
 
         Leading zero numbers, ellipsis:
-        But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020, 0601 military time) or...
+        But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020, 0601 military time) or….. try in the evening at 1930 (is that a date… or a time?).  
 
         URLs, hashtags, at-signs.
-        Alternatively, visit https://ratingstone.agmsmith.ca/server01/about/ for more information or search on www.google.com for hints/tips (use #RealWordCount) or write to agmsrepsys@gmail.com.  On Facebook we're @RealCount.
+        Alternatively, visit https://ratingstone.agmsmith.ca/server01/about/ for more information or search on www.google.com (https://www.google.ca/search?hl=en-CA&q=Real+Count) for hints/tips (use #RealWordCount) or write to agmsrepsys@gmail.com.  On Facebook @RealCount is #1 in the category!
 
         Metric units dictionary.
         Our pool heater can heat 3m3 per minute, of water with a density of 1.0 g/cm3, increasing the temperature by 5C with 20,000W of energy (1.3kg/h of natural gas).  With 5cm diamater (19.63cm2 cross sectional area), that's a 8km/h flow speed.
@@ -217,12 +217,12 @@ class WordCounterController < ApplicationController
     # https://www.example.com/stuff/more/ and for mit.edu but not 2.3 or p.m.
     # or one/two.
     re = %r{
-      (?<spacebefore>[[:space:]]) # Space before the URL required.
+      (?<spacebefore>[[[:space:]]\("']) # Space before the URL required.
       (?<http>[[:alpha:]]+://)? # Optional HTTP:// or HTTPS:// or FTP:// prefix.
       (?<middle>[[:alpha:]] # No initial digit allowed, start with a letter.
         [[:alnum:]]+ # Finish the first word, 2 or more letters.
         ([.@:][[:alnum:]][[:alnum:]]+) # Password, userid, port but no slash.
-        ([./@:][[:alnum:]][[:alnum:]]+)* # Rest of the separators and words.
+        ([.@:/_\-?=%&+][[:alnum:]]+)* # Rest of the separators and words.
         /?) # Optional trailing slash.
       (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
     }xi # x for ignore spaces in definition, i for case insensitive.
@@ -231,7 +231,11 @@ class WordCounterController < ApplicationController
         (result[:http] ? result[:http].gsub(%r{://}, " colon slash slash ") : '') +
         result[:middle]
           .gsub(/\./, ' dot ').gsub(%r{/}, ' slash ')
-          .gsub(/@/, ' at ').gsub(/:/, ' colon ').strip +
+          .gsub(/@/, ' at ').gsub(/:/, ' colon ')
+          .gsub(/_/, ' underscore ').gsub(/-/, ' dash ')
+          .gsub(/\?/, ' question mark ').gsub(/=/, ' equals ')
+          .gsub(/%/, ' percent ').gsub(/&/, ' ampersand ')
+          .gsub(/\+/, ' plus ').strip +
         result[:spaceafter] + result.post_match
     end
   end
