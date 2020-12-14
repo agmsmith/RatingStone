@@ -2,8 +2,8 @@
 # of editing this file, please use the migrations feature of Active Record to
 # incrementally modify your database, and then regenerate this schema definition.
 #
-# This file is the source Rails uses to define your schema when running `rails
-# db:schema:load`. When creating a new database, `rails db:schema:load` tends to
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
 # be faster and is potentially less error prone than running all of your
 # migrations from scratch. Old migrations may fail to apply correctly if those
 # migrations use external dependencies or application code.
@@ -34,23 +34,23 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
   end
 
   create_table "aux_ledgers", force: :cascade do |t|
-    t.integer "parent_id", null: false
-    t.integer "child_id", null: false
+    t.bigint "parent_id", null: false
+    t.bigint "child_id", null: false
     t.index ["child_id"], name: "index_aux_ledgers_on_child_id"
     t.index ["parent_id"], name: "index_aux_ledgers_on_parent_id"
   end
 
   create_table "aux_links", force: :cascade do |t|
-    t.integer "parent_id", null: false
-    t.integer "child_id", null: false
+    t.bigint "parent_id", null: false
+    t.bigint "child_id", null: false
     t.index ["child_id"], name: "index_aux_links_on_child_id"
     t.index ["parent_id"], name: "index_aux_links_on_parent_id"
   end
 
   create_table "clips", force: :cascade do |t|
-    t.integer "ledger_user_id", null: false
-    t.integer "ledger_object_id"
-    t.integer "link_object_id"
+    t.bigint "ledger_user_id", null: false
+    t.bigint "ledger_object_id"
+    t.bigint "link_object_id"
     t.string "description", default: ""
     t.index ["ledger_object_id"], name: "index_clips_on_ledger_object_id"
     t.index ["ledger_user_id"], name: "index_clips_on_ledger_user_id"
@@ -58,7 +58,7 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
   end
 
   create_table "group_settings", force: :cascade do |t|
-    t.integer "ledger_full_group_id", null: false
+    t.bigint "ledger_full_group_id", null: false
     t.boolean "auto_approve_non_member_posts", default: false
     t.boolean "auto_approve_member_posts", default: true
     t.boolean "auto_approve_members", default: false
@@ -79,12 +79,12 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
 
   create_table "ledger_bases", force: :cascade do |t|
     t.string "type", default: "LedgerBase"
-    t.integer "original_id"
-    t.integer "amended_id"
+    t.bigint "original_id"
+    t.bigint "amended_id"
     t.boolean "deleted", default: false
     t.boolean "has_owners", default: false
     t.boolean "is_latest_version", default: true
-    t.integer "creator_id", null: false
+    t.bigint "creator_id", null: false
     t.boolean "bool1", default: false
     t.integer "number1", default: 0
     t.string "string1", default: ""
@@ -106,9 +106,9 @@ ActiveRecord::Schema.define(version: 2020_07_19_164951) do
 
   create_table "link_bases", force: :cascade do |t|
     t.string "type", default: "LinkBase"
-    t.integer "parent_id", null: false
-    t.integer "child_id", null: false
-    t.integer "creator_id", null: false
+    t.bigint "parent_id", null: false
+    t.bigint "child_id", null: false
+    t.bigint "creator_id", null: false
     t.integer "number1", default: 0
     t.string "string1", default: ""
     t.boolean "deleted", default: false

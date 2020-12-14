@@ -34,17 +34,34 @@ class WordCounterController < ApplicationController
         @selected_expansions[a_symbol] = true if params[a_symbol]
       end
     else # First time run, use some demo text and default settings.
-      @vo_script = "Replace this text with your script.  For example, save " \
-        "$123.45 on word-costs in 2020, compared to 1990's fees of " \
-        "$1.125/word; or 3@$0.75, that's a " \
-        "40-50% savings!  Only 1,234.56 seconds remain before this offer " \
-        "expires!  Give us a call at 1-800-555-1234, but before 2020.12.07 " \
-        "6:01 a.m. (that's December 7th, 2020, 0601 military time) or...  " \
-        "Alternatively, " \
-        "visit https://ratingstone.agmsmith.ca/server01/about for more " \
-        "information or search on www.google.com for hints/tips (use " \
-        "#RealWordCount) or write to agmsrepsys@gmail.com.  On Facebook " \
-        "we're @RealCount."
+      @vo_script = <<~DEFAULTSCRIPT
+        Please replace this text with your script.
+        Easiest way to do that is to click the Clear button and then paste in your text.
+
+        Some examples (and test cases we haven't implemented yet):
+
+        Dollars and cents and 4 digit years and precentages and dashed numbers:
+        Save $123.45 on word-costs in 2020, compared to 1990's fees of $1.125/word; or 3@$0.75, that's a 40-50% savings!  Much better than in the 1950s!
+
+        Numbers, commas and minus signs:
+        Only -1,234.56 seconds remain before this offer expires!
+
+        Telephone numbers:
+        Give us a call at 1-800-555-1234, or (613) 555-7648 to save us a few dollars, or if you're in town, it's 555-2911.  In an emergency call 911.
+
+        Leading zero numbers, ellipsis:
+        But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020, 0601 military time) or...
+
+        URLs, hashtags, at-signs.
+        Alternatively, visit https://ratingstone.agmsmith.ca/server01/about/ for more information or search on www.google.com for hints/tips (use #RealWordCount) or write to agmsrepsys@gmail.com.  On Facebook we're @RealCount.
+
+        Metric units dictionary.
+        Our pool heater can heat 3m3 per minute, of water with a density of 1.0 g/cm3, increasing the temperature by 5C with 20,000W of energy (1.3kg/h of natural gas).  With 5cm diamater (19.63cm2 cross sectional area), that's a 8km/h flow speed.
+
+        English units dictionary.
+        The pool heater raises the water temperature by 10-15F, at 20GPM (1.5 hp motor), which uses 150,000 BTU/hour from burning logs.  With 2" pipes (32' long), it's flowing at 5 mph.
+      DEFAULTSCRIPT
+
       EXPANSION_SYMBOLS.each do |a_symbol|
         @selected_expansions[a_symbol] = true
       end
@@ -95,6 +112,10 @@ class WordCounterController < ApplicationController
     @original_word_list.each do |key, value|
       @hybrid_word_list[key] -= value
     end
+
+    logger.info("  #{@original_word_count} word script expanded to " \
+      "#{@expanded_word_count} words " \
+      "(#{@expanded_word_count - @original_word_count} extra).")
 
     render
   end
@@ -244,6 +265,7 @@ class WordCounterController < ApplicationController
     # The area code is 3 digits from 200 to 999.  Similarly the exchange number
     # in the middle is also from 200 to 999.  For details, see Wikipedia's
     # NANP article # https://en.wikipedia.org/wiki/North_American_Numbering_Plan
+    # 911 is a special case.
     # If @selected_expansions[:exp_say_area_code] is true then the words
     # "area code" are inserted before the area code if there is one.  To have
     # it say "telephone number" before the last seven digits part, set
@@ -274,6 +296,9 @@ class WordCounterController < ApplicationController
 
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
+    @expanded_script = @expanded_script.gsub(
+      /([[:space:]])911([[[:space:]][[:punct:]]])/, '\1nine one one\2'
+    )
   end
 
   def expand_percent
@@ -336,15 +361,17 @@ class WordCounterController < ApplicationController
     # Expand dashed numbers into numbers separated by the word "to".
     # So "12-45" or "12 - 45" expands to "12 to 45".
     re = %r{(?<spacebefore>[[:space:]])
-      (?<number1>[0-9]+)[[:space:]]*
+      (?<number1>[0-9]+)
+      [[:space:]]*
       -
-      [[:space:]]*(?<number2>[0-9]+)
-      (?<spaceafter>[[[:space:]][[:punct:]]])
+      [[:space:]]*
+      (?<number2>[0-9]+)
+      (?<thingafter>[^0-9\-])
       }x
     while (result = re.match(@expanded_script))
       @expanded_script = result.pre_match + result[:spacebefore] +
         result[:number1] + ' to ' + result[:number2] +
-        result[:spaceafter] + result.post_match
+        result[:thingafter] + result.post_match
     end
   end
 

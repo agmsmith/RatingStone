@@ -82,7 +82,7 @@
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_na_telephone, "Expand North American Telephone Numbers") %>
       <%= check_box_tag(:exp_na_telephone, true, @selected_expansions[:exp_na_telephone]) %>
-      <p>Long distance numbers start with 1 like 1 (800) 234 5678 or 1-800-234-5678 become: one eight hundred two three four five six seven eight.  Also does 10 digit and local 7 digit numbers with dashes or spaces separating the parts: 765-4321 becomes: seven six five four three two one.</p>
+      <p>Long distance numbers start with 1 like 1 (800) 234 5678 or 1-800-234-5678 become: one eight hundred two three four five six seven eight.  Also does 10 digit and local 7 digit numbers with dashes or spaces separating the parts: 765-4321 becomes: seven six five four three two one.  911 is also done here as a special case.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
