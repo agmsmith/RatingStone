@@ -47,18 +47,18 @@ class WordCounterController < ApplicationController
         Only -1,234.56 seconds remain before this offer expires!  Take the #14 bus and go to room #175, Industrial Avenue site.
 
         Telephone numbers:
-        Give us a call at 1-800-555-1234, or (613) 555-7648 to save us a few dollars, or if you're in town, it's 555-2911.  In an emergency call 911.
+        Give us a call at 1-800-555-1234, or (613) 555-7648 to save us a few dollars, or if you're in town, it's 555-2911.  But 9876543210 is just a number.  In an emergency call 911.
 
         Leading zero numbers, ellipsis:
-        But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020, 0601 military time) or….. try in the evening at 1930 (is that a date… or a time?).  
+        But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020, 0601 military time) or….. try in the evening at 1930 (is that a date… or a time?).  We're also open from 8a.m. to 7:05pm on Saturdays.
 
         URLs, hashtags, at-signs.
         Alternatively, visit https://ratingstone.agmsmith.ca/server01/about/ for more information or search on www.google.com (https://www.google.ca/search?hl=en-CA&q=Real+Count) for hints/tips (use #RealWordCount) or write to agmsrepsys@gmail.com.  On Facebook @RealCount is #1 in the category!
 
-        Metric units dictionary.
+        Metric units dictionary - not yet implemented, suggestions welcome.
         Our pool heater can heat 3m3 per minute, of water with a density of 1.0 g/cm3, increasing the temperature by 5C with 20,000W of energy (1.3kg/h of natural gas).  With 5cm diamater (19.63cm2 cross sectional area), that's a 8km/h flow speed.
 
-        English units dictionary.
+        English units dictionary - not yet implemented, suggestions welcome.
         The pool heater raises the water temperature by 10-15F, at 20GPM (1.5 hp motor), which uses 150,000 BTU/hour from burning logs.  With 2" pipes (32' long), it's flowing at 5 mph.
       DEFAULTSCRIPT
 
@@ -412,7 +412,7 @@ class WordCounterController < ApplicationController
     re = %r{(?<spacebefore>[[[:space:]][[:punct:]]]?)
       (?<![0-9]|[0-9],) # Make sure there isn't a number before the number!
       (?<number>0[0-9]+) # Zero and at least one digit, single 0 not handled.
-      (?<spaceafter>[[[:space:]][[:punct:]]]?) # Test for spaceish afterwards.
+      (?<thingafter>[[[:space:]][[:punct:]]]?) # Test for spaceish afterwards.
     }x
     while (result = re.match(@expanded_script))
       expanded_text = if result[:spacebefore] && !result[:spacebefore].empty?
@@ -423,8 +423,8 @@ class WordCounterController < ApplicationController
       number_text = number_to_digits(result[:number])
       number_text = number_text.gsub(/zero/, 'oh') if @selected_expansions[:exp_leadingohs]
       expanded_text += number_text
-      expanded_text += if result[:spaceafter] && !result[:spaceafter].empty?
-        result[:spaceafter]
+      expanded_text += if result[:thingafter] && !result[:thingafter].empty?
+        result[:thingafter]
       else # No space after, need to separate our new words from following text.
         ' '
       end
@@ -462,7 +462,7 @@ class WordCounterController < ApplicationController
       else
         NumbersInWords.in_words(number.to_i)
       end
-      expanded_text += ' ' unless /^[[[:space:]][[:punct:]]]/.match(result.post_match)
+      expanded_text += ' ' unless /\A[[[:space:]][[:punct:]]]/.match(result.post_match)
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
   end
