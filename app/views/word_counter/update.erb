@@ -46,27 +46,6 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_atsignletter, "Expand @ At-sign + Word") %>
-      <%= check_box_tag(:exp_atsignletter, true, @selected_expansions[:exp_atsignletter]) %>
-      <p>An @ with a space in front and a letter immediately afterwards becomes
-        "at-sign".  @Twitter becomes: at-sign Twitter</p>
-    </div>
-
-    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_atsignnumber, "Expand @ At + Number") %>
-      <%= check_box_tag(:exp_atsignnumber, true, @selected_expansions[:exp_atsignnumber]) %>
-      <p>An @ with a number or dollar sign somewhere afterwards becomes
-        "at".  Stock@$9.25 becomes: Stock at $9.25</p>
-    </div>
-
-    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_dollars, "Expand Dollar Currency") %>
-      <%= check_box_tag(:exp_dollars, true, @selected_expansions[:exp_dollars]) %>
-      <p>$ 123,456.78 becomes: one hundred and twenty-three thousand four
-        hundred and fifty-six dollars and seventy-eight cents</p>
-    </div>
-
-    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_urls, "Expand URLs") %>
       <%= check_box_tag(:exp_urls, true, @selected_expansions[:exp_urls]) %>
       <p>Adds words "dot", "slash", "at" and "colon" for the separators in a
@@ -98,6 +77,36 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_hyphens, "Hyphens to Spaces") %>
+      <%= check_box_tag(:exp_hyphens, true, @selected_expansions[:exp_hyphens]) %>
+      <p>Adjacent words containing only letters separated by a hyphen
+        (to avoid clobbering minus signs and dashes) have the hyphen removed.
+        voice-over becomes: voice over</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_dash_numbers, "Expand Dashed Numbers") %>
+      <%= check_box_tag(:exp_dash_numbers, true, @selected_expansions[:exp_dash_numbers]) %>
+      <p>The dash between numbers or dollar amounts is expanded to the word
+      "to".  $12.3 - $ 14 becomes twelve point three dollars to fourteen dollars.
+      1931-35 or even 1931 - 35 becomes: 1931 to 35</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_atsignletter, "Expand @ At-sign + Word") %>
+      <%= check_box_tag(:exp_atsignletter, true, @selected_expansions[:exp_atsignletter]) %>
+      <p>An @ with a space in front and a letter immediately afterwards becomes
+        "at-sign".  @Twitter becomes: at-sign Twitter</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_atsignnumber, "Expand @ At + Number") %>
+      <%= check_box_tag(:exp_atsignnumber, true, @selected_expansions[:exp_atsignnumber]) %>
+      <p>An @ with a number or dollar sign somewhere afterwards becomes
+        "at".  Stock@$9.25 becomes: Stock at $9.25</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_percent, "Expand % Percent") %>
       <%= check_box_tag(:exp_percent, true, @selected_expansions[:exp_percent]) %>
       <p>A % sign somewhere after a number is expanded to the word "percent".
@@ -119,10 +128,30 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_dash_numbers, "Expand Dashed Numbers") %>
-      <%= check_box_tag(:exp_dash_numbers, true, @selected_expansions[:exp_dash_numbers]) %>
-      <p>The dash between numbers is expanded to the word "to". 1931-35 or
-        even 1931 - 35 becomes: 1931 to 35</p>
+      <%= label_tag(:exp_slash_per_number, "/ to \"per\" for Numbers") %>
+      <%= check_box_tag(:exp_slash_per_number, true, @selected_expansions[:exp_slash_per_number]) %>
+      <p>The slash with a number or dollars on just one end is expanded to the
+      word "per".  Both ends not done - would be a fraction.
+      $3/dozen or even $3 / dozen becomes: $3 per dozen</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_slash_per_always, "/ to \"per\" Always") %>
+      <%= check_box_tag(:exp_slash_per_always, true, @selected_expansions[:exp_slash_per_always]) %>
+      <p>Slash is always expanded to the word "per". A/B becomes: A per B</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_slash_slash_always, "/ to \"slash\" Always") %>
+      <%= check_box_tag(:exp_slash_slash_always, true, @selected_expansions[:exp_slash_slash_always]) %>
+      <p>Slash is always expanded to the word "slash". A/B becomes: A slash B</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_dollars, "Expand Dollar Currency") %>
+      <%= check_box_tag(:exp_dollars, true, @selected_expansions[:exp_dollars]) %>
+      <p>$ 123,456.78 becomes: one hundred and twenty-three thousand four
+        hundred and fifty-six dollars and seventy-eight cents</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
@@ -156,14 +185,6 @@
         decimal points, such as 123,456.78 which
         becomes: one hundred and twenty-three thousand four hundred and
         fifty-six point seven eight.</p>
-    </div>
-
-    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_hyphens, "Hyphens to Spaces") %>
-      <%= check_box_tag(:exp_hyphens, true, @selected_expansions[:exp_hyphens]) %>
-      <p>Adjacent words containing only letters separated by a hyphen
-        (to avoid clobbering minus signs and dashes) have the hyphen removed.
-        voice-over becomes: voice over</p>
     </div>
   </div>
 

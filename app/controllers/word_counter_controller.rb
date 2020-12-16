@@ -17,7 +17,8 @@ class WordCounterController < ApplicationController
     :exp_dollars, :exp_hashtag, :exp_hyphens,
     :exp_leadingohs, :exp_leadingzeroes, :exp_na_telephone,
     :exp_number_of, :exp_numbers, :exp_percent, :exp_say_area_code,
-    :exp_say_telephone_number, :exp_urls, :exp_years
+    :exp_say_telephone_number, :exp_slash_per_always, :exp_slash_per_number,
+    :exp_slash_slash_always, :exp_urls, :exp_years
   ]
 
   def update
@@ -40,20 +41,92 @@ class WordCounterController < ApplicationController
 
         Some examples (and test cases we haven't implemented yet):
 
-        Dollars and cents and 4 digit years and precentages and dashed numbers:
-        Save $123.45 on word-costs in 2020, compared to 1990's fees of $1.125/word; or 3@$0.75, that's a 40-50% savings!  Much better than in the 1950s!
+        URLs - Uniform Resource Locators
+        Visit https://user:password@ratingstone.agmsmith.ca/server01/about/
+        for more information or search on www.google.com
+        (https://www.google.ca/search?hl=en-CA&q=Real+Count) for hints/tips or
+        write to agmsrepsys@gmail.com.  Note that happy@home doesn't get expanded.
+
+        Telephone numbers:
+        Give us a call at 1-800-555-1234, or (613) 555 7648 to save us a few
+        dollars, or if you're in town, it's 555-7648.  555-1234x432 specifies
+        an extension, as does 222-555-1234 ext. 1234 or even 555-1234 extension
+        5432.  In all cases the extension number is read as separate digits.
+        But 9876543210 is just a number (add dashes or spaces to make it a
+        telephone number).  911 is a special case.
+
+        Dashes between Words:
+        Remove dashes directly between words (no spaces).  Voice-over,
+        under‐ground, hot‑dog, hyper‒text, tele–phone, foot—ball,
+        game⸺pad, yet⸻more, cauli﹘flower, the﹣end, finally－done.  Though
+        9⸺pad, yet⸻8, 7﹘6 and so -on- don't get converted (also see dashed
+        numbers).
+
+        - Dashed Numbers:
+        From 1920-30 a dash between two numbers becomes "to".  Even
+        $1.2 — $2.50 are expanded.  A long work day runs from 9 ⸻ 5.  But
+        not - between words.  We handle all these dashes in case you
+        somehow type them in: - ‐ ‑ ‒ – — ⸺ ⸻ ﹘ ﹣ －
+
+        At-signs before words.
+        On Facebook @RealCount is #1 in the category!  But @ is not expanded
+        with a space after it.  Also Needs@ a space before it.  Doit@now!
+        should not change.  By the way, e-mails like someone@gmail.com are
+        handled by URL expansion.
+
+        At-signs before numbers and dollars.
+        3@$0.75 is a good price.  Almost like buying 2 @ 35 cents each.  Sell
+        coal@12 1/8.
+
+        Percent after a Number:
+        That's a 40-50% savings!  50 % more with a space after it. %x x% aren't
+        numbers.  You will never see 99%x expanded.
+
+        # Hashtag:
+        Look for #theanswer where the # is before a word and there is a space
+        in front, so middle#hash or just # won't get expanded.
+
+        # Number:
+        Look for #22 or # 123 where the # is before the number.
+        99# doesn't expand, same as a#9.
+
+        / to per for numbers:
+        Expand a slash to "per", but only if it's got a number at one end
+        (not both; that would be a fraction).  He makes 3 door mats/hour.
+        Try some A/B testing.  3 l/100km and 50 miles/gallon.  But not 3/4.
+        Eggs @ $2.35 / dozen.  Or one egg / $ 0.20.  That's 5 eggs/$1.
+
+        / to per always:
+        Expand a slash to "per" in all remaining situations.
+        A/B, 9/A, A / 9, 9 / 9, 3/4.
+
+        / to slash always:
+        Expand a slash to "slash" in all remaining situations.
+        A/B, 9/A, A / 9, 9 / 9, 3/4.
+
+        Dollars and cents.
+        Save $1,234.56 on word-costs, @$1.125/word.  Fractional
+        dollars like coal @ $ 12.125 are handled too.  $.12ea currently doesn't
+        work (never seen it in real life, use $0.12ea).  And $9.99 million needs
+        to be manually fixed up (otherwise we'd need an AI to figure out the
+        context).
+
+        4 digit dates:
+        Save on word-costs in 2020, compared to 1990's fees of $1.125/word;
+        or 3@$0.75, that's a 40-50% savings!  Much better than in the 1950s!
+        Notice that 50s and other decades aren't handled (yet).  Is 1930
+        a date… or a military time?
+
+        Leading zero numbers:
+        But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020,
+        0601 military time) or try in the evening at 1930.  We're also open
+        from 8a.m. to 7:05pm on Saturdays.
 
         Numbers, commas and minus signs:
         Only -1,234.56 seconds remain before this offer expires!  Take the #14 bus and go to room #175, Industrial Avenue site.
 
-        Telephone numbers:
-        Give us a call at 1-800-555-1234, or (613) 555-7648 to save us a few dollars, or if you're in town, it's 555-2911.  But 9876543210 is just a number.  In an emergency call 911.
-
-        Leading zero numbers, ellipsis:
-        But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020, 0601 military time) or….. try in the evening at 1930 (is that a date… or a time?).  We're also open from 8a.m. to 7:05pm on Saturdays.
-
-        URLs, hashtags, at-signs.
-        Alternatively, visit https://ratingstone.agmsmith.ca/server01/about/ for more information or search on www.google.com (https://www.google.ca/search?hl=en-CA&q=Real+Count) for hints/tips (use #RealWordCount) or write to agmsrepsys@gmail.com.  On Facebook @RealCount is #1 in the category!
+        Ellipsis:
+        Maybe….. try calling us in the evening.   ...or not.
 
         Metric units dictionary - not yet implemented, suggestions welcome.
         Our pool heater can heat 3m3 per minute, of water with a density of 1.0 g/cm3, increasing the temperature by 5C with 20,000W of energy (1.3kg/h of natural gas).  With 5cm diamater (19.63cm2 cross sectional area), that's a 8km/h flow speed.
@@ -67,6 +140,8 @@ class WordCounterController < ApplicationController
       end
       @selected_expansions[:exp_say_area_code] = false
       @selected_expansions[:exp_say_telephone_number] = false
+      @selected_expansions[:exp_slash_per_always] = false
+      @selected_expansions[:exp_slash_slash_always] = false
     end
 
     # Spaces to avoid edge conditions.  Three spaces so "9" at very end can have
@@ -74,19 +149,22 @@ class WordCounterController < ApplicationController
     @expanded_script = '   ' + @vo_script + '   '
 
     # Order of operations here is significant.
-    expand_at_sign_letter if @selected_expansions[:exp_atsignletter]
-    expand_at_sign_number if @selected_expansions[:exp_atsignnumber]
-    expand_dollars if @selected_expansions[:exp_dollars]
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
+    expand_hyphens if @selected_expansions[:exp_hyphens]
+    expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
+    expand_at_sign_letter if @selected_expansions[:exp_atsignletter]
+    expand_at_sign_number if @selected_expansions[:exp_atsignnumber]
     expand_percent if @selected_expansions[:exp_percent]
     expand_hashtag if @selected_expansions[:exp_hashtag]
     expand_number_of if @selected_expansions[:exp_number_of]
-    expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
+    expand_slash_per_number if @selected_expansions[:exp_slash_per_number]
+    expand_slash_per_always if @selected_expansions[:exp_slash_per_always]
+    expand_slash_slash_always if @selected_expansions[:exp_slash_slash_always]
+    expand_dollars if @selected_expansions[:exp_dollars]
     expand_years if @selected_expansions[:exp_years]
     expand_leading_zeroes if @selected_expansions[:exp_leadingzeroes]
     expand_numbers if @selected_expansions[:exp_numbers]
-    expand_hyphens if @selected_expansions[:exp_hyphens]
 
     @expanded_script.strip! # Remove edge case workaround spaces, for display.
 
@@ -180,49 +258,19 @@ class WordCounterController < ApplicationController
     end
   end
 
-  def expand_dollars
-    # Look for $ 123,456.78 type things.  The fractional .78 (two digits
-    # means cents, otherwise it's a decimal fraction) and commas and space
-    # after the dollar sign are optional.
-    # $12.34 becomes "twelve dollars and thirty four cents"
-    # $1.234 becomes "one point two three four dollars"
-    re = /\$[[:space:]]*(?<number>[0-9][0-9,]*)(?<fraction>\.[0-9]+)?/
-    while (result = re.match(@expanded_script))
-      number = result[:number].delete(',')
-      fraction = result[:fraction] # Remember it includes the period in front.
-      int_number = number.to_i
-      # Awkward code to avoid teensy limit of 3 nested blocks in Shopify rules.
-      expanded_text = if (int_number == 0) && fraction
-        '' # So that $0.23 comes out as just "twenty-three cents".
-      else
-        NumbersInWords.in_words(int_number) + ' ' +
-          'dollar'.pluralize(int_number)
-      end
-      if fraction && fraction.length != 3 # More or less than 2 digits at end.
-        real_number = (number + fraction).to_f
-        expanded_text = NumbersInWords.in_words(real_number) + ' dollars'
-      elsif fraction && fraction.length == 3
-        int_fraction = fraction.delete_prefix('.').to_i
-        expanded_text += ' and ' unless expanded_text.empty?
-        expanded_text += NumbersInWords.in_words(int_fraction) + ' ' +
-          'cent'.pluralize(int_fraction)
-      end
-      @expanded_script = result.pre_match + expanded_text + result.post_match
-    end
-  end
-
   def expand_urls
     # Extract a whole URL from the text then apply several processing steps to
     # it then put the expanded version back.  Needs to work for
     # https://www.example.com/stuff/more/ and for mit.edu but not 2.3 or p.m.
     # or one/two.
     re = %r{
-      (?<spacebefore>[[[:space:]]\("']) # Space before the URL required.
+      (?<spacebefore>[[[:space:]]\(\"]) #")) Space etc. before the URL required.
       (?<http>[[:alpha:]]+://)? # Optional HTTP:// or HTTPS:// or FTP:// prefix.
       (?<middle>[[:alpha:]] # No initial digit allowed, start with a letter.
         [[:alnum:]]+ # Finish the first word, 2 or more letters.
-        ([.@:][[:alnum:]][[:alnum:]]+) # Password, userid, port but no slash.
-        ([.@:/_\-?=%&+][[:alnum:]]+)* # Rest of the separators and words.
+        ([@:][[:alnum:]][[:alnum:]]+)* # Password, userid, but no slash dot.
+        ([.][[:alnum:]][[:alnum:]]+) # www Dot com or such.  Dot required.
+        ([.:/_\-?=%&+][[:alnum:]]+)* # Rest of the separators and words.
         /?) # Optional trailing slash.
       (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
     }xi # x for ignore spaces in definition, i for case insensitive.
@@ -280,9 +328,9 @@ class WordCounterController < ApplicationController
     # Number: (?<exchange>[2-9][0-9][0-9])(-|[[:space:]])(?<number>[0-9][0-9][0-9][0-9])
     # If there's a leading 1, need an area code: (leadingone? areacode)? number
     re = %r{(?<spacebefore>[[:space:]])
-      (((?<leadingone>1)(-|[[:space:]]+))?
-      (\(?(?<areacode>[2-9][0-9][0-9])(-|(\)?[[:space:]]+))))?
-      (?<exchange>[2-9][0-9][0-9])(-|[[:space:]])
+      (((?<leadingone>1)([-‐‑‒–—⸺⸻﹘﹣－]|[[:space:]]+))?
+      (\(?(?<areacode>[2-9][0-9][0-9])([-‐‑‒–—⸺⸻﹘﹣－]|(\)?[[:space:]]+))))?
+      (?<exchange>[2-9][0-9][0-9])([-‐‑‒–—⸺⸻﹘﹣－]|[[:space:]])
       (?<number>[0-9][0-9][0-9][0-9])
       (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
       }x
@@ -303,6 +351,16 @@ class WordCounterController < ApplicationController
     @expanded_script = @expanded_script.gsub(
       /([[:space:]])911([[[:space:]][[:punct:]]])/, '\1nine one one\2'
     )
+  end
+
+  def expand_hyphens
+    # Replace hyphens with spaces.  Need to have letters on both sides of the
+    # hyphen to avoid clobbering minus signs and other hyphen uses.
+    re = /(?<letter1>[[:alpha:]])[-‐‑‒–—⸺⸻﹘﹣－](?<letter2>[[:alpha:]])/
+    while (result = re.match(@expanded_script))
+      @expanded_script = result.pre_match + result[:letter1] + ' ' +
+        result[:letter2] + result.post_match
+    end
   end
 
   def expand_percent
@@ -361,21 +419,107 @@ class WordCounterController < ApplicationController
     end
   end
 
+  def expand_slash_per_number
+    # Expand / to "per" if there is a number on just one side.
+    re = %r{(
+      (?<thingbefore>[0-9])
+        [[:space:]]*
+        /
+        [[:space:]]*
+        (?<thingafter>[^0-9$[[:space:]]])
+      )|(
+        (?<thingbefore>[^0-9[[:space:]]])
+        [[:space:]]*
+        /
+        [[:space:]]*
+        (?<thingafter>[0-9$])
+      )}x
+    while (result = re.match(@expanded_script))
+      before = result[:thingbefore]
+      after = result[:thingafter]
+      @expanded_script = result.pre_match +
+        before + (/[[:space:]]\Z/.match(before) ? '' : ' ') +
+        'per' +
+        (/\A[[:space:]]/.match(after) ? '' : ' ') + after +
+        result.post_match
+    end
+  end
+
+  def expand_slash_per_always
+    # Expand / to "per" always.  Add spaces if needed.
+    re = %r{(?<thingbefore>.)/(?<thingafter>.)}x
+    while (result = re.match(@expanded_script))
+      before = result[:thingbefore]
+      after = result[:thingafter]
+      @expanded_script = result.pre_match +
+        before + (/[[:space:]]\Z/.match(before) ? '' : ' ') +
+        'per' +
+        (/\A[[:space:]]/.match(after) ? '' : ' ') + after +
+        result.post_match
+    end
+  end
+
+  def expand_slash_slash_always
+    # Expand / to "slash" always.  Add spaces if needed.
+    re = %r{(?<thingbefore>.)/(?<thingafter>.)}x
+    while (result = re.match(@expanded_script))
+      before = result[:thingbefore]
+      after = result[:thingafter]
+      @expanded_script = result.pre_match +
+        before + (/[[:space:]]\Z/.match(before) ? '' : ' ') +
+        'slash' +
+        (/\A[[:space:]]/.match(after) ? '' : ' ') + after +
+        result.post_match
+    end
+  end
+
   def expand_dash_numbers
-    # Expand dashed numbers into numbers separated by the word "to".
-    # So "12-45" or "12 - 45" expands to "12 to 45".
-    re = %r{(?<spacebefore>[[:space:]])
+    # Expand dashed numbers and dollars into numbers separated by the word "to".
+    # So "12-45" or "12 - 45" expands to "12 to 45".  And $32 - $ 45.67 expands
+    # to "$32 to $45.67.
+    re = %r{
       (?<number1>[0-9]+)
       [[:space:]]*
-      -
+      [-‐‑‒–—⸺⸻﹘﹣－] # All known dash or minus characters.
       [[:space:]]*
-      (?<number2>[0-9]+)
+      (?<number2>([0-9]|(\$[[:space:]]*))([,.]?[0-9])*)
       (?<thingafter>[^0-9\-])
       }x
     while (result = re.match(@expanded_script))
-      @expanded_script = result.pre_match + result[:spacebefore] +
+      @expanded_script = result.pre_match +
         result[:number1] + ' to ' + result[:number2] +
         result[:thingafter] + result.post_match
+    end
+  end
+
+  def expand_dollars
+    # Look for $ 123,456.78 type things.  The fractional .78 (two digits
+    # means cents, otherwise it's a decimal fraction) and commas and space
+    # after the dollar sign are optional.
+    # $12.34 becomes "twelve dollars and thirty four cents"
+    # $1.234 becomes "one point two three four dollars"
+    re = /\$[[:space:]]*(?<number>[0-9][0-9,]*)(?<fraction>\.[0-9]+)?/
+    while (result = re.match(@expanded_script))
+      number = result[:number].delete(',')
+      fraction = result[:fraction] # Remember it includes the period in front.
+      int_number = number.to_i
+      # Awkward code to avoid teensy limit of 3 nested blocks in Shopify rules.
+      expanded_text = if (int_number == 0) && fraction
+        '' # So that $0.23 comes out as just "twenty-three cents".
+      else
+        NumbersInWords.in_words(int_number) + ' ' +
+          'dollar'.pluralize(int_number)
+      end
+      if fraction && fraction.length != 3 # More or less than 2 digits at end.
+        real_number = (number + fraction).to_f
+        expanded_text = NumbersInWords.in_words(real_number) + ' dollars'
+      elsif fraction && fraction.length == 3
+        int_fraction = fraction.delete_prefix('.').to_i
+        expanded_text += ' and ' unless expanded_text.empty?
+        expanded_text += NumbersInWords.in_words(int_fraction) + ' ' +
+          'cent'.pluralize(int_fraction)
+      end
+      @expanded_script = result.pre_match + expanded_text + result.post_match
     end
   end
 
@@ -464,16 +608,6 @@ class WordCounterController < ApplicationController
       end
       expanded_text += ' ' unless /\A[[[:space:]][[:punct:]]]/.match(result.post_match)
       @expanded_script = result.pre_match + expanded_text + result.post_match
-    end
-  end
-
-  def expand_hyphens
-    # Replace hyphens with spaces.  Need to have letters on both sides of the
-    # hyphen to avoid clobbering minus signs and other hyphen uses.
-    re = /(?<letter1>[[:alpha:]])-(?<letter2>[[:alpha:]])/
-    while (result = re.match(@expanded_script))
-      @expanded_script = result.pre_match + result[:letter1] + ' ' +
-        result[:letter2] + result.post_match
     end
   end
 end
