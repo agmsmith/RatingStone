@@ -36,8 +36,7 @@ class WordCounterController < ApplicationController
       end
     else # First time run, use some demo text and default settings.
       @vo_script = <<~DEFAULTSCRIPT
-        Please replace this text with your script.
-        Easiest way to do that is to click the Clear button and then paste in your text.
+        To start - click Clear and paste your script in here, replacing this example.
 
         Some examples (and test cases we haven't implemented yet):
 
@@ -45,15 +44,17 @@ class WordCounterController < ApplicationController
         Visit https://user:password@ratingstone.agmsmith.ca/server01/about/
         for more information or search on www.google.com
         (https://www.google.ca/search?hl=en-CA&q=Real+Count) for hints/tips or
-        write to agmsrepsys@gmail.com.  Note that happy@home doesn't get expanded.
+        write to agmsrepsys@gmail.com.  Get the files from
+        ftp://anonymous:password@example.com/public/
+        Note that happy@home doesn't get expanded.
 
         Telephone numbers:
         Give us a call at 1-800-555-1234, or (613) 555 7648 to save us a few
         dollars, or if you're in town, it's 555-7648.  555-1234x432 specifies
         an extension, as does 222-555-1234 ext. 1234 or even 555-1234 extension
-        5432.  In all cases the extension number is read as separate digits.
+        5432.  In all cases (once we implement it) the extension number is read as separate digits.
         But 9876543210 is just a number (add dashes or spaces to make it a
-        telephone number).  911 is a special case.
+        telephone number).  211, 311,… 911 are special cases.
 
         Dashes between Words:
         Remove dashes directly between words (no spaces).  Voice-over,
@@ -80,7 +81,7 @@ class WordCounterController < ApplicationController
 
         Percent after a Number:
         That's a 40-50% savings!  50 % more with a space after it. %x x% aren't
-        numbers.  You will never see 99%x expanded.
+        numbers.  Save 50%each.
 
         # Hashtag:
         Look for #theanswer where the # is before a word and there is a space
@@ -88,7 +89,8 @@ class WordCounterController < ApplicationController
 
         # Number:
         Look for #22 or # 123 where the # is before the number.
-        99# doesn't expand, same as a#9.
+        99# doesn't expand, same as a#9.  Take the #14 bus and go to room #175,
+        Industrial Avenue site.
 
         / to per for numbers:
         Expand a slash to "per", but only if it's got a number at one end
@@ -109,13 +111,12 @@ class WordCounterController < ApplicationController
         dollars like coal @ $ 12.125 are handled too.  $.12ea currently doesn't
         work (never seen it in real life, use $0.12ea).  And $9.99 million needs
         to be manually fixed up (otherwise we'd need an AI to figure out the
-        context).
+        context). # $9 leaves # alone.  Price set to$4each (adds spaces if needed).
 
         4 digit dates:
-        Save on word-costs in 2020, compared to 1990's fees of $1.125/word;
-        or 3@$0.75, that's a 40-50% savings!  Much better than in the 1950s!
-        Notice that 50s and other decades aren't handled (yet).  Is 1930
-        a date… or a military time?
+        Save on word-costs in 2020, compared to 1990's fees.  Much better than
+        in the 1950s!  Notice that 50s and other decades aren't handled (yet).
+        Is 1930 a date… or a military time?
 
         Leading zero numbers:
         But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020,
@@ -123,9 +124,9 @@ class WordCounterController < ApplicationController
         from 8a.m. to 7:05pm on Saturdays.
 
         Numbers, commas and minus signs:
-        Only -1,234.56 seconds remain before this offer expires!  Take the #14 bus and go to room #175, Industrial Avenue site.
+        Only -1,234.56 seconds remain before this offer expires!
 
-        Ellipsis:
+        Ellipsis - not yet implemented:
         Maybe….. try calling us in the evening.   ...or not.
 
         Metric units dictionary - not yet implemented, suggestions welcome.
@@ -317,7 +318,7 @@ class WordCounterController < ApplicationController
     # The area code is 3 digits from 200 to 999.  Similarly the exchange number
     # in the middle is also from 200 to 999.  For details, see Wikipedia's
     # NANP article # https://en.wikipedia.org/wiki/North_American_Numbering_Plan
-    # 911 is a special case.
+    # 911 and other one one numbers are a special case.
     # If @selected_expansions[:exp_say_area_code] is true then the words
     # "area code" are inserted before the area code if there is one.  To have
     # it say "telephone number" before the last seven digits part, set
@@ -348,9 +349,21 @@ class WordCounterController < ApplicationController
 
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
-    @expanded_script = @expanded_script.gsub(
-      /([[:space:]])911([[[:space:]][[:punct:]]])/, '\1nine one one\2'
-    )
+
+    # Handle 911 and other "one one" numbers.
+    re = %r{
+      (?<before>[[:space:]])
+      (?<number>[2-9]11)
+      (?<after>[[[:space:]][[:punct:]]])
+      }x
+    while (result = re.match(@expanded_script))
+      expanded_text = result[:before]
+      expanded_text += 'telephone number ' if @selected_expansions[:exp_say_telephone_number]
+      expanded_text += number_to_digits(result[:number])
+      expanded_text += result[:after]
+
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
   end
 
   def expand_hyphens
@@ -519,6 +532,15 @@ class WordCounterController < ApplicationController
         expanded_text += NumbersInWords.in_words(int_fraction) + ' ' +
           'cent'.pluralize(int_fraction)
       end
+
+      # Insert spaces if butting up against letters or something similar.
+      unless /[[[:space:]][[:punct:]]]\Z/.match(result.pre_match)
+        expanded_text = ' ' + expanded_text
+      end
+      unless /\A[[[:space:]][[:punct:]]]/.match(result.post_match)
+        expanded_text += ' '
+      end
+
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
   end
