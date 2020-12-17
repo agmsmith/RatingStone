@@ -56,13 +56,6 @@ class WordCounterController < ApplicationController
         But 9876543210 is just a number (add dashes or spaces to make it a
         telephone number).  211, 311,… 911 are special cases.
 
-        Dashes between Words:
-        Remove dashes directly between words (no spaces).  Voice-over,
-        under‐ground, hot‑dog, hyper‒text, tele–phone, foot—ball,
-        game⸺pad, yet⸻more, cauli﹘flower, the﹣end, finally－done.  Though
-        9⸺pad, yet⸻8, 7﹘6 and so -on- don't get converted (also see dashed
-        numbers).
-
         - Dashed Numbers:
         From 1920-30 a dash between two numbers becomes "to".  Even
         $1.2 — $2.50 are expanded.  A long work day runs from 9 ⸻ 5.  But
@@ -126,13 +119,20 @@ class WordCounterController < ApplicationController
         Numbers, commas and minus signs:
         Only -1,234.56 seconds remain before this offer expires!
 
+        Dashes between Words:
+        Remove dashes directly between words (no spaces).  Voice-over,
+        twenty‐three, hot‑dog, hyper‒text, tele–phone, foot—ball,
+        game⸺pad, yet⸻more, cauli﹘flower, the﹣end, finally－done.  Though
+        9⸺pad, yet⸻8, 7﹘6 and so -on- don't get converted (also see dashed
+        numbers).
+
         Ellipsis - not yet implemented:
         Maybe….. try calling us in the evening.   ...or not.
 
-        Metric units dictionary - not yet implemented, suggestions welcome.
+        Metric units dictionary - not yet implemented.
         Our pool heater can heat 3m3 per minute, of water with a density of 1.0 g/cm3, increasing the temperature by 5C with 20,000W of energy (1.3kg/h of natural gas).  With 5cm diamater (19.63cm2 cross sectional area), that's a 8km/h flow speed.
 
-        English units dictionary - not yet implemented, suggestions welcome.
+        English units dictionary - not yet implemented.
         The pool heater raises the water temperature by 10-15F, at 20GPM (1.5 hp motor), which uses 150,000 BTU/hour from burning logs.  With 2" pipes (32' long), it's flowing at 5 mph.
       DEFAULTSCRIPT
 
@@ -152,7 +152,6 @@ class WordCounterController < ApplicationController
     # Order of operations here is significant.
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
-    expand_hyphens if @selected_expansions[:exp_hyphens]
     expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
     expand_at_sign_letter if @selected_expansions[:exp_atsignletter]
     expand_at_sign_number if @selected_expansions[:exp_atsignnumber]
@@ -166,6 +165,7 @@ class WordCounterController < ApplicationController
     expand_years if @selected_expansions[:exp_years]
     expand_leading_zeroes if @selected_expansions[:exp_leadingzeroes]
     expand_numbers if @selected_expansions[:exp_numbers]
+    expand_hyphens if @selected_expansions[:exp_hyphens]
 
     @expanded_script.strip! # Remove edge case workaround spaces, for display.
 

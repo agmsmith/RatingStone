@@ -20,9 +20,11 @@
     </div>
     <div class="col-xs-12 col-sm-6">
       <%= submit_tag(yield(:button_text), class: "btn btn-primary button-full-width") %>
-      <p>Instructions: <small>Paste your script into the box, select the word
-        expansion options you want, and press the "<%= yield(:button_text) %>"
-        button to do the count, and create the expanded script below.</small></p>
+      <p>Instructions: <small>Hit Clear and paste your script into the box,
+        then press the "<%= yield(:button_text) %>" button to do the count,
+        and create the expanded script below.  Check the list of changes there
+        for problems and turn off troublesome expansion options, then count
+        again!</small></p>
     </div>
   </div>
 
@@ -42,7 +44,10 @@
     <div class="col-xs-12"><a name="expansion_options"></a>
       <p class="wordcount-sectiontitle">Expansion Options:</p>
       <p>Note that they are processed in the order given here (make the window
-        narrower to see it in a single column).</p>
+        narrower to see it in a single column).  The defaults are pretty good,
+        but you may have to turn off ones that are causing problems with your
+        particular script.  Or turn on ones that most people won't use, such
+        as making all "/" characters into "slash".</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
@@ -74,14 +79,6 @@
       <%= label_tag(:exp_say_telephone_number, "Say Telephone Number") %>
       <%= check_box_tag(:exp_say_telephone_number, true, @selected_expansions[:exp_say_telephone_number]) %>
       <p>Says "telephone number" before the local portion of a telephone number.   800-234-5678 becomes: eight hundred telephone number two three four five six seven eight.</p>
-    </div>
-
-    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_hyphens, "Hyphens to Spaces") %>
-      <%= check_box_tag(:exp_hyphens, true, @selected_expansions[:exp_hyphens]) %>
-      <p>Adjacent words containing only letters separated by a hyphen
-        (to avoid clobbering minus signs and dashes) have the hyphen removed.
-        voice-over becomes: voice over</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
@@ -185,6 +182,14 @@
         decimal points, such as 123,456.78 which
         becomes: one hundred and twenty-three thousand four hundred and
         fifty-six point seven eight.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_hyphens, "Hyphens to Spaces") %>
+      <%= check_box_tag(:exp_hyphens, true, @selected_expansions[:exp_hyphens]) %>
+      <p>Adjacent words containing only letters separated by a hyphen
+        (to avoid clobbering minus signs and dashes) have the hyphen removed.
+        voice-over becomes: voice over, twenty-three becomes: twenty three</p>
     </div>
   </div>
 
