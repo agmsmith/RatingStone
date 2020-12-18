@@ -44,7 +44,7 @@ class WordCounterController < ApplicationController
         Visit https://user:password@ratingstone.agmsmith.ca/server01/about/
         for more information or search on www.google.com
         (https://www.google.ca/search?hl=en-CA&q=Real+Count) for hints/tips or
-        write to agmsrepsys@gmail.com.  Get the files from
+        write to the sysop @ agmsrepsys@gmail.com.  Get the files from
         ftp://anonymous:password@example.com/public/
         Note that happy@home doesn't get expanded.
 
@@ -52,7 +52,7 @@ class WordCounterController < ApplicationController
         Give us a call at 1-800-555-1234, or (613) 555 7648 to save us a few
         dollars, or if you're in town, it's 555-7648.  555-1234x432 specifies
         an extension, as does 222-555-1234 ext. 1234 or even 555-1234 extension
-        5432.  In all cases (once we implement it) the extension number is read as separate digits.
+        5432.  In all cases the extension number is read as separate digits.
         But 9876543210 is just a number (add dashes or spaces to make it a
         telephone number).  211, 311,… 911 are special cases.
 
@@ -318,21 +318,19 @@ class WordCounterController < ApplicationController
     # The area code is 3 digits from 200 to 999.  Similarly the exchange number
     # in the middle is also from 200 to 999.  For details, see Wikipedia's
     # NANP article # https://en.wikipedia.org/wiki/North_American_Numbering_Plan
-    # 911 and other one one numbers are a special case.
+    # 911 and other one one numbers are a special case.  If followed by
+    # x, ext, ext., extension and a number, that number will be read out
+    # digit by digit.
     # If @selected_expansions[:exp_say_area_code] is true then the words
     # "area code" are inserted before the area code if there is one.  To have
     # it say "telephone number" before the last seven digits part, set
     # @selected_expansions[:exp_say_telephone_number] to true.
-
-    # Leading long distance country code: ((?<leadingone>1)(-|[[:space:]]+))?
-    # Area code: (\(?(?<areacode>[2-9][0-9][0-9])(-|(\)?[[:space:]]+)))
-    # Number: (?<exchange>[2-9][0-9][0-9])(-|[[:space:]])(?<number>[0-9][0-9][0-9][0-9])
-    # If there's a leading 1, need an area code: (leadingone? areacode)? number
     re = %r{(?<spacebefore>[[:space:]])
       (((?<leadingone>1)([-‐‑‒–—⸺⸻﹘﹣－]|[[:space:]]+))?
       (\(?(?<areacode>[2-9][0-9][0-9])([-‐‑‒–—⸺⸻﹘﹣－]|(\)?[[:space:]]+))))?
       (?<exchange>[2-9][0-9][0-9])([-‐‑‒–—⸺⸻﹘﹣－]|[[:space:]])
       (?<number>[0-9][0-9][0-9][0-9])
+      ([[:space:]]*(x|ext\.?|extension)[[:space:]]*(?<extension>[0-9]+))?
       (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
       }x
     while (result = re.match(@expanded_script))
@@ -345,6 +343,9 @@ class WordCounterController < ApplicationController
       expanded_text += 'telephone number ' if @selected_expansions[:exp_say_telephone_number]
       expanded_text += number_to_digits(result[:exchange]) + ' ' +
         number_to_digits(result[:number])
+      if result[:extension]
+        expanded_text += ' extension ' + number_to_digits(result[:extension])
+      end
       expanded_text += result[:spaceafter]
 
       @expanded_script = result.pre_match + expanded_text + result.post_match
