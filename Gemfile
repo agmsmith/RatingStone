@@ -12,7 +12,7 @@ gem 'rails', '~> 6'
 gem 'irb', '~> 1'
 gem 'forwardable', '~> 1'
 # Use a recent version of stringio to avoid the default one.
-gem 'stringio', '~> 0.1'
+gem 'stringio', '~> 3'
 # Use Puma as the app server
 gem 'puma', '~> 4'
 # Use SCSS for stylesheets
