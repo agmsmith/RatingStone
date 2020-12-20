@@ -114,7 +114,9 @@ class WordCounterController < ApplicationController
         Leading zero numbers:
         But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020,
         0601 military time) or try in the evening at 1930.  We're also open
-        from 8a.m. to 7:05pm on Saturdays.
+        from 8a.m. to 7:05pm on Saturdays.  Note that 1201, 4.01 or 2,011
+        isn't expanded since there is a number before the 01 or near it with
+        a comma or period in the way.
 
         Numbers, commas and minus signs:
         Only -1,234.56 seconds remain before this offer expires!
