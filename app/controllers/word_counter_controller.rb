@@ -13,7 +13,7 @@ require 'diffy'
 
 class WordCounterController < ApplicationController
   EXPANSION_SYMBOLS = [ # In alphabetical order for easier manual additions.
-    :exp_atsignletter, :exp_atsignnumber, :exp_dash_numbers,
+    :exp_atsignletter, :exp_atsignnumber, :exp_comma_space, :exp_dash_numbers,
     :exp_dollars, :exp_hashtag, :exp_hyphens,
     :exp_leadingohs, :exp_leadingzeroes, :exp_na_telephone,
     :exp_number_of, :exp_numbers, :exp_percent, :exp_say_area_code,
@@ -56,7 +56,12 @@ class WordCounterController < ApplicationController
         just a number (add dashes or spaces to make it a telephone number).
         211, 311,… 911 are special cases.
 
-        - Dashed Numbers:
+        Comma Space:
+        Add a space, after commas inside words.  This,or that.  But doesn't
+        affect the word count.  1,2 since comma is okay without spaces inside
+        a number.
+
+        Dashed - Numbers:
         From 1920-30 a dash between two numbers becomes "to".  Even
         $1.2 — $2.50 are expanded.  A long work day runs from 9 ⸻ 5.  But
         not - between words.  We handle all these dashes in case you
@@ -102,14 +107,17 @@ class WordCounterController < ApplicationController
         Dollars and cents.
         Save $1,234.56 on word-costs, @$1.125/word.  Fractional
         dollars like coal @ $ 12.125 are handled too.  $.12ea currently doesn't
-        work (never seen it in real life, use $0.12ea).  And $9.99 million needs
-        to be manually fixed up (otherwise we'd need an AI to figure out the
-        context). # $9 leaves # alone.  Price set to$4each (adds spaces if needed).
+        work (rarely seen it in real life, except that one time, use $0.12ea).
+        And $9.99 million needs to be manually fixed up (otherwise we'd need
+        an AI to figure out the context). # $9 leaves # alone.  Price set
+        to$4each (adds spaces if needed).
 
         4 digit dates:
         Save on word-costs in 2020, compared to 1990's fees.  Much better than
         in the 1950s!  Notice that 50s and other decades aren't handled (yet).
-        Is 1930 a date… or a military time?
+        Is 1930 a date… or a military time?  Also note special wording for first
+        ten years in a century and millenia:
+        1000, 1009, 1066, 1803, 1900, 1901, 1920, 2000, 2001, 2009, 2010, 2099.
 
         Leading zero numbers:
         But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020,
@@ -154,6 +162,7 @@ class WordCounterController < ApplicationController
     # Order of operations here is significant.
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
+    expand_comma_space if @selected_expansions[:exp_comma_space]
     expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
     expand_at_sign_letter if @selected_expansions[:exp_atsignletter]
     expand_at_sign_number if @selected_expansions[:exp_atsignnumber]
@@ -242,7 +251,7 @@ class WordCounterController < ApplicationController
       (?<spacebefore>[[:space:]]?) # Optional space before.
       @ # The at sign we're looking for.
       (?<spaceafter>[[:space:]]*) # Optional space after.
-      (?<letterafter>[0-9$]) # Require a number or dollar for the next word.
+      (?<letterafter>[[[:digit:]]$]) # Require a number or dollar for the next word.
       }x
     while (result = re.match(@expanded_script))
       expanded_text = if result[:spacebefore].nil? || result[:spacebefore].empty?
@@ -382,7 +391,7 @@ class WordCounterController < ApplicationController
   def expand_percent
     # A % sign after a number is expanded to the word "percent".
     # 12% becomes: 12 percent.  Can have space so "13 %." becomes "13 percent."
-    re = %r{(?<digitbefore>[0-9]) # Starts with a digit.
+    re = %r{(?<digitbefore>[[:digit:]]) # Starts with a digit.
       (?<spacebefore>[[:space:]]*) # Optional spaces between digit and %.
       % # The percent sign.
       (?<letterafter>[^[[:space:]][[:punct:]]]?) # Stuff after needs distance?
@@ -421,7 +430,7 @@ class WordCounterController < ApplicationController
     re = %r{(?<spacebefore>[[:space:]]) # Need a space before the #.
       \# # The octothorpe number sign.
       (?<interspace>[[:space:]]*) # Optional spaces between # and digit.
-      (?<digitafter>[0-9]) # Ends with a digit.
+      (?<digitafter>[[:digit:]]) # Ends with a digit.
       }x
     while (result = re.match(@expanded_script))
       expanded_text = result[:spacebefore] + 'number' +
@@ -438,17 +447,17 @@ class WordCounterController < ApplicationController
   def expand_slash_per_number
     # Expand / to "per" if there is a number on just one side.
     re = %r{(
-      (?<thingbefore>[0-9])
+      (?<thingbefore>[[:digit:]])
         [[:space:]]*
         /
         [[:space:]]*
-        (?<thingafter>[^0-9$[[:space:]]])
+        (?<thingafter>[^[[:digit:]]$[[:space:]]])
       )|(
-        (?<thingbefore>[^0-9[[:space:]]])
+        (?<thingbefore>[^[[:digit:]][[:space:]]])
         [[:space:]]*
         /
         [[:space:]]*
-        (?<thingafter>[0-9$])
+        (?<thingafter>[[[:digit:]]$])
       )}x
     while (result = re.match(@expanded_script))
       before = result[:thingbefore]
@@ -489,17 +498,24 @@ class WordCounterController < ApplicationController
     end
   end
 
+  def expand_comma_space
+    # Add a space after commas, if needed, and not inside a number.
+    @expanded_script = @expanded_script
+      .gsub(/([^[[:space:]]]),([^[[:digit:]][[:space:]]])/, "\\1, \\2")
+      .gsub(/([^[[:space:]][[:digit:]]]),([^[[:space:]]])/, "\\1, \\2")
+  end
+
   def expand_dash_numbers
     # Expand dashed numbers and dollars into numbers separated by the word "to".
     # So "12-45" or "12 - 45" expands to "12 to 45".  And $32 - $ 45.67 expands
     # to "$32 to $45.67.
     re = %r{
-      (?<number1>[0-9]+)
+      (?<number1>[[:digit:]]+)
       [[:space:]]*
       [-‐‑‒–—⸺⸻﹘﹣－] # All known dash or minus characters.
       [[:space:]]*
-      (?<number2>([0-9]|(\$[[:space:]]*))([,.]?[0-9])*)
-      (?<thingafter>[^0-9\-])
+      (?<number2>([[:digit:]]|(\$[[:space:]]*))([,.]?[[:digit:]])*)
+      (?<thingafter>[^[[:digit:]]\-])
       }x
     while (result = re.match(@expanded_script))
       @expanded_script = result.pre_match +
@@ -558,15 +574,15 @@ class WordCounterController < ApplicationController
     while (result = re.match(@expanded_script))
       century = result[:century].to_i
       year = result[:year].to_i
-      if year == 0
+      if year <= 9 # 00 to 09, said as two thousand and five, 19 hundred and one.
         expanded_text = if century % 10 == 0
           NumbersInWords.in_words(century * 100) # Exact thousand year dates.
         else
           NumbersInWords.in_words(century) + ' hundred'
         end
-      else # Not the year 00 start of a century, 01 to 99 possible.
+        expanded_text += ' and ' + NumbersInWords.in_words(year) if year > 0
+      else # Year 10 to 99 possible.
         expanded_text = NumbersInWords.in_words(century) + ' '
-        expanded_text += 'oh-' if year < 10
         expanded_text += NumbersInWords.in_words(year)
       end
       @expanded_script = result.pre_match + result[:space1] +
@@ -579,7 +595,7 @@ class WordCounterController < ApplicationController
     # out as individual digits.  So 8:05 becomes 8:zero five
     # Zero becomes "oh" if :exp_leadingohs is on.
     re = %r{(?<spacebefore>[[[:space:]][[:punct:]]]?)
-      (?<![0-9]|[0-9],) # Make sure there isn't a number before the number!
+      (?<![0-9]|[0-9],|[0-9]\.) # Make sure there isn't a number before the number!
       (?<number>0[0-9]+) # Zero and at least one digit, single 0 not handled.
       (?<thingafter>[[[:space:]][[:punct:]]]?) # Test for spaceish afterwards.
     }x

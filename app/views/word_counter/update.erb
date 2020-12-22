@@ -82,6 +82,15 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_comma_space, "Put Space after Commas") %>
+      <%= check_box_tag(:exp_comma_space, true,
+        @selected_expansions[:exp_comma_space]) %>
+      <p>Add a space after a comma, when it isn't inside a number.  It won't
+      change the word count, but makes things look nicer.
+      "This,or that" becomes: "This, or that"</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_dash_numbers, "Expand Dashed Numbers") %>
       <%= check_box_tag(:exp_dash_numbers, true, @selected_expansions[:exp_dash_numbers]) %>
       <p>The dash between numbers or dollar amounts is expanded to the word
