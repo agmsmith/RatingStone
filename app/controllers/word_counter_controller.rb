@@ -49,12 +49,12 @@ class WordCounterController < ApplicationController
         Note that happy@home doesn't get expanded.
 
         Telephone numbers:
-        Give us a call at 1-800-555-1234, or (613) 555 7648 to save us a few
-        dollars, or if you're in town, it's 555-7648.  555-1234x432 specifies
-        an extension, as does 222-555-1234 ext. 1234 or even 555-1234 extension
-        5432.  In all cases the extension number is read as separate digits.
-        But 9876543210 is just a number (add dashes or spaces to make it a
-        telephone number).  211, 311,… 911 are special cases.
+        Give us a call at 1-800-JKLHYDE (1-800-555-4933), or (613) 555 7648,
+        or locally it's 555-7648.  555-1234x432 specifies an extension, as does
+        1-222-555-1234 ext. 1234 or even 555-1234 extension 5432.  In all cases
+        the extension number is read as separate digits.  But 9876543210 is
+        just a number (add dashes or spaces to make it a telephone number).
+        211, 311,… 911 are special cases.
 
         - Dashed Numbers:
         From 1920-30 a dash between two numbers becomes "to".  Even
