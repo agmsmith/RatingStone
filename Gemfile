@@ -7,13 +7,12 @@ ruby '2.7.2'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '~> 6'
-# Use a recent version of interactive ruby to
-# avoid duplicate loads with system's version of irb.
+# Use a recent version of these gems to avoid conflicts with default ones.
 gem 'irb', '~> 1'
 gem 'forwardable', '~> 1'
-# Use a recent version of stringio to avoid the default one.
 gem 'stringio', '~> 3'
 gem 'strscan', '~> 3'
+gem 'fileutils', '~> 1'
 # Use Puma as the app server
 gem 'puma', '~> 4'
 # Use SCSS for stylesheets
