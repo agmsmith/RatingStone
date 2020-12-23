@@ -13,12 +13,13 @@ require 'diffy'
 
 class WordCounterController < ApplicationController
   EXPANSION_SYMBOLS = [ # In alphabetical order for easier manual additions.
-    :exp_atsignletter, :exp_atsignnumber, :exp_comma_space, :exp_dash_numbers,
+    :exp_atsignletter, :exp_atsignnumber, :exp_comma_space, :exp_dash_to_to,
     :exp_dollars, :exp_hashtag, :exp_hyphens,
     :exp_leadingohs, :exp_leadingzeroes, :exp_na_telephone,
-    :exp_number_of, :exp_numbers, :exp_percent, :exp_say_area_code,
-    :exp_say_telephone_number, :exp_slash_per_always, :exp_slash_per_number,
-    :exp_slash_slash_always, :exp_urls, :exp_years
+    :exp_number_of, :exp_numbers, :exp_numbers_and, :exp_numbers_dash,
+    :exp_percent, :exp_say_area_code, :exp_say_telephone_number,
+    :exp_slash_per_always, :exp_slash_per_number, :exp_slash_slash_always,
+    :exp_urls, :exp_years
   ]
 
   def update
@@ -87,8 +88,7 @@ class WordCounterController < ApplicationController
 
         # Number:
         Look for #22 or # 123 where the # is before the number.
-        99# doesn't expand, same as a#9.  Take the #14 bus and go to room #175,
-        Industrial Avenue site.
+        99# doesn't expand, same as a#9.
 
         / to per for numbers:
         Expand a slash to "per", but only if it's got a number at one end
@@ -127,7 +127,9 @@ class WordCounterController < ApplicationController
         a comma or period in the way.
 
         Numbers, commas and minus signs:
-        Only -1,234.56 seconds remain before this offer expires!
+        Only -1,234.56 seconds remain before this offer expires!  Can
+        optionally remove the "and" in long numbers and the - dash between
+        some number words.
 
         Dashes between Words:
         Remove dashes directly between words (no spaces).  Voice-over,
@@ -149,6 +151,8 @@ class WordCounterController < ApplicationController
       EXPANSION_SYMBOLS.each do |a_symbol|
         @selected_expansions[a_symbol] = true
       end
+      @selected_expansions[:exp_numbers_and] = false
+      @selected_expansions[:exp_numbers_dash] = false
       @selected_expansions[:exp_say_area_code] = false
       @selected_expansions[:exp_say_telephone_number] = false
       @selected_expansions[:exp_slash_per_always] = false
@@ -163,7 +167,7 @@ class WordCounterController < ApplicationController
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
     expand_comma_space if @selected_expansions[:exp_comma_space]
-    expand_dash_numbers if @selected_expansions[:exp_dash_numbers]
+    expand_dash_to_to if @selected_expansions[:exp_dash_to_to]
     expand_at_sign_letter if @selected_expansions[:exp_atsignletter]
     expand_at_sign_number if @selected_expansions[:exp_atsignnumber]
     expand_percent if @selected_expansions[:exp_percent]
@@ -226,6 +230,22 @@ class WordCounterController < ApplicationController
       result.append(depunct) unless depunct.empty? # Happens for "..."
     end
     result
+  end
+
+  def remove_and_dash(input_text)
+    # The user has the option to remove the word "and" and the - in numbers
+    # read as words.  So "one hundred and one" becomes "one hundred one",
+    # and "twenty-one" becomes "twenty one".  The default NumbersInWords
+    # processing adds them.  The user has options to turn on or off those
+    # removals.
+    output_text = input_text
+    unless @selected_expansions[:exp_numbers_and]
+      output_text = output_text.gsub(/ and /, ' ')
+    end
+    unless @selected_expansions[:exp_numbers_dash]
+      output_text = output_text.gsub(/([[:alpha:]])-([[:alpha:]])/, "\\1 \\2")
+    end
+    output_text
   end
 
   # Various methods for expanding things.  Input and output is @expanded_script.
@@ -505,7 +525,7 @@ class WordCounterController < ApplicationController
       .gsub(/([^[[:space:]][[:digit:]]]),([^[[:space:]]])/, "\\1, \\2")
   end
 
-  def expand_dash_numbers
+  def expand_dash_to_to
     # Expand dashed numbers and dollars into numbers separated by the word "to".
     # So "12-45" or "12 - 45" expands to "12 to 45".  And $32 - $ 45.67 expands
     # to "$32 to $45.67.
@@ -539,12 +559,13 @@ class WordCounterController < ApplicationController
       expanded_text = if (int_number == 0) && fraction
         '' # So that $0.23 comes out as just "twenty-three cents".
       else
-        NumbersInWords.in_words(int_number) + ' ' +
+        remove_and_dash(NumbersInWords.in_words(int_number)) + ' ' +
           'dollar'.pluralize(int_number)
       end
       if fraction && fraction.length != 3 # More or less than 2 digits at end.
         real_number = (number + fraction).to_f
-        expanded_text = NumbersInWords.in_words(real_number) + ' dollars'
+        expanded_text = remove_and_dash(NumbersInWords.in_words(real_number)) +
+          ' dollars'
       elsif fraction && fraction.length == 3
         int_fraction = fraction.delete_prefix('.').to_i
         expanded_text += ' and ' unless expanded_text.empty?
@@ -643,9 +664,9 @@ class WordCounterController < ApplicationController
       end
       number = result[:number].delete(',')
       expanded_text += if number.include?('.')
-        NumbersInWords.in_words(number.to_f)
+        remove_and_dash(NumbersInWords.in_words(number.to_f))
       else
-        NumbersInWords.in_words(number.to_i)
+        remove_and_dash(NumbersInWords.in_words(number.to_i))
       end
       expanded_text += ' ' unless /\A[[[:space:]][[:punct:]]]/.match(result.post_match)
       @expanded_script = result.pre_match + expanded_text + result.post_match

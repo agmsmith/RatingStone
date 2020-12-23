@@ -91,8 +91,8 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_dash_numbers, "Expand Dashed Numbers") %>
-      <%= check_box_tag(:exp_dash_numbers, true, @selected_expansions[:exp_dash_numbers]) %>
+      <%= label_tag(:exp_dash_to_to, "Expand Dashed Numbers") %>
+      <%= check_box_tag(:exp_dash_to_to, true, @selected_expansions[:exp_dash_to_to]) %>
       <p>The dash between numbers or dollar amounts is expanded to the word
       "to".  $12.3 - $ 14 becomes $12.3 to $ 14.
       1931-35 or even 1931 - 35 becomes: 1931 to 35</p>
@@ -194,10 +194,29 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_numbers_and, "Numbers Extra And") %>
+      <%= check_box_tag(:exp_numbers_and, true, @selected_expansions[:exp_numbers_and]) %>
+      <p>When expanding plain numbers and dollars, use the word "and" as in
+        "one hundred and one".  More modern voice-over style is to not say the
+        "and", so this is turned off by default.  However, it always says the
+        "and" between dollars and cents.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_numbers_dash, "Numbers Extra - Dash") %>
+      <%= check_box_tag(:exp_numbers_dash, true, @selected_expansions[:exp_numbers_dash]) %>
+      <p>When expanding plain numbers and dollars, use the - dash between some
+        words, as in "twenty-one".  Since that makes it count as one word
+        rather than two, this option is turned off by default.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_hyphens, "Hyphens to Spaces") %>
       <%= check_box_tag(:exp_hyphens, true, @selected_expansions[:exp_hyphens]) %>
       <p>Adjacent words containing only letters separated by a hyphen
         (to avoid clobbering minus signs and dashes) have the hyphen removed.
+        Note that there is a separate dash option for numbers converted to
+        words, in case you don't like 23 becoming twenty-three.
         voice-over becomes: voice over, twenty-three becomes: twenty three</p>
     </div>
   </div>
