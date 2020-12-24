@@ -25,7 +25,8 @@ class WordCounterController < ApplicationController
     :exp_dollars, :exp_hashtag, :exp_hyphens,
     :exp_leadingohs, :exp_leadingzeroes, :exp_na_telephone,
     :exp_number_of, :exp_numbers, :exp_numbers_and, :exp_numbers_dash,
-    :exp_percent, :exp_say_area_code, :exp_say_telephone_number,
+    :exp_percent, :exp_psalms, :exp_say_area_code, :exp_say_chapter,
+    :exp_say_telephone_number,
     :exp_slash_per_always, :exp_slash_per_number, :exp_slash_slash_always,
     :exp_urls, :exp_years
   ]
@@ -69,6 +70,15 @@ class WordCounterController < ApplicationController
         Add a space, after commas inside words.  This,or that.  But doesn't
         affect the word count.  1,2 since comma is okay without spaces inside
         a number.
+
+        Psalms
+        Biblical references to book, chapter:verse and bible are expanded only
+        if requested, with "chapter" being optional.  Well, it actually only
+        looks for numbers (no leading zeroes) around a colon.
+        Some examples found online: Psalms 86:5, King James Version.
+        John 3 : 16 New Revised Standard Version.
+        1 Cor. 13:4, 15 : 12 - 19.  But half of 15:12-09 and none of 15:012-19
+        due to leading zeroes.
 
         Dashed - Numbers:
         From 1920-30 a dash between two numbers becomes "to".  Even
@@ -130,7 +140,7 @@ class WordCounterController < ApplicationController
         Leading zero numbers:
         But call before 2020.12.07 at 6:01 a.m. (that's December 7th, 2020,
         0601 military time) or try in the evening at 1930.  We're also open
-        from 8a.m. to 7:05pm on Saturdays.  Note that 1201, 4.01 or 2,011
+        from 8a.m. to 7:05pm or 7:15pm on Saturdays.  Note that 1201, 4.01 or 2,011
         isn't expanded since there is a number before the 01 or near it with
         a comma or period in the way.
 
@@ -161,6 +171,7 @@ class WordCounterController < ApplicationController
       end
       @selected_expansions[:exp_numbers_and] = false
       @selected_expansions[:exp_numbers_dash] = false
+      @selected_expansions[:exp_psalms] = false
       @selected_expansions[:exp_say_area_code] = false
       @selected_expansions[:exp_say_telephone_number] = false
       @selected_expansions[:exp_slash_per_always] = false
@@ -175,6 +186,7 @@ class WordCounterController < ApplicationController
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
     expand_comma_space if @selected_expansions[:exp_comma_space]
+    expand_psalms if @selected_expansions[:exp_psalms]
     expand_dash_to_to if @selected_expansions[:exp_dash_to_to]
     expand_at_sign_letter if @selected_expansions[:exp_atsignletter]
     expand_at_sign_number if @selected_expansions[:exp_atsignnumber]
@@ -531,6 +543,29 @@ class WordCounterController < ApplicationController
     @expanded_script = @expanded_script
       .gsub(/([^[[:space:]]]),([^[[:digit:]][[:space:]]])/, "\\1, \\2")
       .gsub(/([^[[:space:]][[:digit:]]]),([^[[:space:]]])/, "\\1, \\2")
+  end
+
+  def expand_psalms
+    # Numbers around colons are expanded to chapter and verse. The verse can
+    # be a dashed range too.  Spaces allowed everywhere.
+    # No leading zeros.  "15:12-19" becomes "chapter 15, verses 12 through 19".
+    re = %r{
+      (?<number1>[[[:digit:]]&&[^0]][[:digit:]]*)
+      [[:space:]]*
+      :
+      [[:space:]]*
+      (?<number2>[[[:digit:]]&&[^0]][[:digit:]]*)
+      ([[:space:]]*-[[:space:]]*(?<number3>[[[:digit:]]&&[^0]][[:digit:]]*))?
+      }x
+    while (result = re.match(@expanded_script))
+      expanded_text = @selected_expansions[:exp_say_chapter] ? 'chapter ' : ''
+      expanded_text += result[:number1] + ', verse'
+      expanded_text += 's' if result[:number3]
+      expanded_text += ' ' + result[:number2]
+      expanded_text += ' through ' + result[:number3] if result[:number3]
+
+      @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
   end
 
   def expand_dash_to_to

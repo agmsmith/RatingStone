@@ -91,6 +91,22 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_psalms, "Expand Psalm References") %>
+      <%= check_box_tag(:exp_psalms, true, @selected_expansions[:exp_psalms]) %>
+      <p>Numbers around colons are expanded to chapter and verse.  The verse
+        can be a dashed range too.  John 3:16 becomes John chapter 3, verse 16.
+        1 Cor. 13:4 and 15:12-19 becomes 1 Cor. chapter 13 verse 4 and
+        chapter 15, verses 12 through 19.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_say_chapter, "Say Chapter in Psalms") %>
+      <%= check_box_tag(:exp_say_chapter, true, @selected_expansions[:exp_say_chapter]) %>
+      <p>Turn on for John 3:16 becomes John chapter 3, verse 16.  Turn off to
+        simplify it as John 3, verse 16.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_dash_to_to, "Expand Dashed Numbers") %>
       <%= check_box_tag(:exp_dash_to_to, true, @selected_expansions[:exp_dash_to_to]) %>
       <p>The dash between numbers or dollar amounts is expanded to the word
