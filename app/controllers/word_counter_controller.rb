@@ -12,6 +12,14 @@ require 'diffy'
 # doing voice-over work and suggested this project.  AGMS20201130
 
 class WordCounterController < ApplicationController
+
+  skip_before_action :verify_authenticity_token
+  # Also could do "protect_from_forgery with: :null_session".
+  # Turn off cross site forgery detection, no password or permanent data
+  # saving is done in this page.  It serves only to annoy users when they
+  # try loading an old page and refreshing it (such as when the server has
+  # been rebooted).  Revisit this if we require a log-in.
+
   EXPANSION_SYMBOLS = [ # In alphabetical order for easier manual additions.
     :exp_atsignletter, :exp_atsignnumber, :exp_comma_space, :exp_dash_to_to,
     :exp_dollars, :exp_hashtag, :exp_hyphens,
