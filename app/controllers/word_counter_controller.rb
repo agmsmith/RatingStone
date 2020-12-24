@@ -61,7 +61,7 @@ class WordCounterController < ApplicationController
         Telephone numbers:
         Give us a call at 1-800-JKLHYDE (1-800-555-4933), or (613) 555 7648,
         or locally it's 555-7648.  555-1234x432 specifies an extension, as does
-        1-222-555-1234 ext. 1234 or even 555-1234 extension 5432.  In all cases
+        1-222-555-1234 ext. 1234 or even ((613) 555-1234 extension 5432).  In all cases
         the extension number is read as separate digits.  But 9876543210 is
         just a number (add dashes or spaces to make it a telephone number).
         211, 311,… 911 are special cases.
@@ -72,10 +72,10 @@ class WordCounterController < ApplicationController
         a number.
 
         Psalms
-        Biblical references to book, chapter:verse and bible are expanded only
-        if requested, with "chapter" being optional.  Well, it actually only
-        looks for numbers (no leading zeroes) around a colon.
-        Some examples found online: Psalms 86:5, King James Version.
+        Biblical references to X:Y-Z are expanded to chapter X and verse Y
+        through Z, but only if requested, and "chapter" can be optional.
+        Well, it actually only looks for numbers (no leading zeroes) around a
+        colon.  Some examples found online: Psalms 86:5, King James Version.
         John 3 : 16 New Revised Standard Version.
         1 Cor. 13:4, 15 : 12 - 19.  But half of 15:12-09 and none of 15:012-19
         due to leading zeroes.
@@ -376,13 +376,16 @@ class WordCounterController < ApplicationController
     # "area code" are inserted before the area code if there is one.  To have
     # it say "telephone number" before the last seven digits part, set
     # @selected_expansions[:exp_say_telephone_number] to true.
-    re = %r{(?<spacebefore>[[:space:]])
-      (((?<leadingone>1)([-‐‑‒–—⸺⸻﹘﹣－]|[[:space:]]+))?
-      (\(?(?<areacode>[2-9][0-9][0-9])([-‐‑‒–—⸺⸻﹘﹣－]|(\)?[[:space:]]+))))?
+    re = %r{(?<spacebefore>[[[:space:]]\(]) # Can be inside round brackets too.
+      ( # Optional area code with optional 1- in front.
+      ((?<leadingone>1)([-‐‑‒–—⸺⸻﹘﹣－]|[[:space:]]+))? # Optional "1-"
+      ((?<areacode>[2-9][0-9][0-9])|(\((?<areacode>[2-9][0-9][0-9])\)))
+      ([-‐‑‒–—⸺⸻﹘﹣－]|([[:space:]]+))
+      )? # End of optional long distance prefix things.
       (?<exchange>[2-9][0-9][0-9])([-‐‑‒–—⸺⸻﹘﹣－]|[[:space:]])
       (?<number>[0-9][0-9][0-9][0-9])
       ([[:space:]]*(x|ext\.?|extension)[[:space:]]*(?<extension>[0-9]+))?
-      (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
+      (?<spaceafter>[[[:space:]][[:punct:]]\)]) # Ends with space or punctuation.
       }x
     while (result = re.match(@expanded_script))
       expanded_text = result[:spacebefore]
