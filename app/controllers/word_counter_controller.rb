@@ -12,7 +12,6 @@ require 'diffy'
 # doing voice-over work and suggested this project.  AGMS20201130
 
 class WordCounterController < ApplicationController
-
   skip_before_action :verify_authenticity_token
   # Also could do "protect_from_forgery with: :null_session".
   # Turn off cross site forgery detection, no password or permanent data
@@ -615,8 +614,8 @@ class WordCounterController < ApplicationController
       elsif fraction && fraction.length == 3
         int_fraction = fraction.delete_prefix('.').to_i
         expanded_text += ' and ' unless expanded_text.empty?
-        expanded_text += NumbersInWords.in_words(int_fraction) + ' ' +
-          'cent'.pluralize(int_fraction)
+        expanded_text += remove_and_dash(NumbersInWords.in_words(int_fraction)) +
+          ' ' + 'cent'.pluralize(int_fraction)
       end
 
       # Insert spaces if butting up against letters or something similar.
