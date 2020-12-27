@@ -9,6 +9,7 @@ ruby '2.7.2'
 gem 'rails', '~> 6'
 # Use a recent version of these gems to avoid conflicts with default ones.
 gem 'irb', '~> 1'
+gem 'etc', '~> 1'
 gem 'forwardable', '~> 1'
 gem 'stringio', '~> 3'
 gem 'strscan', '~> 3'

@@ -92,6 +92,7 @@ GEM
     crass (1.0.6)
     diffy (3.4.0)
     erubi (1.10.0)
+    etc (1.2.0)
     execjs (2.7.0)
     faker (2.15.1)
       i18n (>= 1.6, < 2)
@@ -274,6 +275,7 @@ DEPENDENCIES
   byebug
   capybara (~> 3)
   diffy (~> 3)
+  etc (~> 1)
   faker (~> 2)
   fileutils (~> 1)
   forwardable (~> 1)
