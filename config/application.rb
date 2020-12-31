@@ -9,7 +9,8 @@ Bundler.require(*Rails.groups)
 module RatingStone
   class Application < Rails::Application
     # Initialize configuration defaults for originally generated Rails version.
-    config.load_defaults 6.0
+    # Or try it with the latest version of Rails defaults...  AGMS20201231
+    config.load_defaults 6.1
 
     # Configuration for the application, engines, and railties goes here.
     #
