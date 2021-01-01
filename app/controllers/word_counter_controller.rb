@@ -71,8 +71,8 @@ class WordCounterController < ApplicationController
         a number.
 
         Psalms
-        Biblical references to X:Y-Z are expanded to chapter X and verse Y
-        through Z, but only if requested, and "chapter" can be optional.
+        Optionally biblical references to X:Y-Z are expanded to chapter X and verse Y
+        through Z, but only if requested, and "chapter" can be optional too.
         Well, it actually only looks for numbers (no leading zeroes) around a
         colon.  Some examples found online: Psalms 86:5, King James Version.
         John 3 : 16 New Revised Standard Version.
@@ -127,7 +127,8 @@ class WordCounterController < ApplicationController
         work (rarely seen it in real life, except that one time, use $0.12ea).
         And $9.99 million needs to be manually fixed up (otherwise we'd need
         an AI to figure out the context). # $9 leaves # alone.  Price set
-        to$4each (adds spaces if needed).
+        to$4each (adds spaces if needed).  Commas every 3 digits $456,789,62.22
+        But we don't know what format negative dollars are in; need examples.
 
         4 digit dates:
         Save on word-costs in 2020, compared to 1990's fees.  Much better than
@@ -144,9 +145,10 @@ class WordCounterController < ApplicationController
         a comma or period in the way.
 
         Numbers, commas and minus signs:
-        Only -1,234.56 seconds remain before this offer expires!  Can
-        optionally remove the "and" in long numbers and the - dash between
-        some number words.
+        Only -1,234.56 seconds remain before this offer expires!  There's an
+        option to remove the "and" in long numbers and the - dash between
+        some number words.  1,2,3 should be separate numbers, but +3,456,789
+        is one number (commas only on the 3s) and 34,56,789.0 is just mangled.
 
         Dashes between Words:
         Remove dashes directly between words (no spaces).  Voice-over,
@@ -155,13 +157,13 @@ class WordCounterController < ApplicationController
         9⸺pad, yet⸻8, 7﹘6 and so -on- don't get converted (also see dashed
         numbers).
 
-        Ellipsis - not yet implemented:
+        Ellipsis - not implemented unless someone wants it, would be "dot dot dot" and so on:
         Maybe….. try calling us in the evening.   ...or not.
 
-        Metric units dictionary - not yet implemented.
+        Metric units dictionary - not implemented unless someone wants it.
         Our pool heater can heat 3m3 per minute, of water with a density of 1.0 g/cm3, increasing the temperature by 5C with 20,000W of energy (1.3kg/h of natural gas).  With 5cm diamater (19.63cm2 cross sectional area), that's a 8km/h flow speed.
 
-        English units dictionary - not yet implemented.
+        English units dictionary - not implemented unless someone wants it.
         The pool heater raises the water temperature by 10-15F, at 20GPM (1.5 hp motor), which uses 150,000 BTU/hour from burning logs.  With 2" pipes (32' long), it's flowing at 5 mph.
       DEFAULTSCRIPT
 
@@ -595,7 +597,7 @@ class WordCounterController < ApplicationController
     # after the dollar sign are optional.
     # $12.34 becomes "twelve dollars and thirty four cents"
     # $1.234 becomes "one point two three four dollars"
-    re = /\$[[:space:]]*(?<number>[0-9][0-9,]*)(?<fraction>\.[0-9]+)?/
+    re = /\$[[:space:]]*(?<number>[0-9]+(,[0-9][0-9][0-9])*)(?<fraction>\.[0-9]+)?/
     while (result = re.match(@expanded_script))
       number = result[:number].delete(',')
       fraction = result[:fraction] # Remember it includes the period in front.
@@ -684,17 +686,17 @@ class WordCounterController < ApplicationController
   end
 
   def expand_numbers
-    # Positive numbers are expanded into words.  Note that the numbers can
+    # Signed numbers are expanded into words.  Note that the numbers can
     # be anywhere, even inside a word, so X15 or 9a become X fifteen or
     # nine a.  Though if it's followed by "st", "nd", "rd" or "th" then it
     # won't be expanded (avoids 22nd -> twenty twond).  Numbers can have commas and
     # decimal points, such as 123,456.78 which becomes: one hundred and
     # twenty-three thousand four hundred and fifty-six point seven eight.
-    # The plus or minus sign in front will be left alone, and handled elsewhere.
-    # Avoid ending in a comma.
+    # There's an optional plus or minus sign in front which expands as expected.
     re = %r{
       (?<before>[[[:space:]][[:punct:]]])? # Is there a space before the number?
-      (?<number>[0-9](,?[0-9])*(\.[0-9]+)?) # Number not ending in a comma.
+      (?<sign>[+\-])?
+      (?<number>[0-9]+(,[0-9][0-9][0-9])*(\.[0-9]+)?) # Number and fraction.
       (?!st[[[:space:]][[:punct:]]]| # Not followed by st for 1st.
       nd[[[:space:]][[:punct:]]]| # Not followed by nd for 2nd.
       rd[[[:space:]][[:punct:]]]| # Not followed by rd for 3rd.
@@ -707,6 +709,8 @@ class WordCounterController < ApplicationController
       else
         ' ' # Need to insert a space before our new number text.
       end
+      expanded_text += "plus " if result[:sign] == '+'
+      expanded_text += "minus " if result[:sign] == '-'
       number = result[:number].delete(',')
       expanded_text += if number.include?('.')
         remove_and_dash(NumbersInWords.in_words(number.to_f))
