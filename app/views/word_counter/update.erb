@@ -200,10 +200,11 @@
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_numbers, "Expand Numbers into Words") %>
       <%= check_box_tag(:exp_numbers, true, @selected_expansions[:exp_numbers]) %>
-      <p>Positive numbers are expanded into words.  Note that the numbers can
+      <p>Numbers are expanded into words.  Note that the numbers can
         be anywhere, even inside a word, so X15 or 9a become X fifteen or
         nine a.  Though if it's followed by "st", "nd", "rd" or "th" then it
-        won't be expanded (avoids 22nd -> twenty twond).  Numbers can have commas and
+        won't be expanded (avoids 22nd -> twenty twond).  A leading + or -
+        becomes "plus" or "minus".  Numbers can have commas and
         decimal points, such as 123,456.78 which
         becomes: one hundred and twenty-three thousand four hundred and
         fifty-six point seven eight.</p>
@@ -223,7 +224,8 @@
       <%= check_box_tag(:exp_numbers_dash, true, @selected_expansions[:exp_numbers_dash]) %>
       <p>When expanding plain numbers and dollars, use the - dash between some
         words, as in "twenty-one".  Since that makes it count as one word
-        rather than two, this option is turned off by default.</p>
+        rather than two, this option is turned off by default.  Note that
+        "Hyphens to Spaces" will also remove these number dashes.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
@@ -232,8 +234,7 @@
       <p>Adjacent words containing only letters separated by a hyphen
         (to avoid clobbering minus signs and dashes) have the hyphen removed.
         Note that there is a separate dash option for numbers converted to
-        words, in case you don't like 23 becoming twenty-three.
-        voice-over becomes: voice over, twenty-three becomes: twenty three</p>
+        words.  voice-over becomes: voice over</p>
     </div>
   </div>
 
@@ -283,7 +284,7 @@ or visit <a href="https://www.facebook.com/realcount">RealCount on Facebook</a>
 or send a Tweet tagged with <a href="https://twitter.com/search?q=RealWordCount&f=live&vertical=default">#RealWordCount</a>
 (#RealCount is over-used for vote counting).</p>
 
-<p><small>Situation, legal and otherwise: Use of this experimental web site is
+<p>Situation, legal and otherwise: Use of this experimental web site is
 at your own risk and expense; we don't guarantee anything.  You don't need to
 log in to do a word count, so you don't need cookies (they're only used for
 identifying logged in people).  Also no third party tracking (like Google or
@@ -293,5 +294,5 @@ operator may see your script scrolling by in the log window, but we won't keep
 your data and the log files are discarded whenever the web server is rebooted
 (typically weekly).  Real logs are made of wood.  If you don't like logging,
 you can set up your own copy of this web site, possibly in a desktop virtual
-machine.</small></p>
+machine.</p>
 
