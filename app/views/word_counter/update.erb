@@ -19,24 +19,30 @@
       <%= 'word'.pluralize(delta_count) %><%= if delta_count <= 0 then '?' elsif delta_count < 10 then '.' else '!' end %></H2>
     </div>
     <div class="col-xs-12 col-sm-6">
-      <%= submit_tag(yield(:button_text), class: "btn btn-primary button-full-width") %>
-      <p>Instructions: <small>Hit Clear and paste your script into the box,
+      <div class="hidden-xs"><br></div>
+      <p>Instructions: Hit Clear and paste your script into the box,
         then press the "<%= yield(:button_text) %>" button to do the count,
         and create the expanded script below.  Check the list of changes there
         for problems and turn off troublesome expansion options, then count
-        again!</small></p>
+        again!</p>
     </div>
   </div>
 
   <div class="row">
-    <div class="col-xs-9"><a name="vo_script"></a>
+    <div class="col-xs-12"><a name="vo_script"></a>
       <p class="wordcount-sectiontitle">Your Voice-Over Script:</p>
-    </div>
-    <div class="col-xs-3">
-      <p><%= submit_tag("Clear", class: "btn btn-secondary button-full-width") %></p>
     </div>
     <div class="col-xs-12">
       <%= text_area_tag(:vo_script, @vo_script, size: "80x6", class: 'form-control') %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-8">
+      <%= submit_tag(yield(:button_text), class: "btn btn-primary button-full-width") %>
+    </div>
+    <div class="col-xs-4">
+      <p><%= submit_tag("Clear", class: "btn btn-info button-full-width") %></p>
     </div>
   </div>
 
