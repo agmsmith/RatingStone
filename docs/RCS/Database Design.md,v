@@ -1,9 +1,14 @@
-head	1.50;
+head	1.51;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.51
+date	2021.01.04.17.22.42;	author agmsmith;	state Exp;
+branches;
+next	1.50;
 
 1.50
 date	2020.09.20.23.45.52;	author agmsmith;	state Exp;
@@ -261,14 +266,14 @@ desc
 @
 
 
-1.50
+1.51
 log
-@Need to have a subject for posts, add a string for generic content classes.
+@Added LedgerThing and some LinkOpinion clarification.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.49 2020/09/13 20:48:36 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.50 2020/09/20 23:45:52 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -724,7 +729,8 @@ links.  Otherwise similar to LedgerApprove.
 
 ### *LedgerUser* < LedgerBase
 
-Idenfities a particular user.
+Idenfities a particular user.  We don't have placeholder users (for celebrities
+and other external people); a group should be created by fans instead.
 
 * User_id Points to a user's record in the separate Users database (see
   RailsTutorial) which has passwords, e-mail addresses and other private
@@ -746,7 +752,20 @@ Idenfities a particular user.
 Are corporations people?  Not really, but we have them as users too in case
 someone wants to run a company web page or otherwise have a presence on this
 reputation system.  As well, employees can list the LedgerCompany as their
-employer.
+employer.  Alternatively, they are a regular User but linked to a category
+of Companies.
+
+
+### *LedgerThing* < LedgerBase
+
+Represents a real world thing like a book.  Users can comment about it and
+award it rating points, but it never regenerates points (only Users
+do that).  Attach content to it (like pictures or a post) to describe it better,
+using LinkHomeContent.  Links to a classification group can rate it.  For
+example, a book reviews group would have a link to the book to award it points.
+Can be in multiple groups, such as "My Books" and "World's Best Books".
+
+* Name of thing.
 
 
 ### *LedgerContent* < LedgerBase
@@ -982,12 +1001,12 @@ link records).  The user can click on individual ones to play them.
 
 ### *LinkHomeContent* < LinkBase
 
-Parent is a Ledger(Full/Sub)group and child is usually a LedgerPost.  That post
-will be used as the home post (home page, status page, profile page, same thing)
-for the group.  If there are several, the latest one will be used and the others
-considered to be previous ones, visible if someone asks for the history of home
-pages.  Or maybe we show them all, kind of like a list of announcements or
-pinned posts.  Delete the LinkHomeContent to unpin them.
+Parent is a Ledger(Full/Sub)group or LedgerThing and child is usually a
+LedgerPost.  That post will be used as the home post (home page, status page,
+profile page, description, etc) for the parent.  If there are several, we show
+them all, kind of like a list of announcements or pinned posts.  Delete the
+LinkHomeContent to unpin them.
+
 
 ### *LinkHomeGroup* < LinkBase
 
@@ -1160,11 +1179,12 @@ They receive those points either way.
 ### *LinkOpinion* < LinkBase
 
 Parent LedgerUser (usually the creator) has an opinion about the child object
-(usually a LedgerContent or a LedgerUser).  Can be positive or negative or meh,
-decided by the points awarded to the child.  Usually no points awarded to the
-parent, unless a third party is essentially paying someone to have an opinion.
-Automatically approved for the child end, parent end auto approved if it is the
-creator, and can only be deleted by the creator or parent end.
+(usually a LedgerContent or a LedgerUser or LedgerThing).  Can be positive or
+negative or meh, decided by the points awarded to the child.  Usually no points
+awarded to the parent, unless a third party is essentially paying someone to
+have an opinion.  Automatically approved for the child end, parent end auto
+approved if it is the creator, and can only be deleted or unapproved by the
+creator or parent end.
 
 For example, if you like a post, you can make a LinkOpinion referencing the
 post (as the child object) and give it some of your rating points.  The parent
@@ -1195,19 +1215,21 @@ rewarded child.
 #### *LinkMetaMod* < LinkOpinion
 
 This is an opinion about someone else's opinions, used for meta-moderation.
-The main difference is that it is anonymous.  Usually members of a group will
-on occasion (much more often if they have the meta-moderator role in the group)
-be shown a random opinion about a message in the group (usually a recent one,
-but not always).  They can decide how many points to award and in which
-direction to the person making the opinion.  Additionally they will receive a
-bit of a positive reward too, and for convenience the LinkMetaMod will be
-initially approved on the parent end rather than needing the creator to be the
-parent for pre-approval.  The group will pay for the points and be listed as
-the creator of the LinkMetaMod record.  For meta-meta-moderation, we'll just
-use an annual performance review for the more significant meta-moderators
-(since they get paid in points, they could do this as a kind of job, and
-moderators would also get points from the meta-moderator operation, and the
-group could get points by having a weekly membership fee).
+The main difference is that it is anonymous (the parent is hidden to most
+people).  Usually members of a group will on occasion (much more often if they
+have the meta-moderator role in the group) be shown a random opinion about a
+message in the group (usually a recent one, but not always).  They can decide
+how many points to award and in which direction to the person making the
+opinion.  Additionally they will receive a bit of a positive reward too, and
+for convenience the LinkMetaMod will be initially approved on the parent end
+rather than needing the creator to be the parent for pre-approval.  The group
+will pay for the points and be listed as the creator of the LinkMetaMod record.
+
+For meta-meta-moderation, we'll just use an annual performance review for the
+more significant meta-moderators (since they get paid in points, they could do
+this as a kind of job, and moderators would also get points from the
+meta-moderator operation, and the group could get points by having a weekly
+membership fee).
 
 
 ## Auxiliary Classes
@@ -1415,9 +1437,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.49 2020/09/13 20:48:36 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.50 2020/09/20 23:45:52 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.50  2020/09/20 23:45:52  agmsmith
+Need to have a subject for posts, add a string for generic content classes.
+
 Revision 1.49  2020/09/13 20:48:36  agmsmith
 Add note to is_latest_version as being useful in SQL queries too.
 
@@ -1573,6 +1598,57 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.50
+log
+@Need to have a subject for posts, add a string for generic content classes.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.49 2020/09/13 20:48:36 agmsmith Exp agmsmith $</SMALL>
+d459 2
+a460 1
+Idenfities a particular user.
+d482 14
+a495 1
+employer.
+d731 6
+a736 6
+Parent is a Ledger(Full/Sub)group and child is usually a LedgerPost.  That post
+will be used as the home post (home page, status page, profile page, same thing)
+for the group.  If there are several, the latest one will be used and the others
+considered to be previous ones, visible if someone asks for the history of home
+pages.  Or maybe we show them all, kind of like a list of announcements or
+pinned posts.  Delete the LinkHomeContent to unpin them.
+d909 6
+a914 5
+(usually a LedgerContent or a LedgerUser).  Can be positive or negative or meh,
+decided by the points awarded to the child.  Usually no points awarded to the
+parent, unless a third party is essentially paying someone to have an opinion.
+Automatically approved for the child end, parent end auto approved if it is the
+creator, and can only be deleted by the creator or parent end.
+d945 15
+a959 13
+The main difference is that it is anonymous.  Usually members of a group will
+on occasion (much more often if they have the meta-moderator role in the group)
+be shown a random opinion about a message in the group (usually a recent one,
+but not always).  They can decide how many points to award and in which
+direction to the person making the opinion.  Additionally they will receive a
+bit of a positive reward too, and for convenience the LinkMetaMod will be
+initially approved on the parent end rather than needing the creator to be the
+parent for pre-approval.  The group will pay for the points and be listed as
+the creator of the LinkMetaMod record.  For meta-meta-moderation, we'll just
+use an annual performance review for the more significant meta-moderators
+(since they get paid in points, they could do this as a kind of job, and
+moderators would also get points from the meta-moderator operation, and the
+group could get points by having a weekly membership fee).
+d1167 1
+a1167 1
+$Header: /home/agmsmith/Programming/Rating\040Stone/docs/RCS/Database\040Design.md,v 1.49 2020/09/13 20:48:36 agmsmith Exp agmsmith $
+d1170 3
 @
 
 
