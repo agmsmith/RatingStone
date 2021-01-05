@@ -31,8 +31,6 @@
   <div class="row">
     <div class="col-xs-12"><a name="vo_script"></a>
       <p class="wordcount-sectiontitle">Your Voice-Over Script:</p>
-    </div>
-    <div class="col-xs-12">
       <%= text_area_tag(:vo_script, @vo_script, size: "80x6", class: 'form-control') %>
     </div>
   </div>
@@ -47,13 +45,57 @@
   </div>
 
   <div class="row">
+    <div class="col-xs-12"><a name="differences"></a>
+      <p class="wordcount-sectiontitle">Changes Made:</p>
+      <p>Check this list of differences to avoid embarassing mistakes in the
+        expansion (it's not perfect), such as "$ 3.21 million" becoming
+        "three dollars and twenty-one cents million".  Turn off problematic
+        expansion options or rewrite the original script to avoid glitches like
+        that.  Please contact us for a fix if it is a frequent problem.</p>
+    </div>
+    <div class="col-xs-12">
+      <%= Diffy::Diff.new(@vo_script, @expanded_script).to_s(:html).html_safe %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12"><a name="expanded_script"></a>
+      <p class="wordcount-sectiontitle">Expanded Script:</p>
+      <p>Get your expanded script by clicking in this box, selecting all,
+        then copy the text to your clipboard.</p>
+      <%= # Formerly: safe_join(@expanded_script.split(/\r*\n/), "<br />".html_safe
+        line_count = @expanded_script.count("\n") + 1 # No trailing \n so +1.
+        line_count = 6 if line_count < 6
+        text_area_tag(:expanded_script, @expanded_script, cols: 80,
+        rows: line_count, style: "width: 100% ; height: auto ;") %>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-xs-12"><a name="word_counts"></a>
+      <p class="wordcount-sectiontitle">Word Counts:</p>
+    </div>
+    <% @hybrid_word_list.each do |a_word, a_count| %>
+      <div class="col-xs-6 col-sm-4 col-md-2 col-lg-1"><%= a_word %> = <%=
+        @expanded_word_list[a_word] %><%= if a_count > 0
+          " (+#{a_count})"
+        elsif a_count < 0
+          " (#{a_count})"
+        else
+          ""
+        end %></div>
+    <% end %>
+    <p>&nbsp;</p>
+  </div>
+
+  <div class="row">
     <div class="col-xs-12"><a name="expansion_options"></a>
       <p class="wordcount-sectiontitle">Expansion Options:</p>
-      <p>Note that they are processed in the order given here (make the window
-        narrower to see it in a single column).  The defaults are pretty good,
-        but you may have to turn off ones that are causing problems with your
-        particular script.  Or turn on ones that most people won't use, such
-        as handling Psalms or making all "/" characters into "slash".</p>
+      <p>The defaults are pretty good, but you may have to turn off ones that
+        are causing problems.  Or turn on rare ones, such
+        as handling Psalms or making all "/" characters into "slash".
+        Note that they are processed in the order given here (make the window
+        narrower to see it in a single column).</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
@@ -243,43 +285,6 @@
         words.  voice-over becomes: voice over</p>
     </div>
   </div>
-
-  <div class="row">
-    <div class="col-xs-12"><a name="expanded_script"></a>
-      <p class="wordcount-sectiontitle">Expanded Script:</p>
-      <p class="description-box"><%= safe_join(@expanded_script.split(/\r*\n/), "<br />".html_safe) %></p>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="col-xs-12"><a name="word_counts"></a>
-      <p class="wordcount-sectiontitle">Word Counts:</p>
-    </div>
-    <% @hybrid_word_list.each do |a_word, a_count| %>
-      <div class="col-xs-6 col-sm-4 col-md-2 col-lg-1"><%= a_word %> = <%=
-        @expanded_word_list[a_word] %><%= if a_count > 0
-          " (+#{a_count})"
-        elsif a_count < 0
-          " (#{a_count})"
-        else
-          ""
-        end %></div>
-    <% end %>
-    <p>&nbsp;</p>
-  </div>
-
-  <div class="row">
-    <div class="col-xs-12"><a name="differences"></a>
-      <p class="wordcount-sectiontitle">Expansion Differences:</p>
-      <p>Avoid embarassing mistakes in the expansion (it's not perfect).  Look
-        for things like "$ 3.21 million" becoming "three dollars and twenty-one
-        cents million".  Rewrite the original script to avoid glitches like
-        that, or contact us if fixing it is worthy of becoming a new feature.</p>
-    </div>
-    <div class="col-xs-12">
-      <%= Diffy::Diff.new(@vo_script, @expanded_script).to_s(:html).html_safe %>
-    </div>
-  </div>
 <% end %>
 
 <HR>
@@ -300,5 +305,5 @@ inputs including the script), and the system operator may see your script
 scrolling by in the log window, but we won't keep your data and the log files
 are discarded whenever the web server is rebooted (typically weekly).  Real
 logs are made of wood.  If you don't like logging, you can set up your own
-copy of this web site, possibly in a desktop virtual machine.</p>
+private copy of this web site, possibly in a desktop virtual machine.</p>
 

@@ -82,8 +82,7 @@ class LedgerPostsController < LedgerBasesController
 
   # For information that isn't exactly part of this @ledger_object, side save
   # it into related records specific to the object class.
-  # Bleeble TODO: - move this to the model class, makes more sense there, if
-  # we can get transactions to work.
+  # TODO: move this to the model class, makes more sense there, if we can get transactions to work.
   def side_save(new_object)
     return false unless super
 
