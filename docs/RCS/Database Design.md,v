@@ -1,9 +1,14 @@
-head	1.52;
+head	1.53;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.53
+date	2021.01.08.23.00.03;	author agmsmith;	state Exp;
+branches;
+next	1.52;
 
 1.52
 date	2021.01.08.18.41.24;	author agmsmith;	state Exp;
@@ -271,14 +276,14 @@ desc
 @
 
 
-1.52
+1.53
 log
-@Added more award ceremony fields; starting to implement them.
+@Explain award ceremony.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.51 2021/01/04 17:22:42 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.52 2021/01/08 18:41:24 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -664,21 +669,20 @@ serious or distinct enough.
   record, it's implied by the creator_id field.  Write-once.
 * current_down_points float  Changed as needed.
 * current_meh_points float  Changed as needed.
-* current_up_points float  Number of rating points in each
-  of the directions for this object.  This is the current total, including
-  fading over time (recalculated at the beginning of the week in the awards
-  ceremony) plus new ratings applied this week.  If the related current ceremony
-  number doesn't match the latest ceremony, then they need to be recalculated
-  before they are used or updated.  We keep the directions
-  separate to improve statistical estimation of how accurate the rating is
-  (just storing the net difference of 2 points isn't as meaningful as knowing
-  you had 102 up and 100 down vs 3 up and 1 down), and use them as inputs to
-  various different sorting algorithms.  Until someone redoes the statistical
-  theory, we'll split meh points 50% to each of up and down.  But once we have
-  better math, we can use meh directly.  When they have all faded away to close
-  to zero (less than 0.01, equivalent to 3 years of fading one point) then the
-  record can be garbage collected from the current database, freeing up
-  storage.  Changed as needed.
+* current_up_points float Number of rating points in each of the directions for
+  this object.  This is the current total, including fading over time
+  (recalculated at the beginning of the week in the awards ceremony) plus new
+  ratings applied this week.  If the related current ceremony number doesn't
+  match the latest ceremony, then they need to be recalculated before they are
+  used or updated.  We keep the directions separate to improve statistical
+  estimation of how accurate the rating is (just storing the net difference of
+  2 points isn't as meaningful as knowing you had 102 up and 100 down vs 3 up
+  and 1 down), and use them as inputs to various different sorting algorithms.
+  Until someone redoes the statistical theory, we'll split meh points 50% to
+  each of up and down.  But once we have better math, we can use meh directly.
+  When they have all faded away to close to zero (less than 0.01, equivalent to
+  3 years of fading one point) then the record can be garbage collected from
+  the current database, freeing up storage.  Changed as needed.
 * current_ceremony integer The number of the awards ceremony that the current
   points were calculated for.  Set to -1 if not calculated yet or needs recalc.
   When points change during the week (someone makes a rating for example), the
@@ -771,13 +775,13 @@ of Companies.
 ### *LedgerThing* < LedgerBase
 
 Represents a real world thing like a book.  Users can comment about it and
-award it rating points, but it never regenerates points (only Users
-do that).  Attach content to it (like pictures or a post) to describe it better,
-using LinkHomeContent.  Links to a classification group can rate it.  For
-example, a book reviews group would have a link to the book to award it points.
-Can be in multiple groups, such as "My Books" and "World's Best Books".
+award it rating points, but it never regenerates points (only Users do that).
+Attach content to it (like pictures or a post) to describe it better, using
+LinkHomeContent.  Links to a classification group can rate it.  For example, a
+book reviews group would have a link to the book to award it points.  Can be in
+multiple groups, such as "My Books" and "World's Best Books".
 
-* Name of thing.
+* Name of thing.  Write-once.
 
 
 ### *LedgerContent* < LedgerBase
@@ -873,7 +877,7 @@ the ceremony is ignored and just about everything needs to be recalculated,
 including award numbers for subsequent ceremonies and LinkBase records.
 Currently deleting this kind of record is not implemented, so don't do it.
 
-* award_number A count of the number of award ceremonies done up to and
+* ceremony_number A count of the number of award ceremonies done up to and
   including this one.  In other words, a seqeunce counter starting at 1.  So if
   rating points were assigned at the beginning of time, before any awards, the
   faded value of the points after a particular award ceremony would be original
@@ -881,6 +885,51 @@ Currently deleting this kind of record is not implemented, so don't do it.
 * completed_at Time stamp for when the award ceremony was completed.  The start
   time is in the usual created_at time stamp for this record.  The web site is
   offline while the awards are being calculated.
+
+#### Calculating Awards
+
+To avoid rewriting the whole database, current point levels based on fading and
+awards over time for regular LedgerBase objects are calculated on demand and
+cached.  We also have a recalculate all cached values feature, in case you
+import records from somewhere else or didn't save cached values.  It's useful
+for test purposes to compare the cached values calculated both ways.
+
+There's a bit of extra complication when Link records have been (un)deleted or
+(un)approved where the points given to the child disappear and reappear
+(creators are always charged for the points spent).  We generally calculate
+based on the final deleted state for the latest award ceremony.  Though you may
+want to calculate the state of the system as of a particular date in the past,
+which can be done by making a copy of the database without all records after
+the desired date.
+
+The LedgerAwardCeremony class has functions for keeping track of the latest
+award ceremony and starting a new one (invoked by a weekly cron script on the
+web server or manually).
+
+For the full update basically replay everything.  Process both Link and Ledger
+records in chronological order.  Reset all delete and approved flags to default
+values and zero the cache as the records are processed.  Add changes from Link
+records to the appropriate cached value in Ledger records.  Ignore records in
+the future when doing queries to find group membership etc.
+
+For the incremental update, whenever a Link record is being applied, first
+check if the Ledger record is from an earlier ceremony.  If so, fade the cached
+points by the fade factor raised to the number of ceremonies done since the
+record was last updated.  Then add/subtract points from the appropriate cached
+Ledger values.  Generally Link child will get them added to the appropriate
+up/meh/down cached value.  The Link creator has the points spent taken off
+their cached "up" count (after an update if needed).
+
+For weekly award ceremonies, all User records need to have their entitled
+points calculated (based on the various bonuses they are entitled to) and added
+to the cached points (after cached are faded).  As well the remaining entitled
+points counter for that user is reset.
+
+Bonuses are kept track of by linking the user to various categories, possibly
+multiple times.  There's a category for +1 weekly point for a good year of
+posting, another one for -1 weekly point of annual inactivity, and one for 0
+change for just doing some posting during the year.  Those links are made
+during the award ceremony on the anniversary of a user's account activation.
 
 
 ### *LedgerBirthday* < LedgerBase
@@ -1307,7 +1356,7 @@ details like this:
       t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts.  Also lets us skip older versions directly in an SQL query."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record, using their original ID."
       t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
-      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+      t.bigint :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.string :string2, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.text :text1, default: "", comment: "Generic text (lots of characters), defined by subclasses."
@@ -1315,6 +1364,7 @@ details like this:
       t.float :current_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_meh_points, default: 0.0, comment: "Number of rating points in the meh non-direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
+      t.integer :current_ceremony, default: -1, comment: "The number of the awards ceremony that the current points were calculated for.  Set to -1 if not calculated yet or needs recalc."
       t.timestamps
     end
 
@@ -1327,16 +1377,16 @@ details like this:
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the parent LedgerBase object (or subclass) which is usually the main one or older one in the association.  Uses the original ID of the parent."
       t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the child LedgerBase object (or subclass) which is the child in the association.  Uses the original ID of the child."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link, using their original ID."
-      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+      t.bigint :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
-      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
-      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
+      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
+      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
       t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
       t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
-      t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+      t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the parent object."
       t.string :rating_direction, default: "M", comment: "Use U for up, D for down or M for meh."
-      t.integer :award_number, default: 0, comment: "The week's award number when this record was created, 0 if before time starts."
+      t.integer :rating_ceremony, default: 0, comment: "The week's award ceremony number when this record was created, 0 if before time starts."
       t.timestamps
     end
 
@@ -1449,9 +1499,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.51 2021/01/04 17:22:42 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.52 2021/01/08 18:41:24 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.52  2021/01/08 18:41:24  agmsmith
+Added more award ceremony fields; starting to implement them.
+
 Revision 1.51  2021/01/04 17:22:42  agmsmith
 Added LedgerThing and some LinkOpinion clarification.
 
@@ -1462,7 +1515,8 @@ Revision 1.49  2020/09/13 20:48:36  agmsmith
 Add note to is_latest_version as being useful in SQL queries too.
 
 Revision 1.48  2020/09/11 01:26:12  agmsmith
-Make the default of is_latest_version true, since new records are usually latest.
+Make the default of is_latest_version true, since new records are usually
+latest.
 
 Revision 1.47  2020/09/10 21:58:31  agmsmith
 Add change log to index.
@@ -1486,14 +1540,15 @@ Revision 1.41  2020/07/15 20:46:09  agmsmith
 amended_id now used in later versions to detect race conditions.
 
 Revision 1.40  2020/07/15 01:21:50  agmsmith
-Add a note about multipurpose class structure maybe better than separate object and links.
+Add a note about multipurpose class structure maybe better than separate object
+and links.
 
 Revision 1.39  2020/07/14 00:22:05  agmsmith
 Better wording.
 
 Revision 1.38  2020/07/14 00:17:38  agmsmith
-Group message moderators have special powers over LinkGroupContent
-that links something to their group.
+Group message moderators have special powers over LinkGroupContent that links
+something to their group.
 
 Revision 1.37  2020/07/12 01:00:19  agmsmith
 Both ends of the link need to be approved before points awarded.
@@ -1502,30 +1557,29 @@ Revision 1.36  2020/07/10 19:35:35  agmsmith
 Mention that the original version's id number is stored in various records.
 
 Revision 1.35  2020/07/07 21:35:52  agmsmith
-Put some of the exploratory explanations near the beginning, leaving
-the class definitions at the end.
+Put some of the exploratory explanations near the beginning, leaving the class
+definitions at the end.
 
 Revision 1.34  2020/07/07 20:51:57  agmsmith
 Added meta-moderation idea from a discussion on Slashdot.
 
 Revision 1.33  2020/07/04 16:58:42  agmsmith
-No GroupSettings_id field needed, separate table indexed by
-id of the group instead.
+No GroupSettings_id field needed, separate table indexed by id of the group
+instead.
 
 Revision 1.32  2020/06/30 20:51:44  agmsmith
 Added database setup for GroupSettings table.
 
 Revision 1.31  2020/06/30 00:24:46  agmsmith
-Proof-reading pass.  Fix conceptual problem - no owners of links.
-Also clarify who can delete links (if you need approval, you can
-delete it too).
+Proof-reading pass.  Fix conceptual problem - no owners of links.  Also clarify
+who can delete links (if you need approval, you can delete it too).
 
 Revision 1.30  2020/06/29 20:27:42  agmsmith
 Nope, not owners, else you could get someone to preapprove a relationship.
 
 Revision 1.29  2020/06/29 15:43:14  agmsmith
-Work out Relationship class structure, write up a bit more
-about relationships and the dimensions of symmetry and approval.
+Work out Relationship class structure, write up a bit more about relationships
+and the dimensions of symmetry and approval.
 
 Revision 1.28  2020/06/29 01:01:00  agmsmith
 Added relationships section.
@@ -1546,12 +1600,12 @@ Revision 1.23  2020/06/21 00:20:58  agmsmith
 Working on the Permissions Model.  Idea of Groups for all posts, roles.
 
 Revision 1.22  2020/06/20 17:14:23  agmsmith
-Rework approval vs deletion of records.  Now have separate child and parent
-end of the link approval flags.  Delete is orthogonal to approval.
+Rework approval vs deletion of records.  Now have separate child and parent end
+of the link approval flags.  Delete is orthogonal to approval.
 
 Revision 1.21  2020/06/15 15:56:25  agmsmith
-Rewording, also combine pending and deleted functionality into the
-same thing (granting permission undeletes a record).
+Rewording, also combine pending and deleted functionality into the same thing
+(granting permission undeletes a record).
 
 Revision 1.20  2020/04/10 15:58:33  agmsmith
 Have original_id be NULL on creation, but soon changing to copy of id.
@@ -1613,6 +1667,104 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.52
+log
+@Added more award ceremony fields; starting to implement them.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.51 2021/01/04 17:22:42 agmsmith Exp agmsmith $</SMALL>
+d389 14
+a402 15
+* current_up_points float  Number of rating points in each
+  of the directions for this object.  This is the current total, including
+  fading over time (recalculated at the beginning of the week in the awards
+  ceremony) plus new ratings applied this week.  If the related current ceremony
+  number doesn't match the latest ceremony, then they need to be recalculated
+  before they are used or updated.  We keep the directions
+  separate to improve statistical estimation of how accurate the rating is
+  (just storing the net difference of 2 points isn't as meaningful as knowing
+  you had 102 up and 100 down vs 3 up and 1 down), and use them as inputs to
+  various different sorting algorithms.  Until someone redoes the statistical
+  theory, we'll split meh points 50% to each of up and down.  But once we have
+  better math, we can use meh directly.  When they have all faded away to close
+  to zero (less than 0.01, equivalent to 3 years of fading one point) then the
+  record can be garbage collected from the current database, freeing up
+  storage.  Changed as needed.
+d495 5
+a499 5
+award it rating points, but it never regenerates points (only Users
+do that).  Attach content to it (like pictures or a post) to describe it better,
+using LinkHomeContent.  Links to a classification group can rate it.  For
+example, a book reviews group would have a link to the book to award it points.
+Can be in multiple groups, such as "My Books" and "World's Best Books".
+d501 1
+a501 1
+* Name of thing.
+d597 1
+a597 1
+* award_number A count of the number of award ceremonies done up to and
+d606 45
+d1076 1
+a1076 1
+      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+d1084 1
+d1097 1
+a1097 1
+      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+d1100 2
+a1101 2
+      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
+      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
+d1104 1
+a1104 1
+      t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+d1106 1
+a1106 1
+      t.integer :award_number, default: 0, comment: "The week's award number when this record was created, 0 if before time starts."
+d1219 1
+a1219 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.51 2021/01/04 17:22:42 agmsmith Exp agmsmith $
+d1222 3
+d1235 2
+a1236 1
+Make the default of is_latest_version true, since new records are usually latest.
+d1260 2
+a1261 1
+Add a note about multipurpose class structure maybe better than separate object and links.
+d1267 2
+a1268 2
+Group message moderators have special powers over LinkGroupContent
+that links something to their group.
+d1277 2
+a1278 2
+Put some of the exploratory explanations near the beginning, leaving
+the class definitions at the end.
+d1284 2
+a1285 2
+No GroupSettings_id field needed, separate table indexed by
+id of the group instead.
+d1291 2
+a1292 3
+Proof-reading pass.  Fix conceptual problem - no owners of links.
+Also clarify who can delete links (if you need approval, you can
+delete it too).
+d1298 2
+a1299 2
+Work out Relationship class structure, write up a bit more
+about relationships and the dimensions of symmetry and approval.
+d1320 2
+a1321 2
+Rework approval vs deletion of records.  Now have separate child and parent
+end of the link approval flags.  Delete is orthogonal to approval.
+d1324 2
+a1325 2
+Rewording, also combine pending and deleted functionality into the
+same thing (granting permission undeletes a record).
 @
 
 
