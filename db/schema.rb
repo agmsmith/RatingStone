@@ -93,7 +93,7 @@ ActiveRecord::Schema.define(version: 2020_12_31_204658) do
     t.boolean "is_latest_version", default: true
     t.bigint "creator_id", null: false
     t.boolean "bool1", default: false
-    t.integer "number1", default: 0
+    t.bigint "number1", default: 0
     t.string "string1", default: ""
     t.string "string2", default: ""
     t.text "text1", default: ""
@@ -101,6 +101,7 @@ ActiveRecord::Schema.define(version: 2020_12_31_204658) do
     t.float "current_down_points", default: 0.0
     t.float "current_meh_points", default: 0.0
     t.float "current_up_points", default: 0.0
+    t.integer "current_ceremony", default: -1
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["amended_id"], name: "index_ledger_bases_on_amended_id"
@@ -116,7 +117,7 @@ ActiveRecord::Schema.define(version: 2020_12_31_204658) do
     t.bigint "parent_id", null: false
     t.bigint "child_id", null: false
     t.bigint "creator_id", null: false
-    t.integer "number1", default: 0
+    t.bigint "number1", default: 0
     t.string "string1", default: ""
     t.boolean "deleted", default: false
     t.boolean "approved_parent", default: false
@@ -125,7 +126,7 @@ ActiveRecord::Schema.define(version: 2020_12_31_204658) do
     t.float "rating_points_boost_child", default: 0.0
     t.float "rating_points_boost_parent", default: 0.0
     t.string "rating_direction", default: "M"
-    t.integer "award_number", default: 0
+    t.integer "rating_ceremony", default: 0
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["child_id"], name: "index_link_bases_on_child_id"
