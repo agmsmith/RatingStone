@@ -9,7 +9,7 @@ class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
       t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts.  Also lets us skip older versions directly in an SQL query."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record, using their original ID."
       t.boolean :bool1, default: false, comment: "Generic boolean, defined by subclasses."
-      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+      t.bigint :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.string :string2, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.text :text1, default: "", comment: "Generic text (lots of characters), defined by subclasses."
@@ -17,6 +17,7 @@ class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
       t.float :current_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_meh_points, default: 0.0, comment: "Number of rating points in the meh non-direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
+      t.integer :current_ceremony, default: -1, comment: "The number of the awards ceremony that the current points were calculated for.  Set to -1 if not calculated yet or needs recalc."
       t.timestamps
     end
 
@@ -29,16 +30,16 @@ class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkparent"}, comment: "Points to the parent LedgerBase object (or subclass) which is usually the main one or older one in the association.  Uses the original ID of the parent."
       t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkchild"}, comment: "Points to the child LedgerBase object (or subclass) which is the child in the association.  Uses the original ID of the child."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link, using their original ID."
-      t.integer :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
+      t.bigint :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
       t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
       t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can’t be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
       t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
       t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
-      t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+      t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the parent object."
       t.string :rating_direction, default: "M", comment: "Use U for up, D for down or M for meh."
-      t.integer :award_number, default: 0, comment: "The week's award number when this record was created, 0 if before time starts."
+      t.integer :rating_ceremony, default: 0, comment: "The week's award ceremony number when this record was created, 0 if before time starts."
       t.timestamps
     end
 

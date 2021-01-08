@@ -1,9 +1,14 @@
-head	1.51;
+head	1.52;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.52
+date	2021.01.08.18.41.24;	author agmsmith;	state Exp;
+branches;
+next	1.51;
 
 1.51
 date	2021.01.04.17.22.42;	author agmsmith;	state Exp;
@@ -266,14 +271,14 @@ desc
 @
 
 
-1.51
+1.52
 log
-@Added LedgerThing and some LinkOpinion clarification.
+@Added more award ceremony fields; starting to implement them.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.50 2020/09/20 23:45:52 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.51 2021/01/04 17:22:42 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -659,10 +664,12 @@ serious or distinct enough.
   record, it's implied by the creator_id field.  Write-once.
 * current_down_points float  Changed as needed.
 * current_meh_points float  Changed as needed.
-* current_up_points float Changed as needed.  Number of rating points in each
+* current_up_points float  Number of rating points in each
   of the directions for this object.  This is the current total, including
   fading over time (recalculated at the beginning of the week in the awards
-  ceremony) plus new ratings applied this week.  We keep the directions
+  ceremony) plus new ratings applied this week.  If the related current ceremony
+  number doesn't match the latest ceremony, then they need to be recalculated
+  before they are used or updated.  We keep the directions
   separate to improve statistical estimation of how accurate the rating is
   (just storing the net difference of 2 points isn't as meaningful as knowing
   you had 102 up and 100 down vs 3 up and 1 down), and use them as inputs to
@@ -671,7 +678,12 @@ serious or distinct enough.
   better math, we can use meh directly.  When they have all faded away to close
   to zero (less than 0.01, equivalent to 3 years of fading one point) then the
   record can be garbage collected from the current database, freeing up
-  storage.
+  storage.  Changed as needed.
+* current_ceremony integer The number of the awards ceremony that the current
+  points were calculated for.  Set to -1 if not calculated yet or needs recalc.
+  When points change during the week (someone makes a rating for example), the
+  current point values are updated incrementally and the ceremony number is
+  left at the latest ceremony.  Changed as needed.
 
 
 ### *LedgerDelete* < LedgerBase
@@ -917,7 +929,7 @@ B, object A is a list header and B is in the list, etc).
   transfer points and someone else could spend more than they are allowed).
   Can undelete with LedgerUndelete, another good reason for keeping the rating
   points spent.  Changed as needed.
-* approved_parent boolean
+* approved_parent boolean  Changed as needed.
 * approved_child boolean False if a particular end of the link hasn't been
   approved.  The link record exists but it can't be traversed by ordinary users
   until both ends have been approved.  Like being deleted, the points for
@@ -952,15 +964,15 @@ B, object A is a list header and B is in the list, etc).
   near zero (under 0.01, about 3 years of fading for one point), the link or
   object can be deleted.  Write-once.
 * rating_points_boost_parent float The number of points to boost the rating of
-  the parent.
-* rating_direction_child char
+  the parent.  Write-once.
+* rating_direction_child char  Write-once.
 * rating_direction_parent char How the points from the creator are applied to
   the child and parent objects (both are usually but not always in the same
   direction), can be "U" for up, "D" for down or "M" for meh.  Write-once.
-* award_number integer The week's award number when this record was created, 0
-  if before any ceremonies have been done.  Lets us easily calculate the
-  current faded value of the rating points.  This field can be recalculated by
-  looking at this record's created_at date and cross referencing with all the
+* rating_ceremony integer The week's award ceremony number when this record was
+  created, 0 if before any ceremonies have been done.  Lets us easily calculate
+  the current faded value of the rating points.  This field can be recalculated
+  by looking at this record's created_at date and cross referencing with all the
   LedgerAwardCeremony records up to the creation time.  Write-once.
 
 
@@ -1437,9 +1449,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.50 2020/09/20 23:45:52 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.51 2021/01/04 17:22:42 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.51  2021/01/04 17:22:42  agmsmith
+Added LedgerThing and some LinkOpinion clarification.
+
 Revision 1.50  2020/09/20 23:45:52  agmsmith
 Need to have a subject for posts, add a string for generic content classes.
 
@@ -1598,6 +1613,43 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.51
+log
+@Added LedgerThing and some LinkOpinion clarification.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.50 2020/09/20 23:45:52 agmsmith Exp agmsmith $</SMALL>
+d389 1
+a389 1
+* current_up_points float Changed as needed.  Number of rating points in each
+d392 3
+a394 1
+  ceremony) plus new ratings applied this week.  We keep the directions
+d403 6
+a408 1
+  storage.
+d654 1
+a654 1
+* approved_parent boolean
+d689 2
+a690 2
+  the parent.
+* rating_direction_child char
+d694 4
+a697 4
+* award_number integer The week's award number when this record was created, 0
+  if before any ceremonies have been done.  Lets us easily calculate the
+  current faded value of the rating points.  This field can be recalculated by
+  looking at this record's created_at date and cross referencing with all the
+d1174 1
+a1174 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.50 2020/09/20 23:45:52 agmsmith Exp agmsmith $
+d1177 3
 @
 
 
