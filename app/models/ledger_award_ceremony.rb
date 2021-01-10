@@ -9,7 +9,8 @@ class LedgerAwardCeremony < LedgerBase
   # the user if this is a user object.  Used in error messages.  Empty string
   # for none.
   def context_s
-    "Award Ceremony ##{ceremony_number} completed at #{completed_at}"
+    "Award Ceremony ##{ceremony_number} completed at #{completed_at}, " \
+    "took #{(completed_at - created_at).round(1)} seconds"
   end
 
   ##
@@ -20,8 +21,8 @@ class LedgerAwardCeremony < LedgerBase
     # Wrap this in a transaction so nothing changes while we update everything.
     # Hopefully the database won't explode with the large transaction size!
     transaction do
-      ceremony = self.new(creator_id: 0)
-      max_ceremony = self.maximum(:ceremony_number)
+      ceremony = new(creator_id: 0)
+      max_ceremony = maximum(:ceremony_number)
       ceremony.ceremony_number = if max_ceremony
         max_ceremony + 1
       else # No ceremonies done yet, first one starts at 1.
