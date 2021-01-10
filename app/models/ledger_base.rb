@@ -232,6 +232,28 @@ class LedgerBase < ApplicationRecord
     aux_record
   end
 
+  ##
+  # Make sure that the current rating points are up to date with the latest
+  # awards ceremony fading.  Returns the ceremony number used by this record,
+  # usually the same as the latest ceremony, unless this object is from the
+  # future somehow.
+  def update_current_points
+    last_ceremony = LedgerAwardCeremony.last_ceremony
+    missing_generations = if current_ceremony < 0
+      last_ceremony # TODO: current_ceremony needs recompution using date stamp.
+    else
+      last_ceremony - current_ceremony
+    end
+    return current_ceremony if missing_generations <= 0
+    factor = LedgerAwardCeremony::FADE ** missing_generations
+    self.current_down_points *= factor
+    self.current_meh_points *= factor
+    self.current_up_points *= factor
+    self.current_ceremony = last_ceremony
+    save!
+    current_ceremony
+  end
+
   private
 
   ##
@@ -242,7 +264,8 @@ class LedgerBase < ApplicationRecord
   # Remember to call this from subclasses with an after_create of their own.
   def my_after_create
     if (original_id == id) || original_id.nil? # We are the original.
-      update_attribute(:is_latest_version, true)
+      update_columns(current_ceremony: LedgerAwardCeremony.last_ceremony(),
+        is_latest_version: true)
       return
     end
 
@@ -285,6 +308,5 @@ class LedgerBase < ApplicationRecord
   # run callbacks when they're created, but do when they're changed.
   def patch_original_id
     return unless original_id.nil?
-    update_attribute(:original_id, id) # Doing "save" here would be recursive!
+    update_columns(original_id: id) # Doing "save" here would be recursive!
   end
-end
