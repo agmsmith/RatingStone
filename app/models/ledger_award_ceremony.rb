@@ -31,7 +31,7 @@ class LedgerAwardCeremony < LedgerBase
     # Wrap this in a transaction so nothing changes while we update everything.
     # Hopefully the database won't explode with the large transaction size!
     transaction do
-      ceremony = new(creator_id: 0, ceremony_number: last_ceremony() + 1)
+      ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1)
       ceremony.save!
       @highest_ceremony = ceremony.ceremony_number
       # Do the ceremony processing...
@@ -50,5 +50,4 @@ class LedgerAwardCeremony < LedgerBase
     "Award Ceremony ##{ceremony_number} completed at #{completed_at}, " \
     "took #{(completed_at - created_at).round(1)} seconds"
   end
-
 end

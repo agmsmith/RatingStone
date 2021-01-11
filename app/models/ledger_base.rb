@@ -245,7 +245,7 @@ class LedgerBase < ApplicationRecord
       last_ceremony - current_ceremony
     end
     return current_ceremony if missing_generations <= 0
-    factor = LedgerAwardCeremony::FADE ** missing_generations
+    factor = LedgerAwardCeremony::FADE**missing_generations
     self.current_down_points *= factor
     self.current_meh_points *= factor
     self.current_up_points *= factor
@@ -264,7 +264,7 @@ class LedgerBase < ApplicationRecord
   # Remember to call this from subclasses with an after_create of their own.
   def my_after_create
     if (original_id == id) || original_id.nil? # We are the original.
-      update_columns(current_ceremony: LedgerAwardCeremony.last_ceremony(),
+      update_columns(current_ceremony: LedgerAwardCeremony.last_ceremony,
         is_latest_version: true)
       return
     end
@@ -310,3 +310,4 @@ class LedgerBase < ApplicationRecord
     return unless original_id.nil?
     update_columns(original_id: id) # Doing "save" here would be recursive!
   end
+end
