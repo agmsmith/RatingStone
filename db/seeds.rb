@@ -156,9 +156,6 @@ if !Rails.env.test?
 
   # Make all links approved, not the usual case.
   LinkBase.where(approved_parent: false)
-    .or(LinkBase.where(approved_child: false)).each do |x|
-    x.approved_parent = true
-    x.approved_child = true
-    x.save!
-  end
+    .or(LinkBase.where(approved_child: false))
+    .update_all(approved_parent: true, approved_child: true)
 end

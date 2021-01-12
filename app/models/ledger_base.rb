@@ -265,7 +265,7 @@ class LedgerBase < ApplicationRecord
   def my_after_create
     if (original_id == id) || original_id.nil? # We are the original.
       update_columns(current_ceremony: LedgerAwardCeremony.last_ceremony,
-        is_latest_version: true)
+        is_latest_version: true) # Bare minimum update; no modification date.
       return
     end
 
@@ -285,7 +285,7 @@ class LedgerBase < ApplicationRecord
       end
       # We are the latest one now.
       original.update_attribute(:amended_id, id)
-      update_attribute(:is_latest_version, true)
+      update_columns(is_latest_version: true)
     end
   end
 
