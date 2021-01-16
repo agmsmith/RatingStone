@@ -1,9 +1,14 @@
-head	1.55;
+head	1.56;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.56
+date	2021.01.16.17.25.05;	author agmsmith;	state Exp;
+branches;
+next	1.55;
 
 1.55
 date	2021.01.10.22.42.02;	author agmsmith;	state Exp;
@@ -286,14 +291,14 @@ desc
 @
 
 
-1.55
+1.56
 log
-@Clarify current_ceremony negative numbers.
+@Typo.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.54 2021/01/10 20:33:51 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.55 2021/01/10 22:42:02 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -888,7 +893,7 @@ including award numbers for subsequent ceremonies and LinkBase records.
 Currently deleting this kind of record is not implemented, so don't do it.
 
 * ceremony_number A count of the number of award ceremonies done up to and
-  including this one.  In other words, a seqeunce counter starting at 1.  So if
+  including this one.  In other words, a sequence counter starting at 1.  So if
   rating points were assigned at the beginning of time, before any awards, the
   faded value of the points after a particular award ceremony would be original
   points * (fade ** award_number).
@@ -1514,9 +1519,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.54 2021/01/10 20:33:51 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.55 2021/01/10 22:42:02 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.55  2021/01/10 22:42:02  agmsmith
+Clarify current_ceremony negative numbers.
+
 Revision 1.54  2021/01/10 20:33:51  agmsmith
 More award ceremony clarification.
 
@@ -1688,6 +1696,24 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.55
+log
+@Clarify current_ceremony negative numbers.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.54 2021/01/10 20:33:51 agmsmith Exp agmsmith $</SMALL>
+d598 1
+a598 1
+  including this one.  In other words, a seqeunce counter starting at 1.  So if
+d1224 1
+a1224 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.54 2021/01/10 20:33:51 agmsmith Exp agmsmith $
+d1227 3
 @
 
 
