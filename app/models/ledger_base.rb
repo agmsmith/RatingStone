@@ -281,10 +281,10 @@ class LedgerBase < ApplicationRecord
       if original.amended
         original.amended.update_attribute(:is_latest_version, false)
       else
-        original.update_attribute(:is_latest_version, false)
+        original.update_columns(is_latest_version: false) # Stamped later...
       end
       # We are the latest one now.
-      original.update_attribute(:amended_id, id)
+      original.update_attribute(:amended_id, id) # Does date stamp for original.
       update_columns(is_latest_version: true)
     end
   end
