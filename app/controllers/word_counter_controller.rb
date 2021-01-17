@@ -63,7 +63,7 @@ class WordCounterController < ApplicationController
         1-222-555-1234 ext. 1234 or even ((613) 555-1234 extension 5432).  In all cases
         the extension number is read as separate digits.  But 9876543210 is
         just a number (add dashes or spaces to make it a telephone number).
-        211, 311,… 911 are special cases.
+        211, 311,… 911 are special cases.  We also do metric 1.800.543.2223.
 
         Comma Space:
         Add a space, after commas inside words.  This,or that.  But doesn't
@@ -367,6 +367,8 @@ class WordCounterController < ApplicationController
     # North American numbers look like 1-800-123-4567 for a long distance
     # number, or 1 (800) 222-4567 or 800-222-4567 or 800 222-4567 or
     # (800) 222-4567 or 613 555-1234 or just 222-4567 for a local number.
+    # There are also metric ones like 1.800.555.2222, where all separators are
+    # periods, though we'll assume the extension isn't included.
     # The area code is 3 digits from 200 to 999.  Similarly the exchange number
     # in the middle is also from 200 to 999.  For details, see Wikipedia's
     # NANP article # https://en.wikipedia.org/wiki/North_American_Numbering_Plan
@@ -378,13 +380,23 @@ class WordCounterController < ApplicationController
     # it say "telephone number" before the last seven digits part, set
     # @selected_expansions[:exp_say_telephone_number] to true.
     re = %r{(?<spacebefore>[[[:space:]]\(]) # Can be inside round brackets too.
-      ( # Optional area code with optional 1- in front.
+      (( # First alternative is the usual phone number with dashes, spaces, etc.
+      ( # Optional long distance prefix startin with optional 1- in front.
       ((?<leadingone>1)([-‐‑‒–—⸺⸻﹘﹣－]|[[:space:]]+))? # Optional "1-"
       ((?<areacode>[2-9][0-9][0-9])|(\((?<areacode>[2-9][0-9][0-9])\)))
       ([-‐‑‒–—⸺⸻﹘﹣－]|([[:space:]]+))
       )? # End of optional long distance prefix things.
       (?<exchange>[2-9][0-9][0-9])([-‐‑‒–—⸺⸻﹘﹣－]|[[:space:]])
       (?<number>[0-9][0-9][0-9][0-9])
+      )|( # Or it is a metric phone number, with only periods between elements.
+      ( # Optional long distance prefix starts with optional "1." in front.
+      ((?<leadingone>1)\.)? # Optional "1."
+      ((?<areacode>[2-9][0-9][0-9])\.) # The actual area code and a period.
+      )? # End of optional long distance prefix things.
+      (?<exchange>[2-9][0-9][0-9])\.
+      (?<number>[0-9][0-9][0-9][0-9])
+      ) # End of metric phone number case.
+      ) # End of regular/metric alternatives.
       ([[:space:]]*(x|ext\.?|extension)[[:space:]]*(?<extension>[0-9]+))?
       (?<spaceafter>[[[:space:]][[:punct:]]\)]) # Ends with space or punctuation.
       }x
