@@ -46,6 +46,10 @@ class LinkBase < ApplicationRecord
     creator_id == luser.original_version_id
   end
 
+  # TODO: Implement points apply for links.
+  def legitimate_child
+  end
+
   ##
   # Return true if the given user is allowed to make changes to the approval of
   # the parent end of this link.  Subclasses (like links from groups to posts)

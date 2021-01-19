@@ -3,7 +3,7 @@
 require 'test_helper'
 
 class LedgerAwardCeremonyTest < ActiveSupport::TestCase
-  test "Approval" do
+  test "Fading after Ceremony" do
     lpost = ledger_posts(:lpost_one)
 
     # See that the points of a Ledger object fade after an awards ceremony.

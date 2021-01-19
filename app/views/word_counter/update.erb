@@ -1,12 +1,16 @@
-<% provide(:page_title, 'Real Count™ - Earn what you deserve!') %>
+<% provide(:page_title, 'RealCount™ - Earn what you deserve!') %>
 <% provide(:button_text, 'Update the Count') %>
 
 <div class="row">
   <p class="center col-xs-12"><%= image_tag("RealCountLogoLandscape.png",
-    alt: "[Logo for Real Count - Earn what you deserve!  " \
+    alt: "[Logo for RealCount - Earn what you deserve!  " \
     "Courtesy of \"The Coach\" Dane Scot and Programmer Alexander G. M. Smith]",
     width: "967px", height: "229px", style: "width: 100% ; height: auto ;",
     align: "center") %></p>
+
+  <p class="center col-xs-12">RealCount™ is a free service that gives voiceover
+    people the TRUE word count of their scripts, by converting numbers, URLS,
+    statistics, dates, etc, into spoken words.</p>
 </div>
 
 <%= form_with(url: wordcounter_path + '#main_count', local: true) do %>
@@ -20,11 +24,10 @@
     </div>
     <div class="col-xs-12 col-sm-6">
       <div class="hidden-xs"><br></div>
-      <p>Instructions: Hit Clear and paste your script into the box,
-        then press the "<%= yield(:button_text) %>" button to do the count,
-        and create the expanded script below.  Check the list of changes there
-        for problems and turn off troublesome expansion options, then count
-        again!</p>
+      <p><b>Instructions:</b> Hit Clear, paste your script into the box,
+        then "<%= yield(:button_text) %>."  The count will display just above
+        the box, along with the number of words you’ve gained!  Scroll further
+        down for advanced options.</p>
     </div>
   </div>
 
@@ -51,7 +54,7 @@
         expansion (it's not perfect), such as "$ 3.21 million" becoming
         "three dollars and twenty-one cents million".  Turn off problematic
         expansion options or rewrite the original script to avoid glitches like
-        that.  Please contact us for a fix if it is a frequent problem.</p>
+        that.  Please contact us so we can fix it, if it is a frequent problem.</p>
     </div>
     <div class="col-xs-12">
       <%= Diffy::Diff.new(@vo_script, @expanded_script).to_s(:html).html_safe %>
@@ -289,13 +292,15 @@
 
 <HR>
 
-<p>If you notice a bug or have ideas for counting features that you'd like to
-see, please send us a sample script via <%= link_to "contact us", contact_path %>
-or visit <a href="https://www.facebook.com/realcount">RealCount on Facebook</a>
-or send a Tweet tagged with <a href="https://twitter.com/search?q=RealWordCount&f=live&vertical=default">#RealWordCount</a>
-(#RealCount is over-used for vote counting).</p>
+<p><b>RealCount™ Contact:</b>
+If you notice a bug, want to leave feedback, or have ideas for counting
+features that you'd like to see, please contact
+<a href="https://www.facebook.com/realcount">RealCount on Facebook</a>.
+Details about sending us sample scripts via e-mail and bug reports via GitHub
+are in <%= link_to "contact us", contact_path %>.  The Twitter hashtag to use is
+<a href="https://twitter.com/search?q=RealWordCount&f=live&vertical=default">#RealWordCount</a>.</p>
 
-<p><strong>Situation, legal and otherwise:</strong>
+<p><b>Situation, legal and otherwise:</b>
 Use of this experimental web site is at your own risk and expense; we don't
 guarantee anything.  You don't need to log in to do a word count, so you don't
 need cookies (they're only used for identifying logged in people).  Also no
@@ -305,5 +310,6 @@ inputs including the script), and the system operator may see your script
 scrolling by in the log window, but we won't keep your data and the log files
 are discarded whenever the web server is rebooted (typically weekly).  Real
 logs are made of wood.  If you don't like logging, you can set up your own
-private copy of this web site, possibly in a desktop virtual machine.</p>
+private copy of this web site, possibly in a desktop virtual machine if
+your computer can't run <a href="https://www.ruby-lang.org/">Ruby</a>.</p>
 
