@@ -7,10 +7,11 @@
     "Courtesy of \"The Coach\" Dane Scot and Programmer Alexander G. M. Smith]",
     width: "967px", height: "229px", style: "width: 100% ; height: auto ;",
     align: "center") %></p>
-
-  <p class="center col-xs-12">RealCount™ is a free service that gives voiceover
-    people the TRUE word count of their scripts, by converting numbers, URLS,
-    statistics, dates, etc, into spoken words.</p>
+  <p class="center visible-xs-inline col-xs-12">
+    <!-- Preamble only visible on small single column screens. -->
+    RealCount™ is a free service that gives voiceover people the TRUE word
+    count of their scripts, by converting numbers, URLS, statistics, dates,
+    etc, into spoken words.</p>
 </div>
 
 <%= form_with(url: wordcounter_path + '#main_count', local: true) do %>
@@ -23,7 +24,12 @@
       <%= 'word'.pluralize(delta_count) %><%= if delta_count <= 0 then '?' elsif delta_count < 10 then '.' else '!' end %></H2>
     </div>
     <div class="col-xs-12 col-sm-6">
-      <div class="hidden-xs"><br></div>
+      <div class="hidden-xs">
+        <!-- Preamble only visible on larger multi-column screens. -->
+        <p>RealCount™ is a free service that gives voiceover people the TRUE
+          word count of their scripts, by converting numbers, URLS, statistics,
+          dates, etc, into spoken words.</p>
+      </div>
       <p><b>Instructions:</b> Hit Clear, paste your script into the box,
         then "<%= yield(:button_text) %>."  The count will display just above
         the box, along with the number of words you’ve gained!  Scroll further
