@@ -27,7 +27,7 @@ class WordCounterController < ApplicationController
     :exp_percent, :exp_psalms, :exp_say_area_code, :exp_say_chapter,
     :exp_say_telephone_number,
     :exp_slash_per_always, :exp_slash_per_number, :exp_slash_slash_always,
-    :exp_urls, :exp_years
+    :exp_urls, :exp_www, :exp_years
   ]
 
   def update
@@ -63,7 +63,7 @@ class WordCounterController < ApplicationController
         1-222-555-1234 ext. 1234 or even ((613) 555-1234 extension 5432).  In all cases
         the extension number is read as separate digits.  But 9876543210 is
         just a number (add dashes or spaces to make it a telephone number).
-        211, 311,… 911 are special cases.  We also do metric 1.800.543.2223.
+        211, 311,… 911 are special cases.  We also do metric 1.800.543.2223x3.
 
         Comma Space:
         Add a space, after commas inside words.  This,or that.  But doesn't
@@ -71,13 +71,14 @@ class WordCounterController < ApplicationController
         a number.
 
         Psalms
-        Optionally biblical references to X:Y-Z are expanded to chapter X and verse Y
-        through Z, but only if requested, and "chapter" can be optional too.
-        Well, it actually only looks for numbers (no leading zeroes) around a
-        colon.  Some examples found online: Psalms 86:5, King James Version.
+        Optionally (default is off) biblical references to X:Y-Z are expanded
+        to chapter X and verse Y through Z, but only if requested, and
+        "chapter" can be optional too.  Well, it actually only looks for
+        numbers (no leading zeroes) around a colon.  Some examples found online:
+        Psalms 86:5, King James Version.
         John 3 : 16 New Revised Standard Version.
-        1 Cor. 13:4, 15 : 12 - 19.  But half of 15:12-09 and none of 15:012-19
-        due to leading zeroes.
+        1 Cor. 13:4, 15 : 12 - 19.
+        But half of 15:12-09 and none of 15:012-19 due to leading zeroes.
 
         Dashed - Numbers:
         From 1920-30 a dash between two numbers becomes "to".  Even
@@ -114,12 +115,12 @@ class WordCounterController < ApplicationController
         Eggs @ $2.35 / dozen.  Or one egg / $ 0.20.  That's 5 eggs/$1.
 
         / to per always:
-        Expand a slash to "per" in all remaining situations.
-        A/B, 9/A, A / 9, 9 / 9, 3/4.
+        Expand a slash to "per" in all remaining situations.  Option is off by
+        default.  A/B, 9/A, A / 9, 9 / 9, 3/4.
 
         / to slash always:
-        Expand a slash to "slash" in all remaining situations.
-        A/B, 9/A, A / 9, 9 / 9, 3/4.
+        Expand a slash to "slash" in all remaining situations.  This option is
+        off by default.  A/B, 9/A, A / 9, 9 / 9, 3/4.
 
         Dollars and cents.
         Save $1,234.56 on word-costs, @$1.125/word.  Fractional
@@ -157,8 +158,16 @@ class WordCounterController < ApplicationController
         9⸺pad, yet⸻8, 7﹘6 and so -on- don't get converted (also see dashed
         numbers).
 
-        Ellipsis - not implemented unless someone wants it, would be "dot dot dot" and so on:
-        Maybe….. try calling us in the evening.   ...or not.
+        WWW:
+        Changes "www" (surrounded by spaces or punctuation) to
+        double-u double-u double-u.  Dashes are persistent, otherwise it's
+        a ridiculous word count.  Yes, this is a cheap way of getting more
+        words, but you do have to say it three times and that takes real time,
+        and that is money.  Monetary reasoning in action :-)
+
+        Ellipsis - not implemented unless someone wants it (probably just for
+        reading extended Tweets), would be "dot dot dot" and so on: Maybe…..
+        try calling us in the evening.   ...or not.
 
         Metric units dictionary - not implemented unless someone wants it.
         Our pool heater can heat 3m3 per minute, of water with a density of 1.0 g/cm3, increasing the temperature by 5C with 20,000W of energy (1.3kg/h of natural gas).  With 5cm diamater (19.63cm2 cross sectional area), that's a 8km/h flow speed.
@@ -197,11 +206,12 @@ class WordCounterController < ApplicationController
     expand_slash_per_number if @selected_expansions[:exp_slash_per_number]
     expand_slash_per_always if @selected_expansions[:exp_slash_per_always]
     expand_slash_slash_always if @selected_expansions[:exp_slash_slash_always]
+    expand_hyphens if @selected_expansions[:exp_hyphens]
     expand_dollars if @selected_expansions[:exp_dollars]
     expand_years if @selected_expansions[:exp_years]
     expand_leading_zeroes if @selected_expansions[:exp_leadingzeroes]
     expand_numbers if @selected_expansions[:exp_numbers]
-    expand_hyphens if @selected_expansions[:exp_hyphens]
+    expand_www if @selected_expansions[:exp_www]
 
     @expanded_script.strip! # Remove edge case workaround spaces, for display.
 
@@ -660,10 +670,11 @@ class WordCounterController < ApplicationController
         else
           NumbersInWords.in_words(century) + ' hundred'
         end
-        expanded_text += ' and ' + NumbersInWords.in_words(year) if year > 0
+        expanded_text = remove_and_dash(expanded_text)
+        expanded_text += ' and ' + remove_and_dash(NumbersInWords.in_words(year)) if year > 0
       else # Year 10 to 99 possible.
-        expanded_text = NumbersInWords.in_words(century) + ' '
-        expanded_text += NumbersInWords.in_words(year)
+        expanded_text = remove_and_dash(NumbersInWords.in_words(century)) + ' '
+        expanded_text += remove_and_dash(NumbersInWords.in_words(year))
       end
       @expanded_script = result.pre_match + result[:space1] +
         expanded_text + result[:space2] + result.post_match
@@ -731,6 +742,20 @@ class WordCounterController < ApplicationController
       end
       expanded_text += ' ' unless /\A[[[:space:]][[:punct:]]]/.match(result.post_match)
       @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
+  def expand_www
+    # Expand "www" into "double-u double-u double-u".
+    re = %r{
+      (?<before>[[[:punct:]][[:space:]]])
+      www
+      (?<after>[[[:punct:]][[:space:]]])
+      }xi # Case insensitive, WWW and www both handled.
+    while (result = re.match(@expanded_script))
+      @expanded_script = result.pre_match +
+        result[:before] + 'double-u double-u double-u' + result[:after] +
+        result.post_match
     end
   end
 end

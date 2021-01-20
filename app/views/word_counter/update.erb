@@ -18,10 +18,11 @@
   <div class="row">
     <div class="col-xs-12 col-sm-6"><a name="main_count"></a>
       <H1><%= @expanded_word_count %> <%= 'Word'.pluralize(@expanded_word_count) %></H1>
-      <H2>Was <%= @original_word_count %> <%= 'word'.pluralize(@original_word_count) %>
-      unexpanded;
-      <%= delta_count = @expanded_word_count - @original_word_count %> extra
-      <%= 'word'.pluralize(delta_count) %><%= if delta_count <= 0 then '?' elsif delta_count < 10 then '.' else '!' end %></H2>
+      <H2>You've gained <%= delta_count = @expanded_word_count - @original_word_count
+        %> <%= 'word'.pluralize(delta_count) %><%= if delta_count <= 0 then
+        '?' elsif delta_count < 10 then '.' else '!' end %><br>
+        Was <%= @original_word_count %> <%=
+        'word'.pluralize(@original_word_count) %> unexpanded.</H2>
     </div>
     <div class="col-xs-12 col-sm-6">
       <div class="hidden-xs">
@@ -114,8 +115,8 @@
         web site address or FTP server URL or e-mail.  Needs two or more
         characters for each part of the URL (so p.m. doesn't become "p dot m.",
         and the first part can't start with a digit (otherwise 23.45 becomes
-        23 dot 45).  So apple.com / http://www.google.com/ /
-        agmsrepsys@gmail.com becomes:
+        23 dot 45).  See elsewhere for the option to expand www to double-u's.
+        So apple.com / http://www.google.com/ / agmsrepsys@gmail.com becomes:
         apple dot com / http colon slash slash www dot google dot com slash /
         agmsrepsys at gmail dot com
     </div>
@@ -123,7 +124,7 @@
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_na_telephone, "Expand North American Telephone Numbers") %>
       <%= check_box_tag(:exp_na_telephone, true, @selected_expansions[:exp_na_telephone]) %>
-      <p>Long distance numbers start with 1 like 1 (800) 234 5678 or 1-800-234-5678 become: one eight hundred two three four five six seven eight.  Also does 10 digit and local 7 digit numbers with dashes or spaces separating the parts: 765-4321 becomes: seven six five four three two one.  911 is also done here as a special case.</p>
+      <p>Long distance numbers start with 1 like 1 (800) 234 5678 or 1-800-234-5678 become: one eight hundred two three four five six seven eight.  Also does 10 digit and local 7 digit numbers with dashes or spaces separating the parts, or metric ones where only periods do the separation: 765-4321 becomes: seven six five four three two one.  Use "x", "ext." or the full word for extensions.  911 is also done here as a special case.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
@@ -227,6 +228,15 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_hyphens, "Hyphens to Spaces") %>
+      <%= check_box_tag(:exp_hyphens, true, @selected_expansions[:exp_hyphens]) %>
+      <p>Adjacent words containing only letters separated by a hyphen
+        (to avoid clobbering minus signs and dashes) have the hyphen removed.
+        Note that there is a separate dash option for numbers converted to
+        words.  voice-over becomes: voice over</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_dollars, "Expand Dollar Currency") %>
       <%= check_box_tag(:exp_dollars, true, @selected_expansions[:exp_dollars]) %>
       <p>$ 123,456.78 becomes: one hundred and twenty-three thousand four
@@ -281,17 +291,13 @@
       <%= check_box_tag(:exp_numbers_dash, true, @selected_expansions[:exp_numbers_dash]) %>
       <p>When expanding plain numbers and dollars, use the - dash between some
         words, as in "twenty-one".  Since that makes it count as one word
-        rather than two, this option is turned off by default.  Note that
-        "Hyphens to Spaces" will also remove these number dashes.</p>
+        rather than two, this option is turned off by default.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_hyphens, "Hyphens to Spaces") %>
-      <%= check_box_tag(:exp_hyphens, true, @selected_expansions[:exp_hyphens]) %>
-      <p>Adjacent words containing only letters separated by a hyphen
-        (to avoid clobbering minus signs and dashes) have the hyphen removed.
-        Note that there is a separate dash option for numbers converted to
-        words.  voice-over becomes: voice over</p>
+      <%= label_tag(:exp_www, "WWW Double-U") %>
+      <%= check_box_tag(:exp_www, true, @selected_expansions[:exp_www]) %>
+      <p>Change all occurances of www to double-u double-u double-u.</p>
     </div>
   </div>
 <% end %>
