@@ -20,9 +20,8 @@
       <H1><%= @expanded_word_count %> <%= 'Word'.pluralize(@expanded_word_count) %></H1>
       <H2>You've gained <%= delta_count = @expanded_word_count - @original_word_count
         %> <%= 'word'.pluralize(delta_count) %><%= if delta_count <= 0 then
-        '?' elsif delta_count < 10 then '.' else '!' end %><br>
-        Was <%= @original_word_count %> <%=
-        'word'.pluralize(@original_word_count) %> unexpanded.</H2>
+        '?' elsif delta_count < 10 then '.' else '!' end %>
+        <p>(was <%= @original_word_count %> unexpanded)</p></H2>
     </div>
     <div class="col-xs-12 col-sm-6">
       <div class="hidden-xs">
@@ -136,7 +135,9 @@
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_say_telephone_number, "Say Telephone Number") %>
       <%= check_box_tag(:exp_say_telephone_number, true, @selected_expansions[:exp_say_telephone_number]) %>
-      <p>Says "telephone number" before the local portion of a telephone number.   800-234-5678 becomes: eight hundred telephone number two three four five six seven eight.</p>
+      <p>Says "telephone number" before the local portion of a telephone number.
+        Shortened to just "number" if there is an area code too.  800-234-5678
+        becomes: eight hundred number two three four five six seven eight.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">

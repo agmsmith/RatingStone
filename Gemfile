@@ -13,8 +13,6 @@ gem 'etc', '~> 1'
 gem 'forwardable', '~> 1'
 gem 'stringio', '~> 3'
 gem 'strscan', '~> 3'
-# Force an old version for these ones, to match the default old version which somehow always gets loaded.
-gem 'fileutils', '~> 1.4.1'
 # Use Puma as the app server
 gem 'puma', '~> 4'
 # Use SCSS for stylesheets

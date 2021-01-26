@@ -54,16 +54,18 @@ class WordCounterController < ApplicationController
         for more information or search on www.google.com
         (https://www.google.ca/search?hl=en-CA&q=Real+Count) for hints/tips or
         write to the sysop @ agmsrepsys@gmail.com.  Get the files from
-        ftp://anonymous:password@example.com/public/
+        ftp://anonymous:password@example.com/public/ and check the
+        site with a dash www.tpsgc-pwgsc.gc.ca for job listings.
         Note that happy@home doesn't get expanded.
 
         Telephone numbers:
         Give us a call at 1-800-JKLHYDE (1-800-555-4933), or (613) 555 7648,
         or locally it's 555-7648.  555-1234x432 specifies an extension, as does
-        1-222-555-1234 ext. 1234 or even ((613) 555-1234 extension 5432).  In all cases
-        the extension number is read as separate digits.  But 9876543210 is
-        just a number (add dashes or spaces to make it a telephone number).
-        211, 311,… 911 are special cases.  We also do metric 1.800.543.2223x3.
+        1-222-555-1234 ext. 1234 or even ((613) 555-1234 extension 5432).  In
+        all cases the extension number is read as separate digits.  But
+        9876543210 is just a number (add dashes or spaces to make it a
+        telephone number).  211, 311,… 911 are special cases.  We also do
+        metric like 1.800.543.2223x3.
 
         Comma Space:
         Add a space, after commas inside words.  This,or that.  But doesn't
@@ -161,9 +163,12 @@ class WordCounterController < ApplicationController
         WWW:
         Changes "www" (surrounded by spaces or punctuation) to
         double-u double-u double-u.  Dashes are persistent, otherwise it's
-        a ridiculous word count.  Yes, this is a cheap way of getting more
-        words, but you do have to say it three times and that takes real time,
-        and that is money.  Monetary reasoning in action :-)
+        a ridiculous word count.  Originally (7th or 8th century) the W sound
+        in Germanic was written as "uu" in Latin, which is carved in stone as
+        "vv" thus the W letter shape and why it is also a double U.
+        Yes, this is a cheap way of getting more words, but you do have to say
+        it three times and that takes real time, and that is money.  Monetary
+        reasoning in action :-)
 
         Ellipsis - not implemented unless someone wants it (probably just for
         reading extended Tweets), would be "dot dot dot" and so on: Maybe…..
@@ -325,14 +330,15 @@ class WordCounterController < ApplicationController
     # Extract a whole URL from the text then apply several processing steps to
     # it then put the expanded version back.  Needs to work for
     # https://www.example.com/stuff/more/ and for mit.edu but not 2.3 or p.m.
-    # or one/two.
+    # or one/two.  Note that "-" is allowed in domain names as well as letters
+    # and numbers.  So www.tpsgc-pwgsc.gc.ca is ok.
     re = %r{
       (?<spacebefore>[[[:space:]]\(\"]) #")) Space etc. before the URL required.
       (?<http>[[:alpha:]]+://)? # Optional HTTP:// or HTTPS:// or FTP:// prefix.
       (?<middle>[[:alpha:]] # No initial digit allowed, start with a letter.
-        [[:alnum:]]+ # Finish the first word, 2 or more letters.
+        [[[:alnum:]]\-]+ # Finish the first word, 2 or more letters or dash.
         ([@:][[:alnum:]][[:alnum:]]+)* # Password, userid, but no slash dot.
-        ([.][[:alnum:]][[:alnum:]]+) # www Dot com or such.  Dot required.
+        ([.][[:alnum:]][[[:alnum:]]\-]+) # www Dot com or such.  Dot required.
         ([.:/_\-?=%&+][[:alnum:]]+)* # Rest of the separators and words.
         /?) # Optional trailing slash.
       (?<spaceafter>[[[:space:]][[:punct:]]]) # Ends with space or punctuation.
@@ -417,7 +423,13 @@ class WordCounterController < ApplicationController
         expanded_text += 'area code ' if @selected_expansions[:exp_say_area_code]
         expanded_text += area_code_to_words(result[:areacode]) + ' '
       end
-      expanded_text += 'telephone number ' if @selected_expansions[:exp_say_telephone_number]
+      if @selected_expansions[:exp_say_telephone_number]
+        expanded_text += if result[:areacode]
+          'number '
+        else # No area code in front, say the whole thing.
+          'telephone number '
+        end
+      end
       expanded_text += number_to_digits(result[:exchange]) + ' ' +
         number_to_digits(result[:number])
       if result[:extension]
