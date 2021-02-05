@@ -5,12 +5,15 @@
  
 cd /var/www/SomeWWWName/
 pwd
-chmod -R -v og-rwx config | grep -i changed
-chmod -R -v og-rwx miscellaneous | grep -i changed
 
+# Empty out the log files to save disk space.
 for filename in ./log/*.log
 do
   echo "Resetting log file $filename."
   date > "$filename"
 done
 
+chmod -R -v og-rwx config | grep -i changed
+chmod -R -v og-rwx miscellaneous | grep -i changed
+chmod -R -v og-rwx log | grep -i changed
+chmod -R -v og-w . | grep -i changed
