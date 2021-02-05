@@ -16,4 +16,4 @@ done
 chmod -R -v og-rwx config | grep -i changed
 chmod -R -v og-rwx miscellaneous | grep -i changed
 chmod -R -v og-rwx log | grep -i changed
-chmod -R -v og-w . | grep -i changed
+chmod -R -v o-w . | grep -i changed
