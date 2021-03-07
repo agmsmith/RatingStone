@@ -1,11 +1,11 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class LinkRoleTest < ActiveSupport::TestCase
   test "Odd role numbers" do
     krole = LinkRole.new(group: ledger_subgroups(:group_dogs),
-      user: ledger_posts(:lpost_two), priority: '42xxx')
+      user: ledger_posts(:lpost_two), priority: "42xxx")
     assert_not(krole.valid?, "Should check types of link endpoints.")
     assert_equal(3, krole.errors.messages.count, "Should be some errors.")
     assert(krole.errors.messages.include?(:creator))

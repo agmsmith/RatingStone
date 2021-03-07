@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-ENV['RAILS_ENV'] ||= 'test'
-require_relative '../config/environment'
-require 'rails/test_help'
+ENV["RAILS_ENV"] ||= "test"
+require_relative "../config/environment"
+require "rails/test_help"
 require "minitest/reporters"
 Minitest::Reporters.use!
 
@@ -38,7 +38,7 @@ module ActionDispatch
   class IntegrationTest
     # Log in as a particular user via login page, for integration tests.
     # Fortunately the fixture users use 'password' as their password.
-    def log_in_as(user, password: 'password', remember_me: '1')
+    def log_in_as(user, password: "password", remember_me: "1")
       post(login_path, params: { session: {
         email: user.email,
         password: password,

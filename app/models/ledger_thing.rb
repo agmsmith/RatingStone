@@ -10,6 +10,6 @@ class LedgerThing < LedgerBase
   ##
   # Return some user readable context for the object.  Used in error messages.
   def context_s
-    "representing \"#{name.truncate(40).tr("\n", ' ')}\""
+    "representing \"#{name.truncate(40).tr("\n", " ")}\""
   end
 end

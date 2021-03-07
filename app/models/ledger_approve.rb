@@ -11,8 +11,8 @@ class LedgerApprove < LedgerBase
   def context_s
     ledger_count = AuxLedger.where(parent: self).count
     link_count = AuxLink.where(parent: self).count
-    "#{ledger_count} Ledger #{'Object'.pluralize(ledger_count)}, " \
-      "#{link_count} Link #{'Object'.pluralize(link_count)}"
+    "#{ledger_count} Ledger #{"Object".pluralize(ledger_count)}, " \
+      "#{link_count} Link #{"Object".pluralize(link_count)}"
   end
 
   ##

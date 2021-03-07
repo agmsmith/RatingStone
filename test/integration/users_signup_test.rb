@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class UsersSignupTest < ActionDispatch::IntegrationTest
   def setup
@@ -9,7 +9,7 @@ class UsersSignupTest < ActionDispatch::IntegrationTest
 
   test "invalid signup information" do
     get signup_path
-    assert_no_difference 'User.count' do
+    assert_no_difference "User.count" do
       post users_path, params: { user:
       {
         name: "",
@@ -18,15 +18,15 @@ class UsersSignupTest < ActionDispatch::IntegrationTest
         password_confirmation: "bar",
       } }
     end
-    assert_template 'users/new' # Ask user for new page again if errors.
-    assert_select 'div#error_explanation' do |divexpl|
-      assert_select divexpl, 'li', 4, "Should be 4 errors in our bad signup."
+    assert_template "users/new" # Ask user for new page again if errors.
+    assert_select "div#error_explanation" do |divexpl|
+      assert_select divexpl, "li", 4, "Should be 4 errors in our bad signup."
     end
   end
 
   test "valid signup information with account activation" do
     get signup_path
-    assert_difference 'User.count', 1 do
+    assert_difference "User.count", 1 do
       post users_path, params: { user:
       {
         name: "Example User",
@@ -45,13 +45,13 @@ class UsersSignupTest < ActionDispatch::IntegrationTest
     get edit_account_activation_path("invalid token", email: user.email)
     assert_not tested_user_logged_in?
     # Valid token, wrong email
-    get edit_account_activation_path(user.activation_token, email: 'wrong')
+    get edit_account_activation_path(user.activation_token, email: "wrong")
     assert_not tested_user_logged_in?
     # Valid activation token
     get edit_account_activation_path(user.activation_token, email: user.email)
     assert user.reload.activated?
     follow_redirect!
-    assert_template 'users/show'
+    assert_template "users/show"
     assert tested_user_logged_in?
   end
 end

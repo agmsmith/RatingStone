@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class UsersProfileTest < ActionDispatch::IntegrationTest
   include ApplicationHelper
@@ -16,13 +16,13 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
 
   test "profile display" do
     get user_path(@user)
-    assert_template 'users/show'
-    assert_select 'title', full_title(@user.name)
-    assert_select 'h1', text: @user.name
-    assert_select 'img.gravatar'
+    assert_template "users/show"
+    assert_select "title", full_title(@user.name)
+    assert_select "h1", text: @user.name
+    assert_select "img.gravatar"
     lposts = LedgerPost.where(creator_id: @user.ledger_user_id, deleted: false)
     assert_match "#{lposts.count} Ledger Posts by #{@user.name}", response.body
-    assert_select 'div.pagination', count: 2
+    assert_select "div.pagination", count: 2
     lposts.paginate(page: 1).each do |lpost|
       assert_match lpost.content, response.body
     end

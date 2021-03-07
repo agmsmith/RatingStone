@@ -13,9 +13,9 @@ class LedgerBasesController < ApplicationController
 
     LedgerDelete.delete_records([@ledger_object], current_ledger_user,
       "Web site manual delete by user logged in from address " \
-      "#{request.env['REMOTE_ADDR']}.", params[:reason]) # Reason can be nil.
+      "#{request.env["REMOTE_ADDR"]}.", params[:reason]) # Reason can be nil.
     feedback_text = "Ledger Object " +
-      @ledger_object.to_s.truncate(60, separator: ' ') +
+      @ledger_object.to_s.truncate(60, separator: " ") +
       " deleted"
     vcount = @ledger_object.all_versions.count
     feedback_text += " (#{vcount} versions included)" if vcount > 1
@@ -31,9 +31,9 @@ class LedgerBasesController < ApplicationController
 
     LedgerUndelete.undelete_records([@ledger_object], current_ledger_user,
       "Web site manual undelete by user logged in from address " \
-      "#{request.env['REMOTE_ADDR']}.", params[:reason]) # Reason can be nil.
+      "#{request.env["REMOTE_ADDR"]}.", params[:reason]) # Reason can be nil.
     feedback_text = "Ledger Object " +
-      @ledger_object.to_s.truncate(60, separator: ' ') +
+      @ledger_object.to_s.truncate(60, separator: " ") +
       " undeleted"
     vcount = @ledger_object.all_versions.count
     feedback_text += " (#{vcount} versions included)" if vcount > 1
@@ -83,7 +83,7 @@ class LedgerBasesController < ApplicationController
       # preview markdown text and continue editing it.
       @ledger_object.assign_attributes(sanitised_params)
       side_load_params(@ledger_object)
-      render('edit')
+      render("edit")
     else # Change the object by making a new version of it, new ID too.
       is_new = @ledger_object.id.nil?
       new_object = if is_new
@@ -106,11 +106,11 @@ class LedgerBasesController < ApplicationController
           "#{@ledger_object.base_s} updated, new version is #{new_object.base_s}."
         end
         @ledger_object = new_object
-        render('show')
+        render("show")
       else # Failed to save, preserve error messages for field editing display.
         new_object.id = @ledger_object.id
         @ledger_object = new_object
-        render('edit')
+        render("edit")
       end
     end
   end

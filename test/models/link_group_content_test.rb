@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class LinkGroupContentTest < ActiveSupport::TestCase
   test "Parent should be a Group" do

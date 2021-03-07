@@ -26,14 +26,14 @@ class LinkRole < LinkBase
 
   # Designed so you can say "Person X is a ___ in group Y".
   ROLE_NAMES = {
-    BANNED => 'banned user',
-    READER => 'reader',
-    MEMBER => 'member',
-    MESSAGE_MODERATOR => 'message moderator',
-    META_MODERATOR => 'meta moderator',
-    MEMBER_MODERATOR => 'member moderator',
-    OWNER => 'owner',
-    CREATOR => 'creator',
+    BANNED => "banned user",
+    READER => "reader",
+    MEMBER => "member",
+    MESSAGE_MODERATOR => "message moderator",
+    META_MODERATOR => "meta moderator",
+    MEMBER_MODERATOR => "member moderator",
+    OWNER => "owner",
+    CREATOR => "creator",
   }
 
   private

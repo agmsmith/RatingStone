@@ -21,7 +21,7 @@ class PasswordResetsController < ApplicationController
     else
       flash.now[:danger] = "Invalid or unknown email #{email.inspect} or " \
         "user not activated."
-      render('new')
+      render("new")
     end
   end
 
@@ -31,14 +31,14 @@ class PasswordResetsController < ApplicationController
   def update
     if params[:user][:password].empty?
       @user.errors.add(:password, "can't be empty")
-      render('edit')
+      render("edit")
     elsif @user.update(user_params)
       log_in(@user)
       @user.update_attribute(:reset_digest, nil) # Only one use per reset.
       flash[:success] = "Password has been reset."
       redirect_to(@user)
     else
-      render('edit')
+      render("edit")
     end
   end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require 'test_helper'
+require "test_helper"
 
 class UsersEditTest < ActionDispatch::IntegrationTest
   def setup
@@ -10,24 +10,24 @@ class UsersEditTest < ActionDispatch::IntegrationTest
   test "unsuccessful edit" do
     log_in_as(@user)
     get edit_user_path(@user)
-    assert_template 'users/edit'
+    assert_template "users/edit"
     patch user_path(@user), params: { user: {
       name: "",
       email: "foo@invalid",
       password: "foo",
       password_confirmation: "bar",
     } }
-    assert_template 'users/edit'
-    assert_select 'div.alert', "The form contains 4 errors."
-    assert_select 'div#error_explanation' do
-      assert_select 'li', 4, "Should be 4 errors in our bad edit."
+    assert_template "users/edit"
+    assert_select "div.alert", "The form contains 4 errors."
+    assert_select "div#error_explanation" do
+      assert_select "li", 4, "Should be 4 errors in our bad edit."
     end
   end
 
   test "successful edit" do
     log_in_as(@user)
     get edit_user_path(@user)
-    assert_template 'users/edit'
+    assert_template "users/edit"
     name = "Foo Bar"
     email = "foo@bar.com"
     patch user_path(@user), params: { user: {
@@ -48,7 +48,7 @@ class UsersEditTest < ActionDispatch::IntegrationTest
     assert_redirected_to login_url
     assert_equal edit_user_url(@user), session[:forwarding_url]
     follow_redirect!
-    assert_template 'sessions/new'
+    assert_template "sessions/new"
     log_in_as(@user)
     assert session[:forwarding_url].nil?
     assert_redirected_to edit_user_url(@user)

@@ -130,7 +130,7 @@ class LedgerBase < ApplicationRecord
   # stored elsewhere, in the original ledger record.  Won't work in test mode
   # where original_id is nil for Fixture generated data.
   def all_versions
-    LedgerBase.where(original_id: original_version_id).order('created_at')
+    LedgerBase.where(original_id: original_version_id).order("created_at")
   end
 
   ##
@@ -224,7 +224,7 @@ class LedgerBase < ApplicationRecord
     # Note update_all goes direct to the database, so callbacks and timestamps
     # won't be used/updated.  Instead iterate through records to update.  Or we
     # could use update_all and also set the updated_at date.
-    LedgerBase.where(original_id: original_version_id).order('created_at')
+    LedgerBase.where(original_id: original_version_id).order("created_at")
       .each do |x|
       x.deleted = do_delete
       x.save!

@@ -13,7 +13,7 @@ class UsersController < ApplicationController
         "Look for one with the subject \"Rating Stone Account Activation\"."
       redirect_to(root_url)
     else # Bad inputs.
-      render('new') # Ask the user to redo the form.
+      render("new") # Ask the user to redo the form.
     end
   end
 
@@ -50,7 +50,7 @@ class UsersController < ApplicationController
       flash[:success] = "Profile updated."
       redirect_to(@user)
     else
-      render('edit')
+      render("edit")
     end
   end
 

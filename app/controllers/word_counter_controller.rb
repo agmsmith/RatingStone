@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require 'numbers_in_words'
-require 'diffy'
+require "numbers_in_words"
+require "diffy"
 
 # Controller and model (it's just a string and this is a quickie coding project)
 # too.  It expands numbers and some other things in the way that someone reading
@@ -36,7 +36,7 @@ class WordCounterController < ApplicationController
     if @vo_script
       # Use an empty script if Clear button pressed, otherwise remove the blank
       # line that the Form textarea adds at front, depending on the browser.
-      @vo_script = params[:commit] == 'Clear' ? '' : @vo_script.strip
+      @vo_script = params[:commit] == "Clear" ? "" : @vo_script.strip
 
       # Copy known expansion settings to our local storage.  If a checkbox
       # isn't checked then the param is missing rather than false.
@@ -195,7 +195,7 @@ class WordCounterController < ApplicationController
 
     # Spaces to avoid edge conditions.  Three spaces so "9" at very end can have
     # three characters after it for the st, th, rd plus space test.
-    @expanded_script = '   ' + @vo_script + '   '
+    @expanded_script = "   " + @vo_script + "   "
 
     # Order of operations here is significant.
     expand_urls if @selected_expansions[:exp_urls]
@@ -262,7 +262,7 @@ class WordCounterController < ApplicationController
       .gsub(/([^[[:space:]][[:digit:]]]),([^[[:space:]]])/, "\\1, \\2")
     result = []
     spaced.split(/[[:space:]]+/).each do |a_word|
-      depunct = a_word.sub(/^[,.?"“”!()]+/, '').sub(/[,.?"“”!()]+$/, '')
+      depunct = a_word.sub(/^[,.?"“”!()]+/, "").sub(/[,.?"“”!()]+$/, "")
       result.append(depunct) unless depunct.empty? # Happens for "..."
     end
     result
@@ -276,7 +276,7 @@ class WordCounterController < ApplicationController
     # removals.
     output_text = input_text
     unless @selected_expansions[:exp_numbers_and]
-      output_text = output_text.gsub(/ and /, ' ')
+      output_text = output_text.gsub(/ and /, " ")
     end
     unless @selected_expansions[:exp_numbers_dash]
       output_text = output_text.gsub(/([[:alpha:]])-([[:alpha:]])/, "\\1 \\2")
@@ -294,7 +294,7 @@ class WordCounterController < ApplicationController
       (?<letterafter>[[:alpha:]]) # Require a letter to start the next word.
       }x
     while (result = re.match(@expanded_script))
-      expanded_text = result[:spacebefore] + 'at-sign' + ' ' +
+      expanded_text = result[:spacebefore] + "at-sign" + " " +
         result[:letterafter]
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
@@ -311,13 +311,13 @@ class WordCounterController < ApplicationController
       }x
     while (result = re.match(@expanded_script))
       expanded_text = if result[:spacebefore].nil? || result[:spacebefore].empty?
-        ' '
+        " "
       else
         result[:spacebefore]
       end
-      expanded_text += 'at' +
+      expanded_text += "at" +
         if result[:spaceafter].nil? || result[:spaceafter].empty?
-          ' '
+          " "
         else
           result[:spaceafter]
         end
@@ -345,14 +345,14 @@ class WordCounterController < ApplicationController
     }xi # x for ignore spaces in definition, i for case insensitive.
     while (result = re.match(@expanded_script))
       @expanded_script = result.pre_match + result[:spacebefore] +
-        (result[:http] ? result[:http].gsub(%r{://}, " colon slash slash ") : '') +
+        (result[:http] ? result[:http].gsub(%r{://}, " colon slash slash ") : "") +
         result[:middle]
-          .gsub(/\./, ' dot ').gsub(%r{/}, ' slash ')
-          .gsub(/@/, ' at ').gsub(/:/, ' colon ')
-          .gsub(/_/, ' underscore ').gsub(/-/, ' dash ')
-          .gsub(/\?/, ' question mark ').gsub(/=/, ' equals ')
-          .gsub(/%/, ' percent ').gsub(/&/, ' ampersand ')
-          .gsub(/\+/, ' plus ').strip +
+          .gsub(/\./, " dot ").gsub(%r{/}, " slash ")
+          .gsub(/@/, " at ").gsub(/:/, " colon ")
+          .gsub(/_/, " underscore ").gsub(/-/, " dash ")
+          .gsub(/\?/, " question mark ").gsub(/=/, " equals ")
+          .gsub(/%/, " percent ").gsub(/&/, " ampersand ")
+          .gsub(/\+/, " plus ").strip +
         result[:spaceafter] + result.post_match
     end
   end
@@ -360,9 +360,9 @@ class WordCounterController < ApplicationController
   # Convert a string number to individual digits.  "0123" becomes
   # "zero one two three", not "one two three" or "one hundred and twenty three".
   def number_to_digits(number_string)
-    expanded_text = ''
+    expanded_text = ""
     number_string.each_char do |digit|
-      expanded_text += NumbersInWords.in_words(digit.to_i) + ' '
+      expanded_text += NumbersInWords.in_words(digit.to_i) + " "
     end
     expanded_text.strip # Remove trailing space if any.
   end
@@ -371,7 +371,7 @@ class WordCounterController < ApplicationController
   # hundred, then say it as a hundreds number.  So it's "eight hundred" rather
   # than "eight zero zero".  Common for "one eight hundred" toll free numbers.
   def area_code_to_words(area_code_string)
-    if area_code_string[-2..-1] == '00'
+    if area_code_string[-2..-1] == "00"
       NumbersInWords.in_words(area_code_string.to_i)
     else
       number_to_digits(area_code_string)
@@ -418,22 +418,22 @@ class WordCounterController < ApplicationController
       }x
     while (result = re.match(@expanded_script))
       expanded_text = result[:spacebefore]
-      expanded_text += number_to_digits(result[:leadingone]) + ' ' if result[:leadingone]
+      expanded_text += number_to_digits(result[:leadingone]) + " " if result[:leadingone]
       if result[:areacode]
-        expanded_text += 'area code ' if @selected_expansions[:exp_say_area_code]
-        expanded_text += area_code_to_words(result[:areacode]) + ' '
+        expanded_text += "area code " if @selected_expansions[:exp_say_area_code]
+        expanded_text += area_code_to_words(result[:areacode]) + " "
       end
       if @selected_expansions[:exp_say_telephone_number]
         expanded_text += if result[:areacode]
-          'number '
+          "number "
         else # No area code in front, say the whole thing.
-          'telephone number '
+          "telephone number "
         end
       end
-      expanded_text += number_to_digits(result[:exchange]) + ' ' +
+      expanded_text += number_to_digits(result[:exchange]) + " " +
         number_to_digits(result[:number])
       if result[:extension]
-        expanded_text += ' extension ' + number_to_digits(result[:extension])
+        expanded_text += " extension " + number_to_digits(result[:extension])
       end
       expanded_text += result[:spaceafter]
 
@@ -448,7 +448,7 @@ class WordCounterController < ApplicationController
       }x
     while (result = re.match(@expanded_script))
       expanded_text = result[:before]
-      expanded_text += 'telephone number ' if @selected_expansions[:exp_say_telephone_number]
+      expanded_text += "telephone number " if @selected_expansions[:exp_say_telephone_number]
       expanded_text += number_to_digits(result[:number])
       expanded_text += result[:after]
 
@@ -461,7 +461,7 @@ class WordCounterController < ApplicationController
     # hyphen to avoid clobbering minus signs and other hyphen uses.
     re = /(?<letter1>[[:alpha:]])[-‐‑‒–—⸺⸻﹘﹣－](?<letter2>[[:alpha:]])/
     while (result = re.match(@expanded_script))
-      @expanded_script = result.pre_match + result[:letter1] + ' ' +
+      @expanded_script = result.pre_match + result[:letter1] + " " +
         result[:letter2] + result.post_match
     end
   end
@@ -477,13 +477,13 @@ class WordCounterController < ApplicationController
     while (result = re.match(@expanded_script))
       expanded_text = result[:digitbefore] +
         if result[:spacebefore].nil? || result[:spacebefore].empty?
-          ' '
+          " "
         else
           result[:spacebefore]
         end
       expanded_text += "percent"
       if result[:letterafter] && !result[:letterafter].empty?
-        expanded_text += ' ' + result[:letterafter]
+        expanded_text += " " + result[:letterafter]
       end
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
@@ -497,7 +497,7 @@ class WordCounterController < ApplicationController
       (?<letterafter>[[:alpha:]])
       }x
     while (result = re.match(@expanded_script))
-      expanded_text = result[:spacebefore] + 'hashtag ' + result[:letterafter]
+      expanded_text = result[:spacebefore] + "hashtag " + result[:letterafter]
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
   end
@@ -511,9 +511,9 @@ class WordCounterController < ApplicationController
       (?<digitafter>[[:digit:]]) # Ends with a digit.
       }x
     while (result = re.match(@expanded_script))
-      expanded_text = result[:spacebefore] + 'number' +
+      expanded_text = result[:spacebefore] + "number" +
         if result[:interspace].nil? || result[:interspace].empty?
-          ' '
+          " "
         else
           result[:interspace]
         end
@@ -541,9 +541,9 @@ class WordCounterController < ApplicationController
       before = result[:thingbefore]
       after = result[:thingafter]
       @expanded_script = result.pre_match +
-        before + (/[[:space:]]\Z/.match(before) ? '' : ' ') +
-        'per' +
-        (/\A[[:space:]]/.match(after) ? '' : ' ') + after +
+        before + (/[[:space:]]\Z/.match(before) ? "" : " ") +
+        "per" +
+        (/\A[[:space:]]/.match(after) ? "" : " ") + after +
         result.post_match
     end
   end
@@ -555,9 +555,9 @@ class WordCounterController < ApplicationController
       before = result[:thingbefore]
       after = result[:thingafter]
       @expanded_script = result.pre_match +
-        before + (/[[:space:]]\Z/.match(before) ? '' : ' ') +
-        'per' +
-        (/\A[[:space:]]/.match(after) ? '' : ' ') + after +
+        before + (/[[:space:]]\Z/.match(before) ? "" : " ") +
+        "per" +
+        (/\A[[:space:]]/.match(after) ? "" : " ") + after +
         result.post_match
     end
   end
@@ -569,9 +569,9 @@ class WordCounterController < ApplicationController
       before = result[:thingbefore]
       after = result[:thingafter]
       @expanded_script = result.pre_match +
-        before + (/[[:space:]]\Z/.match(before) ? '' : ' ') +
-        'slash' +
-        (/\A[[:space:]]/.match(after) ? '' : ' ') + after +
+        before + (/[[:space:]]\Z/.match(before) ? "" : " ") +
+        "slash" +
+        (/\A[[:space:]]/.match(after) ? "" : " ") + after +
         result.post_match
     end
   end
@@ -596,11 +596,11 @@ class WordCounterController < ApplicationController
       ([[:space:]]*-[[:space:]]*(?<number3>[[[:digit:]]&&[^0]][[:digit:]]*))?
       }x
     while (result = re.match(@expanded_script))
-      expanded_text = @selected_expansions[:exp_say_chapter] ? 'chapter ' : ''
-      expanded_text += result[:number1] + ', verse'
-      expanded_text += 's' if result[:number3]
-      expanded_text += ' ' + result[:number2]
-      expanded_text += ' through ' + result[:number3] if result[:number3]
+      expanded_text = @selected_expansions[:exp_say_chapter] ? "chapter " : ""
+      expanded_text += result[:number1] + ", verse"
+      expanded_text += "s" if result[:number3]
+      expanded_text += " " + result[:number2]
+      expanded_text += " through " + result[:number3] if result[:number3]
 
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
@@ -620,7 +620,7 @@ class WordCounterController < ApplicationController
       }x
     while (result = re.match(@expanded_script))
       @expanded_script = result.pre_match +
-        result[:number1] + ' to ' + result[:number2] +
+        result[:number1] + " to " + result[:number2] +
         result[:thingafter] + result.post_match
     end
   end
@@ -633,33 +633,33 @@ class WordCounterController < ApplicationController
     # $1.234 becomes "one point two three four dollars"
     re = /\$[[:space:]]*(?<number>[0-9]+(,[0-9][0-9][0-9])*)(?<fraction>\.[0-9]+)?/
     while (result = re.match(@expanded_script))
-      number = result[:number].delete(',')
+      number = result[:number].delete(",")
       fraction = result[:fraction] # Remember it includes the period in front.
       int_number = number.to_i
       # Awkward code to avoid teensy limit of 3 nested blocks in Shopify rules.
       expanded_text = if (int_number == 0) && fraction
-        '' # So that $0.23 comes out as just "twenty-three cents".
+        "" # So that $0.23 comes out as just "twenty-three cents".
       else
-        remove_and_dash(NumbersInWords.in_words(int_number)) + ' ' +
-          'dollar'.pluralize(int_number)
+        remove_and_dash(NumbersInWords.in_words(int_number)) + " " +
+          "dollar".pluralize(int_number)
       end
       if fraction && fraction.length != 3 # More or less than 2 digits at end.
         real_number = (number + fraction).to_f
         expanded_text = remove_and_dash(NumbersInWords.in_words(real_number)) +
-          ' dollars'
+          " dollars"
       elsif fraction && fraction.length == 3
-        int_fraction = fraction.delete_prefix('.').to_i
-        expanded_text += ' and ' unless expanded_text.empty?
+        int_fraction = fraction.delete_prefix(".").to_i
+        expanded_text += " and " unless expanded_text.empty?
         expanded_text += remove_and_dash(NumbersInWords.in_words(int_fraction)) +
-          ' ' + 'cent'.pluralize(int_fraction)
+          " " + "cent".pluralize(int_fraction)
       end
 
       # Insert spaces if butting up against letters or something similar.
       unless /[[[:space:]][[:punct:]]]\Z/.match(result.pre_match)
-        expanded_text = ' ' + expanded_text
+        expanded_text = " " + expanded_text
       end
       unless /\A[[[:space:]][[:punct:]]]/.match(result.post_match)
-        expanded_text += ' '
+        expanded_text += " "
       end
 
       @expanded_script = result.pre_match + expanded_text + result.post_match
@@ -680,12 +680,12 @@ class WordCounterController < ApplicationController
         expanded_text = if century % 10 == 0
           NumbersInWords.in_words(century * 100) # Exact thousand year dates.
         else
-          NumbersInWords.in_words(century) + ' hundred'
+          NumbersInWords.in_words(century) + " hundred"
         end
         expanded_text = remove_and_dash(expanded_text)
-        expanded_text += ' and ' + remove_and_dash(NumbersInWords.in_words(year)) if year > 0
+        expanded_text += " and " + remove_and_dash(NumbersInWords.in_words(year)) if year > 0
       else # Year 10 to 99 possible.
-        expanded_text = remove_and_dash(NumbersInWords.in_words(century)) + ' '
+        expanded_text = remove_and_dash(NumbersInWords.in_words(century)) + " "
         expanded_text += remove_and_dash(NumbersInWords.in_words(year))
       end
       @expanded_script = result.pre_match + result[:space1] +
@@ -706,15 +706,15 @@ class WordCounterController < ApplicationController
       expanded_text = if result[:spacebefore] && !result[:spacebefore].empty?
         result[:spacebefore]
       else # No space before, need to separate our new words from prior text.
-        ' '
+        " "
       end
       number_text = number_to_digits(result[:number])
-      number_text = number_text.gsub(/zero/, 'oh') if @selected_expansions[:exp_leadingohs]
+      number_text = number_text.gsub(/zero/, "oh") if @selected_expansions[:exp_leadingohs]
       expanded_text += number_text
       expanded_text += if result[:thingafter] && !result[:thingafter].empty?
         result[:thingafter]
       else # No space after, need to separate our new words from following text.
-        ' '
+        " "
       end
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
@@ -742,17 +742,17 @@ class WordCounterController < ApplicationController
       expanded_text = if result[:before] && !result[:before].empty?
         result[:before]
       else
-        ' ' # Need to insert a space before our new number text.
+        " " # Need to insert a space before our new number text.
       end
-      expanded_text += "plus " if result[:sign] == '+'
-      expanded_text += "minus " if result[:sign] == '-'
-      number = result[:number].delete(',')
-      expanded_text += if number.include?('.')
+      expanded_text += "plus " if result[:sign] == "+"
+      expanded_text += "minus " if result[:sign] == "-"
+      number = result[:number].delete(",")
+      expanded_text += if number.include?(".")
         remove_and_dash(NumbersInWords.in_words(number.to_f))
       else
         remove_and_dash(NumbersInWords.in_words(number.to_i))
       end
-      expanded_text += ' ' unless /\A[[[:space:]][[:punct:]]]/.match(result.post_match)
+      expanded_text += " " unless /\A[[[:space:]][[:punct:]]]/.match(result.post_match)
       @expanded_script = result.pre_match + expanded_text + result.post_match
     end
   end
@@ -766,7 +766,7 @@ class WordCounterController < ApplicationController
       }xi # Case insensitive, WWW and www both handled.
     while (result = re.match(@expanded_script))
       @expanded_script = result.pre_match +
-        result[:before] + 'double-u double-u double-u' + result[:after] +
+        result[:before] + "double-u double-u double-u" + result[:after] +
         result.post_match
     end
   end

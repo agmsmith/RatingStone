@@ -38,7 +38,7 @@ class LedgerPostsController < LedgerBasesController
     @ledger_object.new_groups << home_group.original_version_id if home_group
 
     side_load_params(@ledger_object) # Mostly to get the "Add a new..." entries.
-    render('edit')
+    render("edit")
   end
 
   # See parent class for generic show() method.

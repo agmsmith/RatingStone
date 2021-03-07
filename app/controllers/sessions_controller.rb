@@ -14,7 +14,7 @@ class SessionsController < ApplicationController
       if user.activated?
         # Log the user in (save session cookie) and redirect to profile page.
         log_in(user)
-        session[:remember_me] == '1' ? remember(user) : forget(user)
+        session[:remember_me] == "1" ? remember(user) : forget(user)
         redirect_back_or(user)
       else
         flash[:warning] = "Account is not activated.  Check your email " \
@@ -23,10 +23,10 @@ class SessionsController < ApplicationController
       end
     else
       # Create an error message.
-      flash.now[:danger] = 'Invalid email/password combination.'
+      flash.now[:danger] = "Invalid email/password combination."
       # Return HTTP error code 401/unauthorized, so Fail2Ban can see it in the
       # web server logs and block this IP address if they fail login too often.
-      render('new', status: :unauthorized)
+      render("new", status: :unauthorized)
     end
   end
 
