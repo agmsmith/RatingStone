@@ -6,6 +6,9 @@
 cd /var/www/SomeWWWName/
 pwd
 
+# Delete temporary files, usually from compiling assets/Yarn.
+rm -rv tmp/*
+
 # Empty out the log files to save disk space.
 for filename in ./log/*.log
 do
@@ -13,7 +16,7 @@ do
   date > "$filename"
 done
 
-chmod -R -v og-rwx config | grep -i changed
-chmod -R -v og-rwx miscellaneous | grep -i changed
-chmod -R -v og-rwx log | grep -i changed
-chmod -R -v o-w . | grep -i changed
+chmod -R -v og-rwx config 2>/dev/null | grep -i changed
+chmod -R -v og-rwx miscellaneous 2>/dev/null | grep -i changed
+chmod -R -v og-rwx log 2>/dev/null | grep -i changed
+chmod -R -v o-w . 2>/dev/null | grep -i changed
