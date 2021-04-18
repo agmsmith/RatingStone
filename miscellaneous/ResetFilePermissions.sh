@@ -16,7 +16,7 @@ do
   date > "$filename"
 done
 
-chmod -R -v og-rwx config 2>/dev/null | grep -i changed
-chmod -R -v og-rwx miscellaneous 2>/dev/null | grep -i changed
-chmod -R -v og-rwx log 2>/dev/null | grep -i changed
-chmod -R -v o-w . 2>/dev/null | grep -i changed
+chmod -R -v og-rwx config | grep -i "changed from"
+chmod -R -v og-rwx miscellaneous | grep -i "changed from"
+chmod -R -v og-rwx log | grep -i "changed from"
+chmod -R -v o-w . | grep -i "changed from"
