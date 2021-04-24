@@ -7,7 +7,7 @@ class LedgerSubgroup < LedgerBase
   validates :name, presence: true, length: { maximum: 255 }
 
   # Methods we delegate to the parent LedgerFullGroup(s).
-  REDIRECTED_METHODS = %i[can_post? role_test?].to_set
+  REDIRECTED_METHODS = [:can_post?, :role_test?].to_set
 
   ##
   # Return some user readable context for the object.  Things like the name of
