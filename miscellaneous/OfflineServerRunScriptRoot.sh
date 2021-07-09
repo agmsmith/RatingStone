@@ -21,9 +21,13 @@ systemctl restart httpd
 sleep 2s
 
 echo
+echo
+echo
 echo "Now executing: $1"
 runuser --login SomeUser "/var/www/SomeWWWName/miscellaneous/$1"
 echo "Finished executing $1, return code $?."
+echo
+echo
 echo
 
 cd /etc/httpd/conf/
