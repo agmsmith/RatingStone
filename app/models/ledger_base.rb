@@ -233,12 +233,20 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
-  # Make sure that the current rating points are up to date with the latest
-  # awards ceremony fading.  Returns the ceremony number used by this record,
-  # usually the same as the latest ceremony, unless this object is from the
-  # future somehow.
+  # Recalculate the current rating points if needed (ceremony number isn't
+  # current).  Done by adding up the points from all the links referencing
+  # this LedgerBase object, fading each one appropriately by how far in the
+  # past it is.
+  # 
   def update_current_points
     last_ceremony = LedgerAwardCeremony.last_ceremony
+    return if current_ceremony == last_ceremony
+
+    # Out of date, evaluate reputation points coming from all link objects
+    # that have this base object as a child, and points spent by links which
+    # have this object as a parent.
+    # bleeble
+
     missing_generations = if current_ceremony < 0
       last_ceremony # TODO: current_ceremony needs recompution using date stamp.
     else
@@ -258,17 +266,12 @@ class LedgerBase < ApplicationRecord
 
   ##
   # If this is an amended ledger record, now that it has been created, go back
-  # and update the original record to point to the newly saved amended data.
-  # Check that this is indeed the latest amendment, raise exception if not.
+  # and do a few things.  Update the original record to point to the newly
+  # saved amended data.  Sanity check that this is indeed the latest amendment,
+  # raise exception if not.
   #
   # Remember to call this from subclasses with an after_create of their own.
   def my_after_create
-    if (original_id == id) || original_id.nil? # We are the original.
-      update_columns(current_ceremony: LedgerAwardCeremony.last_ceremony,
-        is_latest_version: true) # Bare minimum update; no modification date.
-      return
-    end
-
     # Wrap this critical section (read and modify amended_id) in a transaction.
     self.class.transaction do
       if original.amended_id != amended_id

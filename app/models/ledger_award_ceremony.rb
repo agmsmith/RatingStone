@@ -15,7 +15,9 @@ class LedgerAwardCeremony < LedgerBase
   # award ceremony starts processing.
 
   ##
-  # Class function to find the number of the last ceremony done.
+  # Class function to find the number of the last ceremony done.  Zero if no
+  # ceremonies done yet, else number of highest ceremony.  They're assumed to
+  # be increasing sequential numbers, else fading will be excessive.
   def self.last_ceremony
     return @highest_ceremony if @highest_ceremony
     @highest_ceremony = maximum(:ceremony_number)
@@ -25,21 +27,25 @@ class LedgerAwardCeremony < LedgerBase
 
   ##
   # Class function to start an award ceremony.  Usually called by a weekly cron
-  # script on the web server, but can also be triggered manually.
+  # script on the web server, but can also be triggered manually.  Returns the
+  # new ceremony record.
   def self.start_ceremony
-    ceremony = nil
+    result = nil
     # Wrap this in a transaction so nothing changes while we update everything.
-    # Hopefully the database won't explode with the large transaction size!
     transaction do
       ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1)
       ceremony.save!
-      @highest_ceremony = ceremony.ceremony_number
+      @highest_ceremony = nil
       # Do the ceremony processing...
       sleep(2) unless Rails.env.test?
       ceremony.completed_at = Time.zone.now
       ceremony.save!
+      result = ceremony
+      logger.info("  Awards ceremony ##{ceremony.ceremony_number} completed " \
+        "successfully after #{ceremony.completed_at - ceremony.created_at} " \
+        "seconds.")
     end
-    ceremony
+    result
   end
 
   ##
