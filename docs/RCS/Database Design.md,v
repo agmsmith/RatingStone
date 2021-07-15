@@ -1,9 +1,14 @@
-head	1.57;
+head	1.58;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.58
+date	2021.07.15.01.32.12;	author agmsmith;	state Exp;
+branches;
+next	1.57;
 
 1.57
 date	2021.07.13.23.59.23;	author agmsmith;	state Exp;
@@ -296,23 +301,21 @@ desc
 @
 
 
-1.57
+1.58
 log
-@Added opinionator role, message moderation and meta opinions updated.
-LedgerDelete and LedgerApprove et al replaced by LedgerChangeMarkings.
-Ceremony rework in progress.
+@After another proofreading run.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.56 2021/01/16 17:25:05 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.57 2021/07/13 23:59:23 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
 
 ## Basic Ideas
 
-Because I'm planning on implementing the reputation system as a BlockChain
+Because I'm thinking of on implementing the reputation system as a BlockChain
 ledger application, or as a federated collection of systems exchanging records,
 the database is set up as a write once collection of object records and link
 records.  Objects are the things the user can view and which have ratings
@@ -321,25 +324,25 @@ things, connecting a pair of objects together, one being a parent or container
 object (such as a list of book reviews) and the other being a child object in
 that container (such as a book review object).  Usually rating points are also
 transfered when you create a link (perhaps describing how much you like that
-book review).  I'm using separate link records rather than parent references in
-the objects so that an object can have multiple parents (useful for filing
-something under multiple categories).
+book review).  I'm using separate link records rather than parent references
+internal to the objects so that an object can have multiple parents (useful for
+filing something under multiple categories).
 
 ### Changing Things by Making New Objects
 
 For example, if you want to edit some posted text, the system will create a
 newer object (they all have datestamps) with the new text and a reference back
-to the original text object record.  Then when displaying the original text, it
-will search for newer versions and display that text instead.  But new
-references (links) to the text (such as replies) will still reference the
-original text record, since that has a more constant identity then possibly yet
-more new text records.  Advanced users can view a list of all those text
-records and see the change history.
+to the original text object record.  Then when someone wants to see the
+original text, it will search for newer versions and display that text instead.
+But new references (links) to the text (such as replies) will still reference
+the original text record, since that has a more constant identity then possibly
+yet more new text records.  Advanced users can view a list of all those text
+records and see how the text changed over time.
 
 Similarly when someone adds an item to a list, a link record will be added to
 connect the list and the item.  To remove an item, the link record isn't
-modified, instead a new deletion record is created, referencing the original
-link record.
+modified, instead a new deletion record is created, marking the original link
+record as deleted.
 
 Theoretically, when displaying the current state of things, you run through all
 the records in chronological order, adding and removing objects and links from
@@ -364,12 +367,11 @@ To avoid the common complaint about single table inheritance adding too many
 fields for subclasses, we put some generic number and string fields into the
 base class and reuse them differently for each subclass.  Subclasses give those
 generic fields subclass-specific names by using the magic "alias_attribute"
-ActiveRecord function.  So where the base may have a generic string1 and
-string2 field, a User subclass could rename those as FullName and EMailAddress,
-with "alias_attribute :full_name, :string1" and "alias_attribute
-:email_address, :string2".  ActiveRecord will then automatically build queries
-using the actual database field (string1, string2) names whenever we use the
-subclass object.
+ActiveRecord method.  So where the base may have a generic string1 and string2
+field, a User subclass could rename those as FullName and EMailAddress, with
+"alias_attribute :full_name, :string1" and "alias_attribute :email_address,
+:string2".  ActiveRecord will then automatically build queries using the actual
+database field (string1, string2) names whenever we use the subclass object.
 
 ### Direct References, Link Records, or Full Blown Lists
 
@@ -404,7 +406,8 @@ records representing things (posts, pictures, etc).  The links transfer
 reputation points.  The objects contain reputation points.  A multipurpose
 object design would make it simpler to have an opinion about an opinion, which
 is needed for meta-moderation.  And we need meta-moderation to keep the quality
-of opinions up.
+of opinions up.  Though having simpler link records makes the database smaller
+and faster.
 
 ## About Posts and Groups
 
@@ -425,7 +428,7 @@ contribute a bit to its upkeep.  The group owners can spend the group points on
 the group's behalf, perhaps reimbursing moderators for the points they use
 while doing their work (creating approval and deletion objects takes points).
 Of course, if the group's points fall to zero, it can be garbage collected.
-Same for posts that aren't referenced much.
+Same for posts that aren't referenced much over time.
 
 I'd like to have small points awarded for just reading a post, but that won't
 be practical since it would blow up the database size tremendously (each read
@@ -494,9 +497,10 @@ look for the same type of record but search different fields.
 ### Approval Dimension
 
 The other dimension is approval.  Sometimes we need approval from both parties
-to create the link; each approves their end using a LedgerApprove record.
-Other times we have a one way relationship, such as a fan of a movie star, and
-only the fan end needs approval (and that's usually automatic).
+to create the link; each approves their end using a LedgerChangeMarkings
+record.  Other times we have a one way relationship, such as a fan of a movie
+star, and only the fan end needs approval (and that's usually automatic because
+they created the link).
 
 One side effect of approval is that the reputation points assigned to the link
 only get counted when the link is fully approved.  That gives incentive to do
@@ -534,14 +538,15 @@ The next big insight was to use permission roles.  They can be put in a rough
 order where one more permissive role includes the things allowed in the lower
 less permissive roles, to save on having to grant each permission individually.
 In practice, each role is granted by linking the user to a group with a record
-that specifies the highest role they have.
+that specifies the highest role they have in that group.
 
 1. **Banned**.  Can't access the group or posts.
 2. **Reader**.  Can read posts and see the group description.
 3. **Member**.  Can see more group information, like membership lists.  Some
-   groups also automatically approve posts by members.  Others require approval
-   by a moderator.  By the way, there's no permission needed to request that a
-   post be added to a group, so even a non-member could do that.
+   groups also automatically approve posts by members, effectively giving the
+   member write priviledges.  Others require approval by a moderator.  By the
+   way, there's no permission needed to request that a post be added to a
+   group, so even a non-member could submit a post.
 4. **Opinionator**.  Can make opinions about things, and associate them with
    the group.
 5. **Message Moderator**.  Can approve, unapprove (makes it pending approval
@@ -672,11 +677,16 @@ serious or distinct enough.
   Usually we delete or undelete all versions of an object, but if we ever
   delete/undelete just some versions, this will point to the latest not deleted
   version.  Changed as needed.
-* deleted boolean True if there is a LedgerDelete record that is currently
-  deleting this record, otherwise false (record is alive).  A deleted object
-  just shows a warning message to the user when an attempt is made to display
-  it.  Rating points are accumulated as usual.  That way we can undelete this
-  record if needed.  Changed as needed.
+* deleted boolean True if there is a LedgerChangeMarkings record that is
+  currently deleting this record, otherwise false (record is alive).  A deleted
+  object just shows a warning message to the user when an attempt is made to
+  display it.  Rating points are accumulated as usual.  That way we can
+  undelete this record if needed.  Changed as needed.
+* expired boolean False.  When true (usually set by the weekly award ceremony
+  prior to garbage collection at the next ceremony), the record will be deleted
+  soon.  Other than displaying a warning to the user when viewing this object
+  (suggesting that they spend some points to revive it), doesn't affect how the
+  record is treated.  Changed as needed.
 * has_owners boolean True if there is one or more LinkOwner records (even
   deleted ones) that references this record.  False if there are none, which
   means we can skip searching for LinkOwner records every time we check
@@ -727,11 +737,12 @@ rejected, no change) and parent approval state.  Though the approval state only
 is relevant for link records.  And you can't delete a LedgerChangeMarkings
 record, to avoid recursive infinite loops if someone makes a circle of records.
 You can have several LedgerChangeMarkings records affecting the same object;
-only the unexpired ones played back in chronological order decide the target
-object's status.  So yes, if enough time passes, the LedgerChangeMarkings will
-fade away and the targets will no longer be deleted.  Though most often the
-targets will have faded away too by that time.  Or we could have a policy of
-not garbage collecting LedgerChangeMarkings records.
+only the undeleted ones (can be expired, doesn't matter) played back in
+chronological order decide the target object's status.  So yes, if enough time
+passes, the LedgerChangeMarkings will fade away and the targets will no longer
+be deleted.  Though most often the targets will have faded away too by that
+time.  Or we could have a policy of not garbage collecting LedgerChangeMarkings
+records.
 
 You need to be the creator or owner of the object to change the deleted state.
 
@@ -744,8 +755,9 @@ you can delete it too).
 * marks string Specifies which flags to turn on or off.  The letters are "D"
   for delete, "A" for approval, and preceed with a "+" to add the flag, "-" to
   remove the flag.  Don't mention the letters for flags which you don't want to
-  change.  Run them together or put in spaces if you wish, "-D +A" and "-D+A"
-  and "+A-D" are equivalent.
+  change.  Run them together or put in spaces or commas if you wish, "-D +A"
+  and "-D,+A" and "-D+A" and "+A-D" are equivalent.  But "+ A - D" won't work;
+  the +/- have to be immediately before the letter.
 * context string Describes the context, such as being a manual delete button
   push from a given web page, from a specified IP address.  User is implied by
   the creator of this record.  Automatically generated by the system.
@@ -778,7 +790,7 @@ Are corporations people?  Not really, but we have them as users too in case
 someone wants to run a company web page or otherwise have a presence on this
 reputation system.  As well, employees can list the LedgerCompany as their
 employer.  Alternatively, they are a regular User but linked to a category
-of Companies.
+of Companies.  I prefer the latter method.
 
 
 ### *LedgerThing* < LedgerBase
@@ -832,7 +844,8 @@ file or download it if binary.
 
 * Implicit ActiveStorage link stores the file.  May use CarrierWave if
   ActiveStorage URL policies are too annoying (too long, permanent links
-  difficult).  Have functions for getting the file size, data type, URL, etc.
+  difficult, breaks web browser caching).  Have functions for getting the file
+  size, data type, URL, etc.
 
 
 ### *LedgerSubgroup* < LedgerBase
@@ -893,7 +906,7 @@ Currently deleting this kind of record is not implemented, so don't do it.
   points * (fade ** award_number).
 * completed_at Time stamp for when the award ceremony was completed.  The start
   time is in the usual created_at time stamp for this record.  The web site is
-  offline while the awards are being calculated.
+  offline (by design) while the awards are being calculated.
 
 #### Calculating Awards
 
@@ -921,7 +934,7 @@ links are made during the award ceremony on the anniversary of a user's account
 activation.
 
 
-### *LedgerBirthday* < LedgerBase
+### *LedgerBirthday* < LedgerMedia
 
 Identifies the birthday of a user.  Mostly an excuse to reuse the generic
 timestamp field that LedgerAwardCeremony made necessary.
@@ -930,7 +943,7 @@ timestamp field that LedgerAwardCeremony made necessary.
   independently operational.
 
 
-### *LedgerDeathday* < LedgerBase
+### *LedgerDeathday* < LedgerMedia
 
 Identifies the date of a user's death.
 
@@ -946,8 +959,8 @@ particular subclass identifies what the link's purpose is (object A owns object
 B, object A is a list header and B is in the list, etc).
 
 * id The usual big (64 bit) integer unique record sequence number so that we
-  can refer to the link record, currently only used by LedgerDelete/Undelete
-  and similar operations.  Write-once.
+  can refer to the link record, currently only used by LedgerChangeMarkings and
+  similar operations.  Write-once.
 * type string  The name of the subclass to use for this record.  Write-once.
 * parent_id Points to the LedgerBase object (or subclass) which is usually the
   main one in the association.  Generally the older one is the parent (eg:
@@ -959,15 +972,20 @@ B, object A is a list header and B is in the list, etc).
   original version's id number.  Write-once.
 * creator_id Identifies the LedgerUser who created this link.  Never NULL.  Use
   the original version's id number.  Write-once.
-* deleted boolean True if there is a LedgerDelete record that deletes this
-  record, otherwise false (this record is alive).  Any rating points gained by
-  the child object through this link vanish when it is deleted, as if they
-  never were transfered.  However, the rating points spent by the user to make
-  the link are not returned to the user (otherwise they could temporarily
+* deleted boolean True if there is a LedgerChangeMarkings record that deletes
+  this record, otherwise false (this record is alive).  Any rating points
+  gained by the child object through this link vanish when it is deleted, as if
+  they never were transfered.  However, the rating points spent by the user to
+  make the link are not returned to the user (otherwise they could temporarily
   transfer points and someone else could spend more than they are allowed).
-  Can undelete with LedgerUndelete, another good reason for keeping the rating
-  points spent.  Changed as needed.
-* approved_parent boolean  Changed as needed.
+  Can undelete with another LedgerChangeMarkings; one more good reason for
+  keeping the rating points spent.  Changed as needed.
+* expired boolean False.  When true (usually set by the weekly award ceremony
+  prior to garbage collection at the next ceremony), the record will be deleted
+  soon.  Other than displaying a warning to the user when viewing this link
+  (suggesting that they spend some points to revive it), doesn't affect how the
+  record is treated.  Changed as needed.
+* approved_parent boolean  See approved_child description.  Changed as needed.
 * approved_child boolean False if a particular end of the link hasn't been
   approved.  The link record exists but it can't be traversed by ordinary users
   until both ends have been approved.  Like being deleted, the points for
@@ -981,9 +999,9 @@ B, object A is a list header and B is in the list, etc).
   approval isn't automatic, then the new link is considered to be pending and
   the flag(s) start out false.  Later on someone with appropriate permissions
   (usually a group moderator) can approve the pending post link by using a
-  LedgerApprove record.  Approval can be revoked by using LedgerUnapprove, or
-  the link could just be deleted if you want to reject it more completely
-  (still could get undeleted).  Combined with the deleted boolean, a record is
+  LedgerChangeMarkings record.  Approval can be revoked the same way, or the
+  link could just be deleted if you want to reject it more completely (still
+  could get undeleted).  Combined with the deleted boolean, a record is
   normally only seen if it is both fully approved and not deleted.  Changed as
   needed.
 * rating_points_spent float The number of points spent on making this link by
@@ -1139,8 +1157,8 @@ approvals will be used to find people with the relationship.
 
 All ends of the link which are the same as the creator are automatically
 approved.  Other ends will be in a pending state until the referred person uses
-a LedgerApprove to approve their end.  Where you can approve, you can also
-unapprove your end of the relationship.  Until both are approved, it's a
+a LedgerChangeMarkings to approve their end.  Where you can approve, you can
+also unapprove your end of the relationship.  Until both are approved, it's a
 partial relationship (admirer rather than friends) and not usually shown to
 users or used for finding related people.
 
@@ -1271,6 +1289,8 @@ are all spam.  But probably should limit it to one.
   mentioned link or its creator.  False means don't bother searching for an
   AuxLink record; it shouldn't exist.  Mostly this field exists to avoid
   searching for AuxLink records every time an opinion is shown.
+* secret boolean True if it should be hidden from most users, sort of like
+  secret ballots.
 
 
 #### *LinkMetaMod* < LinkOpinion
@@ -1298,8 +1318,8 @@ membership fee).
 ### *AuxLink*
 
 This database table and class is used for connecting LedgerBase records (a
-LedgerDelete/Undelete or LedgerApprove/Unapprove) and LinkBase records.  Used
-for deleting, undeleting, and giving approvals to a LinkBase record.  The main
+LedgerChangeMarkings usually) and LinkBase records.  Used for deleting &amp;
+undeleting, and only for LinkBase subclasses - giving approvals.  The main
 difference with LinkBase is that no rating points are involved.
 
 * parent_id Points to a LedgerBase record doing something to a link.
@@ -1310,7 +1330,8 @@ difference with LinkBase is that no rating points are involved.
 ### *AuxLedger*
 
 Like AuxLink, but for connecting LedgerBase objects (usually a
-LedgerDelete/Undelete) to child LedgerBase objects (things being deleted).
+LedgerChangeMarkings object) to child LedgerBase objects (such as things being
+deleted).
 
 * parent_id Points to a LedgerBase record doing something to an object.
 * child_id Points to a LedgerBase record being modified in some way.
@@ -1351,7 +1372,7 @@ details like this:
       t.string :type, default: "LedgerBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
       t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one.  NULL if not initialised (should be a copy of the id of this record)."
       t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
-      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerChangeMarkings record that is currently deleting this record, otherwise false (record is alive)."
       t.boolean :has_owners, default: false, comment: "True if there is one or more LinkOwner records (even deleted ones) that references this record.  False if there are none, which means we can skip searching for LinkOwner records every time we check permissions, which saves a lot of database queries!"
       t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts.  Also lets us skip older versions directly in an SQL query."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record, using their original ID."
@@ -1379,9 +1400,9 @@ details like this:
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link, using their original ID."
       t.bigint :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
-      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
-      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
-      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerChangeMarkings record that deletes this record, otherwise false (this record is alive)."
+      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerChangeMarkings."
+      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerChangeMarkings."
       t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
       t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
       t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the parent object."
@@ -1393,12 +1414,12 @@ details like this:
     add_index :link_bases, :string1
     add_index :link_bases, :number1
 
-    create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerDelete) to LinkBase records (usually links being deleted)." do |t|
+    create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerChangeMarkings) to LinkBase records (usually links being deleted)." do |t|
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxlinkparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete or give permission order."
       t.references :child, null: false, foreign_key: {to_table: :link_bases, name: "fk_rails_auxlinkchild"}, comment: "Points to the child LinkBase object (or subclass) which is being modified by the parent."
     end
 
-    create_table :aux_ledgers, force: false, comment: "AuxLedger class and record for connecting LedgerBase records (usually LedgerDelete) to other LedgerBase records (usually objects being deleted)." do |t|
+    create_table :aux_ledgers, force: false, comment: "AuxLedger class and record for connecting LedgerBase records (usually LedgerChangeMarkings) to other LedgerBase records (usually objects being deleted)." do |t|
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete order."
       t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerchild"}, comment: "Points to the child LedgerBase object (or subclass) which is being modified by the parent."
     end
@@ -1499,9 +1520,14 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.56 2021/01/16 17:25:05 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.57 2021/07/13 23:59:23 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.57  2021/07/13 23:59:23  agmsmith
+Added opinionator role, message moderation and meta opinions updated.
+LedgerDelete and LedgerApprove et al replaced by LedgerChangeMarkings.
+Ceremony rework in progress.
+
 Revision 1.56  2021/01/16 17:25:05  agmsmith
 Typo.
 
@@ -1679,6 +1705,150 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.57
+log
+@Added opinionator role, message moderation and meta opinions updated.
+LedgerDelete and LedgerApprove et al replaced by LedgerChangeMarkings.
+Ceremony rework in progress.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.56 2021/01/16 17:25:05 agmsmith Exp agmsmith $</SMALL>
+d10 1
+a10 1
+Because I'm planning on implementing the reputation system as a BlockChain
+d19 3
+a21 3
+book review).  I'm using separate link records rather than parent references in
+the objects so that an object can have multiple parents (useful for filing
+something under multiple categories).
+d27 6
+a32 6
+to the original text object record.  Then when displaying the original text, it
+will search for newer versions and display that text instead.  But new
+references (links) to the text (such as replies) will still reference the
+original text record, since that has a more constant identity then possibly yet
+more new text records.  Advanced users can view a list of all those text
+records and see the change history.
+d36 2
+a37 2
+modified, instead a new deletion record is created, referencing the original
+link record.
+d62 5
+a66 6
+ActiveRecord function.  So where the base may have a generic string1 and
+string2 field, a User subclass could rename those as FullName and EMailAddress,
+with "alias_attribute :full_name, :string1" and "alias_attribute
+:email_address, :string2".  ActiveRecord will then automatically build queries
+using the actual database field (string1, string2) names whenever we use the
+subclass object.
+d101 2
+a102 1
+of opinions up.
+d123 1
+a123 1
+Same for posts that aren't referenced much.
+d192 4
+a195 3
+to create the link; each approves their end using a LedgerApprove record.
+Other times we have a one way relationship, such as a fan of a movie star, and
+only the fan end needs approval (and that's usually automatic).
+d233 1
+a233 1
+that specifies the highest role they have.
+d238 4
+a241 3
+   groups also automatically approve posts by members.  Others require approval
+   by a moderator.  By the way, there's no permission needed to request that a
+   post be added to a group, so even a non-member could do that.
+d372 10
+a381 5
+* deleted boolean True if there is a LedgerDelete record that is currently
+  deleting this record, otherwise false (record is alive).  A deleted object
+  just shows a warning message to the user when an attempt is made to display
+  it.  Rating points are accumulated as usual.  That way we can undelete this
+  record if needed.  Changed as needed.
+d432 6
+a437 5
+only the unexpired ones played back in chronological order decide the target
+object's status.  So yes, if enough time passes, the LedgerChangeMarkings will
+fade away and the targets will no longer be deleted.  Though most often the
+targets will have faded away too by that time.  Or we could have a policy of
+not garbage collecting LedgerChangeMarkings records.
+d450 3
+a452 2
+  change.  Run them together or put in spaces if you wish, "-D +A" and "-D+A"
+  and "+A-D" are equivalent.
+d485 1
+a485 1
+of Companies.
+d539 2
+a540 1
+  difficult).  Have functions for getting the file size, data type, URL, etc.
+d601 1
+a601 1
+  offline while the awards are being calculated.
+d629 1
+a629 1
+### *LedgerBirthday* < LedgerBase
+d638 1
+a638 1
+### *LedgerDeathday* < LedgerBase
+d654 2
+a655 2
+  can refer to the link record, currently only used by LedgerDelete/Undelete
+  and similar operations.  Write-once.
+d667 5
+a671 5
+* deleted boolean True if there is a LedgerDelete record that deletes this
+  record, otherwise false (this record is alive).  Any rating points gained by
+  the child object through this link vanish when it is deleted, as if they
+  never were transfered.  However, the rating points spent by the user to make
+  the link are not returned to the user (otherwise they could temporarily
+d673 8
+a680 3
+  Can undelete with LedgerUndelete, another good reason for keeping the rating
+  points spent.  Changed as needed.
+* approved_parent boolean  Changed as needed.
+d694 3
+a696 3
+  LedgerApprove record.  Approval can be revoked by using LedgerUnapprove, or
+  the link could just be deleted if you want to reject it more completely
+  (still could get undeleted).  Combined with the deleted boolean, a record is
+d852 2
+a853 2
+a LedgerApprove to approve their end.  Where you can approve, you can also
+unapprove your end of the relationship.  Until both are approved, it's a
+d984 2
+d1013 2
+a1014 2
+LedgerDelete/Undelete or LedgerApprove/Unapprove) and LinkBase records.  Used
+for deleting, undeleting, and giving approvals to a LinkBase record.  The main
+d1025 2
+a1026 1
+LedgerDelete/Undelete) to child LedgerBase objects (things being deleted).
+d1067 1
+a1067 1
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
+d1095 3
+a1097 3
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
+      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
+      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApproved."
+d1109 1
+a1109 1
+    create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerDelete) to LinkBase records (usually links being deleted)." do |t|
+d1114 1
+a1114 1
+    create_table :aux_ledgers, force: false, comment: "AuxLedger class and record for connecting LedgerBase records (usually LedgerDelete) to other LedgerBase records (usually objects being deleted)." do |t|
+d1215 1
+a1215 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.56 2021/01/16 17:25:05 agmsmith Exp agmsmith $
+d1218 5
 @
 
 
