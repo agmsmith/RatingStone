@@ -1,9 +1,14 @@
-head	1.59;
+head	1.60;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.60
+date	2021.07.21.23.33.36;	author agmsmith;	state Exp;
+branches;
+next	1.59;
 
 1.59
 date	2021.07.21.21.57.31;	author agmsmith;	state Exp;
@@ -306,14 +311,14 @@ desc
 @
 
 
-1.59
+1.60
 log
-@Switch to subclasses for LedgerDelete and LedgerApprove.
+@Change database migration comments back to LedgerDelete or LedgerApprove.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.58 2021/07/15 01:32:12 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.59 2021/07/21 21:57:31 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -1392,7 +1397,7 @@ details like this:
       t.string :type, default: "LedgerBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."
       t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one.  NULL if not initialised (should be a copy of the id of this record)."
       t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
-      t.boolean :deleted, default: false, comment: "True if there is a LedgerChangeMarkings record that is currently deleting this record, otherwise false (record is alive)."
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
       t.boolean :has_owners, default: false, comment: "True if there is one or more LinkOwner records (even deleted ones) that references this record.  False if there are none, which means we can skip searching for LinkOwner records every time we check permissions, which saves a lot of database queries!"
       t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts.  Also lets us skip older versions directly in an SQL query."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record, using their original ID."
@@ -1420,9 +1425,9 @@ details like this:
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_linkcreator"}, comment: "Identifies the User who created this link, using their original ID."
       t.bigint :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
-      t.boolean :deleted, default: false, comment: "True if there is a LedgerChangeMarkings record that deletes this record, otherwise false (this record is alive)."
-      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerChangeMarkings."
-      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerChangeMarkings."
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
+      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApprove."
+      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApprove."
       t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
       t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
       t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the parent object."
@@ -1434,12 +1439,12 @@ details like this:
     add_index :link_bases, :string1
     add_index :link_bases, :number1
 
-    create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerChangeMarkings) to LinkBase records (usually links being deleted)." do |t|
+    create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerDelete or LedgerApprove) to LinkBase records (usually links being deleted or approved)." do |t|
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxlinkparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete or give permission order."
       t.references :child, null: false, foreign_key: {to_table: :link_bases, name: "fk_rails_auxlinkchild"}, comment: "Points to the child LinkBase object (or subclass) which is being modified by the parent."
     end
 
-    create_table :aux_ledgers, force: false, comment: "AuxLedger class and record for connecting LedgerBase records (usually LedgerChangeMarkings) to other LedgerBase records (usually objects being deleted)." do |t|
+    create_table :aux_ledgers, force: false, comment: "AuxLedger class and record for connecting LedgerBase records (usually LedgerDelete) to other LedgerBase records (usually objects being deleted)." do |t|
       t.references :parent, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerparent"}, comment: "Points to the LedgerBase object (or subclass) which has the delete or undelete order."
       t.references :child, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_auxledgerchild"}, comment: "Points to the child LedgerBase object (or subclass) which is being modified by the parent."
     end
@@ -1540,9 +1545,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.58 2021/07/15 01:32:12 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.59 2021/07/21 21:57:31 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.59  2021/07/21 21:57:31  agmsmith
+Switch to subclasses for LedgerDelete and LedgerApprove.
+
 Revision 1.58  2021/07/15 01:32:12  agmsmith
 After another proofreading run.
 
@@ -1728,6 +1736,35 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.59
+log
+@Switch to subclasses for LedgerDelete and LedgerApprove.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.58 2021/07/15 01:32:12 agmsmith Exp agmsmith $</SMALL>
+d1082 1
+a1082 1
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerChangeMarkings record that is currently deleting this record, otherwise false (record is alive)."
+d1110 3
+a1112 3
+      t.boolean :deleted, default: false, comment: "True if there is a LedgerChangeMarkings record that deletes this record, otherwise false (this record is alive)."
+      t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerChangeMarkings."
+      t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerChangeMarkings."
+d1124 1
+a1124 1
+    create_table :aux_links, force: false, comment: "AuxLink class and record for connecting LedgerObjects (usually LedgerChangeMarkings) to LinkBase records (usually links being deleted)." do |t|
+d1129 1
+a1129 1
+    create_table :aux_ledgers, force: false, comment: "AuxLedger class and record for connecting LedgerBase records (usually LedgerChangeMarkings) to other LedgerBase records (usually objects being deleted)." do |t|
+d1230 1
+a1230 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.58 2021/07/15 01:32:12 agmsmith Exp agmsmith $
+d1233 3
 @
 
 
