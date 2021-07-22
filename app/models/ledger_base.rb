@@ -2,9 +2,6 @@
 
 class LedgerBase < ApplicationRecord
   validate :validate_ledger_original_versions_referenced
-
-  # Note that after_create needs a different method name than what subclasses
-  # use, else get an infinite loop.  Found out the hard way, can't use super.
   after_create :base_after_create
 
   # Always have a creator, but "optional: false" makes it reload the creator
@@ -272,8 +269,6 @@ class LedgerBase < ApplicationRecord
   # original record ID.  Amended records need to update the original to point
   # to them with their ID and fix up the latest record flag.  Sanity check that
   # this is indeed the latest amendment, raise exception if not.
-  #
-  # Remember to super call this from subclasses with their own after_create.
   def base_after_create
     # If this is a record being saved without an original_id, it is an original
     # record itself.  For future queries for all versions convenience, we want
@@ -302,6 +297,7 @@ class LedgerBase < ApplicationRecord
         end
         # We are the latest one now.
         original.update_attribute(:amended_id, id) # Does original's date stamp.
+        update_columns(is_latest_version: true) if !is_latest_version
       end
     end
   end

@@ -69,7 +69,9 @@ class LedgerUser < LedgerBase
   # For auto-approval of link parent or child where the parent or child is a
   # user, we need to make the user the creator or owner of themselves.  But
   # we don't know our own record ID until after the record has been created.
+  # But only do that for new LedgerUser records, amended ones keep the current
+  # creator.
   def user_after_create
-    update_columns(creator_id: id)
+    update_columns(creator_id: id) if creator_id.nil? || creator_id == 0
   end
 end
