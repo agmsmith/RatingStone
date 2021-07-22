@@ -89,6 +89,7 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
     t.bigint "original_id"
     t.bigint "amended_id"
     t.boolean "deleted", default: false
+    t.boolean "expired", default: false
     t.boolean "has_owners", default: false
     t.boolean "is_latest_version", default: true
     t.bigint "creator_id", null: false
@@ -120,6 +121,7 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
     t.bigint "number1", default: 0
     t.string "string1", default: ""
     t.boolean "deleted", default: false
+    t.boolean "expired", default: false
     t.boolean "approved_parent", default: false
     t.boolean "approved_child", default: false
     t.float "rating_points_spent", default: 0.0

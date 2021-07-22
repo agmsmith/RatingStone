@@ -2,8 +2,10 @@
 
 class LedgerBase < ApplicationRecord
   validate :validate_ledger_original_versions_referenced
-  after_save :patch_original_id # Do this one first - lower level field init.
-  after_create :my_after_create
+
+  # Note that after_create needs a different method name than what subclasses
+  # use, else get an infinite loop.  Found out the hard way, can't use super.
+  after_create :base_after_create
 
   # Always have a creator, but "optional: false" makes it reload the creator
   # object every time we do something with an object.  So just require it to
@@ -266,29 +268,41 @@ class LedgerBase < ApplicationRecord
 
   ##
   # If this is an amended ledger record, now that it has been created, go back
-  # and do a few things.  Update the original record to point to the newly
-  # saved amended data.  Sanity check that this is indeed the latest amendment,
-  # raise exception if not.
+  # and do a few things.  Original records need to set their own ID as their
+  # original record ID.  Amended records need to update the original to point
+  # to them with their ID and fix up the latest record flag.  Sanity check that
+  # this is indeed the latest amendment, raise exception if not.
   #
-  # Remember to call this from subclasses with an after_create of their own.
-  def my_after_create
-    # Wrap this critical section (read and modify amended_id) in a transaction.
-    self.class.transaction do
-      if original.amended_id != amended_id
-        raise RatingStoneErrors,
-          "Race condition?  Some other amended record (#{original.amended}) " \
-          "was added before this (#{self}) new amended record.  " \
-          "Original: #{original}"
+  # Remember to super call this from subclasses with their own after_create.
+  def base_after_create
+    # If this is a record being saved without an original_id, it is an original
+    # record itself.  For future queries for all versions convenience, we want
+    # original_id to point to self.  Since we can't know the id value until
+    # after the save, update original_id after the save.  Also as a side
+    # effect, fixes Fixture created records which don't run callbacks when
+    # they're created, but do when they're changed.
+    if original_id.nil?
+      update_columns(original_id: id) # New is_latest_version defaults to true.
+    else
+      # Wrap this critical section (read and modify amended_id) in a
+      # transaction.
+      self.class.transaction do
+        if original.amended_id != amended_id
+          raise RatingStoneErrors,
+            "Race condition?  " \
+            "Some other amended record (#{original.amended}) " \
+            "was added before this (#{self}) new amended record.  " \
+            "Original: #{original}"
+        end
+        # Previous latest one isn't the most recent after this one was created.
+        if original.amended
+          original.amended.update_attribute(:is_latest_version, false)
+        else
+          original.update_columns(is_latest_version: false) # Stamped later...
+        end
+        # We are the latest one now.
+        original.update_attribute(:amended_id, id) # Does original's date stamp.
       end
-      # Previous latest one isn't the most recent any more.
-      if original.amended
-        original.amended.update_attribute(:is_latest_version, false)
-      else
-        original.update_columns(is_latest_version: false) # Stamped later...
-      end
-      # We are the latest one now.
-      original.update_attribute(:amended_id, id) # Does date stamp for original.
-      update_columns(is_latest_version: true)
     end
   end
 
@@ -300,17 +314,5 @@ class LedgerBase < ApplicationRecord
     errors.add(:unoriginal_creator,
       "Creator #{creator.class.name} ##{creator_id} isn't the original " \
       "version.") if creator && creator.original_version_id != creator_id
-  end
-
-  ##
-  # Patch the original_id if needed.  If this is a record being saved without
-  # an original_id, it is an original record itself.  For future queries for
-  # all versions convenience, we want original_id to point to self.  Since we
-  # can't know the id value until after the save, update original_id after the
-  # save.  Also as a side effect, fixes Fixture created records which don't
-  # run callbacks when they're created, but do when they're changed.
-  def patch_original_id
-    return unless original_id.nil?
-    update_columns(original_id: id) # Doing "save" here would be recursive!
   end
 end

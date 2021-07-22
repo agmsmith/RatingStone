@@ -5,7 +5,7 @@ class LedgerUser < LedgerBase
   alias_attribute :email, :string2
   alias_attribute :birthday, :date1
 
-  after_create :my_after_create
+  after_create :user_after_create
 
   def context_s
     latest_version.name.truncate(25)
@@ -68,9 +68,8 @@ class LedgerUser < LedgerBase
   ##
   # For auto-approval of link parent or child where the parent or child is a
   # user, we need to make the user the creator or owner of themselves.  But
-  # we don't know our own record ID until after the record has been saved.
-  def my_after_create
-    super # Rails loses parent's after_create methods, manually call them.
-    update_attribute(:creator_id, original_version_id)
+  # we don't know our own record ID until after the record has been created.
+  def user_after_create
+    update_columns(creator_id: id)
   end
 end

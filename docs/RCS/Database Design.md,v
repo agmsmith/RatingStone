@@ -1,9 +1,14 @@
-head	1.60;
+head	1.61;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.61
+date	2021.07.22.00.01.15;	author agmsmith;	state Exp;
+branches;
+next	1.60;
 
 1.60
 date	2021.07.21.23.33.36;	author agmsmith;	state Exp;
@@ -311,14 +316,14 @@ desc
 @
 
 
-1.60
+1.61
 log
-@Change database migration comments back to LedgerDelete or LedgerApprove.
+@Add expired field to the database migration example.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.59 2021/07/21 21:57:31 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.60 2021/07/21 23:33:36 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -1398,6 +1403,7 @@ details like this:
       t.references :original, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeroriginal"}, comment: "Points to the original version of this record, or equal to id if this is the original one.  NULL if not initialised (should be a copy of the id of this record)."
       t.references :amended, null: true, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgeramended"}, comment: "Points to the latest version of this record, or NULL if this is not the original record."
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that is currently deleting this record, otherwise false (record is alive)."
+      t.boolean :expired, default: false, comment: "When true (usually set by the weekly award ceremony prior to garbage collection at the next ceremony), the record will be deleted soon.  Other than displaying a warning to the user when viewing this object (suggesting that they spend some points to revive it), doesn't affect how the record is treated."
       t.boolean :has_owners, default: false, comment: "True if there is one or more LinkOwner records (even deleted ones) that references this record.  False if there are none, which means we can skip searching for LinkOwner records every time we check permissions, which saves a lot of database queries!"
       t.boolean :is_latest_version, default: true, comment: "True if the record is the latest version of the object.  False otherwise.  Caches the result of looking up the original object and seeing which record is the latest, so we have less overhead when displaying only the latest versions in a list of posts.  Also lets us skip older versions directly in an SQL query."
       t.references :creator, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_ledgercreator"}, comment: "Identifies the user who created this record, using their original ID."
@@ -1426,6 +1432,7 @@ details like this:
       t.bigint :number1, default: 0, comment: "Generic number for counting things, or referencing other database tables, usage defined by subclasses."
       t.string :string1, default: "", comment: "Generic string (up to 255 bytes), defined by subclasses."
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
+      t.boolean :expired, default: false, comment: "When true (usually set by the weekly award ceremony prior to garbage collection at the next ceremony), the record will be deleted soon.  Other than displaying a warning to the user when viewing this object (suggesting that they spend some points to revive it), doesn't affect how the record is treated."
       t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApprove."
       t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApprove."
       t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
@@ -1545,9 +1552,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.59 2021/07/21 21:57:31 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.60 2021/07/21 23:33:36 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.60  2021/07/21 23:33:36  agmsmith
+Change database migration comments back to LedgerDelete or LedgerApprove.
+
 Revision 1.59  2021/07/21 21:57:31  agmsmith
 Switch to subclasses for LedgerDelete and LedgerApprove.
 
@@ -1736,6 +1746,23 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.60
+log
+@Change database migration comments back to LedgerDelete or LedgerApprove.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.59 2021/07/21 21:57:31 agmsmith Exp agmsmith $</SMALL>
+d1083 1
+d1112 1
+d1232 1
+a1232 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.59 2021/07/21 21:57:31 agmsmith Exp agmsmith $
+d1235 3
 @
 
 
