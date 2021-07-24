@@ -136,6 +136,28 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert(lastamended_lbase.latest_version?)
   end
 
+  test "current_creator function" do
+    luser = ledger_users(:outsider_user)
+    lpost = LedgerPost.create!(creator_id: luser.id, subject: "Some Post",
+      content: "A post created by somebody.")
+    assert_equal(lpost.current_creator_id, luser.id)
+    luser = luser.append_version
+    luser.name = "Outsider Version 2"
+    luser.save!
+    assert_not_equal(lpost.current_creator_id, luser.id)
+    assert_equal(lpost.current_creator, luser.original_version)
+    lpost = lpost.append_version
+    lpost.subject = "A later Version of a Post"
+    lpost.content = "A post now created by someone else."
+    lpost.creator_id = luser.latest_version_id
+    assert_not(lpost.save) # Should fail validation, need original creator.
+    lpost.creator = ledger_users(:member_user)
+    assert(lpost.save)
+    lpost.reload
+    assert_not_equal(lpost.current_creator_id, luser.original_version_id)
+    assert_equal(lpost.current_creator_id, ledger_users(:member_user).id)
+  end
+
   test "creator_owner? function" do
     lgroup = ledger_full_groups(:group_all)
     assert lgroup.creator_owner?(ledger_users(:group_creator_user))
@@ -152,30 +174,60 @@ class LedgerBaseTest < ActiveSupport::TestCase
       lgroup.creator_owner?(nil)
     end
 
-    # Avoiding fixtures, make our own owner record so post-create callback gets
-    # run, test has_owners field, also test with a versioned user and post.
-    lpost = ledger_posts(:lpost_one).append_version
-    lpost.content = "Some edited content here, new version."
-    lpost.creator = ledger_users(:reader_user) # Change creator.
+    # Avoiding fixtures, make our own user and owner record so post-create
+    # callback gets run, test has_owners field, also test with a versioned
+    # user and post.
+    luser1 = LedgerUser.create!(name: "User One", email: "1@example.com",
+      creator_id: 0);
+    luser2 = LedgerUser.create!(name: "User Two A", email: "2@example.com",
+      creator_id: 0);
+    luser2 = luser2.append_version
+    luser2.name = "User Two B"
+    luser2.save!
+    luser2.reload
+    luser3 = LedgerUser.create!(name: "User Three A", email: "3@example.com",
+      creator_id: 0);
+    lpost = LedgerPost.create!(creator_id: luser1.original_version_id,
+      subject: "Post by User One", content: "This is a **Post** by User One.")
+    lpost = lpost.append_version
+    lpost.content = "Version with User Two B as new creator."
+    lpost.creator_id = luser2.original_version_id # Change creator.
     lpost.save!
     lpost.reload
-    assert_equal(ledger_users(:reader_user).id, lpost.current_creator_id)
-    assert_equal(0, lpost.original_version.creator_id)
-    luser = ledger_users(:outsider_user).append_version
-    luser.email = "NewVersionOfUser@example.com"
-    luser.save!
-    luser.reload
+    assert_equal(luser2.original_version_id,
+      lpost.creator_id)
+    assert_equal(luser2.original_version_id,
+      lpost.current_creator_id)
+    assert_equal(luser2.original_version_id,
+      lpost.original_version.current_creator_id)
+    assert_equal(luser1.original_version_id,
+      lpost.original_version.creator_id)
+    luser3 = luser3.append_version
+    luser3.email = "3B@example.com"
+    luser3.name = "User Three B"
+    luser3.save!
+    luser3.reload
     assert_not(lpost.original_version.has_owners)
-    assert_not(lpost.creator_owner?(luser))
-    lowner = LinkOwner.create!(parent: luser.original_version,
-      child: lpost.original_version, creator: luser.original_version)
+    assert(lpost.creator_owner?(luser2.original_version))
+    assert(lpost.creator_owner?(luser2))
+    assert_not(lpost.creator_owner?(luser3))
+debugger # bleeble
+    lowner = LinkOwner.create!(parent_id: luser3.original_version_id,
+      child_id: lpost.original_version_id,
+      creator_id: luser3.original_version_id)
+    assert(lowner.approved_parent,
+      "Parent of ownership link should be approved since it created link")
+    assert_not(lowner.approved_child,
+      "Child of ownership link should not yet be approved")
     assert(lpost.original_version.has_owners)
-    assert_not(lpost.creator_owner?(luser),
+    assert_not(lpost.creator_owner?(luser3),
       "Permission not approved yet in #{lowner}.")
     LedgerApprove.approve_records([lowner],
-      ledger_users(:reader_user), "Testing creator_owner?",
+      luser2, "Testing creator_owner?",
       "Creator of post approving ownership change.")
-    assert(lpost.creator_owner?(luser),
+    lowner.reload
+    assert(lowner.approved_child, "Child of link now approved")
+    assert(lpost.creator_owner?(luser3),
       "Should now have permission in #{lowner.reload}.")
   end
 

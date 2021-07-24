@@ -1,5 +1,23 @@
 # frozen_string_literal: true
 
+##
+# General Policies for our API
+#
+# Return Original Versions:
+# Methods that return a versioned object (LedgerBase subclasses) should return
+# the original version of that object.  Same for record ID numbers, return the
+# ID of the original record, not the latest version.  Only methods that
+# explicitly deal with versions should return non-original objects.  The
+# general idea is to use the original version as the cannonical version of an
+# object, and only access the latest version when displaying data to the user
+# or doing a search.
+#
+# Pass in Any Version:
+# Assume the caller passes in any version of an object.  Automatically use the
+# original version if processing should be done with canonical objects or IDs.
+# Though we assume the record IDs in the database are correctly canonical where
+# required.
+
 class LedgerBase < ApplicationRecord
   validate :validate_ledger_original_versions_referenced
   after_create :base_after_create
@@ -42,7 +60,7 @@ class LedgerBase < ApplicationRecord
   # Return a basic user readable identification of an object (ID and class).
   # Though ID can be nil for unsaved new records.
   def base_s
-    base_string = "##{id} ".dup # dup to unfreeze, silly for #{} strings.
+    base_string = "##{id} ".dup # dup to unfreeze.
     if original_version.amended_id
       base_string << "[#{original_version_id}-#{latest_version_id}] "
     end
@@ -68,8 +86,9 @@ class LedgerBase < ApplicationRecord
     new_entry = latest_version.dup
     new_entry.original_id = original_version_id # In case original_id is nil.
     new_entry.amended_id = original_version.amended_id # For consistency check.
-    new_entry.deleted = false
     # Cached values not used (see original record) in amended, set to defaults.
+    new_entry.deleted = false
+    new_entry.expired = false
     new_entry.has_owners = false
     new_entry.current_down_points = 0.0
     new_entry.current_meh_points = 0.0
@@ -79,21 +98,26 @@ class LedgerBase < ApplicationRecord
 
   ##
   # Finds the original version of this record, which is still used as a central
-  # point for the cached calculated values.  May be slightly faster than just
-  # using "original".  Also safer, for that brief moment when original_id is
-  # nil since we can't easily have a transaction around record creation (also
-  # get a nil original_id in Fixture generated data used for testing and in
-  # new unsaved records (id is nil too in that case)).
+  # point for the cached calculated values and the canonical representative of
+  # the object.  May be slightly faster than just using "original".  Also safer,
+  # for that brief moment when original_id is nil since we can't easily have a
+  # transaction around record creation (also get a nil original_id in Fixture
+  # generated data used for testing and in new unsaved records (id is nil too in
+  # that case)).
   def original_version
-    return self if id.nil? || original_id.nil? || (original_id == id)
+    return self if original_id.nil? || (original_id == id)
     original
   end
 
+  def original_version?
+    original_id.nil? || (original_id == id)
+  end
+
   ##
-  # Finds the id number of the original version of this record.
+  # Finds the id number of the original version of this record.  Will be nil if
+  # this is an unsaved original record.
   def original_version_id
-    return original_id if id.nil? # Partial save has original_id but id is nil.
-    return id if original_id.nil? || (original_id == id)
+    return id if original_id.nil?
     original_id
   end
 
@@ -111,7 +135,8 @@ class LedgerBase < ApplicationRecord
   ##
   # Returns true if this record is the latest version.
   def latest_version?
-    is_latest_version # Use cached value, avoids looking up original record.
+    # Use cached field from database, avoids loading the original record.
+    is_latest_version
   end
 
   ##
@@ -126,7 +151,7 @@ class LedgerBase < ApplicationRecord
   # Finds all versions of this record (including deleted ones).  Returned in
   # increasing date order (thus original version is first, we assume).  Note
   # that non-ledger fields (cached calculated values like rating points) are
-  # stored elsewhere, in the original ledger record.  Won't work in test mode
+  # stored all in the original ledger record.  Won't work in test mode
   # where original_id is nil for Fixture generated data.
   def all_versions
     LedgerBase.where(original_id: original_version_id).order("created_at")
@@ -136,22 +161,24 @@ class LedgerBase < ApplicationRecord
   # Returns the current creator of the object.  It's the creator field in the
   # latest version of the object.  Yes, besides adding owners, you can change
   # the creator; needed for handing over full control of a group to a different
-  # person.  Also this will be the latest version of the creator's record, so
-  # you get their current name etc.
+  # person.  Also this will be the original version of the creator's record, so
+  # check for a later version if you want their current name etc.  Can be nil
+  # in an unsaved record.
   def current_creator
-    latest_version.creator.latest_version
+    latest_version.creator
   end
 
   ##
   # Returns the original ID of the current creator of this object.  Or at least
-  # it should, if the database is correctly used.  Nil for unsaved new records.
+  # it should, if the database is correctly used.  Can be nil in an unsaved
+  # record.
   def current_creator_id
     latest_version.creator_id
   end
 
   ##
   # See if the given user is allowed to delete and otherwise modify this
-  # record.  Has to be the current (not necessarily original) creator or the
+  # record.  Has to be the current (not necessarily the first) creator or the
   # owner of the object.  Returns true if they have permission.
   def creator_owner?(luser)
     raise RatingStoneErrors,
@@ -164,9 +191,10 @@ class LedgerBase < ApplicationRecord
     # object. Use our original id as key, since we can be using amended
     # versions for data but we want the canonical base version for references.
     # Can save time by skipping the owner search if we know there are no owners.
+    my_original = original_version
     return LinkOwner.exists?(parent_id: luser_original_id,
-      child_id: original_version_id, deleted: false, approved_parent: true,
-      approved_child: true) if original_version.has_owners
+      child_id: my_original.id, deleted: false, approved_parent: true,
+      approved_child: true) if my_original.has_owners
     false
   end
 
@@ -189,14 +217,14 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
-  # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
-  # records, with the most recent first.  Works by searching the AuxLedger
-  # records for references to our original record ID.
+  # Find out who deleted me.  Returns a list of LedgerDelete records, with the
+  # most recent first.  Works by searching the AuxLedger records for references
+  # to our original record ID.
   def deleted_by
     LedgerBase.joins(:aux_ledger_downs)
       .where({
         aux_ledgers: { child_id: original_version_id },
-        type: [:LedgerDelete, :LedgerUndelete],
+        type: [:LedgerDelete],
       })
       .order(created_at: :desc)
   end
@@ -273,9 +301,7 @@ class LedgerBase < ApplicationRecord
     # If this is a record being saved without an original_id, it is an original
     # record itself.  For future queries for all versions convenience, we want
     # original_id to point to self.  Since we can't know the id value until
-    # after the save, update original_id after the save.  Also as a side
-    # effect, fixes Fixture created records which don't run callbacks when
-    # they're created, but do when they're changed.
+    # after the save, update original_id after the save.
     if original_id.nil?
       update_columns(original_id: id) # New is_latest_version defaults to true.
     else
@@ -307,8 +333,7 @@ class LedgerBase < ApplicationRecord
   # the original ID is what we use to find all versions of an object.  This
   # is mostly a sanity check and may be removed if it's never triggered.
   def validate_ledger_original_versions_referenced
-    errors.add(:unoriginal_creator,
-      "Creator #{creator.class.name} ##{creator_id} isn't the original " \
-      "version.") if creator && creator.original_version_id != creator_id
+    errors.add(:unoriginal_creator, "Creator #{creator} isn't the canonical " \
+    "original version.") unless creator.original_version?
   end
 end

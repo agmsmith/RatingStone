@@ -173,7 +173,7 @@ class LinkBase < ApplicationRecord
   # creator of the object at that end of the link.  No fancy checks here for
   # group members etc, that's only in the subclass for things in groups.
   def do_automatic_approvals
-    self.approved_parent = true if parent.latest_version.creator_owner?(creator)
-    self.approved_child = true if child.latest_version.creator_owner?(creator)
+    self.approved_parent = true if parent.creator_owner?(creator)
+    self.approved_child = true if child.creator_owner?(creator)
   end
 end

@@ -72,6 +72,6 @@ class LedgerUser < LedgerBase
   # But only do that for new LedgerUser records, amended ones keep the current
   # creator.
   def user_after_create
-    update_columns(creator_id: id) if creator_id.nil? || creator_id == 0
+    update_columns(creator_id: id) if creator_id.nil?
   end
 end
