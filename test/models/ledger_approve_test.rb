@@ -43,14 +43,14 @@ class LedgerApproveTest < ActiveSupport::TestCase
     # Do manual approval by the group's banned moderator.
     assert_not(link_group2.approved_parent)
     assert_raise(RatingStoneErrors) do
-      LedgerApprove.approve_records([link_group2],
+      LedgerApprove.mark_records([link_group2], true,
         luser_group_moderator2, "Testing approvals",
         "Banned moderator trying to approve something.")
     end
 
     # Do manual approval by the group's regular moderator.
     assert_not(link_group2.approved_parent)
-    ledger_approve = LedgerApprove.approve_records([link_group2],
+    ledger_approve = LedgerApprove.mark_records([link_group2], true,
       luser_group_moderator, "Testing approvals",
       "Regular moderator trying to approve something.")
     assert(ledger_approve)
@@ -72,7 +72,7 @@ class LedgerApproveTest < ActiveSupport::TestCase
     assert(link_group5.approved_child)
 
     # Manual approval of a linked post in a subgroup.
-    ledger_approve = LedgerApprove.approve_records([link_group5],
+    ledger_approve = LedgerApprove.mark_records([link_group5], true,
       luser_group_moderator, "Testing approvals",
       "Regular moderator trying to approve a subgroup post.")
     assert(ledger_approve)

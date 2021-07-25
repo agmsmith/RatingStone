@@ -66,86 +66,61 @@ class LinkBase < ApplicationRecord
   end
 
   ##
-  # Find out who approved me.  Returns a list of LedgerApprove and
-  # LedgerUnapprove records, with the most recent first.  Works by searching
+  # Find out who approved me.  Returns a list of LedgerApprove
+  # records, with the most recent first.  Works by searching
   # the AuxLink records for references to this particular record.
   def approved_by
     LedgerBase.joins(:aux_link_downs)
       .where({
         aux_links: { child_id: id },
-        type: [:LedgerApprove, :LedgerUnapprove],
+        type: [:LedgerApprove],
       })
       .order(created_at: :desc)
   end
 
   ##
-  # Find out who deleted me.  Returns a list of LedgerDelete and LedgerUndelete
-  # records, with the most recent first.  Works by searching the AuxLink
-  # records for references to this particular record.
+  # Find out who deleted me.  Returns a list of LedgerDelete records, with the
+  # most recent first.  Works by searching the AuxLink records for references
+  # to this particular record.
   def deleted_by
     LedgerBase.joins(:aux_link_downs)
       .where({
         aux_links: { child_id: id },
-        type: [:LedgerDelete, :LedgerUndelete],
+        type: [:LedgerDelete],
       })
       .order(created_at: :desc)
   end
 
   ##
-  # Internal function to include this record in a bunch being approved or
-  # unapproved.  It's linked to a LedgerApprove or LedgerUnapprove record
-  # (created by a utility function in the LedgerApprove/Unapprove class) by an
-  # AuxLink record (parent field in AuxLink identifies the Ledger(Un)approve)
-  # to this record being approved (child field in AuxLink).  If doing an
-  # unapprove, the parameter "do_approve" will be false.  Both parent and
-  # child are (un)approved if the approver person has permission.  If they
-  # don't have any permission, an AuxLink isn't created and an exception thrown.
-  def ledger_approve_append(ledger_approve_record, do_approve)
-    luser = ledger_approve_record.creator
-    changes_permitted = false
+  # Callback method that marks a LinkBase object as approved.  Hub record is
+  # the LedgerApprove instance being processed.  Check for permissions and
+  # raise an exception if the user isn't allowed to approve it.
+  def mark_approved(hub)
+    luser = hub.creator # Already original version.
+    parent_change_permitted = permission_to_change_parent_approval(luser)
+    child_change_permitted = permission_to_change_child_approval(luser)
+    raise RatingStoneErrors, "#mark_approved: User #{luser.latest_version} " \
+      "doesn't have permission to change any approvals in record #{self}." \
+      unless parent_change_permitted || child_change_permitted
 
-    if permission_to_change_parent_approval(luser)
-      changes_permitted = true
-      self.approved_parent = do_approve
-    end
-
-    if permission_to_change_child_approval(luser)
-      changes_permitted = true
-      self.approved_child = do_approve
-    end
-
-    raise RatingStoneErrors, "Doesn't have permission to change any " \
-      "approvals, user: #{luser}, record: #{self}." unless changes_permitted
-
-    aux_record = AuxLink.new(parent: ledger_approve_record, child: self)
-    aux_record.save!
+    self.approved_parent = hub.new_marking_state if parent_change_permitted
+    self.approved_child = hub.new_marking_state if child_change_permitted
     save!
-    aux_record
   end
 
   ##
-  # Internal function to include this record in a bunch being deleted or
-  # undeleted.  Since this is a ledger, it doesn't actually get deleted.
-  # Instead, it's linked to a LedgerDelete or LedgerUndelete record (created by
-  # a utility function in the LedgerDelete/Undelete class) by an AuxLink
-  # record (parent field in AuxLink identifies the Ledger(Un)Delete) to this
-  # record being deleted (child field in AuxLink).  If doing an undelete, the
-  # parameter "do_delete" will be false.  Updates the cached deleted flag in
-  # this record.  Returns the AuxLink record or nil or raises an error
-  # exception.
-  def ledger_delete_append(ledger_delete_record, do_delete)
-    # Check for permission to delete a Ledger object.
-    luser = ledger_delete_record.creator # Already original version.
-    raise RatingStoneErrors,
-      "Not allowed to delete record #{self}, user: #{luser}." \
-      unless creator_owner?(luser)
+  # Callback method that marks a LinkBase object as deleted.  Hub record is
+  # the LedgerDelete instance being processed.  Check for permissions and raise
+  # an exception if the user isn't allowed to delete it.
+  def mark_deleted(hub)
+    luser = hub.creator # Already original version.
+    raise RatingStoneErrors, "#mark_deleted: #{luser.latest_version} not " \
+      "allowed to delete record #{self}." unless creator_owner?(luser)
 
-    # Make the AuxLink record showing what's being deleted.
-    aux_record = AuxLink.new(parent: ledger_delete_record, child: self)
-    aux_record.save!
-    self.deleted = do_delete
+    # All we usually have to do is to set/clear the deleted flag.  Subclasses
+    # can override this method if they wish, to do fancier permission checks.
+    self.deleted = hub.new_marking_state
     save!
-    aux_record
   end
 
   private

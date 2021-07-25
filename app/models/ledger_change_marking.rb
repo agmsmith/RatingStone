@@ -17,21 +17,24 @@ class LedgerChangeMarking < LedgerBase
   end
 
   ##
-  # Class function that returns a symbol with the name of the method to call on
+  # Class method that returns a symbol with the name of the method to call on
   # an object to mark it.  Subclasses will override this to specify the
   # operations they do.  So LedgerDelete class will return :mark_deleted,
   # LedgerApprove class will return :mark_approved.  The marking code will then
   # call that method on each object (LedgerBase and/or LinkBase subclass
-  # instances) being marked, with a boolean flag argument specifying the desired
-  # new marking state.
+  # instances) being marked, with an argument specifying the hub record
+  # (usually LedgerDelete or LedgerApprove) which implicitly specifies
+  # the user doing the delete (its creator) and the new state (delete vs
+  # undelete, approve vs unapprove in the new state flag).
   def self.get_marking_method
     :mark_not_implemented_for_base_class_ledger_change_marking
   end
 
   ##
-  # Class function to mark a list/array/relation of records.  This can include
+  # Class method to mark a list/array/relation of records.  This is what the
+  # application programmer calls to delete, approve records.  This can include
   # both LedgerBase and LedgerLink records and their subclasses.  A single
-  # LedgerChangeMarking record (usually a subclass like LedgerDelete) will be
+  # LedgerChangeMarking instance (usually a subclass like LedgerDelete) will be
   # created identifying all the records to be marked (an AuxLedger or AuxLink
   # record will be created for each thing marked).  Note that all versions of a
   # LedgerBase object are marked no matter which one you specify.  Also only
@@ -41,14 +44,15 @@ class LedgerChangeMarking < LedgerBase
   # The reason is an optional user provided string explaining why the delete is
   # being done.  Context is a system generated string explaining where the
   # delete comes from.  Returns the LedgerChangeMarking record on success, nil
-  # on nothing to do, raises an exception if something goes wrong.
+  # on nothing to do, raises an exception if something goes wrong (permission
+  # denied usually).
   def self.mark_records(record_collection, new_marking_state, luser,
     context = nil, reason = nil)
     return nil if record_collection.nil? || record_collection.empty?
 
-    creator_user = luser.original
+    creator_user = luser.original_version
     raise RatingStoneErrors,
-      "#mark_records: Wrong type of input, #{luser} (original version) " \
+      "#mark_records: Wrong type of input, #{creator_user} " \
       "should be a LedgerUser." unless creator_user.is_a?(LedgerUser)
 
     # Method name to actually do the marking work depends on our class.
@@ -58,6 +62,7 @@ class LedgerChangeMarking < LedgerBase
     # instance as the hub for the operation, and wrap it in a transaction in
     # case an error exception (such as not having priviledges to delete
     # something) happens.
+    returned_record = nil
     self.transaction do
       hub_record = self.new(creator_id: creator_user.id)
       hub_record.context = context if context
@@ -83,15 +88,16 @@ class LedgerChangeMarking < LedgerBase
       end
       ledger_ids.each do |an_id|
         a_record = LedgerBase.find(an_id)
+        a_record.send(marking_method_symbol, hub_record)
         AuxLedger.create!(parent_id: hub_record.id, child_id: an_id)
-        a_record.send(marking_method_symbol, new_marking_state)
       end
       link_ids.each do |an_id|
         a_record = LinkBase.find(an_id)
+        a_record.send(marking_method_symbol, hub_record)
         AuxLink.create!(parent_id: hub_record.id, child_id: an_id)
-        a_record.send(marking_method_symbol, new_marking_state)
       end
+      returned_record = hub_record # Successfully got to the end!
     end # End transaction.
-    hub_record
+    returned_record
   end
 end

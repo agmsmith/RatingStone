@@ -59,8 +59,8 @@
           Delete and undelete history:
           <ul class="list-ledger-objects">
           <% delete_list.each do |x| %>
-            <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
-            <%= x.creator.name %> (#<%= x.creator_id %>) on
+            <li><%= (x.new_marking_state) ? "Deleted" : "Undeleted" %> by
+            <%= x.creator.latest_version.name %> (#<%= x.creator_id %>) on
             <%= x.created_at.getlocal %><BR>
             <small>Reason: <%= x.reason %></small><BR>
             <small>Context: <%= x.context %></small></li>

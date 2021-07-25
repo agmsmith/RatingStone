@@ -216,11 +216,11 @@ class LedgerBaseTest < ActiveSupport::TestCase
     luser3.name = "User Three B"
     luser3.save!
     luser3.reload
-    assert_not(lpost.original_version.has_owners)
+    assert_not(lpost.original_version.reload.has_owners)
     assert(lpost.creator_owner?(luser2.original_version))
     assert(lpost.creator_owner?(luser2))
     assert_not(lpost.creator_owner?(luser3))
-# debugger # bleeble
+# debugger # FIXME breakpoint for looking at approval problems.
     lowner = LinkOwner.create!(parent_id: luser3.original_version_id,
       child_id: lpost.original_version_id,
       creator_id: luser3.original_version_id)
@@ -228,11 +228,11 @@ class LedgerBaseTest < ActiveSupport::TestCase
       "Parent of ownership link should be approved since it created link")
     assert_not(lowner.approved_child,
       "Child of ownership link should not yet be approved")
-    assert(lpost.original_version.has_owners)
+    assert(lpost.original_version.reload.has_owners)
     assert_not(lpost.creator_owner?(luser3),
       "Permission not approved yet in #{lowner}.")
-    LedgerApprove.approve_records([lowner],
-      luser2, "Testing creator_owner?",
+    LedgerApprove.mark_records([lowner], true, luser2,
+      "Testing creator_owner?",
       "Creator of post approving ownership change.")
     lowner.reload
     assert(lowner.approved_child, "Child of link now approved")
@@ -283,8 +283,8 @@ class LedgerBaseTest < ActiveSupport::TestCase
     end
 
     # Now approve the group end of the link between post and group.
-    assert_equal("LedgerApprove", LedgerApprove.approve_records([group_content],
-      ledger_users(:message_moderator_user), "Inside a test.",
+    assert_equal("LedgerApprove", LedgerApprove.mark_records([group_content],
+      true, ledger_users(:message_moderator_user), "Inside a test.",
       "Because we want to see who can view an approved post.").class.name)
     user_ins.each do |x|
       assert(lpost.allowed_to_view?(x), "#{x} should be able to view.")
@@ -294,8 +294,8 @@ class LedgerBaseTest < ActiveSupport::TestCase
     end
 
     # Now delete the approval.
-    assert_equal("LedgerDelete", LedgerDelete.delete_records([group_content],
-      ledger_users(:message_moderator_user), "Inside a test again.",
+    assert_equal("LedgerDelete", LedgerDelete.mark_records([group_content],
+      true, ledger_users(:message_moderator_user), "Inside a test again.",
       "Want to see if deleting a group content link works.").class.name)
     (user_ins + user_outs).each do |x|
       assert_not(lpost.allowed_to_view?(x), "#{x} should not be able to view.")

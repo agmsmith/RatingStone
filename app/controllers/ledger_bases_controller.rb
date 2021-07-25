@@ -11,7 +11,7 @@ class LedgerBasesController < ApplicationController
       return redirect_back(fallback_location: root_url)
     end
 
-    LedgerDelete.delete_records([@ledger_object], current_ledger_user,
+    LedgerDelete.mark_records([@ledger_object], true, current_ledger_user,
       "Web site manual delete by user logged in from address " \
       "#{request.env["REMOTE_ADDR"]}.", params[:reason]) # Reason can be nil.
     feedback_text = "Ledger Object " +
@@ -29,7 +29,7 @@ class LedgerBasesController < ApplicationController
       return redirect_back(fallback_location: root_url)
     end
 
-    LedgerUndelete.undelete_records([@ledger_object], current_ledger_user,
+    LedgerDelete.mark_records([@ledger_object], false, current_ledger_user,
       "Web site manual undelete by user logged in from address " \
       "#{request.env["REMOTE_ADDR"]}.", params[:reason]) # Reason can be nil.
     feedback_text = "Ledger Object " +

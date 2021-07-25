@@ -179,11 +179,11 @@ class LedgerBase < ApplicationRecord
 
   ##
   # See if the given user is allowed to delete and otherwise modify this
-  # record.  Has to be the current (not necessarily the first) creator or the
-  # owner of the object.  Returns true if they have permission.
+  # record.  Has to be the current (not necessarily the first) creator or one
+  # of the owners of the object.  Returns true if they have permission.
   def creator_owner?(luser)
     raise RatingStoneErrors,
-      "Need a LedgerUser, not a #{luser.class.name} " \
+      "#creator_owner?: Need a LedgerUser, not a #{luser} " \
       "object to test against." unless luser.is_a?(LedgerUser)
     luser_original_id = luser.original_version_id
     return true if current_creator_id == luser_original_id
@@ -231,33 +231,20 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
-  # Internal function to include this record in a bunch being deleted or
-  # undeleted.  Since this is a ledger, it doesn't actually get deleted.
-  # Instead, it's linked to a LedgerDelete or LedgerUndelete record (created by
-  # a utility function in the LedgerDelete/Undelete class) by an AuxLedger
-  # record (parent field in AuxLedger identifies the Ledger(Un)Delete) to this
-  # record being deleted (child field in AuxLedger, points to the original
-  # version of this record).  If doing an undelete, the parameter "do_delete"
-  # will be false.  All versions of this record will also be marked
-  # as (un)deleted.  In the future we may mark individual versions as being
-  # deleted, if that's useful.  Returns the AuxLedger record if successful.
-  def ledger_delete_append(ledger_delete_record, do_delete)
-    luser = ledger_delete_record.creator # Already original version.
-    raise RatingStoneErrors, "#{luser} not allowed to delete record " \
-      "#{self}." unless creator_owner?(luser)
-    aux_record = AuxLedger.new(parent: ledger_delete_record,
-      child_id: original_version_id)
-    aux_record.save!
+  # Callback method that marks a LedgerBase object as deleted.  Hub record is
+  # the LedgerDelete instance being processed.  Check for permissions and raise
+  # an exception if the user isn't allowed to delete it.
+  def mark_deleted(hub)
+    luser = hub.creator # Already original version.
+    raise RatingStoneErrors, "#mark_deleted: #{luser.latest_version} not " \
+      "allowed to delete record #{self}." unless creator_owner?(luser)
 
-    # Note update_all goes direct to the database, so callbacks and timestamps
-    # won't be used/updated.  Instead iterate through records to update.  Or we
-    # could use update_all and also set the updated_at date.
-    LedgerBase.where(original_id: original_version_id).order("created_at")
-      .each do |x|
-      x.deleted = do_delete
-      x.save!
-    end
-    aux_record
+    # All we usually have to do is to set/clear the deleted flag in the
+    # original record.  Feature creep would be to delete specific versions of
+    # a record; not implemented.  Subclasses can implement more if they wish,
+    # such as fancier permission checks.
+    self.deleted = hub.new_marking_state
+    save!
   end
 
   ##
@@ -273,7 +260,7 @@ class LedgerBase < ApplicationRecord
     # Out of date, evaluate reputation points coming from all link objects
     # that have this base object as a child, and points spent by links which
     # have this object as a parent.
-    # bleeble
+    # TODO - write code here for awards ceremony recursive evaluation.
 
     missing_generations = if current_ceremony < 0
       last_ceremony # TODO: current_ceremony needs recompution using date stamp.
@@ -306,8 +293,7 @@ class LedgerBase < ApplicationRecord
     if original_id.nil?
       update_columns(original_id: id) # New is_latest_version defaults to true.
     else
-      # Wrap this critical section (read and modify amended_id) in a
-      # transaction.
+      # Critical section (read and modify amended_id) needs a transaction.
       self.class.transaction do
         if original.amended_id != amended_id
           raise RatingStoneErrors,
@@ -333,8 +319,9 @@ class LedgerBase < ApplicationRecord
   # Make sure that the original version of the creator is used when saving.
   # This is mostly a sanity check and may be removed if it's never triggered.
   def validate_ledger_original_creator_used
+    return if creator.nil? # You'll get a database NULL exception soon.
     errors.add(:unoriginal_creator, "Creator #{creator} isn't the canonical " \
-    "original version.") unless creator.original_version?
+      "original version.") unless creator.original_version?
   end
 
   ##
