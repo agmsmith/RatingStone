@@ -202,7 +202,6 @@ class LedgerBaseTest < ActiveSupport::TestCase
     lpost.content = "Version with User Two B as new creator."
     lpost.creator_id = luser2.original_version_id # Change creator.
     lpost.save!
-    lpost.reload
     assert_equal(luser2.original_version_id,
       lpost.creator_id)
     assert_equal(luser2.original_version_id,
@@ -216,11 +215,10 @@ class LedgerBaseTest < ActiveSupport::TestCase
     luser3.name = "User Three B"
     luser3.save!
     luser3.reload
-    assert_not(lpost.original_version.reload.has_owners)
+    assert_not(lpost.original_version.has_owners)
     assert(lpost.creator_owner?(luser2.original_version))
     assert(lpost.creator_owner?(luser2))
     assert_not(lpost.creator_owner?(luser3))
-# debugger # FIXME breakpoint for looking at approval problems.
     lowner = LinkOwner.create!(parent_id: luser3.original_version_id,
       child_id: lpost.original_version_id,
       creator_id: luser3.original_version_id)
@@ -228,7 +226,8 @@ class LedgerBaseTest < ActiveSupport::TestCase
       "Parent of ownership link should be approved since it created link")
     assert_not(lowner.approved_child,
       "Child of ownership link should not yet be approved")
-    assert(lpost.original_version.reload.has_owners)
+    lpost.reload # Also makes it forget cached original record.
+    assert(lpost.original_version.has_owners)
     assert_not(lpost.creator_owner?(luser3),
       "Permission not approved yet in #{lowner}.")
     LedgerApprove.mark_records([lowner], true, luser2,
@@ -236,6 +235,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
       "Creator of post approving ownership change.")
     lowner.reload
     assert(lowner.approved_child, "Child of link now approved")
+    lpost.reload
     assert(lpost.creator_owner?(luser3),
       "Should now have permission in #{lowner.reload}.")
   end

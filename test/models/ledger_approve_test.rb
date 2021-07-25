@@ -47,6 +47,7 @@ class LedgerApproveTest < ActiveSupport::TestCase
         luser_group_moderator2, "Testing approvals",
         "Banned moderator trying to approve something.")
     end
+    link_group2.reload
 
     # Do manual approval by the group's regular moderator.
     assert_not(link_group2.approved_parent)
@@ -76,8 +77,9 @@ class LedgerApproveTest < ActiveSupport::TestCase
       luser_group_moderator, "Testing approvals",
       "Regular moderator trying to approve a subgroup post.")
     assert(ledger_approve)
+    link_group5.reload
     assert(link_group5.approved_parent)
 
-    # Approval in multiple groups.
+    # TODO = Test approval in multiple groups.
   end
 end
