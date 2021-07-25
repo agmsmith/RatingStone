@@ -19,7 +19,8 @@
 # required.
 
 class LedgerBase < ApplicationRecord
-  validate :validate_ledger_original_versions_referenced
+  validate :validate_ledger_original_creator_used,
+    :validate_ledger_type_same_between_versions
   after_create :base_after_create
 
   # Always have a creator, but "optional: false" makes it reload the creator
@@ -329,11 +330,20 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
-  # Make sure that the original version of objects are used when saving, since
-  # the original ID is what we use to find all versions of an object.  This
-  # is mostly a sanity check and may be removed if it's never triggered.
-  def validate_ledger_original_versions_referenced
+  # Make sure that the original version of the creator is used when saving.
+  # This is mostly a sanity check and may be removed if it's never triggered.
+  def validate_ledger_original_creator_used
     errors.add(:unoriginal_creator, "Creator #{creator} isn't the canonical " \
     "original version.") unless creator.original_version?
+  end
+
+  ##
+  # Check that the type of a record matches the original version's type.
+  # This is mostly a sanity check and may be removed if it's never triggered.
+  def validate_ledger_type_same_between_versions
+    return if latest_version_id == original_version_id # Only one version.
+    errors.add(:type_change_between_versions, "Object #{self} has a " \
+      "different type than the original version #{original_version}.") \
+      unless type == original_version.type
   end
 end

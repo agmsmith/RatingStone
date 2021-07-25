@@ -1,9 +1,14 @@
-head	1.61;
+head	1.62;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.62
+date	2021.07.24.22.34.58;	author agmsmith;	state Exp;
+branches;
+next	1.61;
 
 1.61
 date	2021.07.22.00.01.15;	author agmsmith;	state Exp;
@@ -316,14 +321,14 @@ desc
 @
 
 
-1.61
+1.62
 log
-@Add expired field to the database migration example.
+@Renamed LedgerChangeMarkings to singular, wording updates.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.60 2021/07/21 23:33:36 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.61 2021/07/22 00:01:15 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -512,7 +517,7 @@ look for the same type of record but search different fields.
 ### Approval Dimension
 
 The other dimension is approval.  Sometimes we need approval from both parties
-to create the link; each approves their end using a LedgerChangeMarkings
+to create the link; each approves their end using a LedgerApprove
 record.  Other times we have a one way relationship, such as a fan of a movie
 star, and only the fan end needs approval (and that's usually automatic because
 they created the link).
@@ -692,7 +697,7 @@ serious or distinct enough.
   Usually we delete or undelete all versions of an object, but if we ever
   delete/undelete just some versions, this will point to the latest not deleted
   version.  Changed as needed.
-* deleted boolean True if there is a LedgerChangeMarkings record that is
+* deleted boolean True if there is a LedgerDelete record that is
   currently deleting this record, otherwise false (record is alive).  A deleted
   object just shows a warning message to the user when an attempt is made to
   display it.  Rating points are accumulated as usual.  That way we can
@@ -741,27 +746,28 @@ serious or distinct enough.
   left at the latest ceremony.  Changed as needed.
 
 
-### *LedgerChangeMarkings* < LedgerBase
+### *LedgerChangeMarking* < LedgerBase
 
 Used for marking possibly multiple objects and/or links as deleted, undeleted,
 approved or rejected.  AuxLedger and AuxLink records are used to associate this
-LedgerChangeMarkings with all the things (both LedgerBase object records and
+LedgerChangeMarking with all the things (both LedgerBase object records and
 LinkBase link records) being changed.  Subclasses specify which kind of marking
-(mark deleted, mark approved, etc) to do.
+(mark deleted, mark approved, etc) to do.  A boolean in the record specifies
+whether to set or clear the marking.
 
-Please don't make loops of LedgerChangeMarkings records, this will lock up the
+Please don't make loops of LedgerChangeMarking records, this will lock up the
 server.  While you can do an undelete by deleting a LedgerDelete with another
 LedgerDelete record, the recommended way (easier for the user to understand) to
 undo a delete is to make a new LedgerDelete which clears the delete flag on the
 same set of files as the original LedgerDelete.
 
-While you can have several LedgerChangeMarkings records affecting the same
+While you can have several LedgerChangeMarking records affecting the same
 object, only the undeleted ones (can be expired, that doesn't matter) played
 back in chronological order decide the target object's status.  So yes, if
-enough time passes, the LedgerChangeMarkings will fade away and the targets
+enough time passes, the LedgerChangeMarking will fade away and the targets
 will no longer be deleted or approved etc.  Though most often the targets will
 have faded away too by that time.  Or we could have a policy of not garbage
-collecting LedgerChangeMarkings records.
+collecting LedgerChangeMarking records.
 
 * new_marking_state boolean True to set the marking, false to clear it.  For
   example, for the LedgerDelete subclass, the deleted flag on the specified
@@ -774,23 +780,23 @@ collecting LedgerChangeMarkings records.
   by the user.  Write-once.
 
 
-#### *LedgerDelete* < LedgerChangeMarkings
+#### *LedgerDelete* < LedgerChangeMarking
 
 Deletes the specified records, can be LedgerBase and/or LinkBase ones.  If the
 new_marking_state flag is false, it undeletes.
 
 You usually need to be the creator or owner of the object to change the deleted
 state.  Though for links, if you need to be asked for approval, you can delete
-it too.
+the link too.
 
 
-#### *LedgerApprove* < LedgerChangeMarkings
+#### *LedgerApprove* < LedgerChangeMarking
 
 Both child and parent approvals of the specified LinkBase records are
 potentially changed when you make a LedgerApprove request.  The actual changes
 are determined by whether you have permission to change those approvals
 (relative security role used).  To more strongly reject permission, delete the
-unapproved link instead (if you need to be asked for approval, you can delete
+link instead (if you need to be asked for approval, you can delete
 it too).
 
 
@@ -989,7 +995,7 @@ particular subclass identifies what the link's purpose is (object A owns object
 B, object A is a list header and B is in the list, etc).
 
 * id The usual big (64 bit) integer unique record sequence number so that we
-  can refer to the link record, currently only used by LedgerChangeMarkings and
+  can refer to the link record, currently only used by LedgerChangeMarking and
   similar operations.  Write-once.
 * type string  The name of the subclass to use for this record.  Write-once.
 * parent_id Points to the LedgerBase object (or subclass) which is usually the
@@ -1002,13 +1008,13 @@ B, object A is a list header and B is in the list, etc).
   original version's id number.  Write-once.
 * creator_id Identifies the LedgerUser who created this link.  Never NULL.  Use
   the original version's id number.  Write-once.
-* deleted boolean True if there is a LedgerChangeMarkings record that deletes
+* deleted boolean True if there is a LedgerDelete record that deletes
   this record, otherwise false (this record is alive).  Any rating points
   gained by the child object through this link vanish when it is deleted, as if
   they never were transfered.  However, the rating points spent by the user to
   make the link are not returned to the user (otherwise they could temporarily
   transfer points and someone else could spend more than they are allowed).
-  Can undelete with another LedgerChangeMarkings; one more good reason for
+  Can undelete with another LedgerDelete; one more good reason for
   keeping the rating points spent.  Changed as needed.
 * expired boolean False.  When true (usually set by the weekly award ceremony
   prior to garbage collection at the next ceremony), the record will be deleted
@@ -1029,7 +1035,7 @@ B, object A is a list header and B is in the list, etc).
   approval isn't automatic, then the new link is considered to be pending and
   the flag(s) start out false.  Later on someone with appropriate permissions
   (usually a group moderator) can approve the pending post link by using a
-  LedgerChangeMarkings record.  Approval can be revoked the same way, or the
+  LedgerApprove record.  Approval can be revoked the same way, or the
   link could just be deleted if you want to reject it more completely (still
   could get undeleted).  Combined with the deleted boolean, a record is
   normally only seen if it is both fully approved and not deleted.  Changed as
@@ -1187,7 +1193,7 @@ approvals will be used to find people with the relationship.
 
 All ends of the link which are the same as the creator are automatically
 approved.  Other ends will be in a pending state until the referred person uses
-a LedgerChangeMarkings to approve their end.  Where you can approve, you can
+a LedgerApprove to approve their end.  Where you can approve, you can
 also unapprove your end of the relationship.  Until both are approved, it's a
 partial relationship (admirer rather than friends) and not usually shown to
 users or used for finding related people.
@@ -1348,7 +1354,7 @@ membership fee).
 ### *AuxLink*
 
 This database table and class is used for connecting LedgerBase records (a
-LedgerChangeMarkings usually) and LinkBase records.  Used for deleting &amp;
+LedgerChangeMarking usually) and LinkBase records.  Used for deleting &
 undeleting, and only for LinkBase subclasses - giving approvals.  The main
 difference with LinkBase is that no rating points are involved.
 
@@ -1360,7 +1366,7 @@ difference with LinkBase is that no rating points are involved.
 ### *AuxLedger*
 
 Like AuxLink, but for connecting LedgerBase objects (usually a
-LedgerChangeMarkings object) to child LedgerBase objects (such as things being
+LedgerChangeMarking object) to child LedgerBase objects (such as things being
 deleted).
 
 * parent_id Points to a LedgerBase record doing something to an object.
@@ -1552,9 +1558,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.60 2021/07/21 23:33:36 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.61 2021/07/22 00:01:15 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.61  2021/07/22 00:01:15  agmsmith
+Add expired field to the database migration example.
+
 Revision 1.60  2021/07/21 23:33:36  agmsmith
 Change database migration comments back to LedgerDelete or LedgerApprove.
 
@@ -1746,6 +1755,81 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.61
+log
+@Add expired field to the database migration example.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.60 2021/07/21 23:33:36 agmsmith Exp agmsmith $</SMALL>
+d192 1
+a192 1
+to create the link; each approves their end using a LedgerChangeMarkings
+d372 1
+a372 1
+* deleted boolean True if there is a LedgerChangeMarkings record that is
+d421 1
+a421 1
+### *LedgerChangeMarkings* < LedgerBase
+d425 1
+a425 1
+LedgerChangeMarkings with all the things (both LedgerBase object records and
+d427 2
+a428 1
+(mark deleted, mark approved, etc) to do.
+d430 1
+a430 1
+Please don't make loops of LedgerChangeMarkings records, this will lock up the
+d436 1
+a436 1
+While you can have several LedgerChangeMarkings records affecting the same
+d439 1
+a439 1
+enough time passes, the LedgerChangeMarkings will fade away and the targets
+d442 1
+a442 1
+collecting LedgerChangeMarkings records.
+d455 1
+a455 1
+#### *LedgerDelete* < LedgerChangeMarkings
+d462 1
+a462 1
+it too.
+d465 1
+a465 1
+#### *LedgerApprove* < LedgerChangeMarkings
+d471 1
+a471 1
+unapproved link instead (if you need to be asked for approval, you can delete
+d670 1
+a670 1
+  can refer to the link record, currently only used by LedgerChangeMarkings and
+d683 1
+a683 1
+* deleted boolean True if there is a LedgerChangeMarkings record that deletes
+d689 1
+a689 1
+  Can undelete with another LedgerChangeMarkings; one more good reason for
+d710 1
+a710 1
+  LedgerChangeMarkings record.  Approval can be revoked the same way, or the
+d868 1
+a868 1
+a LedgerChangeMarkings to approve their end.  Where you can approve, you can
+d1029 1
+a1029 1
+LedgerChangeMarkings usually) and LinkBase records.  Used for deleting &amp;
+d1041 1
+a1041 1
+LedgerChangeMarkings object) to child LedgerBase objects (such as things being
+d1233 1
+a1233 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.60 2021/07/21 23:33:36 agmsmith Exp agmsmith $
+d1236 3
 @
 
 

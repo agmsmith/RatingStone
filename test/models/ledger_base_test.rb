@@ -30,7 +30,16 @@ class LedgerBaseTest < ActiveSupport::TestCase
     lbase = LedgerBase.new(creator: later_creator, string1: "Just One")
     assert_not(lbase.save)
     assert_equal(lbase.errors[:unoriginal_creator].first,
-      "Creator LedgerUser ##{later_creator.id} isn't the original version.")
+      "Creator #{later_creator} isn't the canonical original version.")
+  end
+
+  test "new verison must be same type as original" do
+    original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String One")
+    original_lbase.save!
+    later_lbase = original_lbase.append_version
+    later_lbase.string1 = "A newer version of the object."
+    later_lbase.type = "LedgerPost"
+    assert_not(later_lbase.save)
   end
 
   test "amended record fields" do
@@ -211,7 +220,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert(lpost.creator_owner?(luser2.original_version))
     assert(lpost.creator_owner?(luser2))
     assert_not(lpost.creator_owner?(luser3))
-debugger # bleeble
+# debugger # bleeble
     lowner = LinkOwner.create!(parent_id: luser3.original_version_id,
       child_id: lpost.original_version_id,
       creator_id: luser3.original_version_id)
