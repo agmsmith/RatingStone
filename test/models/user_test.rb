@@ -40,7 +40,7 @@ class UserTest < ActiveSupport::TestCase
     valid_addresses = [
       "user@example.com", "USER@foo.COM",
       "A_US-ER@foo.bar.org", "first.last@foo.jp",
-      "alice+bob@baz.cn", "my.name@gc.ca"
+      "alice+bob@baz.cn", "my.name@gc.ca",
     ]
     valid_addresses.each do |valid_address|
       @user.email = valid_address
@@ -52,7 +52,7 @@ class UserTest < ActiveSupport::TestCase
     invalid_addresses = [
       "user@example,com", "user_at_foo.org",
       "user.name@example.", "foo@bar_baz.com",
-      "foo@bar+baz.com", "something@doubledot..com"
+      "foo@bar+baz.com", "something@doubledot..com",
     ]
     invalid_addresses.each do |invalid_address|
       @user.email = invalid_address

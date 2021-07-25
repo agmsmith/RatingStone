@@ -252,7 +252,6 @@ class LedgerBase < ApplicationRecord
   # current).  Done by adding up the points from all the links referencing
   # this LedgerBase object, fading each one appropriately by how far in the
   # past it is.
-  # 
   def update_current_points
     last_ceremony = LedgerAwardCeremony.last_ceremony
     return if current_ceremony == last_ceremony
@@ -310,7 +309,7 @@ class LedgerBase < ApplicationRecord
         end
         # We are the latest one now.
         original.update_attribute(:amended_id, id) # Does original's date stamp.
-        update_columns(is_latest_version: true) if !is_latest_version
+        update_columns(is_latest_version: true) unless is_latest_version
       end
     end
   end

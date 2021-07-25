@@ -187,15 +187,15 @@ class LedgerBaseTest < ActiveSupport::TestCase
     # callback gets run, test has_owners field, also test with a versioned
     # user and post.
     luser1 = LedgerUser.create!(name: "User One", email: "1@example.com",
-      creator_id: 0);
+      creator_id: 0)
     luser2 = LedgerUser.create!(name: "User Two A", email: "2@example.com",
-      creator_id: 0);
+      creator_id: 0)
     luser2 = luser2.append_version
     luser2.name = "User Two B"
     luser2.save!
     luser2.reload
     luser3 = LedgerUser.create!(name: "User Three A", email: "3@example.com",
-      creator_id: 0);
+      creator_id: 0)
     lpost = LedgerPost.create!(creator_id: luser1.original_version_id,
       subject: "Post by User One", content: "This is a **Post** by User One.")
     lpost = lpost.append_version
@@ -259,8 +259,10 @@ class LedgerBaseTest < ActiveSupport::TestCase
       ledger_users(:root_ledger_user_fixture),
       users(:malory).ledger_user,
     ]
-    user_outs = [ledger_users(:message_moderator2_user),
-                 ledger_users(:undesirable_user)]
+    user_outs = [
+      ledger_users(:message_moderator2_user),
+      ledger_users(:undesirable_user),
+    ]
     (user_ins + user_outs).each do |x|
       assert_not(lpost.allowed_to_view?(x), "#{x} should not be able to view.")
     end

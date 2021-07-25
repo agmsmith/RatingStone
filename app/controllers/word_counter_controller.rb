@@ -27,7 +27,7 @@ class WordCounterController < ApplicationController
     :exp_percent, :exp_psalms, :exp_say_area_code, :exp_say_chapter,
     :exp_say_telephone_number,
     :exp_slash_per_always, :exp_slash_per_number, :exp_slash_slash_always,
-    :exp_urls, :exp_www, :exp_years
+    :exp_urls, :exp_www, :exp_years,
   ]
 
   def update

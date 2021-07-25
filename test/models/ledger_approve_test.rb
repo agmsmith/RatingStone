@@ -80,6 +80,6 @@ class LedgerApproveTest < ActiveSupport::TestCase
     link_group5.reload
     assert(link_group5.approved_parent)
 
-    # TODO = Test approval in multiple groups.
+    # TODO: Test approval in multiple groups.
   end
 end

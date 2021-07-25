@@ -26,7 +26,7 @@ class LedgerChangeMarking < LedgerBase
   # (usually LedgerDelete or LedgerApprove) which implicitly specifies
   # the user doing the delete (its creator) and the new state (delete vs
   # undelete, approve vs unapprove in the new state flag).
-  def self.get_marking_method
+  def self.marking_method_name
     :mark_not_implemented_for_base_class_ledger_change_marking
   end
 
@@ -56,15 +56,15 @@ class LedgerChangeMarking < LedgerBase
       "should be a LedgerUser." unless creator_user.is_a?(LedgerUser)
 
     # Method name to actually do the marking work depends on our class.
-    marking_method_symbol = self.get_marking_method
+    marking_method_symbol = marking_method_name
 
     # Create a LedgerChangeMarking (usually a subclass like LedgerDelete)
     # instance as the hub for the operation, and wrap it in a transaction in
     # case an error exception (such as not having priviledges to delete
     # something) happens.
     returned_record = nil
-    self.transaction do
-      hub_record = self.new(creator_id: creator_user.id)
+    transaction do
+      hub_record = new(creator_id: creator_user.id)
       hub_record.context = context if context
       hub_record.reason = reason if reason
       hub_record.new_marking_state = new_marking_state
