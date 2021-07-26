@@ -77,8 +77,8 @@ if User.where(name: "Anonymous Internet Browser").empty?
   internet_user.activate
 end
 
-# Generate a bunch of additional users and data, but not in test mode.
-if !Rails.env.test?
+# Generate a bunch of additional users and data, but only in development.
+if Rails.env.development?
   # Make four groups.  GOne, GTwo, GThree, and GMany a subgroup of GTwo & GThree.
   group_names = %w[GOne GTwo GThree GMany]
   group_records = []
