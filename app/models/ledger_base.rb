@@ -89,7 +89,8 @@ class LedgerBase < ApplicationRecord
     new_entry.amended_id = original_version.amended_id # For consistency check.
     # Cached values not used (see original record) in amended, set to defaults.
     new_entry.deleted = false
-    new_entry.expired = false
+    new_entry.expired_now = false
+    new_entry.expired_soon = false
     new_entry.has_owners = false
     new_entry.current_down_points = 0.0
     new_entry.current_meh_points = 0.0
