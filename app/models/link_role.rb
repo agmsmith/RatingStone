@@ -18,17 +18,19 @@ class LinkRole < LinkBase
   BANNED = 10
   READER = 20
   MEMBER = 30
-  MESSAGE_MODERATOR = 40
-  META_MODERATOR = 50
-  MEMBER_MODERATOR = 60
-  OWNER = 70
-  CREATOR = 80
+  OPINIONATOR = 40
+  MESSAGE_MODERATOR = 50
+  META_MODERATOR = 60
+  MEMBER_MODERATOR = 70
+  OWNER = 80
+  CREATOR = 90
 
   # Designed so you can say "Person X is a ___ in group Y".
   ROLE_NAMES = {
     BANNED => "banned user",
     READER => "reader",
     MEMBER => "member",
+    OPINIONATOR => "opinion maker",
     MESSAGE_MODERATOR => "message moderator",
     META_MODERATOR => "meta moderator",
     MEMBER_MODERATOR => "member moderator",
