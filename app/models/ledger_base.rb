@@ -293,8 +293,10 @@ class LedgerBase < ApplicationRecord
     if original_id.nil?
       update_columns(original_id: id) # New is_latest_version defaults to true.
     else
-      # Critical section (read and modify amended_id) needs a transaction.
-      self.class.transaction do
+      # This is a newer version of the record, update pointers back in the
+      # original version.  Use a lock to protect the critical section
+      # (read and modify amended_id in the original record).
+      original.with_lock do
         if original.amended_id != amended_id
           raise RatingStoneErrors,
             "Race condition?  " \

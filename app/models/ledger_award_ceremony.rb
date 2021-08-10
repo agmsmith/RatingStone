@@ -31,7 +31,8 @@ class LedgerAwardCeremony < LedgerBase
   # new ceremony record.
   def self.start_ceremony
     result = nil
-    # Wrap this in a transaction so nothing changes while we update everything.
+    # Wrap this in a transaction so the ceremony gets cancelled if something
+    # goes wrong.
     transaction do
       ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1)
       ceremony.save!
