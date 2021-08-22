@@ -30,24 +30,23 @@ class LinkGroupContent < LinkBase
     parent.role_test?(luser, LinkRole::MESSAGE_MODERATOR)
   end
 
-  private
-
-  ##
-  # Automatically approve the group end of the link when the creator is a
-  # member of the group in a role with high enough priviledge to approve.
-  def do_automatic_approvals
-    super # Do the usual owner and creator approvals.
-    return if approved_parent # Already approved, skip group role test.
+  def initial_approval_state
+    approvals = super # Do the usual owner and creator approvals.
+    # If the parent is already approved, skip the role test.
+    return approvals if approvals[APPROVE_PARENT]
 
     # Check if the creator is a member of the parent group with enough
     # priviledge and points spent to add posts to the group.
     errors = []
     if parent.can_post?(creator, rating_points_boost_parent, errors)
-      self.approved_parent = true
+      approvals[APPROVE_PARENT] = true
     else
       self.disapproval_messages = errors.join("  ").truncate(255)
     end
+    approvals
   end
+
+  private
 
   def set_default_description
     return unless string1.empty?

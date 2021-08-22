@@ -11,6 +11,10 @@ class LinkBase < ApplicationRecord
   has_many :aux_link_ups, class_name: :AuxLink, foreign_key: :child_id
   has_many :aux_link_ancestors, through: :aux_link_ups, source: :parent
 
+  # Indices into an array of booleans showing parent and child approvals.
+  APPROVE_PARENT = 0
+  APPROVE_CHILD = 1
+
   ##
   # Return a user readable description of the object.  Besides some unique
   # identification so we can find it in the database, have some readable
@@ -63,6 +67,22 @@ class LinkBase < ApplicationRecord
   # the child end of this link.  Subclasses probably won't override this.
   def permission_to_change_child_approval(luser)
     child.creator_owner?(luser)
+  end
+
+  ##
+  # Returns the initial approval state, used for creating new records, or
+  # finding out what the initial approvals were retrospectively (needed for
+  # replaying history).  Though ownership may change over time, so maybe we
+  # should have a time stamp as an input argument.  Returns an array, first
+  # element is the boolean for the parent (true if parent was initially
+  # approved), second for the child.  Subclasses should override this if they
+  # want non-default initial approvals.  For example, links to groups have a
+  # fancier method that checks if the user is a member of the group who is
+  # allowed to approve links.
+  def initial_approval_state
+    # The default is to approve the end of the link where the creator of the
+    # link is the owner or creator of the object at that end of the link.
+    [parent.creator_owner?(creator), child.creator_owner?(creator)]
   end
 
   ##
@@ -148,7 +168,8 @@ class LinkBase < ApplicationRecord
   # creator of the object at that end of the link.  No fancy checks here for
   # group members etc, that's only in the subclass for things in groups.
   def do_automatic_approvals
-    self.approved_parent = true if parent.creator_owner?(creator)
-    self.approved_child = true if child.creator_owner?(creator)
+    approvals = initial_approval_state
+    self.approved_parent = approvals[APPROVE_PARENT]
+    self.approved_child = approvals[APPROVE_CHILD]
   end
 end
