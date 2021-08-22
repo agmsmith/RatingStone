@@ -19,7 +19,12 @@ class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
       t.float :current_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_meh_points, default: 0.0, comment: "Number of rating points in the meh non-direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
-      t.integer :current_ceremony, default: -1, comment: "The number of the awards ceremony that the current points were calculated for.  0 means before the first ceremony.  Set to -1 if needs recalculation based on date created."
+      t.integer :current_ceremony, default: -1, comment: "The number of the awards ceremony that the current points were calculated for.  0 means before the first ceremony.  Set to -1 to force a recalculation of current points.  If it doesn't match the most recent ceremony's number, the points need recalculation too (fading has to be applied)."
+      t.float :checkpoint_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object at the time of the last checkpoint."
+      t.float :checkpoint_meh_points, default: 0.0, comment: "Number of rating points in the meh direction for this object at the time of the last checkpoint."
+      t.float :checkpoint_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object at the time of the last checkpoint."
+      t.integer :checkpoint_ceremony, default: -1, comment: "The number of the awards ceremony that the checkpoint points were calculated for.  Negative or zero means no checkpoint data (need to recalculate from the beginning of time).  Checkpoints reflect the rating points just after the ceremony, not mid-week (incremental changes during the week aren't checkpointed, until the next ceremony of course)."
+      t.integer :original_ceremony, default: -1, comment: "The number of the awards ceremony immediately prior to the creation of this object.  0 if before the first awards ceremony.  Negative is an initialisation bug.  Theoretically you could figure it out from the record creation date."
       t.timestamps
     end
 
