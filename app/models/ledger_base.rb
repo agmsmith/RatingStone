@@ -95,6 +95,12 @@ class LedgerBase < ApplicationRecord
     new_entry.current_down_points = 0.0
     new_entry.current_meh_points = 0.0
     new_entry.current_up_points = 0.0
+    new_entry.current_ceremony = -1
+    new_entry.checkpoint_down_points = 0.0
+    new_entry.checkpoint_meh_points = 0.0
+    new_entry.checkpoint_up_points = 0.0
+    new_entry.checkpoint_ceremony = -1
+    new_entry.original_ceremony = LedgerAwardCeremony.last_ceremony
     new_entry
   end
 
