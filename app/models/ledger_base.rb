@@ -291,7 +291,8 @@ class LedgerBase < ApplicationRecord
     # original_id to point to self.  Since we can't know the id value until
     # after the save, update original_id after the save.
     if original_id.nil?
-      update_columns(original_id: id) # New is_latest_version defaults to true.
+      update_columns(original_id: id,
+        original_ceremony: LedgerAwardCeremony.last_ceremony)
     else
       # This is a newer version of the record, update pointers back in the
       # original version.  Use a lock to protect the critical section

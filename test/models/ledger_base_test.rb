@@ -6,10 +6,14 @@ class LedgerBaseTest < ActiveSupport::TestCase
   test "original record fields" do
     original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String One")
     assert_nil(original_lbase.id, "No ID number before saving")
+    assert_equal(-1, original_lbase.original_ceremony,
+      "No ceremony number before saving")
     assert(original_lbase.save, "Save should succeed.")
     assert_not_nil(original_lbase.id, "Has an ID number after saving")
     assert_equal(original_lbase.id, original_lbase.original_id,
       "original_id of the original record should be the same as its ID number")
+    assert_equal(LedgerAwardCeremony.last_ceremony,
+      original_lbase.original_ceremony, "Current ceremony number after saving")
   end
 
   test "creator always required" do
