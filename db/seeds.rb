@@ -77,6 +77,24 @@ if User.where(name: "Anonymous Internet Browser").empty?
   internet_user.activate
 end
 
+# Create Mike Davison, the first person to set up an account, though he
+# doesn't use it.
+if User.where(name: "Mike Davison").empty?
+  pw = SecureRandom.hex(35)
+  mike_user = User.create!(
+    name:  "Mike Davison",
+    email: "davisonspeaking@gmail.com",
+    password: pw,
+    password_confirmation: pw,
+    admin: false)
+  mike_user.update_attribute(:password_digest,
+   '$2a$12$F4kOjn3bCMtcP/ebvORdGOnkDhEhSAhnq/2TahVSNF4TMxaGCHhBe')
+  mike_ledger = mike_user.ledger_user # Will create ledger record.
+  mike_ledger.birthday = DateTime.new(2021,6,28,18,31,55)
+  mike_ledger.save!
+  mike_user.activate
+end
+
 # Generate a bunch of additional users and data, but only in development.
 if Rails.env.development?
   # Make four groups.  GOne, GTwo, GThree, and GMany a subgroup of GTwo & GThree.
