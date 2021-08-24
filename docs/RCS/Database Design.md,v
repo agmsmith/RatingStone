@@ -1,10 +1,19 @@
-head	1.66;
+head	1.68;
 access;
 symbols;
-locks
-	agmsmith:1.66; strict;
+locks; strict;
 comment	@# @;
 
+
+1.68
+date	2021.08.24.22.01.21;	author agmsmith;	state Exp;
+branches;
+next	1.67;
+
+1.67
+date	2021.08.24.21.52.02;	author agmsmith;	state Exp;
+branches;
+next	1.66;
 
 1.66
 date	2021.08.24.16.53.00;	author agmsmith;	state Exp;
@@ -342,14 +351,14 @@ desc
 @
 
 
-1.66
+1.68
 log
-@Work in progress - thinking about checkpointing points.
+@Remove checkpoint from example of database migration.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.65 2021/08/22 21:41:41 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.67 2021/08/24 21:52:02 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -768,25 +777,18 @@ serious or distinct enough.
   3 years of fading one point) then the record can be garbage collected from
   the current database, freeing up storage.  Changed as needed.
 * current_ceremony integer The number of the awards ceremony that the current
-  points and checkpointed points were calculated for.  0 means before the first
-  ceremony.  Set to -1 (perhaps when importing a database) to force a
-  recalculation of current and checkpointed points (which may introduce
-  inaccuracies due to missing expired garbage collected records).  If it is
-  less than the most recent ceremony's number, the points need recalculation
-  (fading has to be applied).  Changed as needed.
-* checkpoint_down_points float Changed as needed.
-* checkpoint_meh_points float Changed as needed.
-* checkpoint_up_points float Number of rating points in the up direction for
-  this object at the time just after the last checkpoint.  Checkpoints store
-  the rating points immediately after current_ceremony happened, not including
-  mid-week (incremental changes during the week after the ceremony aren't
-  checkpointed, until the next ceremony of course).  Useful for avoiding long
-  term point distortions when records are garbage collected or things are deleted.  Changed as needed.
+  points were calculated for.  0 means before the first ceremony.  Set to -1
+  (perhaps when importing a database) to force a recalculation of current
+  points (which may introduce slight inaccuracies due to missing expired
+  garbage collected records).  If it is less than the most recent ceremony's
+  number, the points just need an update recalculation (fading has to be
+  applied).  Changed as needed.
 * original_ceremony integer The number of the awards ceremony immediately prior
   to the creation of this object.  0 if before the first awards ceremony.
   Negative is an initialisation bug.  Theoretically you could figure it out
   by cross referencing this record's creation date with the dates from the
-  award ceremony records.  Write-once.
+  award ceremony records.  Appended version records have the ceremony that
+  was active when they were created.  Write-once.
 
 
 ### *LedgerChangeMarking* < LedgerBase
@@ -1461,11 +1463,7 @@ details like this:
       t.float :current_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_meh_points, default: 0.0, comment: "Number of rating points in the meh non-direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
       t.float :current_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object. This is the current total, including fading over time (recalculated at the beginning of the week in the awards ceremony) plus new ratings applied this week."
-      t.integer :current_ceremony, default: -1, comment: "The number of the awards ceremony that the current points were calculated for.  0 means before the first ceremony.  Set to -1 to force a recalculation of current points.  If it doesn't match the most recent ceremony's number, the points need recalculation too (fading has to be applied)."
-      t.float :checkpoint_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object at the time of the last checkpoint."
-      t.float :checkpoint_meh_points, default: 0.0, comment: "Number of rating points in the meh direction for this object at the time of the last checkpoint."
-      t.float :checkpoint_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object at the time of the last checkpoint."
-      t.integer :checkpoint_ceremony, default: -1, comment: "The number of the awards ceremony that the checkpoint points were calculated for.  Negative or zero means no checkpoint data (need to recalculate from the beginning of time).  Checkpoints reflect the rating points just after the ceremony, not mid-week (incremental changes during the week aren't checkpointed, until the next ceremony of course)."
+      t.integer :current_ceremony, default: -1, comment: "The number of the awards ceremony that the current points were calculated for.  0 means before the first ceremony.  Set to -1 to force a recalculation of current points.  If it is less than the most recent ceremony's number, the points just need an update recalculation."
       t.integer :original_ceremony, default: -1, comment: "The number of the awards ceremony immediately prior to the creation of this object.  0 if before the first awards ceremony.  Negative is an initialisation bug.  Theoretically you could figure it out from the record creation date."
       t.timestamps
     end
@@ -1601,9 +1599,15 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.65 2021/08/22 21:41:41 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.67 2021/08/24 21:52:02 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.67  2021/08/24 21:52:02  agmsmith
+Remove the checkpoint idea, it's actually useless.
+
+Revision 1.66  2021/08/24 16:53:00  agmsmith
+Work in progress - thinking about checkpointing points.
+
 Revision 1.65  2021/08/22 21:41:41  agmsmith
 Add checkpoint for current points at start of week.
 
@@ -1810,6 +1814,62 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.67
+log
+@Remove the checkpoint idea, it's actually useless.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.66 2021/08/24 16:53:00 agmsmith Exp agmsmith $</SMALL>
+d1108 1
+a1108 5
+      t.integer :current_ceremony, default: -1, comment: "The number of the awards ceremony that the current points were calculated for.  0 means before the first ceremony.  Set to -1 to force a recalculation of current points.  If it doesn't match the most recent ceremony's number, the points need recalculation too (fading has to be applied)."
+      t.float :checkpoint_down_points, default: 0.0, comment: "Number of rating points in the down direction for this object at the time of the last checkpoint."
+      t.float :checkpoint_meh_points, default: 0.0, comment: "Number of rating points in the meh direction for this object at the time of the last checkpoint."
+      t.float :checkpoint_up_points, default: 0.0, comment: "Number of rating points in the up direction for this object at the time of the last checkpoint."
+      t.integer :checkpoint_ceremony, default: -1, comment: "The number of the awards ceremony that the checkpoint points were calculated for.  Negative or zero means no checkpoint data (need to recalculate from the beginning of time).  Checkpoints reflect the rating points just after the ceremony, not mid-week (incremental changes during the week aren't checkpointed, until the next ceremony of course)."
+d1244 1
+a1244 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.66 2021/08/24 16:53:00 agmsmith Exp agmsmith $
+d1247 3
+@
+
+
+1.66
+log
+@Work in progress - thinking about checkpointing points.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.65 2021/08/22 21:41:41 agmsmith Exp agmsmith $</SMALL>
+d422 6
+a427 14
+  points and checkpointed points were calculated for.  0 means before the first
+  ceremony.  Set to -1 (perhaps when importing a database) to force a
+  recalculation of current and checkpointed points (which may introduce
+  inaccuracies due to missing expired garbage collected records).  If it is
+  less than the most recent ceremony's number, the points need recalculation
+  (fading has to be applied).  Changed as needed.
+* checkpoint_down_points float Changed as needed.
+* checkpoint_meh_points float Changed as needed.
+* checkpoint_up_points float Number of rating points in the up direction for
+  this object at the time just after the last checkpoint.  Checkpoints store
+  the rating points immediately after current_ceremony happened, not including
+  mid-week (incremental changes during the week after the ceremony aren't
+  checkpointed, until the next ceremony of course).  Useful for avoiding long
+  term point distortions when records are garbage collected or things are deleted.  Changed as needed.
+d432 2
+a433 1
+  award ceremony records.  Write-once.
+d1248 1
+a1248 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.65 2021/08/22 21:41:41 agmsmith Exp agmsmith $
+d1251 3
 @
 
 

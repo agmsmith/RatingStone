@@ -88,6 +88,7 @@ class LedgerBase < ApplicationRecord
     new_entry = latest_version.dup
     new_entry.original_id = original_version_id # In case original_id is nil.
     new_entry.amended_id = original_version.amended_id # For consistency check.
+    new_entry.original_ceremony = LedgerAwardCeremony.last_ceremony
     # Cached values not used (see original record) in amended, set to defaults.
     new_entry.deleted = false
     new_entry.expired_now = false
@@ -97,11 +98,6 @@ class LedgerBase < ApplicationRecord
     new_entry.current_meh_points = 0.0
     new_entry.current_up_points = 0.0
     new_entry.current_ceremony = -1
-    new_entry.checkpoint_down_points = 0.0
-    new_entry.checkpoint_meh_points = 0.0
-    new_entry.checkpoint_up_points = 0.0
-    new_entry.checkpoint_ceremony = -1
-    new_entry.original_ceremony = LedgerAwardCeremony.last_ceremony
     new_entry
   end
 
@@ -255,30 +251,23 @@ class LedgerBase < ApplicationRecord
     save!
   end
 
-
-
-
-
-
-
-
   ##
-  # Recalculate the current rating points if needed (award ceremony number isn't
-  # current).  Done by adding up the points from all the links referencing
-  # this LedgerBase object, fading each one appropriately by how far in the
-  # past it is.  Can start off at a checkpoint, or if none exists, goes back to
-  # the beginning of time.  Also updates the checkpointed value to just before
-  # the last award ceremony.
+  # Fade the current rating points if needed (award ceremony number isn't
+  # current).  If a full recalculation is requested, it adds up the points
+  # from all the links referencing this LedgerBase object, fading each one
+  # appropriately by how far in the past it is.  Then adds on weekly bonus
+  # points (pretty much just LedgerUsers have those).  Call this before
+  # modifying current points, or even just reading them.
   def update_current_points
     last_ceremony = LedgerAwardCeremony.last_ceremony
     return if current_ceremony >= last_ceremony # Current is still good.
 
-    # Out of date, first step is to evaluate reputation points spent on this
-    # object by adding up spending from all undeleted link objects that have
-    # this object as a child or as a parent or both (but that's rare).
-    # Also update the checkpoint value if it's far behind the current ceremony.
+    # Out of date, if just fading is needed it's fairly simple.  For a full
+    # recalculation the first step is to evaluate reputation points spent on
+    # this object by adding up spending from all undeleted link objects that
+    # have this object as a child or as a parent or both (but that's rare).
 
-    self.with_lock do
+    with_lock do
       # Will be updating our current values so it is a critical section.
       # In case two processes try to update simultaneously, one will get the
       # lock and do the job and the second one that gets the lock later doesn't
@@ -287,108 +276,61 @@ class LedgerBase < ApplicationRecord
       # and job run separately).
       return if current_ceremony >= last_ceremony
 
-      links_to_examine = if checkpoint_ceremony <= 0
-        # No checkpoint data available, recalculate from the beginning.
+      if current_ceremony >= 0 # Just need to fade points to catch up.
+        generations = last_ceremony - current_ceremony
+        fade_factor = LedgerAwardCeremony::FADE**generations
+        self.current_down_points *= fade_factor
+        self.current_meh_points *= fade_factor
+        self.current_up_points *= fade_factor
+        # And add weekly allowance points for the elapsed time.
+        update_current_bonus_points_since(current_ceremony)
+      else # Recalculation from the beginning has been requested.
         self.current_down_points = 0.0
         self.current_meh_points = 0.0
         self.current_up_points = 0.0
-        self.checkpoint_down_points = 0.0
-        self.checkpoint_meh_points = 0.0
-        self.checkpoint_up_points = 0.0
-        link_ups.or(link_downs)
-      else # Just need points spent via links since the last checkpoint.
-        generations = last_ceremony - current_ceremony
-        fade_factor = LedgerAwardCeremony::FADE**generations
-        self.checkpoint_down_points *= fade_factor
-        self.checkpoint_meh_points *= fade_factor
-        self.checkpoint_up_points *= fade_factor
-        self.current_down_points = checkpoint_down_points
-        self.current_meh_points = checkpoint_meh_points
-        self.current_up_points = checkpoint_up_points
-        link_ups.or(link_downs).where(
-          "rating_ceremony >= ?", checkpoint_ceremony)
-      end.where(deleted: false, approved_parent: true, approved_child: true)
 
-      links_to_examine.find_each do |a_link| # Iterates in batches of 1000.
-        generations = last_ceremony - a_link.rating_ceremony
-        if generations < 0
-          # If some future record snuck in, or last_ceremony is out of date then
-          # ignore the extra generations.  Shouldn't happen.  But we're doing up
-          # to last_ceremony so just calculate that.
-          generations = 0
-          logger.warn("#update_current_points: Ceremony number "
-            "#{a_link.rating_ceremony} is in the future, for {a_link}, while "
-            "updating #{self}.")
-        end
-        fade_factor = LedgerAwardCeremony::FADE**generations
+        link_ups.or(link_downs).where(deleted: false,
+          approved_parent: true, approved_child: true).find_each do |a_link|
+          # Iterates in batches of 1000.
+          generations = last_ceremony - a_link.rating_ceremony
+          if generations < 0
+            # If some future record snuck in, or last_ceremony is out of date then
+            # ignore the extra generations.  Shouldn't happen.  But we're doing up
+            # to last_ceremony so just calculate that.
+            generations = 0
+            logger.warn("#update_current_points: Ceremony number " \
+              "#{a_link.rating_ceremony} is in the future, for {a_link}, " \
+              "while updating #{self}.")
+          end
+          fade_factor = LedgerAwardCeremony::FADE**generations
 
-        # Always update the current points.  Also update the checkpoint with
-        # new things that have happened since the last checkpoint, up to just
-        # before last_ceremony.  Don't include things happening in the current
-        # week in the checkpoint since the week isn't over yet; that would break
-        # the invariant of checkpoints being tied to particular ceremonies.
-
-        do_checkpoint = a_link.rating_ceremony < last_ceremony
-
-        if a_link.child_id == id
-          amount = rating_points_boost_child * fade_factor
-          case a_link.rating_direction_child
-            when 'D'
-              self.current_down_points += amount
-              self.checkpoint_down_points += amount if do_checkpoint
-            end
-            when 'M'
-              self.current_meh_points += amount
-              self.checkpoint_meh_points += amount if do_checkpoint
-            end
-            when 'U'
-              self.current_up_points += amount
-              self.checkpoint_up_points += amount if do_checkpoint
+          if a_link.child_id == id
+            amount = rating_points_boost_child * fade_factor
+            case a_link.rating_direction_child
+            when "D" then self.current_down_points += amount
+            when "M" then self.current_meh_points += amount
+            when "U" then self.current_up_points += amount
             end
           end
-        end
-  
-        if a_link.parent_id == id
-          amount = rating_points_boost_parent * fade_factor
-          case a_link.rating_direction_parent
-            when 'D'
-              self.current_down_points += amount
-              self.checkpoint_down_points += amount if do_checkpoint
-            end
-            when 'M'
-              self.current_meh_points += amount
-              self.checkpoint_meh_points += amount if do_checkpoint
-            end
-            when 'U'
-              self.current_up_points += amount
-              self.checkpoint_up_points += amount if do_checkpoint
+
+          if a_link.parent_id == id
+            amount = rating_points_boost_parent * fade_factor
+            case a_link.rating_direction_parent
+            when "D" then self.current_down_points += amount
+            when "M" then self.current_meh_points += amount
+            when "U" then self.current_up_points += amount
             end
           end
-        end
-      end # links_to_examine
+        end # find_each
+
+        # And add accumulated faded weekly allowance points for all time.
+        update_current_bonus_points_since(original_ceremony)
+      end
+
+      self.current_ceremony = last_ceremony
+      save!
     end # with_lock
-
-    # TODO: Next step is to count points spent by this object to create links.
-    # Typically only LedgerUser objects do that.
-
-
-    # Next step is to add in bonus points from weekly awards.  Usually just
-    # LedgerUser objects have them.
-    
-    update_current_bonus_points
-
-    self.current_ceremony = last_ceremony
-    self.checkpoint_ceremony = last_ceremony
-    save!
   end
-
-
-
-
-
-
-
-
 
   private
 
@@ -432,11 +374,11 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
-  # Recalculates the effect of other kinds of bonus points on the current
-  # points and checkpoint points.  Called by update_current_points, with a
-  # lock on this object already in effect.  Subclasses with bonus points should
-  # override this method; usually only LedgerUser objects have them.
-  def update_current_bonus_points
+  # Adds the effect of other kinds of bonus points on the current points, since
+  # the given ceremony number.  Called by update_current_points, with a lock on
+  # this object already in effect.  Subclasses with bonus points should
+  # override this method; usually only LedgerUser objects do that.
+  def update_current_bonus_points_since(old_ceremony)
   end
 
   ##

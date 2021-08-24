@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
+# TODO: Method for finding a ceremony number when given a date.
+# TODO: Method for figuring out points from adding bonuses over a given number
+# of ceremonies, can cache it as a lookup table from 0 to latest ceremony
+# number.  Multiply weekly award bonus points by the method value to get
+# current day points including faded accumulation.
+
 class LedgerAwardCeremony < LedgerBase
   alias_attribute :ceremony_number, :number1
   alias_attribute :completed_at, :date1

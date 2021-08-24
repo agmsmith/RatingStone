@@ -104,10 +104,6 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
     t.float "current_meh_points", default: 0.0
     t.float "current_up_points", default: 0.0
     t.integer "current_ceremony", default: -1
-    t.float "checkpoint_down_points", default: 0.0
-    t.float "checkpoint_meh_points", default: 0.0
-    t.float "checkpoint_up_points", default: 0.0
-    t.integer "checkpoint_ceremony", default: -1
     t.integer "original_ceremony", default: -1
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false

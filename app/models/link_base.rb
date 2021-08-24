@@ -172,7 +172,7 @@ class LinkBase < ApplicationRecord
     self.approved_parent = approvals[APPROVE_PARENT]
     self.approved_child = approvals[APPROVE_CHILD]
   end
-  
+
   ##
   # Use whatever the latest ceremony number is as our starting ceremony number,
   # so that points can be faded in the future from this starting time.
