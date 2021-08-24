@@ -2,7 +2,7 @@
 
 class LinkBase < ApplicationRecord
   validate :validate_link_original_versions_referenced
-  before_create :do_automatic_approvals
+  before_create :do_automatic_approvals, :set_ceremony
 
   belongs_to :parent, class_name: :LedgerBase, optional: false
   belongs_to :child, class_name: :LedgerBase, optional: false
@@ -171,5 +171,12 @@ class LinkBase < ApplicationRecord
     approvals = initial_approval_state
     self.approved_parent = approvals[APPROVE_PARENT]
     self.approved_child = approvals[APPROVE_CHILD]
+  end
+  
+  ##
+  # Use whatever the latest ceremony number is as our starting ceremony number,
+  # so that points can be faded in the future from this starting time.
+  def set_ceremony
+    self.rating_ceremony = LedgerAwardCeremony.last_ceremony
   end
 end
