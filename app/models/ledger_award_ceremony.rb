@@ -1,24 +1,51 @@
 # frozen_string_literal: true
 
 # TODO: Method for finding a ceremony number when given a date.
-# TODO: Method for figuring out points from adding bonuses over a given number
-# of ceremonies, can cache it as a lookup table from 0 to latest ceremony
-# number.  Multiply weekly award bonus points by the method value to get
-# current day points including faded accumulation.
 
 class LedgerAwardCeremony < LedgerBase
   alias_attribute :ceremony_number, :number1
   alias_attribute :completed_at, :date1
+  alias_attribute :comment, :string1
 
   FADE = 0.97
   # How much to fade ratings points by in an awards ceremony.  The 0.97 factor
   # Cuts things down to about 1% of their original size after 3 years of weekly
   # fading.
 
+  FADED_BONUS_TABLE_SIZE = 500
+  FADED_BONUS_CONVERGED = 1.0 / (1.0 - FADE)
+  @accumulated_faded_bonus_table = nil
+  # To avoid recalculating the accumulated bonus points (we don't have a
+  # simple equation for it), store the values here in an array of size
+  # FADED_BONUS_TABLE_SIZE.  Though after a few hundred iterations (for 0.97)
+  # it converges on 1/(1-FADE).  Nil if not initialised yet.
+
   @highest_ceremony = nil
   # Class variable storing the highest ceremony number, or nil if not known
   # yet.  Computed on demand and cached here.  Will be incremented when a new
-  # award ceremony starts processing.
+  # award ceremony starts processing (will be in single threaded mode).
+
+  ##
+  # Class function to calculate the cummulative accumulation of bonus points
+  # added at every ceremony to a user's points.  Give it the number of elapsed
+  # ceremonies and it will figure out the accumulated faded sum of 1 point
+  # weekly.  Multiply that by the number of weekly bonus points to get the
+  # long term effect on total points of a user.  After a number of iterations
+  # it converges on 1/(1-FADE).
+  def self.accumulated_bonus(elapsed_ceremonies)
+    return 0.0 if elapsed_ceremonies < 1
+    return FADED_BONUS_CONVERGED if elapsed_ceremonies >= FADED_BONUS_TABLE_SIZE
+
+    if @accumulated_faded_bonus_table.nil?
+      accumulated = 0.0
+      @accumulated_faded_bonus_table = Array.new(FADED_BONUS_TABLE_SIZE) do
+        prev = accumulated # Previous value used so array[0] starts at zero.
+        accumulated = accumulated * FADE + 1.0
+        prev
+      end
+    end
+    @accumulated_faded_bonus_table[elapsed_ceremonies]
+  end
 
   ##
   # Class function to find the number of the last ceremony done.  Zero if no
@@ -34,24 +61,30 @@ class LedgerAwardCeremony < LedgerBase
   ##
   # Class function to start an award ceremony.  Usually called by a weekly cron
   # script on the web server, but can also be triggered manually.  Returns the
-  # new ceremony record.
-  def self.start_ceremony
+  # new ceremony record.  You can provide a descriptive comment if you wish.
+  def self.start_ceremony(comment_string = "Routine ceremony.")
     result = nil
     # Wrap this in a transaction so the ceremony gets cancelled if something
     # goes wrong.
     transaction do
-      ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1)
+      ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1,
+        comment: comment_string)
       ceremony.save!
-      @highest_ceremony = nil
-      # Do the ceremony processing...
+      @highest_ceremony = nil # Current ceremony number changed, do updates.
+
+      # Do the ceremony processing.  Currently the actual fading work is done
+      # incrementally on request (see #update_current_points).  May later do
+      # garbage collection here of obsolete forgotten links and objects.
       sleep(2) unless Rails.env.test?
       ceremony.completed_at = Time.zone.now
       ceremony.save!
+
       result = ceremony
       logger.info("  Awards ceremony ##{ceremony.ceremony_number} completed " \
         "successfully after #{ceremony.completed_at - ceremony.created_at} " \
         "seconds.")
     end
+    @highest_ceremony = nil if result.nil? # Oops - revert ceremony cache.
     result
   end
 

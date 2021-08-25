@@ -252,20 +252,24 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
-  # Fade the current rating points if needed (award ceremony number isn't
-  # current).  If a full recalculation is requested, it adds up the points
-  # from all the links referencing this LedgerBase object, fading each one
-  # appropriately by how far in the past it is.  Then adds on weekly bonus
-  # points (pretty much just LedgerUsers have those).  Call this before
-  # modifying current points, or even just reading them.
+  # Make sure the current_(down|meh|up)_points rating points are up to date.
+  # Call this before modifying current points, or even just reading them.
+  #
+  # Most of the time the points are up to date and this method does nothing
+  # quickly.  If the current points are too old, it fades them to catch up with
+  # the current time (time is based on award ceremony sequence numbers) and
+  # adds in weekly bonus points (mostly for LedgerUsers).
+  #
+  # If a full recalculation is requested it does a lot more:
+  # * Add up the points from all the links referencing this LedgerBase object,
+  #   fading each one appropriately by how far in the past it is.
+  # * Then removes faded points spent in creating other objects.
+  # * Then adds on faded weekly bonus points.
   def update_current_points
     last_ceremony = LedgerAwardCeremony.last_ceremony
     return if current_ceremony >= last_ceremony # Current is still good.
 
-    # Out of date, if just fading is needed it's fairly simple.  For a full
-    # recalculation the first step is to evaluate reputation points spent on
-    # this object by adding up spending from all undeleted link objects that
-    # have this object as a child or as a parent or both (but that's rare).
+    # Out of date, if just fading is needed it's fairly simple.
 
     with_lock do
       # Will be updating our current values so it is a critical section.
@@ -284,7 +288,12 @@ class LedgerBase < ApplicationRecord
         self.current_up_points *= fade_factor
         # And add weekly allowance points for the elapsed time.
         update_current_bonus_points_since(current_ceremony, last_ceremony)
-      else # Recalculation from the beginning has been requested.
+      else
+        # Recalculation from the beginning has been requested.  The first step
+        # is to evaluate reputation points spent on this object by adding up
+        # spending received from all undeleted link objects that have this
+        # object as a child or as a parent or both (but that's rare).
+
         self.current_down_points = 0.0
         self.current_meh_points = 0.0
         self.current_up_points = 0.0
@@ -323,13 +332,41 @@ class LedgerBase < ApplicationRecord
           end
         end # find_each
 
-        # TODO: Remove points spent in making links.
+        # Remove points spent in creating links.  Doesn't matter if it's a
+        # deleted link, it still counts as spent points for fraud reasons.
+
+        links_created.find_each do |a_link|
+          self.current_up_points -= a_link.rating_points_spent
+        end
 
         # And add accumulated faded weekly allowance points for all time.
         update_current_bonus_points_since(original_ceremony, last_ceremony)
 
-        # TODO: Check for negative points after full recalc, do warning.
       end # full recalculation
+
+      # Check for negative points, a sign of missing records if small,
+      # a bug or fraud if large.  Operator should look into it; maybe forcing
+      # a full recalculation will fix it.
+
+      if current_down_points < 0.0 || current_meh_points < 0.0 ||
+        current_up_points <= 0.0
+        logger.warn("#update_current_points: Negative rating points " \
+          "(#{current_down_points}, #{current_meh_points}, " \
+          "#{current_up_points}) in #{self}.  Bug, fraud or deleted old " \
+          "records?  Working around it.")
+        # Fix by converting negative down into up points and vice versa.
+        if current_down_points < 0.0
+          self.current_up_points -= current_down_points
+          current_down_points = 0.0
+        end
+        if current_up_points < 0.0
+          self.current_down_points -= current_up_points
+          current_up_points = 0.0
+        end
+        if current_meh_points < 0.0
+          current_meh_points = 0.0
+        end
+      end
 
       self.current_ceremony = last_ceremony
       save!

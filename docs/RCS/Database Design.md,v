@@ -1,9 +1,14 @@
-head	1.68;
+head	1.69;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.69
+date	2021.08.25.16.50.38;	author agmsmith;	state Exp;
+branches;
+next	1.68;
 
 1.68
 date	2021.08.24.22.01.21;	author agmsmith;	state Exp;
@@ -351,14 +356,14 @@ desc
 @
 
 
-1.68
+1.69
 log
-@Remove checkpoint from example of database migration.
+@Added a comment to the award ceremony record.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.67 2021/08/24 21:52:02 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.68 2021/08/24 22:01:21 agmsmith Exp agmsmith $</SMALL>
 
 1. Table of Contents
 {:toc}
@@ -975,10 +980,9 @@ if a history of changes needs to be preserved.
 This record marks the time when (usually weekly) rating points are awarded.  We
 perform the ceremony relative to planetary time, so the actual time between
 ceremonies won't always be exactly 7 days and 0 seconds, due to the slowdown of
-the earth's rotation and server downtime problems.  If you delete this record,
-the ceremony is ignored and just about everything needs to be recalculated,
-including award numbers for subsequent ceremonies and LinkBase records.
-Currently deleting this kind of record is not implemented, so don't do it.
+the earth's rotation and server downtime problems.  Currently deleting this
+kind of record may cause problems (like duplicate ceremony numbers), so don't
+do that.
 
 * ceremony_number A count of the number of award ceremonies done up to and
   including this one.  In other words, a sequence counter starting at 1.  So if
@@ -988,6 +992,10 @@ Currently deleting this kind of record is not implemented, so don't do it.
 * completed_at Time stamp for when the award ceremony was completed.  The start
   time is in the usual created_at time stamp for this record.  The web site is
   offline (by design) while the awards are being calculated.
+* comment string An optional description of why the ceremony was performed.
+  Perhaps there was an extra ceremony to celebrate a holiday, that would be
+  mentioned here.
+
 
 #### Calculating Awards
 
@@ -1599,9 +1607,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.67 2021/08/24 21:52:02 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.68 2021/08/24 22:01:21 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.68  2021/08/24 22:01:21  agmsmith
+Remove checkpoint from example of database migration.
+
 Revision 1.67  2021/08/24 21:52:02  agmsmith
 Remove the checkpoint idea, it's actually useless.
 
@@ -1814,6 +1825,28 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.68
+log
+@Remove checkpoint from example of database migration.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.67 2021/08/24 21:52:02 agmsmith Exp agmsmith $</SMALL>
+d620 3
+a622 4
+the earth's rotation and server downtime problems.  If you delete this record,
+the ceremony is ignored and just about everything needs to be recalculated,
+including award numbers for subsequent ceremonies and LinkBase records.
+Currently deleting this kind of record is not implemented, so don't do it.
+d632 4
+d1247 1
+a1247 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.67 2021/08/24 21:52:02 agmsmith Exp agmsmith $
+d1250 3
 @
 
 
