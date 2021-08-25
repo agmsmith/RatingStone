@@ -12,6 +12,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost.current_down_points = 1.1
     lpost.current_meh_points = 2.2
     lpost.current_up_points = 3.3
+    lpost.save!
     LedgerAwardCeremony.start_ceremony
     LedgerAwardCeremony.start_ceremony
     assert_equal(ceremony_number + 2, LedgerAwardCeremony.last_ceremony)

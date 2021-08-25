@@ -283,7 +283,7 @@ class LedgerBase < ApplicationRecord
         self.current_meh_points *= fade_factor
         self.current_up_points *= fade_factor
         # And add weekly allowance points for the elapsed time.
-        update_current_bonus_points_since(current_ceremony)
+        update_current_bonus_points_since(current_ceremony, last_ceremony)
       else # Recalculation from the beginning has been requested.
         self.current_down_points = 0.0
         self.current_meh_points = 0.0
@@ -323,9 +323,13 @@ class LedgerBase < ApplicationRecord
           end
         end # find_each
 
+        # TODO: Remove points spent in making links.
+
         # And add accumulated faded weekly allowance points for all time.
-        update_current_bonus_points_since(original_ceremony)
-      end
+        update_current_bonus_points_since(original_ceremony, last_ceremony)
+
+        # TODO: Check for negative points after full recalc, do warning.
+      end # full recalculation
 
       self.current_ceremony = last_ceremony
       save!
@@ -378,7 +382,7 @@ class LedgerBase < ApplicationRecord
   # the given ceremony number.  Called by update_current_points, with a lock on
   # this object already in effect.  Subclasses with bonus points should
   # override this method; usually only LedgerUser objects do that.
-  def update_current_bonus_points_since(old_ceremony)
+  def update_current_bonus_points_since(old_ceremony, last_ceremony)
   end
 
   ##
