@@ -357,14 +357,14 @@ class LedgerBase < ApplicationRecord
         # Fix by converting negative down into up points and vice versa.
         if current_down_points < 0.0
           self.current_up_points -= current_down_points
-          current_down_points = 0.0
+          self.current_down_points = 0.0
         end
         if current_up_points < 0.0
           self.current_down_points -= current_up_points
-          current_up_points = 0.0
+          self.current_up_points = 0.0
         end
         if current_meh_points < 0.0
-          current_meh_points = 0.0
+          self.current_meh_points = 0.0
         end
       end
 
