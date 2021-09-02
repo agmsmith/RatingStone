@@ -66,6 +66,14 @@ class LedgerUser < LedgerBase
   private
 
   ##
+  # Adds the effect of other kinds of bonus points on the current points, since
+  # the given ceremony number.  Called by update_current_points, with a lock on
+  # this object already in effect.
+  def update_current_bonus_points_since(old_ceremony, last_ceremony)
+    # TODO: Write code here.
+  end
+
+  ##
   # For auto-approval of link parent or child where the parent or child is a
   # user, we need to make the user the creator or owner of themselves.  But
   # we don't know our own record ID until after the record has been created.

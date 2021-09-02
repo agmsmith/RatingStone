@@ -349,7 +349,7 @@ class LedgerBase < ApplicationRecord
       # a full recalculation will fix it.
 
       if current_down_points < 0.0 || current_meh_points < 0.0 ||
-        current_up_points <= 0.0
+        current_up_points < 0.0
         logger.warn("#update_current_points: Negative rating points " \
           "(#{current_down_points}, #{current_meh_points}, " \
           "#{current_up_points}) in #{self}.  Bug, fraud or deleted old " \

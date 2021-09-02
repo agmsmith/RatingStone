@@ -1,9 +1,14 @@
-head	1.69;
+head	1.70;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.70
+date	2021.09.02.13.54.18;	author agmsmith;	state Exp;
+branches;
+next	1.69;
 
 1.69
 date	2021.08.25.16.50.38;	author agmsmith;	state Exp;
@@ -356,16 +361,16 @@ desc
 @
 
 
-1.69
+1.70
 log
-@Added a comment to the award ceremony record.
+@First draft of LinkBonus.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.68 2021/08/24 22:01:21 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.69 2021/08/25 16:50:38 agmsmith Exp agmsmith $</SMALL>
 
-1. Table of Contents
+0. Table of Contents
 {:toc}
 
 ## Basic Ideas
@@ -1397,6 +1402,32 @@ meta-moderator operation, and the group could get points by having a weekly
 membership fee).
 
 
+### *LinkBonus* < LinkBase
+
+This kind of link adds or removes weekly bonus points to/from a child
+LedgerUser record.  The parent object explains the bonus, usually in the form
+of LedgerContent of some sort that can be displayed to the user if they want to
+know why they got that bonus.  Normal users can't create this kind of link
+other than indirectly through their actions.
+
+The links fade away as usual and expire, so your bonus for being a good poster
+in one year will last for typically 3 years before it expires (assuming the
+creator gave the link 1 point of its own).  Similarly you'll have to reenter
+an e-mail address once the bonus for having a tested e-mail has expired.  Some
+bonuses like the e-mail one will be limited to one existing at a time.
+
+The total of all bonus points at the award ceremony is pegged between 0 and
+100.  The user also gets to spend that many points even if their net reputation
+is negative, to avoid totally silencing them.  The weekly running total of
+bonus points and their spending is stored in the User record, outside the
+ledger system, so we don't have to recalculate it every time the user wants to
+spend a point.
+
+* points integer Number of bonus points per week, added or subtracted from the
+  user's Up points at each awards ceremony.  Negative is usually some sort of
+  penalty, such as for spamming or otherwise annoying too many people.
+
+
 ## Auxiliary Classes
 
 ### *AuxLink*
@@ -1607,9 +1638,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.68 2021/08/24 22:01:21 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.69 2021/08/25 16:50:38 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.69  2021/08/25 16:50:38  agmsmith
+Added a comment to the award ceremony record.
+
 Revision 1.68  2021/08/24 22:01:21  agmsmith
 Remove checkpoint from example of database migration.
 
@@ -1825,6 +1859,25 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.69
+log
+@Added a comment to the award ceremony record.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.68 2021/08/24 22:01:21 agmsmith Exp agmsmith $</SMALL>
+d5 1
+a5 1
+1. Table of Contents
+d1037 26
+d1273 1
+a1273 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.68 2021/08/24 22:01:21 agmsmith Exp agmsmith $
+d1276 3
 @
 
 

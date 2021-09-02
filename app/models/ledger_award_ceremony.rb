@@ -23,7 +23,9 @@ class LedgerAwardCeremony < LedgerBase
   @highest_ceremony = nil
   # Class variable storing the highest ceremony number, or nil if not known
   # yet.  Computed on demand and cached here.  Will be incremented when a new
-  # award ceremony starts processing (will be in single threaded mode).
+  # award ceremony starts processing (will be in single threaded mode so other
+  # web server processes with a similar but different global variable won't
+  # exist).
 
   ##
   # Class function to calculate the cummulative accumulation of bonus points
@@ -53,7 +55,7 @@ class LedgerAwardCeremony < LedgerBase
   # be increasing sequential numbers, else fading will be excessive.
   def self.last_ceremony
     return @highest_ceremony if @highest_ceremony
-    @highest_ceremony = maximum(:ceremony_number)
+    @highest_ceremony = maximum(:ceremony_number) # Find largest in database.
     @highest_ceremony = 0 unless @highest_ceremony # If no ceremonies done yet.
     @highest_ceremony
   end
@@ -65,12 +67,12 @@ class LedgerAwardCeremony < LedgerBase
   def self.start_ceremony(comment_string = "Routine ceremony.")
     result = nil
     # Wrap this in a transaction so the ceremony gets cancelled if something
-    # goes wrong.
+    # goes wrong, also leave @highest_ceremony valid in that case.
     transaction do
       ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1,
         comment: comment_string)
       ceremony.save!
-      @highest_ceremony = nil # Current ceremony number changed, do updates.
+      @highest_ceremony = nil # Current ceremony number changed, force updates.
 
       # Do the ceremony processing.  Currently the actual fading work is done
       # incrementally on request (see #update_current_points).  May later do
