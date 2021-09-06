@@ -1,2 +1,32 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
+link_reply_3_4:
+  type: 'LinkReply'
+  creator: member_user
+  parent: lpost_three
+  child: lpost_four
+  string1: 'Makes post four a reply to post three, done by member user.'
+  approved_parent: true
+  approved_child: true
+  rating_points_spent: 1.0
+  rating_points_boost_parent: 0.2
+  rating_points_boost_child: 0.7
+  rating_direction_parent: "M"
+  rating_direction_child: "U"
+  original_ceremony: 1
+
+link_reply_3_5:
+  type: 'LinkReply'
+  creator: outsider_user
+  parent: lpost_three
+  child: lpost_five
+  string1: 'Makes post five a reply to post three, done by outsider.'
+  approved_parent: true
+  approved_child: true
+  rating_points_spent: 2.0
+  rating_points_boost_parent: 0.3
+  rating_points_boost_child: 1.6
+  rating_direction_parent: "U"
+  rating_direction_child: "D"
+  original_ceremony: 2
+

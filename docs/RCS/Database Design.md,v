@@ -1,9 +1,19 @@
-head	1.70;
+head	1.72;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.72
+date	2021.09.06.19.38.51;	author agmsmith;	state Exp;
+branches;
+next	1.71;
+
+1.71
+date	2021.09.05.19.37.35;	author agmsmith;	state Exp;
+branches;
+next	1.70;
 
 1.70
 date	2021.09.02.13.54.18;	author agmsmith;	state Exp;
@@ -361,14 +371,15 @@ desc
 @
 
 
-1.70
+1.72
 log
-@First draft of LinkBonus.
+@Renamed rating_ceremony as original_ceremony to be consistent
+with the way the LedgerBase is named.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.69 2021/08/25 16:50:38 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.71 2021/09/05 19:37:35 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -1099,25 +1110,27 @@ B, object A is a list header and B is in the list, etc).
   will be given to the child and parent objects, the split decided by the user.
   Needed so that a reply to a post will boost the rating of both the post and
   the reply (so they both have longer lifetimes).  Write-once.
-* rating_points_boost_child float The number of points used to boost the rating
-  of the child object, equals spent minus fees and minus parent boost.  Over
-  time they are considered to fade (the value in the database doesn't change,
-  we just calculate the current faded value when needed), and when enough time
-  has gone by, you can remove this link completely from the database.  If the
-  child object no longer has any points, it can be deleted too, and so on.
+* rating_points_boost_parent float The number of points to boost the rating of
+  the parent, equals spent minus fees and minus child boost.  Over time they
+  are considered to fade (the value in the database doesn't change, we just
+  calculate the current faded value when needed), and when enough time has gone
+  by, you can remove this link completely from the database.  If the attached
+  objects no longer have any points, they can be deleted too, and so on.
   We'll probably do that as part of the weekly point updates - if the total is
   near zero (under 0.01, about 3 years of fading for one point), the link or
   object can be deleted.  Write-once.
-* rating_points_boost_parent float The number of points to boost the rating of
-  the parent.  Write-once.
-* rating_direction_child char  Write-once.
+* rating_points_boost_child float The number of points used to boost the rating
+  of the child object.  Write-once.
 * rating_direction_parent char How the points from the creator are applied to
   the child and parent objects (both are usually but not always in the same
   direction), can be "U" for up, "D" for down or "M" for meh.  Write-once.
-* rating_ceremony integer The week's award ceremony number when this record was
-  created, 0 if before any ceremonies have been done.  Lets us easily calculate
-  the current faded value of the rating points.  This field can be recalculated
-  by looking at this record's created_at date and cross referencing with all the
+* rating_direction_child char  Write-once.
+* original_ceremony integer The week's award ceremony number when this record
+  was created, 0 if before any ceremonies have been done.  -1 if it hasn't been
+  set yet (in which case it will soon be set and the point boosts added to the
+  parent and child objects).  Lets us easily calculate the current faded value
+  of the rating points.  This field can be recalculated by looking at this
+  record's created_at date and cross referencing with all the
   LedgerAwardCeremony records up to the creation time.  Write-once.
 
 
@@ -1521,11 +1534,12 @@ details like this:
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
       t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApprove."
       t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApprove."
-      t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
-      t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+      t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator.  Includes transaction fees."
       t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the parent object."
-      t.string :rating_direction, default: "M", comment: "Use U for up, D for down or M for meh."
-      t.integer :rating_ceremony, default: 0, comment: "The week's award ceremony number when this record was created, 0 if before time starts."
+      t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+      t.string :rating_direction_parent, default: "M", comment: "Use U for up, D for down or M for meh.  Controls how points spent modify the parent's rating."
+      t.string :rating_direction_child, default: "M", comment: "Use U for up, D for down or M for meh.  Controls how points spent modify the child's rating."
+      t.integer :original_ceremony, default: -1, comment: "The week's award ceremony number when this record was created, 0 if before any ceremonies have been done.  -1 if it hasn't been set yet (in which case it will soon be set and the point boosts added to the parent and child objects)."
       t.timestamps
     end
 
@@ -1580,6 +1594,7 @@ class LedgerBase < ApplicationRecord
   has_many :descendants, through: :link_downs, source: :child
   has_many :link_ups, class_name: :LinkBase, foreign_key: :child_id
   has_many :ancestors, through: :link_ups, source: :parent
+  has_many :links_created, class_name: :LinkBase, foreign_key: :creator_id
 
   has_many :aux_ledger_downs, class_name: :AuxLedger, foreign_key: :parent_id
   has_many :aux_ledger_descendants, through: :aux_ledger_downs, source: :child
@@ -1638,9 +1653,15 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.69 2021/08/25 16:50:38 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.71 2021/09/05 19:37:35 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.71  2021/09/05 19:37:35  agmsmith
+Reorder so parent field documented before child field in LinkBase.
+
+Revision 1.70  2021/09/02 13:54:18  agmsmith
+First draft of LinkBonus.
+
 Revision 1.69  2021/08/25 16:50:38  agmsmith
 Added a comment to the award ceremony record.
 
@@ -1859,6 +1880,67 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.71
+log
+@Reorder so parent field documented before child field in LinkBase.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.70 2021/09/02 13:54:18 agmsmith Exp agmsmith $</SMALL>
+d749 6
+a754 4
+* rating_ceremony integer The week's award ceremony number when this record was
+  created, 0 if before any ceremonies have been done.  Lets us easily calculate
+  the current faded value of the rating points.  This field can be recalculated
+  by looking at this record's created_at date and cross referencing with all the
+d1163 1
+a1163 1
+      t.integer :rating_ceremony, default: 0, comment: "The week's award ceremony number when this record was created, 0 if before time starts."
+d1277 1
+a1277 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.70 2021/09/02 13:54:18 agmsmith Exp agmsmith $
+d1280 3
+@
+
+
+1.70
+log
+@First draft of LinkBonus.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.69 2021/08/25 16:50:38 agmsmith Exp agmsmith $</SMALL>
+d734 6
+a739 6
+* rating_points_boost_child float The number of points used to boost the rating
+  of the child object, equals spent minus fees and minus parent boost.  Over
+  time they are considered to fade (the value in the database doesn't change,
+  we just calculate the current faded value when needed), and when enough time
+  has gone by, you can remove this link completely from the database.  If the
+  child object no longer has any points, it can be deleted too, and so on.
+d743 2
+a744 3
+* rating_points_boost_parent float The number of points to boost the rating of
+  the parent.  Write-once.
+* rating_direction_child char  Write-once.
+d748 1
+d1156 2
+a1157 1
+      t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
+d1159 2
+a1160 2
+      t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the parent object."
+      t.string :rating_direction, default: "M", comment: "Use U for up, D for down or M for meh."
+d1216 1
+d1275 1
+a1275 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.69 2021/08/25 16:50:38 agmsmith Exp agmsmith $
+d1278 3
 @
 
 

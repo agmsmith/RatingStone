@@ -7,7 +7,7 @@ cd /var/www/SomeWWWName/
 pwd
 
 # Delete temporary files, usually from compiling assets/Yarn.
-rm -rv tmp/*
+rm -rvf tmp/* node_modules/.cache/*
 
 # Empty out the log files to save disk space.
 for filename in ./log/*.log

@@ -126,10 +126,11 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
     t.boolean "approved_parent", default: false
     t.boolean "approved_child", default: false
     t.float "rating_points_spent", default: 0.0
-    t.float "rating_points_boost_child", default: 0.0
     t.float "rating_points_boost_parent", default: 0.0
-    t.string "rating_direction", default: "M"
-    t.integer "rating_ceremony", default: 0
+    t.float "rating_points_boost_child", default: 0.0
+    t.string "rating_direction_parent", default: "M"
+    t.string "rating_direction_child", default: "M"
+    t.integer "original_ceremony", default: -1
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
     t.index ["child_id"], name: "index_link_bases_on_child_id"

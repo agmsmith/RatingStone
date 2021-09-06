@@ -2,7 +2,7 @@
 
 class LinkBase < ApplicationRecord
   validate :validate_link_original_versions_referenced
-  before_create :do_automatic_approvals, :set_ceremony
+  before_create :do_automatic_approvals, :distribute_rating_points
 
   belongs_to :parent, class_name: :LedgerBase, optional: false
   belongs_to :child, class_name: :LedgerBase, optional: false
@@ -74,11 +74,11 @@ class LinkBase < ApplicationRecord
   # finding out what the initial approvals were retrospectively (needed for
   # replaying history).  Though ownership may change over time, so maybe we
   # should have a time stamp as an input argument.  Returns an array, first
-  # element is the boolean for the parent (true if parent was initially
-  # approved), second for the child.  Subclasses should override this if they
-  # want non-default initial approvals.  For example, links to groups have a
-  # fancier method that checks if the user is a member of the group who is
-  # allowed to approve links.
+  # element [APPROVE_PARENT] is the boolean for the parent (true if parent was
+  # initially approved), second [APPROVE_CHILD] for the child.  Subclasses
+  # should override this if they want non-default initial approvals.  For
+  # example, links to groups have a fancier method that checks if the user is
+  # a member of the group who is allowed to approve links.
   def initial_approval_state
     # The default is to approve the end of the link where the creator of the
     # link is the owner or creator of the object at that end of the link.
@@ -174,9 +174,47 @@ class LinkBase < ApplicationRecord
   end
 
   ##
-  # Use whatever the latest ceremony number is as our starting ceremony number,
-  # so that points can be faded in the future from this starting time.
-  def set_ceremony
-    self.rating_ceremony = LedgerAwardCeremony.last_ceremony
+  # For newly created records (with approval flags now set), update it to the
+  # current ceremony number and add the rating points to the child and parent
+  # objects (subject to approval) and subtract from the creator (always).
+  def distribute_rating_points
+    # Sanity check that the point amounts add up.
+    if rating_points_spent < rating_points_boost_parent +
+    rating_points_boost_child
+      logger.warn("#distribute_rating_points: Boosts " \
+        "#{rating_points_boost_parent + rating_points_boost_child - rating_points_spent} " \
+        "more points than were spent in creating the link #{self}.  " \
+        "Perhaps it's fraud?")
+    end
+
+    # Check that the creator has enough points to spend for creating this link.
+    creator.current_up_points -= rating_points_spent
+    if creator.current_up_points < 0.0
+      logger.warn("#distribute_rating_points: Negative balance of " \
+        "#{creator.current_up_points} points after creating link " \
+        "#{self} for creator #{creator}.  " \
+        "Perhaps you should check for fraud?")
+    end
+    creator.save!
+
+    if approved_parent && rating_points_boost_parent > 0.0
+      case rating_direction_parent
+      when "D" then parent.current_down_points += rating_points_boost_parent
+      when "M" then parent.current_meh_points += rating_points_boost_parent
+      when "U" then parent.current_up_points += rating_points_boost_parent
+      end
+      parent.save!
+    end
+
+    if approved_child && rating_points_boost_child > 0.0
+      case rating_direction_child
+      when "D" then child.current_down_points += rating_points_boost_child
+      when "M" then child.current_meh_points += rating_points_boost_child
+      when "U" then child.current_up_points += rating_points_boost_child
+      end
+      child.save!
+    end
+
+    self.original_ceremony = LedgerAwardCeremony.last_ceremony
   end
 end

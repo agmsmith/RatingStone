@@ -13,3 +13,24 @@ lpost_two:
   text1: 'The second ledger post by a member, used for testing ownership.'
   has_owners: true
 
+lpost_three:
+  type: 'LedgerPost'
+  creator: member_user
+  string1: "Third Fixture Subject"
+  text1: 'The third ledger post by a member, used for testing points and reply links.'
+  original_ceremony: 0
+
+lpost_four:
+  type: 'LedgerPost'
+  creator: outsider_user
+  string1: "Fourth Fixture Subject"
+  text1: 'The fourth ledger post by an outsider, will be a reply to third, used for testing points and reply links.'
+  original_ceremony: 1
+
+lpost_five:
+  type: 'LedgerPost'
+  creator: outsider_user
+  string1: "Fifth Fixture Subject"
+  text1: 'The fifth ledger post by an outsider, will be another reply to third, used for testing points and reply links.'
+  original_ceremony: 2
+

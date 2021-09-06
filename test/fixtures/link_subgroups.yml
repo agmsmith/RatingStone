@@ -11,7 +11,8 @@ linkgroup_all_animals:
   rating_points_spent: 1.0
   rating_points_boost_child: 0.5
   rating_points_boost_parent: 0.5
-  rating_direction: "U"
+  rating_direction_parent: "U"
+  rating_direction_child: "D"
 
 linkgroup_animals_dogs:
   type: "LinkSubgroup"
@@ -24,5 +25,6 @@ linkgroup_animals_dogs:
   rating_points_spent: 1.0
   rating_points_boost_child: 0.5
   rating_points_boost_parent: 0.5
-  rating_direction: "U"
+  rating_direction_parent: "D"
+  rating_direction_child: "U"
 

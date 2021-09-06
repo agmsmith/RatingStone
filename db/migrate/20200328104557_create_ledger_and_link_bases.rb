@@ -38,11 +38,12 @@ class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
       t.boolean :deleted, default: false, comment: "True if there is a LedgerDelete record that deletes this record, otherwise false (this record is alive)."
       t.boolean :approved_parent, default: false, comment: "True if the link to the parent object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApprove."
       t.boolean :approved_child, default: false, comment: "True if the link to the child object has been approved.  False means it's pending; the link record exists but it can't be traversed (sort of like being deleted) until someone gives permission via LedgerApprove."
-      t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator."
-      t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+      t.float :rating_points_spent, default: 0.0, comment: "The number of points spent on making this link by the creator.  Includes transaction fees."
       t.float :rating_points_boost_parent, default: 0.0, comment: "The number of points used to boost the rating of the parent object."
-      t.string :rating_direction, default: "M", comment: "Use U for up, D for down or M for meh."
-      t.integer :rating_ceremony, default: 0, comment: "The week's award ceremony number when this record was created, 0 if before time starts."
+      t.float :rating_points_boost_child, default: 0.0, comment: "The number of points used to boost the rating of the child object."
+      t.string :rating_direction_parent, default: "M", comment: "Use U for up, D for down or M for meh.  Controls how points spent modify the parent's rating."
+      t.string :rating_direction_child, default: "M", comment: "Use U for up, D for down or M for meh.  Controls how points spent modify the child's rating."
+      t.integer :original_ceremony, default: -1, comment: "The week's award ceremony number when this record was created, 0 if before any ceremonies have been done.  -1 if it hasn't been set yet (in which case it will soon be set and the point boosts added to the parent and child objects)."
       t.timestamps
     end
 

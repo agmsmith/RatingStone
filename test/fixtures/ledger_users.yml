@@ -1,7 +1,8 @@
 # Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
 
 # Note that users need to own themselves for auto-approval of links that
-# mention the user at one end of the link.
+# mention the user at one end of the link.  Thus we need to use
+# ActiveRecord::FixtureSet.identify
 
 root_ledger_user_fixture:
   type: 'LedgerUser'
@@ -27,42 +28,36 @@ message_moderator_user:
 message_moderator2_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:message_moderator2_user) %>
-  creator_id: 0
   string1: 'Second moderator of messages in a group, banned'
 
 member_moderator_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:member_moderator_user) %>
-  creator_id: 0
   string1: 'Moderator of members in a group'
 
 meta_moderator_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:meta_moderator_user) %>
-  creator_id: 0
   string1: 'Moderator of opinions in a group'
 
 member_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:member_user) %>
-  creator_id: 0
   string1: 'Member of a group'
+  current_up_points: 10.0
 
 reader_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:reader_user) %>
-  creator_id: 0
   string1: 'Reader of a group'
 
 undesirable_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:undesirable_user) %>
-  creator_id: 0
   string1: 'An undesirable user who gets banned'
 
 outsider_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:outsider_user) %>
-  creator_id: 0
   string1: 'A user not in any groups'
 

@@ -266,6 +266,10 @@ class LedgerBase < ApplicationRecord
   # * Then removes faded points spent in creating other objects.
   # * Then adds on faded weekly bonus points.
   def update_current_points
+    raise RatingStoneErrors,
+      "#update_current_points: Not the original version!  #{self}" \
+      unless original_version?
+
     last_ceremony = LedgerAwardCeremony.last_ceremony
     return if current_ceremony >= last_ceremony # Current is still good.
 
@@ -293,28 +297,30 @@ class LedgerBase < ApplicationRecord
         # is to evaluate reputation points spent on this object by adding up
         # spending received from all undeleted link objects that have this
         # object as a child or as a parent or both (but that's rare).
+        # OPTIMIZE: Theoretically we should count ranges of times when the link
+        # existed in the past in an undeleted and approved state, but for
+        # simplicity we just check the current state.
 
         self.current_down_points = 0.0
         self.current_meh_points = 0.0
         self.current_up_points = 0.0
 
-        link_ups.or(link_downs).where(deleted: false,
-          approved_parent: true, approved_child: true).find_each do |a_link|
+        link_ups.or(link_downs).where(deleted: false).find_each do |a_link|
           # Iterates in batches of 1000.
-          generations = last_ceremony - a_link.rating_ceremony
+          generations = last_ceremony - a_link.original_ceremony
           if generations < 0
-            # If some future record snuck in, or last_ceremony is out of date then
-            # ignore the extra generations.  Shouldn't happen.  But we're doing up
-            # to last_ceremony so just calculate that.
-            generations = 0
+            # If some future record snuck in, or last_ceremony is out of date
+            # then ignore the data.  Shouldn't happen.
             logger.warn("#update_current_points: Ceremony number " \
-              "#{a_link.rating_ceremony} is in the future, for {a_link}, " \
-              "while updating #{self}.")
+              "#{a_link.original_ceremony} is in the future, for #{a_link}, " \
+              "while updating object #{self}.  Ignoring rating points from " \
+              "that future link (check for fraud? recalculate it?).")
+            next
           end
           fade_factor = LedgerAwardCeremony::FADE**generations
 
-          if a_link.child_id == id
-            amount = rating_points_boost_child * fade_factor
+          if a_link.child_id == id && a_link.approved_child
+            amount = a_link.rating_points_boost_child * fade_factor
             case a_link.rating_direction_child
             when "D" then self.current_down_points += amount
             when "M" then self.current_meh_points += amount
@@ -322,8 +328,8 @@ class LedgerBase < ApplicationRecord
             end
           end
 
-          if a_link.parent_id == id
-            amount = rating_points_boost_parent * fade_factor
+          if a_link.parent_id == id && a_link.approved_parent
+            amount = a_link.rating_points_boost_parent * fade_factor
             case a_link.rating_direction_parent
             when "D" then self.current_down_points += amount
             when "M" then self.current_meh_points += amount
@@ -387,8 +393,9 @@ class LedgerBase < ApplicationRecord
     # original_id to point to self.  Since we can't know the id value until
     # after the save, update original_id after the save.
     if original_id.nil?
+      ceremony = LedgerAwardCeremony.last_ceremony
       update_columns(original_id: id,
-        original_ceremony: LedgerAwardCeremony.last_ceremony)
+        original_ceremony: ceremony, current_ceremony: ceremony)
     else
       # This is a newer version of the record, update pointers back in the
       # original version.  Use a lock to protect the critical section

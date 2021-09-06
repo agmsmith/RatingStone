@@ -19,8 +19,8 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     second_lbase.save!
     link_original_second = LinkBase.new(creator_id: 0, parent: original_lbase,
       child: second_lbase, rating_points_spent: 1,
-      rating_points_boost_child: 0.5, rating_points_boost_parent: 0.25,
-      rating_direction: "U")
+      rating_points_boost_parent: 0.25, rating_points_boost_child: 0.5,
+      rating_direction_parent: "U", rating_direction_child: "D")
     link_original_second.save!
     original_lbase.reload
 
