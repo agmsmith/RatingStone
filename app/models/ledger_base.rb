@@ -237,7 +237,8 @@ class LedgerBase < ApplicationRecord
   ##
   # Callback method that marks a LedgerBase object as deleted.  Hub record is
   # the LedgerDelete instance being processed.  Check for permissions and raise
-  # an exception if the user isn't allowed to delete it.
+  # an exception if the user isn't allowed to delete it.  Returns false if
+  # nothing was changed.
   def mark_deleted(hub)
     luser = hub.creator # Already original version.
     raise RatingStoneErrors, "#mark_deleted: #{luser.latest_version} not " \
@@ -247,8 +248,13 @@ class LedgerBase < ApplicationRecord
     # original record.  Feature creep would be to delete specific versions of
     # a record; not implemented.  Subclasses can implement more if they wish,
     # such as fancier permission checks.
-    self.deleted = hub.new_marking_state
-    save!
+    if deleted != hub.new_marking_state
+      self.deleted = hub.new_marking_state
+      save!
+      true
+    else
+      false
+    end
   end
 
   ##
@@ -353,25 +359,20 @@ class LedgerBase < ApplicationRecord
       # Check for negative points, a sign of missing records if small,
       # a bug or fraud if large.  Operator should look into it; maybe forcing
       # a full recalculation will fix it.
+      #
+      # Don't try to automatically fix it; punting negative points into
+      # positive points in the opposite category can let you spend more than
+      # you have - get a big Up rating, spend it, unapprove the rating, now
+      # have negative Up points.  If we changed that into Down points and made
+      # Up zero, the user could then re-approve the big Up, and have more Up
+      # points to spend.
 
       if current_down_points < 0.0 || current_meh_points < 0.0 ||
         current_up_points < 0.0
         logger.warn("#update_current_points: Negative rating points " \
           "(#{current_down_points}, #{current_meh_points}, " \
           "#{current_up_points}) in #{self}.  Bug, fraud or deleted old " \
-          "records?  Working around it.")
-        # Fix by converting negative down into up points and vice versa.
-        if current_down_points < 0.0
-          self.current_up_points -= current_down_points
-          self.current_down_points = 0.0
-        end
-        if current_up_points < 0.0
-          self.current_down_points -= current_up_points
-          self.current_up_points = 0.0
-        end
-        if current_meh_points < 0.0
-          self.current_meh_points = 0.0
-        end
+          "records?  Leaving it as is for anti-fraud reasons.")
       end
 
       self.current_ceremony = last_ceremony

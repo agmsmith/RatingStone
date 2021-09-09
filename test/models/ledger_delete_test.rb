@@ -137,7 +137,9 @@ class LedgerDeleteTest < ActiveSupport::TestCase
   # Test permission to delete for special kinds of links.
 
   test "delete permission for special links" do
-    # A normal one without extra people, though parent is a group.
+    # Link made by group_owner_user, though parent is a group created by
+    # group_creator_user.  We don't want approval permissions to leak through
+    # to deleting links, at least not content related links.
     link = link_subgroups(:linkgroup_all_animals)
     assert_raise(RatingStoneErrors) do
       LedgerDelete.mark_records([link], true, ledger_users(:group_creator_user))
@@ -147,13 +149,13 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     luser = link.creator.append_version # Testing with a later version id.
     luser.name = "Later #{link.creator.name}"
     luser.save!
-    assert_equal(LedgerDelete.mark_records([link], true, luser).class.name,
-      "LedgerDelete")
+    assert_equal("LedgerDelete",
+      LedgerDelete.mark_records([link], true, luser).class.name)
     link.reload
     assert(link.deleted)
 
-    # Linking a post to a group lets group moderators and the post owner also
-    # delete the link, as well as the usual link creator.
+    # Linking a post to a group (LinkGroupContent) lets group moderators and
+    # the post owner also delete the link, as well as the usual link creator.
     link = link_group_contents(:group_dogs_content_post2)
     assert_raise(RatingStoneErrors) do
       LedgerDelete.mark_records([link], true, ledger_users(:undesirable_user))

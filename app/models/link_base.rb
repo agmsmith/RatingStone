@@ -40,8 +40,8 @@ class LinkBase < ApplicationRecord
   # Has to be the creator of the object.  You can't have owners of a link,
   # though owners do get involved for approvals of link ends, but that's a
   # separate concept.  Returns true if they have permission.  Subclasses may
-  # override this to add more people.  The policy is that if someone needs to
-  # approve a link, they should also be able to delete it.
+  # override this to add more people (such as group message moderators being
+  # able to delete or change links attaching posts to their group).
   def creator_owner?(luser)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{luser.class.name} " \
@@ -82,7 +82,8 @@ class LinkBase < ApplicationRecord
   def initial_approval_state
     # The default is to approve the end of the link where the creator of the
     # link is the owner or creator of the object at that end of the link.
-    [parent.creator_owner?(creator), child.creator_owner?(creator)]
+    [permission_to_change_parent_approval(creator),
+      permission_to_change_child_approval(creator)]
   end
 
   ##
@@ -114,7 +115,8 @@ class LinkBase < ApplicationRecord
   ##
   # Callback method that marks a LinkBase object as approved.  Hub record is
   # the LedgerApprove instance being processed.  Check for permissions and
-  # raise an exception if the user isn't allowed to approve it.
+  # raise an exception if the user isn't allowed to approve it.  Returns
+  # false if nothing was changed.
   def mark_approved(hub)
     luser = hub.creator # Already original version.
     parent_change_permitted = permission_to_change_parent_approval(luser)
@@ -123,24 +125,104 @@ class LinkBase < ApplicationRecord
       "doesn't have permission to change any approvals in record #{self}." \
       unless parent_change_permitted || child_change_permitted
 
-    self.approved_parent = hub.new_marking_state if parent_change_permitted
-    self.approved_child = hub.new_marking_state if child_change_permitted
-    save!
+    generations = LedgerAwardCeremony.last_ceremony - original_ceremony
+    fade_factor = if generations >= 0
+      LedgerAwardCeremony::FADE**generations
+    else # Link is in the future, ignore its points.
+      0.0
+    end
+    change_made = false
+
+    if parent_change_permitted && approved_parent != hub.new_marking_state
+      self.approved_parent = hub.new_marking_state
+      unless deleted
+        amount = (approved_parent ? 1.0 : -1.0) *
+          rating_points_boost_parent * fade_factor
+        parent.with_lock do
+          case rating_direction_parent
+          when "D" then parent.current_down_points += amount
+          when "M" then parent.current_meh_points += amount
+          when "U" then parent.current_up_points += amount
+          end
+          parent.save!
+        end
+      end
+      change_made = true
+    end
+
+    if child_change_permitted && approved_child != hub.new_marking_state
+      self.approved_child = hub.new_marking_state
+      unless deleted
+        amount = (approved_child ? 1.0 : -1.0) *
+          rating_points_boost_child * fade_factor
+        child.with_lock do
+          case rating_direction_child
+          when "D" then child.current_down_points += amount
+          when "M" then child.current_meh_points += amount
+          when "U" then child.current_up_points += amount
+          end
+          child.save!
+        end
+      end
+      change_made = true
+    end
+
+    if change_made
+      save!
+      true
+    else
+      false
+    end
   end
 
   ##
   # Callback method that marks a LinkBase object as deleted.  Hub record is
   # the LedgerDelete instance being processed.  Check for permissions and raise
-  # an exception if the user isn't allowed to delete it.
+  # an exception if the user isn't allowed to delete it (creator and users who
+  # need to approve ends of the link are all allowed to delete).  Return false
+  # if nothing was changed.
   def mark_deleted(hub)
     luser = hub.creator # Already original version.
     raise RatingStoneErrors, "#mark_deleted: #{luser.latest_version} not " \
       "allowed to delete record #{self}." unless creator_owner?(luser)
 
-    # All we usually have to do is to set/clear the deleted flag.  Subclasses
-    # can override this method if they wish, to do fancier permission checks.
+    return false if deleted == hub.new_marking_state
+
     self.deleted = hub.new_marking_state
+
+    generations = LedgerAwardCeremony.last_ceremony - original_ceremony
+    fade_factor = if generations >= 0
+      LedgerAwardCeremony::FADE**generations
+    else # Link is in the future, ignore its points.
+      0.0
+    end
+
+    if approved_parent
+      amount = (deleted ? -1.0 : 1.0) * rating_points_boost_parent * fade_factor
+      parent.with_lock do
+        case rating_direction_parent
+        when "D" then parent.current_down_points += amount
+        when "M" then parent.current_meh_points += amount
+        when "U" then parent.current_up_points += amount
+        end
+        parent.save!
+      end
+    end
+
+    if approved_child
+      amount = (deleted ? -1.0 : 1.0) * rating_points_boost_child * fade_factor
+      child.with_lock do
+        case rating_direction_child
+        when "D" then child.current_down_points += amount
+        when "M" then child.current_meh_points += amount
+        when "U" then child.current_up_points += amount
+        end
+        child.save!
+      end
+    end
+
     save!
+    true
   end
 
   private

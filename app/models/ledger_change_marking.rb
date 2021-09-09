@@ -25,7 +25,9 @@ class LedgerChangeMarking < LedgerBase
   # instances) being marked, with an argument specifying the hub record
   # (usually LedgerDelete or LedgerApprove) which implicitly specifies
   # the user doing the delete (its creator) and the new state (delete vs
-  # undelete, approve vs unapprove in the new state flag).
+  # undelete, approve vs unapprove in the new state flag).  The method
+  # returns true if it did something, false if it did nothing, raises an
+  # exception if something goes wrong.
   def self.marking_method_name
     :mark_not_implemented_for_base_class_ledger_change_marking
   end
@@ -86,17 +88,34 @@ class LedgerChangeMarking < LedgerBase
           logger.error("#mark_records Unknown kind of record: #{a_record}.")
         end
       end
+
+      changed_something = false
       ledger_ids.each do |an_id|
         a_record = LedgerBase.find(an_id)
-        a_record.send(marking_method_symbol, hub_record)
-        AuxLedger.create!(parent_id: hub_record.id, child_id: an_id)
+        a_record.with_lock do
+          if a_record.send(marking_method_symbol, hub_record)
+            changed_something = true
+            AuxLedger.create!(parent_id: hub_record.id, child_id: an_id)
+          end
+        end
       end
       link_ids.each do |an_id|
         a_record = LinkBase.find(an_id)
-        a_record.send(marking_method_symbol, hub_record)
-        AuxLink.create!(parent_id: hub_record.id, child_id: an_id)
+        a_record.with_lock do
+          if a_record.send(marking_method_symbol, hub_record)
+            changed_something = true
+            AuxLink.create!(parent_id: hub_record.id, child_id: an_id)
+          end
+        end
       end
-      returned_record = hub_record # Successfully got to the end!
+      if changed_something
+        returned_record = hub_record
+      else
+        raise ActiveRecord::Rollback,
+          "Nothing was changed in #{self.class.name} changing marking " \
+          "#{marking_method_symbol} requested by #{luser}, aborting the " \
+          "useless transaction."
+      end
     end # End transaction.
     returned_record
   end

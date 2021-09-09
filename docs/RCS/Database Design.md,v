@@ -1,9 +1,19 @@
-head	1.72;
+head	1.74;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.74
+date	2021.09.09.19.59.43;	author agmsmith;	state Exp;
+branches;
+next	1.73;
+
+1.73
+date	2021.09.09.01.56.42;	author agmsmith;	state Exp;
+branches;
+next	1.72;
 
 1.72
 date	2021.09.06.19.38.51;	author agmsmith;	state Exp;
@@ -371,15 +381,14 @@ desc
 @
 
 
-1.72
+1.74
 log
-@Renamed rating_ceremony as original_ceremony to be consistent
-with the way the LedgerBase is named.
+@LinkReply and LinkGroupContent can be deleted by users with just approval permission.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.71 2021/09/05 19:37:35 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.73 2021/09/09 01:56:42 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -851,9 +860,10 @@ collecting LedgerChangeMarking records.
 Deletes the specified records, can be LedgerBase and/or LinkBase ones.  If the
 new_marking_state flag is false, it undeletes.
 
-You usually need to be the creator or owner of the object to change the deleted
-state.  Though for links, if you need to be asked for approval, you can delete
-the link too.
+You usually need to be the creator or owner of the link to change the deleted
+state.  I was thinking that people who can approve the link ends could also
+delete it, but that then means that someone who has been banned from a group
+could delete their banning link.  May need to revisit this.
 
 
 #### *LedgerApprove* < LedgerChangeMarking
@@ -862,8 +872,7 @@ Both child and parent approvals of the specified LinkBase records are
 potentially changed when you make a LedgerApprove request.  The actual changes
 are determined by whether you have permission to change those approvals
 (relative security role used).  To more strongly reject permission, delete the
-link instead (if you need to be asked for approval, you can delete
-it too).
+link instead (if you are allowed to).
 
 
 ### *LedgerUser* < LedgerBase
@@ -1157,7 +1166,10 @@ could be a way of letting multiple people control a person or company account.
 ### *LinkReply* < LinkBase
 
 The child is a reply to the parent.  Usually both objects are LedgerPost, or at
-least LedgerContent.
+least LedgerContent.  Besides the usual creator, the users who are allowed to
+approve either end of the link are also allowed to delete the link.  So if
+someone attaches their post as a reply to your post, you can break that
+connection.
 
 
 ### *LinkMedia* < LinkBase
@@ -1225,7 +1237,9 @@ Unlike most Links where only the owner or creator of the linked to thing can
 change the approval, group message moderators can change the approval of the
 parent (group) end of this link (since it's trying to connect to their group).
 As well, they can also delete this link (to get it out of their pending things
-to moderate list).
+to moderate list).  Similarly the users who can change the approval of the
+child end of the link (usually the creator of the post) are allowed to delete
+the link.
 
 * display_priority integer Importance of showing this object.  Higher numbers
   for content which is more likely to be an original post, the start of a chain
@@ -1653,9 +1667,17 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.71 2021/09/05 19:37:35 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.73 2021/09/09 01:56:42 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.73  2021/09/09 01:56:42  agmsmith
+Deleting links needs to be more strict, people who can do approval
+shouldn't necessarily be able to delete.
+
+Revision 1.72  2021/09/06 19:38:51  agmsmith
+Renamed rating_ceremony as original_ceremony to be consistent
+with the way the LedgerBase is named.
+
 Revision 1.71  2021/09/05 19:37:35  agmsmith
 Reorder so parent field documented before child field in LinkBase.
 
@@ -1880,6 +1902,53 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.73
+log
+@Deleting links needs to be more strict, people who can do approval
+shouldn't necessarily be able to delete.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.72 2021/09/06 19:38:51 agmsmith Exp agmsmith $</SMALL>
+d781 4
+a784 1
+least LedgerContent.
+d852 3
+a854 1
+to moderate list).
+d1282 1
+a1282 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.72 2021/09/06 19:38:51 agmsmith Exp agmsmith $
+d1285 4
+@
+
+
+1.72
+log
+@Renamed rating_ceremony as original_ceremony to be consistent
+with the way the LedgerBase is named.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.71 2021/09/05 19:37:35 agmsmith Exp agmsmith $</SMALL>
+d475 4
+a478 3
+You usually need to be the creator or owner of the object to change the deleted
+state.  Though for links, if you need to be asked for approval, you can delete
+the link too.
+d487 1
+a487 2
+link instead (if you need to be asked for approval, you can delete
+it too).
+d1277 1
+a1277 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.71 2021/09/05 19:37:35 agmsmith Exp agmsmith $
+d1280 4
 @
 
 

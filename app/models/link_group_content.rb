@@ -12,14 +12,13 @@ class LinkGroupContent < LinkBase
   before_create :set_default_description
 
   ##
-  # Besides the creator of the link, the message moderator in the linked to
-  # group can also delete this link (rather than having it hang around as
-  # a post waiting for moderation).  And the linked-to content owner can
-  # also delete the link.
+  # Besides the creator of the link, the creator of the content, and the
+  # message moderator role in the linked to group can also delete this link
+  # (rather than having it hang around as a post waiting for moderation).
   def creator_owner?(luser)
     return true if super
-    return true if parent.role_test?(luser, LinkRole::MESSAGE_MODERATOR)
-    child.creator_owner?(luser)
+    return true if permission_to_change_child_approval(luser)
+    permission_to_change_parent_approval(luser) # More expensive method last.
   end
 
   ##
