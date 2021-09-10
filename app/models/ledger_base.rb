@@ -353,7 +353,6 @@ class LedgerBase < ApplicationRecord
 
         # And add accumulated faded weekly allowance points for all time.
         update_current_bonus_points_since(original_ceremony, last_ceremony)
-
       end # full recalculation
 
       # Check for negative points, a sign of missing records if small,
@@ -425,8 +424,9 @@ class LedgerBase < ApplicationRecord
   ##
   # Adds the effect of other kinds of bonus points on the current points, since
   # the given ceremony number.  Called by update_current_points, with a lock on
-  # this object already in effect.  Subclasses with bonus points should
-  # override this method; usually only LedgerUser objects do that.
+  # this object already in effect, will save the record later too.  Subclasses
+  # with bonus points should override this method; usually only LedgerUser
+  # objects do that.
   def update_current_bonus_points_since(old_ceremony, last_ceremony)
   end
 

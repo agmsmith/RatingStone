@@ -36,22 +36,18 @@ class LinkBase < ApplicationRecord
   end
 
   ##
-  # See if the given user is allowed to delete and otherwise modify this record.
-  # Has to be the creator of the object.  You can't have owners of a link,
-  # though owners do get involved for approvals of link ends, but that's a
-  # separate concept.  Returns true if they have permission.  Subclasses may
-  # override this to add more people (such as group message moderators being
-  # able to delete or change links attaching posts to their group).
+  # See if the given user is allowed to delete this link.  Default has to be
+  # the creator of the record.  You can't have owners of a link, though owners
+  # do get involved for approvals of link ends, but that's a separate concept.
+  # Returns true if they have permission.  Subclasses may override this to add
+  # more people (such as group message moderators being able to delete links
+  # attaching posts to their group).
   def creator_owner?(luser)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{luser.class.name} " \
       "object to test against.  Self: #{self}, supposed user: #{luser}" \
       unless luser.is_a?(LedgerUser)
     creator_id == luser.original_version_id
-  end
-
-  # TODO: Implement points apply for links.
-  def legitimate_child
   end
 
   ##
@@ -83,7 +79,7 @@ class LinkBase < ApplicationRecord
     # The default is to approve the end of the link where the creator of the
     # link is the owner or creator of the object at that end of the link.
     [permission_to_change_parent_approval(creator),
-      permission_to_change_child_approval(creator)]
+     permission_to_change_child_approval(creator),]
   end
 
   ##

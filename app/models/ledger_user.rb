@@ -68,9 +68,21 @@ class LedgerUser < LedgerBase
   ##
   # Adds the effect of other kinds of bonus points on the current points, since
   # the given ceremony number.  Called by update_current_points, with a lock on
-  # this object already in effect.
+  # this object already in effect, will save it too later on.
   def update_current_bonus_points_since(old_ceremony, last_ceremony)
-    # TODO: Write code here.
+    LinkBonus.where(approved_parent: true, approved_child: true,
+      deleted: false, bonus_user_id: original_version_id).each do |a_bonus|
+      start_ceremony = if old_ceremony < a_bonus.original_ceremony
+        a_bonus.original_ceremony
+      else
+        old_ceremony
+      end
+      generations = last_ceremony - start_ceremony
+      # Note that zero or negative generations means no bonus, so you don't get
+      # the bonus until the next ceremony after the bonus is created.
+      self.current_up_points += a_bonus.bonus_points *
+        LedgerAwardCeremony.accumulated_bonus(generations)
+    end
   end
 
   ##
