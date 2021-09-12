@@ -52,16 +52,21 @@ class LedgerAwardCeremony < LedgerBase
   ##
   # Class function to find the number of the last ceremony done.  Zero if no
   # ceremonies done yet, else number of highest ceremony.  They're assumed to
-  # be increasing sequential numbers, else fading will be excessive.  The
-  # option to clear the cache is used when testing since the test framework
-  # sometimes leaves the @highest_ceremony unchanged.  Normally you don't
-  # need to do that since the ceremony is performed in single tasking mode
-  # when the web server isn't running.
-  def self.last_ceremony(reset_cached_ceremony = false)
-    return @highest_ceremony if @highest_ceremony && !reset_cached_ceremony
+  # be increasing sequential numbers, else fading will be excessive.
+  def self.last_ceremony
+    return @highest_ceremony if @highest_ceremony
     @highest_ceremony = maximum(:ceremony_number) # Find largest in database.
     @highest_ceremony = 0 unless @highest_ceremony # If no ceremonies done yet.
     @highest_ceremony
+  end
+
+  ##
+  # Class function to clear the last ceremony cache.  Only used when testing
+  # since the test framework sometimes leaves the @highest_ceremony unchanged.
+  # Other than that, you don't need to call this since the ceremony is
+  # performed in single tasking mode when the web server isn't running.
+  def self.clear_ceremony_cache
+    @highest_ceremony = nil
   end
 
   ##

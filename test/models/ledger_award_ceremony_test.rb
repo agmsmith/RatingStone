@@ -4,12 +4,12 @@ require "test_helper"
 
 class LedgerAwardCeremonyTest < ActiveSupport::TestCase
   test "Fading after Ceremony" do
-    lpost = ledger_posts(:lpost_one)
-
     # See that the points of a Ledger object fade after an awards ceremony.
-    # Have to clear the cached ceremony number (the "true" argument) since the
-    # test framework sometimes leaves that global variable with an old value.
-    ceremony_number = LedgerAwardCeremony.last_ceremony(true)
+    # Have to clear the cached ceremony number since the test framework
+    # sometimes leaves that global variable with an old value.
+    LedgerAwardCeremony.clear_ceremony_cache
+    ceremony_number = LedgerAwardCeremony.last_ceremony
+    lpost = ledger_posts(:lpost_one)
     lpost.update_current_points
     lpost.current_up_points = 3.3
     lpost.current_meh_points = 2.2
@@ -27,14 +27,15 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
   end
 
   test "Forced Recalculation of Rating Points" do
+    LedgerAwardCeremony.clear_ceremony_cache
+    assert_equal(0, LedgerAwardCeremony.last_ceremony,
+      "Should be no ceremonies in the database yet.")
     # Post 3 has two reply links giving it (up, meh, down):
     # Post four reply at Ceremony 1: (0, 0.2, 0)
     # Post five reply at Ceremony 2: (0.3, 0, 0)
     # Post 4 is a reply, has at ceremony 1: (0.7, 0, 0)
     # Post 5 is a reply, has at ceremony 2: (0, 0, 1.6)
     lpost3 = ledger_posts(:lpost_three)
-    assert_equal(0, LedgerAwardCeremony.last_ceremony(true),
-      "Should be no ceremonies in the database yet.")
     assert_equal(0, lpost3.original_ceremony)
     assert_equal(-1, lpost3.current_ceremony)
     lpost3.update_current_points
