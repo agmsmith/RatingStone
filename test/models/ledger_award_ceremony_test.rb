@@ -7,7 +7,9 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost = ledger_posts(:lpost_one)
 
     # See that the points of a Ledger object fade after an awards ceremony.
-    ceremony_number = LedgerAwardCeremony.last_ceremony
+    # Have to clear the cached ceremony number (the "true" argument) since the
+    # test framework sometimes leaves that global variable with an old value.
+    ceremony_number = LedgerAwardCeremony.last_ceremony(true)
     lpost.update_current_points
     lpost.current_up_points = 3.3
     lpost.current_meh_points = 2.2
@@ -31,7 +33,8 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     # Post 4 is a reply, has at ceremony 1: (0.7, 0, 0)
     # Post 5 is a reply, has at ceremony 2: (0, 0, 1.6)
     lpost3 = ledger_posts(:lpost_three)
-    assert_equal(0, LedgerAwardCeremony.last_ceremony) # No ceremonies yet.
+    assert_equal(0, LedgerAwardCeremony.last_ceremony(true),
+      "Should be no ceremonies in the database yet.")
     assert_equal(0, lpost3.original_ceremony)
     assert_equal(-1, lpost3.current_ceremony)
     lpost3.update_current_points
