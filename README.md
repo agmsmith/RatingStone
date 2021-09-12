@@ -71,3 +71,6 @@ $ rails server
 
 For more information, see the
 [*Ruby on Rails Tutorial* book](https://www.railstutorial.org/book).
+
+![One of many Rating Stones](/app/assets/images/RatingStoneIcon_00000_16x9.jpg)
+
