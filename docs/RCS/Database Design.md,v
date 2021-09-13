@@ -1,9 +1,19 @@
-head	1.74;
+head	1.76;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.76
+date	2021.09.12.21.49.00;	author agmsmith;	state Exp;
+branches;
+next	1.75;
+
+1.75
+date	2021.09.12.21.32.16;	author agmsmith;	state Exp;
+branches;
+next	1.74;
 
 1.74
 date	2021.09.09.19.59.43;	author agmsmith;	state Exp;
@@ -381,14 +391,14 @@ desc
 @
 
 
-1.74
+1.76
 log
-@LinkReply and LinkGroupContent can be deleted by users with just approval permission.
+@Added LinkBonusUnique class rather than adding a boolean to LinkBonus.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.73 2021/09/09 01:56:42 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.75 2021/09/12 21:32:16 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -1040,12 +1050,13 @@ The LedgerAwardCeremony class has functions for keeping track of the latest
 award ceremony and starting a new one (invoked by a weekly cron script on the
 web server or manually).
 
-Bonuses are kept track of by linking the user to various categories, possibly
-multiple times.  There's a category for +1 weekly entitlement point for a good
-year of posting, another one for -1 weekly point of annual inactivity, or no
-bonus for just doing a minor amount of posting during the year.  Those bonus
-links are made during the award ceremony on the anniversary of a user's account
-activation.
+Bonuses are kept track of by linking the user to various things (category or a
+post explaining the bonus), possibly multiple times for some or singletons for
+others (like e-mail activation).  There's a category for +1 weekly entitlement
+point for a good year of posting, another one for -1 weekly point of annual
+inactivity, or no bonus for just doing a minor amount of posting during the
+year.  Those bonus links are made during the award ceremony on the anniversary
+of a user's account activation.
 
 
 ### *LedgerBirthday* < LedgerMedia
@@ -1434,14 +1445,15 @@ membership fee).
 This kind of link adds or removes weekly bonus points to/from a child
 LedgerUser record.  The parent object explains the bonus, usually in the form
 of LedgerContent of some sort that can be displayed to the user if they want to
-know why they got that bonus.  Normal users can't create this kind of link
-other than indirectly through their actions.
+know why they got that bonus, or perhaps a Category object (have a tree of
+bonuses).  Normal users can't create this kind of link other than indirectly
+through their actions.
 
 The links fade away as usual and expire, so your bonus for being a good poster
 in one year will last for typically 3 years before it expires (assuming the
 creator gave the link 1 point of its own).  Similarly you'll have to reenter
 an e-mail address once the bonus for having a tested e-mail has expired.  Some
-bonuses like the e-mail one will be limited to one existing at a time.
+bonuses like the e-mail one will be limited to only one existing at a time.
 
 The total of all bonus points at the award ceremony is pegged between 0 and
 100.  The user also gets to spend that many points even if their net reputation
@@ -1453,6 +1465,13 @@ spend a point.
 * points integer Number of bonus points per week, added or subtracted from the
   user's Up points at each awards ceremony.  Negative is usually some sort of
   penalty, such as for spamming or otherwise annoying too many people.
+
+#### *LinkBonusUnique* < LinkBonus
+
+A subclass for bonuses which are unique.  There can only be one of these at a
+time linked to the same parent object.  For example, the activated e-mail
+bonus has to be unique, otherwise the user will just keep on activating more
+e-mail addresses to get more of a bonus.
 
 
 ## Auxiliary Classes
@@ -1667,9 +1686,15 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.73 2021/09/09 01:56:42 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.75 2021/09/12 21:32:16 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.75  2021/09/12 21:32:16  agmsmith
+More LinkBonus details.
+
+Revision 1.74  2021/09/09 19:59:43  agmsmith
+LinkReply and LinkGroupContent can be deleted by users with just approval permission.
+
 Revision 1.73  2021/09/09 01:56:42  agmsmith
 Deleting links needs to be more strict, people who can do approval
 shouldn't necessarily be able to delete.
@@ -1902,6 +1927,56 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.75
+log
+@More LinkBonus details.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.74 2021/09/09 19:59:43 agmsmith Exp agmsmith $</SMALL>
+d1070 7
+a1076 2
+* unique boolean  True if there should only be one LinkBonus to the same parent
+  object at a time.  False for multiple LinkBonus links to that parent allowed.
+d1291 1
+a1291 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.74 2021/09/09 19:59:43 agmsmith Exp agmsmith $
+d1294 3
+@
+
+
+1.74
+log
+@LinkReply and LinkGroupContent can be deleted by users with just approval permission.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.73 2021/09/09 01:56:42 agmsmith Exp agmsmith $</SMALL>
+d655 7
+a661 6
+Bonuses are kept track of by linking the user to various categories, possibly
+multiple times.  There's a category for +1 weekly entitlement point for a good
+year of posting, another one for -1 weekly point of annual inactivity, or no
+bonus for just doing a minor amount of posting during the year.  Those bonus
+links are made during the award ceremony on the anniversary of a user's account
+activation.
+d1050 3
+a1052 2
+know why they got that bonus.  Normal users can't create this kind of link
+other than indirectly through their actions.
+d1058 1
+a1058 1
+bonuses like the e-mail one will be limited to one existing at a time.
+d1070 2
+d1286 1
+a1286 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.73 2021/09/09 01:56:42 agmsmith Exp agmsmith $
+d1289 3
 @
 
 

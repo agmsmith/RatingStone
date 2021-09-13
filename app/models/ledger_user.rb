@@ -70,6 +70,10 @@ class LedgerUser < LedgerBase
   # the given ceremony number.  Called by update_current_points, with a lock on
   # this object already in effect, will save it too later on.
   def update_current_bonus_points_since(old_ceremony, last_ceremony)
+    # Note that LinkBonus implies LinkBonusUnique too, but only if the single
+    # table inhertance system knows that the LinkBonusUnique exists, thus the
+    # dummy reference.  The .class afterwards is to pacify Rubocop.
+    LinkBonusUnique.class
     LinkBonus.where(approved_parent: true, approved_child: true,
       deleted: false, bonus_user_id: original_version_id).each do |a_bonus|
       start_ceremony = if old_ceremony < a_bonus.original_ceremony

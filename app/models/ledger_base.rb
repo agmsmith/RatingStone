@@ -279,7 +279,7 @@ class LedgerBase < ApplicationRecord
     last_ceremony = LedgerAwardCeremony.last_ceremony
     return if current_ceremony >= last_ceremony # Current is still good.
 
-    # Out of date, if just fading is needed it's fairly simple.
+    # Out of date, if just fading is needed then it's fairly simple.
 
     with_lock do
       # Will be updating our current values so it is a critical section.
@@ -305,7 +305,8 @@ class LedgerBase < ApplicationRecord
         # object as a child or as a parent or both (but that's rare).
         # OPTIMIZE: Theoretically we should count ranges of times when the link
         # existed in the past in an undeleted and approved state, but for
-        # simplicity we just check the current state.
+        # simplicity we just check the current state.  This could lead to
+        # inaccuracies.
 
         self.current_down_points = 0.0
         self.current_meh_points = 0.0
@@ -377,6 +378,7 @@ class LedgerBase < ApplicationRecord
       self.current_ceremony = last_ceremony
       save!
     end # with_lock
+    self
   end
 
   private

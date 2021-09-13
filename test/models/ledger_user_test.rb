@@ -74,4 +74,74 @@ class LedgerUserTest < ActiveSupport::TestCase
     luser = user.ledger_user
     assert_equal(new_email, luser.email)
   end
+
+  test "Weekly bonus points should accumulate with fading" do
+    LedgerAwardCeremony.clear_ceremony_cache # Avoid a test framework problem.
+    user = User.create!(
+      name: "Bonus User",
+      email: "SomeEMail@SomeDomain.com",
+      password: "SomePassword",
+      password_confirmation: "SomePassword",
+      activated: true,
+      activated_at: Time.zone.now
+    )
+    luser = user.ledger_user
+    LedgerAwardCeremony.start_ceremony
+
+    # Set up a weekly bonus.  Shouldn't get it until the following
+    # ceremony happens.
+    lbonus_explanation = LedgerPost.create!(creator_id: 0,
+      subject: "Weekly eMail Bonus", content: "You get **10 Up** points " \
+      "each week for having a validated e-mail address!")
+    lbonus_link = LinkBonus.create(creator_id: 0,
+      bonus_explanation: lbonus_explanation, bonus_user: luser,
+      bonus_points: 10)
+    lbonus_link.approved_child = true
+    lbonus_link.save!
+    assert(lbonus_link.approved_parent && lbonus_link.approved_child &&
+      !lbonus_link.deleted, "Bonus link should be fully approved.")
+
+    # Check that the weekly bonus appears in the next ceremony and both
+    # accumulates and fades in the ones after that.
+    luser.update_current_points
+    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    LedgerAwardCeremony.start_ceremony
+    luser.update_current_points
+    assert_in_delta(10.0, luser.current_up_points, 0.0000001)
+    LedgerAwardCeremony.start_ceremony
+    luser.update_current_points
+    assert_in_delta(10.0 + 10.0 * 0.97, luser.current_up_points, 0.0000001)
+    # See if a full recalculation gives the same number.
+    luser.current_up_points = -2
+    luser.current_ceremony = -1
+    luser.save!
+    luser.update_current_points
+    assert_in_delta(10.0 + 10.0 * 0.97, luser.current_up_points, 0.0000001)
+  end
+
+  test "Shouldn't be able to add a second unique bonus" do
+    luser = LedgerUser.create!(name: "Bonus User",
+      email: "SomeEMail@SomeDomain.com", creator_id: 0)
+    lpost = ledger_posts(:lpost_one)
+    lbonus_link = LinkBonusUnique.create(creator_id: 0,
+      bonus_explanation: lpost, bonus_user: luser, bonus_points: 1)
+    lbonus_link.approved_child = true
+    lbonus_link.save!
+    LedgerAwardCeremony.start_ceremony
+    luser.update_current_points
+    assert_in_delta(1.0, luser.current_up_points, 0.0000001)
+
+    # Make the second link.
+    lbonus_link = LinkBonusUnique.create(creator_id: 0,
+      bonus_explanation: lpost, bonus_user: luser, bonus_points: 2)
+    assert_equal(1, lbonus_link.errors.size,
+      "Should fail to save a second unique bonus.")
+    assert_equal("This LinkBonusUnique isn't unique - " \
+      "there are other LinkBonus records with the same parent of " \
+      "#{lpost}.",
+      lbonus_link.errors[:validate_uniqueness].first)
+    LedgerAwardCeremony.start_ceremony
+    luser.update_current_points
+    assert_in_delta(1.0 + 1.0 * 0.97, luser.current_up_points, 0.0000001)
+  end
 end

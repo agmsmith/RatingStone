@@ -96,6 +96,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
   test "Incremental Recalculation of Rating Points" do
     # Make a post, and add reply posts over time, with points spent to link
     # in the replies.  Also do approvals, and test deletion effects on points.
+    LedgerAwardCeremony.clear_ceremony_cache
     LedgerAwardCeremony.start_ceremony
     assert_equal(1, LedgerAwardCeremony.last_ceremony,
       "Should just have one Ceremony in the test database at this point.")

@@ -95,7 +95,7 @@ class LedgerAwardCeremony < LedgerBase
         "successfully after #{ceremony.completed_at - ceremony.created_at} " \
         "seconds.")
     end
-    @highest_ceremony = nil if result.nil? # Oops - revert ceremony cache.
+    clear_ceremony_cache if result.nil?
     result
   end
 
