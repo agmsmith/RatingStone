@@ -16,4 +16,13 @@ class LinkBonus < LinkBase
       "#{original_ceremony}.  Explanation of bonus is in " \
       "#{parent.to_s.truncate(80)}."
   end
+
+  ##
+  # Pre-approve the child by default.  Since this is a system created link,
+  # no need for a separate approval step.
+  def initial_approval_state
+    approvals = super
+    approvals[APPROVE_CHILD] = true
+    approvals
+  end
 end

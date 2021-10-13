@@ -93,11 +93,9 @@ class LedgerUserTest < ActiveSupport::TestCase
     lbonus_explanation = LedgerPost.create!(creator_id: 0,
       subject: "Weekly eMail Bonus", content: "You get **10 Up** points " \
       "each week for having a validated e-mail address!")
-    lbonus_link = LinkBonus.create(creator_id: 0,
+    lbonus_link = LinkBonus.create!(creator_id: 0,
       bonus_explanation: lbonus_explanation, bonus_user: luser,
       bonus_points: 10)
-    lbonus_link.approved_child = true
-    lbonus_link.save!
     assert(lbonus_link.approved_parent && lbonus_link.approved_child &&
       !lbonus_link.deleted, "Bonus link should be fully approved.")
 
@@ -123,25 +121,37 @@ class LedgerUserTest < ActiveSupport::TestCase
     luser = LedgerUser.create!(name: "Bonus User",
       email: "SomeEMail@SomeDomain.com", creator_id: 0)
     lpost = ledger_posts(:lpost_one)
-    lbonus_link = LinkBonusUnique.create(creator_id: 0,
+    lbonus_link = LinkBonusUnique.create!(creator_id: 0,
       bonus_explanation: lpost, bonus_user: luser, bonus_points: 1)
-    lbonus_link.approved_child = true
-    lbonus_link.save!
+    assert(lbonus_link.approved_parent && lbonus_link.approved_child &&
+      !lbonus_link.deleted, "Unique Bonus link should be fully approved.")
     LedgerAwardCeremony.start_ceremony
     luser.update_current_points
     assert_in_delta(1.0, luser.current_up_points, 0.0000001)
 
     # Make the second link.
-    lbonus_link = LinkBonusUnique.create(creator_id: 0,
+    lbonus_second_link = LinkBonusUnique.create(creator_id: 0,
       bonus_explanation: lpost, bonus_user: luser, bonus_points: 2)
-    assert_equal(1, lbonus_link.errors.size,
+    assert_equal(1, lbonus_second_link.errors.size,
       "Should fail to save a second unique bonus.")
     assert_equal("This LinkBonusUnique isn't unique - " \
       "there are other LinkBonus records with the same parent of " \
       "#{lpost}.",
-      lbonus_link.errors[:validate_uniqueness].first)
+      lbonus_second_link.errors[:validate_uniqueness].first)
     LedgerAwardCeremony.start_ceremony
     luser.update_current_points
     assert_in_delta(1.0 + 1.0 * 0.97, luser.current_up_points, 0.0000001)
+
+    # Try deleting the old bonus link and make a new one.
+    LedgerDelete.mark_records([lbonus_link], true,
+      LedgerUser.find(0), "Some Context", "Testing deletion.")
+    lbonus_second_link = LinkBonusUnique.create!(creator_id: 0,
+      bonus_explanation: lpost, bonus_user: luser, bonus_points: 3)
+    LedgerAwardCeremony.start_ceremony
+    luser.update_current_points
+    assert_in_delta(3.0, luser.current_up_points, 0.0000001)
+    LedgerAwardCeremony.start_ceremony
+    luser.update_current_points
+    assert_in_delta(3.0 + 3.0 * 0.97, luser.current_up_points, 0.0000001)
   end
 end

@@ -258,6 +258,15 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # If things get too messy, you can recalculate everything.  Mostly used when
+  # bonuses get undeleted, reapproved, etc.  Even so, it won't accurately
+  # account for points during deleted periods in the past - the variations in
+  # the past are ignored in the currently not too complicated recalculation.
+  def request_full_point_recalculation
+    update_attribute(:current_ceremony, -1) 
+  end
+
+  ##
   # Make sure the current_(down|meh|up)_points rating points are up to date.
   # Call this before modifying current points, or even just reading them.
   #

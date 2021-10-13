@@ -245,10 +245,12 @@ class LinkBase < ApplicationRecord
   # Automatically approve the end of the link where the creator is the owner or
   # creator of the object at that end of the link.  No fancy checks here for
   # group members etc, that's only in the subclass for things in groups.
+  # True approvals specified as inputs to create() persist, in case you want to
+  # pre-approve something.
   def do_automatic_approvals
     approvals = initial_approval_state
-    self.approved_parent = approvals[APPROVE_PARENT]
-    self.approved_child = approvals[APPROVE_CHILD]
+    self.approved_parent |= approvals[APPROVE_PARENT]
+    self.approved_child |= approvals[APPROVE_CHILD]
   end
 
   ##
