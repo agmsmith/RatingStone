@@ -188,7 +188,7 @@ class LedgerBase < ApplicationRecord
   def creator_owner?(luser)
     raise RatingStoneErrors,
       "#creator_owner?: Need a LedgerUser, not a #{luser} " \
-      "object to test against." unless luser.is_a?(LedgerUser)
+        "object to test against." unless luser.is_a?(LedgerUser)
     luser_original_id = luser.original_version_id
     return true if current_creator_id == luser_original_id
 
@@ -263,7 +263,12 @@ class LedgerBase < ApplicationRecord
   # account for points during deleted periods in the past - the variations in
   # the past are ignored in the currently not too complicated recalculation.
   def request_full_point_recalculation
-    update_attribute(:current_ceremony, -1) 
+    update_columns(
+      current_ceremony: -1,
+      current_down_points: -2.0,
+      current_meh_points: -3.0,
+      current_up_points: -4.0
+    )
   end
 
   ##
@@ -377,7 +382,7 @@ class LedgerBase < ApplicationRecord
       # points to spend.
 
       if current_down_points < 0.0 || current_meh_points < 0.0 ||
-        current_up_points < 0.0
+          current_up_points < 0.0
         logger.warn("#update_current_points: Negative rating points " \
           "(#{current_down_points}, #{current_meh_points}, " \
           "#{current_up_points}) in #{self}.  Bug, fraud or deleted old " \
@@ -415,9 +420,9 @@ class LedgerBase < ApplicationRecord
         if original.amended_id != amended_id
           raise RatingStoneErrors,
             "Race condition?  " \
-            "Some other amended record (#{original.amended}) " \
-            "was added before this (#{self}) new amended record.  " \
-            "Original: #{original}"
+              "Some other amended record (#{original.amended}) " \
+              "was added before this (#{self}) new amended record.  " \
+              "Original: #{original}"
         end
         # Previous latest one isn't the most recent after this one was created.
         if original.amended

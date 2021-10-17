@@ -126,7 +126,7 @@ class LedgerPostsController < LedgerBasesController
         unless link_post.save
           new_object.errors.add(:base,
             "Failed to make link back to original #{original_post} for " \
-            "reply #{new_object}.")
+              "reply #{new_object}.")
           link_post.errors.each do |error_key, error_value|
             new_object.errors.add(error_key, error_value)
           end

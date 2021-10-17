@@ -22,7 +22,7 @@ class LinkBase < ApplicationRecord
   # Usually used in error messages, which the user may see.  Max 255 characters.
   def to_s
     "#{base_s} (num1: #{number1}, " \
-      "notes: #{string1.truncate(40)}, " \
+      "notes: #{string1.truncate(50)}, " \
       "parent #{approved_parent.to_s[0].upcase}: " \
       "#{parent.to_s.truncate(75)}, " \
       "child #{approved_child.to_s[0].upcase}: " \
@@ -45,7 +45,7 @@ class LinkBase < ApplicationRecord
   def creator_owner?(luser)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{luser.class.name} " \
-      "object to test against.  Self: #{self}, supposed user: #{luser}" \
+        "object to test against.  Self: #{self}, supposed user: #{luser}" \
       unless luser.is_a?(LedgerUser)
     creator_id == luser.original_version_id
   end
@@ -112,7 +112,8 @@ class LinkBase < ApplicationRecord
   # Callback method that marks a LinkBase object as approved.  Hub record is
   # the LedgerApprove instance being processed.  Check for permissions and
   # raise an exception if the user isn't allowed to approve it.  Returns
-  # false if nothing was changed.
+  # false if nothing was changed.  Subclasses can do extra adustments, such as
+  # for weekly allowance bonus points.
   def mark_approved(hub)
     luser = hub.creator # Already original version.
     parent_change_permitted = permission_to_change_parent_approval(luser)
@@ -129,10 +130,12 @@ class LinkBase < ApplicationRecord
     end
     change_made = false
 
+    parent.update_current_points
+    child.update_current_points
+
     if parent_change_permitted && approved_parent != hub.new_marking_state
-      self.approved_parent = hub.new_marking_state
       unless deleted
-        amount = (approved_parent ? 1.0 : -1.0) *
+        amount = (hub.new_marking_state ? 1.0 : -1.0) *
           rating_points_boost_parent * fade_factor
         parent.with_lock do
           case rating_direction_parent
@@ -143,13 +146,13 @@ class LinkBase < ApplicationRecord
           parent.save!
         end
       end
+      self.approved_parent = hub.new_marking_state
       change_made = true
     end
 
     if child_change_permitted && approved_child != hub.new_marking_state
-      self.approved_child = hub.new_marking_state
       unless deleted
-        amount = (approved_child ? 1.0 : -1.0) *
+        amount = (hub.new_marking_state ? 1.0 : -1.0) *
           rating_points_boost_child * fade_factor
         child.with_lock do
           case rating_direction_child
@@ -157,9 +160,13 @@ class LinkBase < ApplicationRecord
           when "M" then child.current_meh_points += amount
           when "U" then child.current_up_points += amount
           end
+          if is_a?(LinkBonus)
+            add_or_remove_bonus(generations, hub.new_marking_state)
+          end
           child.save!
         end
       end
+      self.approved_child = hub.new_marking_state
       change_made = true
     end
 
@@ -176,7 +183,8 @@ class LinkBase < ApplicationRecord
   # the LedgerDelete instance being processed.  Check for permissions and raise
   # an exception if the user isn't allowed to delete it (creator and users who
   # need to approve ends of the link are all allowed to delete).  Return false
-  # if nothing was changed.
+  # if nothing was changed.  Subclasses can do extra adustments, such as for
+  # weekly allowance bonus points.
   def mark_deleted(hub)
     luser = hub.creator # Already original version.
     raise RatingStoneErrors, "#mark_deleted: #{luser.latest_version} not " \
@@ -184,7 +192,8 @@ class LinkBase < ApplicationRecord
 
     return false if deleted == hub.new_marking_state
 
-    self.deleted = hub.new_marking_state
+    parent.update_current_points
+    child.update_current_points
 
     generations = LedgerAwardCeremony.last_ceremony - original_ceremony
     fade_factor = if generations >= 0
@@ -194,7 +203,8 @@ class LinkBase < ApplicationRecord
     end
 
     if approved_parent
-      amount = (deleted ? -1.0 : 1.0) * rating_points_boost_parent * fade_factor
+      amount = (hub.new_marking_state ? -1.0 : 1.0) *
+        rating_points_boost_parent * fade_factor
       parent.with_lock do
         case rating_direction_parent
         when "D" then parent.current_down_points += amount
@@ -206,17 +216,22 @@ class LinkBase < ApplicationRecord
     end
 
     if approved_child
-      amount = (deleted ? -1.0 : 1.0) * rating_points_boost_child * fade_factor
+      amount = (hub.new_marking_state ? -1.0 : 1.0) *
+        rating_points_boost_child * fade_factor
       child.with_lock do
         case rating_direction_child
         when "D" then child.current_down_points += amount
         when "M" then child.current_meh_points += amount
         when "U" then child.current_up_points += amount
         end
+        if is_a?(LinkBonus)
+          add_or_remove_bonus(generations, !hub.new_marking_state)
+        end
         child.save!
       end
     end
 
+    self.deleted = hub.new_marking_state
     save!
     true
   end
@@ -260,7 +275,7 @@ class LinkBase < ApplicationRecord
   def distribute_rating_points
     # Sanity check that the point amounts add up.
     if rating_points_spent < rating_points_boost_parent +
-    rating_points_boost_child
+        rating_points_boost_child
       logger.warn("#distribute_rating_points: Boosts " \
         "#{rating_points_boost_parent + rating_points_boost_child - rating_points_spent} " \
         "more points than were spent in creating the link #{self}.  " \
@@ -268,33 +283,42 @@ class LinkBase < ApplicationRecord
     end
 
     # Check that the creator has enough points to spend for creating this link.
-    creator.current_up_points -= rating_points_spent
-    if creator.current_up_points < 0.0
-      logger.warn("#distribute_rating_points: Negative balance of " \
-        "#{creator.current_up_points} points after creating link " \
-        "#{self} for creator #{creator}.  " \
-        "Perhaps you should check for fraud?")
-    end
-    creator.save!
-
-    if approved_parent && rating_points_boost_parent > 0.0
-      case rating_direction_parent
-      when "D" then parent.current_down_points += rating_points_boost_parent
-      when "M" then parent.current_meh_points += rating_points_boost_parent
-      when "U" then parent.current_up_points += rating_points_boost_parent
+    creator.with_lock do
+      creator.current_up_points -= rating_points_spent
+      if creator.current_up_points < 0.0
+        logger.warn("#distribute_rating_points: Negative balance of " \
+          "#{creator.current_up_points} points after creating link " \
+          "#{self} for creator #{creator}.  " \
+          "Perhaps you should check for fraud?")
       end
-      parent.save!
-    end
-
-    if approved_child && rating_points_boost_child > 0.0
-      case rating_direction_child
-      when "D" then child.current_down_points += rating_points_boost_child
-      when "M" then child.current_meh_points += rating_points_boost_child
-      when "U" then child.current_up_points += rating_points_boost_child
-      end
-      child.save!
+      creator.save!
     end
 
     self.original_ceremony = LedgerAwardCeremony.last_ceremony
+
+    if approved_parent && rating_points_boost_parent > 0.0
+      parent.with_lock do
+        case rating_direction_parent
+        when "D" then parent.current_down_points += rating_points_boost_parent
+        when "M" then parent.current_meh_points += rating_points_boost_parent
+        when "U" then parent.current_up_points += rating_points_boost_parent
+        end
+        parent.save!
+      end
+    end
+
+    if approved_child && rating_points_boost_child > 0.0
+      child.with_lock do
+        case rating_direction_child
+        when "D" then child.current_down_points += rating_points_boost_child
+        when "M" then child.current_meh_points += rating_points_boost_child
+        when "U" then child.current_up_points += rating_points_boost_child
+        end
+        child.save!
+      end
+    end
+
+    # Note, no need to add bonuses for LinkBonus since it only starts taking
+    # effect after the next ceremony.
   end
 end

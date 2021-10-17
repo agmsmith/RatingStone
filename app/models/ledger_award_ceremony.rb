@@ -105,6 +105,6 @@ class LedgerAwardCeremony < LedgerBase
   # for none.
   def context_s
     "Award Ceremony ##{ceremony_number} completed at #{completed_at}, " \
-    "took #{(completed_at - created_at).round(1)} seconds"
+      "took #{(completed_at - created_at).round(1)} seconds"
   end
 end

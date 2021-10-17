@@ -39,15 +39,15 @@ class LedgerFullGroup < LedgerSubgroup
       unless group_setting.auto_approve_member_posts
         error_messages&.push(
           "Currently not doing automatic approval of member's posts in the " \
-          "\"#{name}\" group.")
+            "\"#{name}\" group.")
         return false
       end
       return true if points_spent >= group_setting.min_points_member_post &&
         points_spent <= group_setting.max_points_member_post
       error_messages&.push(
         "Need to spend between #{group_setting.min_points_member_post} and " \
-        "#{group_setting.max_points_member_post} points on the " \
-        "\"#{name}\" group in order to get your member message pre-approved.")
+          "#{group_setting.max_points_member_post} points on the " \
+          "\"#{name}\" group in order to get your member message pre-approved.")
       return false
     end
 
@@ -56,7 +56,7 @@ class LedgerFullGroup < LedgerSubgroup
       unless group_setting.auto_approve_non_member_posts
         error_messages&.push(
           "Currently not doing automatic approval of non-member's posts in " \
-          "the \"#{name}\" group.")
+            "the \"#{name}\" group.")
         return false
       end
       return true if points_spent >=
@@ -64,15 +64,15 @@ class LedgerFullGroup < LedgerSubgroup
         points_spent <= group_setting.max_points_non_member_post
       error_messages&.push(
         "Need to spend between #{group_setting.min_points_non_member_post} " \
-        "and #{group_setting.max_points_non_member_post} points on the " \
-        "\"#{name}\" group in order to get your non-member message " \
-        "pre-approved.")
+          "and #{group_setting.max_points_non_member_post} points on the " \
+          "\"#{name}\" group in order to get your non-member message " \
+          "pre-approved.")
       return false
     end
 
     error_messages&.push(
       "You (#{luser.latest_version}) are not allowed to even read the " \
-      "\"#{name}\" group, let alone post.")
+        "\"#{name}\" group, let alone post.")
     false
   end
 

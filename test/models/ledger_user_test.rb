@@ -91,11 +91,13 @@ class LedgerUserTest < ActiveSupport::TestCase
     # Set up a weekly bonus.  Shouldn't get it until the following
     # ceremony happens.
     lbonus_explanation = LedgerPost.create!(creator_id: 0,
-      subject: "Weekly eMail Bonus", content: "You get **10 Up** points " \
-      "each week for having a validated e-mail address!")
+      subject: "Weekly eMail Bonus",
+      content:
+        "You get **10 Up** points each week for having a validated " \
+        "e-mail address!")
     lbonus_link = LinkBonus.create!(creator_id: 0,
       bonus_explanation: lbonus_explanation, bonus_user: luser,
-      bonus_points: 10)
+      bonus_points: 10, approved_parent: true, approved_child: true)
     assert(lbonus_link.approved_parent && lbonus_link.approved_child &&
       !lbonus_link.deleted, "Bonus link should be fully approved.")
 
@@ -121,37 +123,105 @@ class LedgerUserTest < ActiveSupport::TestCase
     luser = LedgerUser.create!(name: "Bonus User",
       email: "SomeEMail@SomeDomain.com", creator_id: 0)
     lpost = ledger_posts(:lpost_one)
+
+    # A couple of extra ceremonies, so we can test that relative ceremony
+    # numbers are being used.
+    LedgerAwardCeremony.start_ceremony("First ceremony, for testing...")
+    LedgerAwardCeremony.start_ceremony("Second ceremony, relative numbers.")
+
     lbonus_link = LinkBonusUnique.create!(creator_id: 0,
-      bonus_explanation: lpost, bonus_user: luser, bonus_points: 1)
+      bonus_explanation: lpost, bonus_user: luser, bonus_points: 1,
+      approved_parent: true, approved_child: true)
     assert(lbonus_link.approved_parent && lbonus_link.approved_child &&
       !lbonus_link.deleted, "Unique Bonus link should be fully approved.")
-    LedgerAwardCeremony.start_ceremony
+    LedgerAwardCeremony.start_ceremony("Ceremony #1 since first bonus created.")
     luser.update_current_points
     assert_in_delta(1.0, luser.current_up_points, 0.0000001)
 
-    # Make the second link.
+    # Make the second link, should fail.
     lbonus_second_link = LinkBonusUnique.create(creator_id: 0,
-      bonus_explanation: lpost, bonus_user: luser, bonus_points: 2)
+      bonus_explanation: lpost, bonus_user: luser, bonus_points: 2,
+      approved_parent: true, approved_child: true)
     assert_equal(1, lbonus_second_link.errors.size,
       "Should fail to save a second unique bonus.")
     assert_equal("This LinkBonusUnique isn't unique - " \
       "there are other LinkBonus records with the same parent of " \
       "#{lpost}.",
       lbonus_second_link.errors[:validate_uniqueness].first)
-    LedgerAwardCeremony.start_ceremony
+    LedgerAwardCeremony.start_ceremony("Ceremony #2 since first bonus created.")
+    luser.update_current_points
+    assert_in_delta(1.0 + 1.0 * 0.97, luser.current_up_points, 0.0000001)
+
+    # Does full recalculation match incremental?
+    luser.request_full_point_recalculation
     luser.update_current_points
     assert_in_delta(1.0 + 1.0 * 0.97, luser.current_up_points, 0.0000001)
 
     # Try deleting the old bonus link and make a new one.
     LedgerDelete.mark_records([lbonus_link], true,
-      LedgerUser.find(0), "Some Context", "Testing deletion.")
+      LedgerUser.find(0), "Should work.", "Testing deletion of First Bonus.")
     lbonus_second_link = LinkBonusUnique.create!(creator_id: 0,
-      bonus_explanation: lpost, bonus_user: luser, bonus_points: 3)
-    LedgerAwardCeremony.start_ceremony
+      bonus_explanation: lpost, bonus_user: luser, bonus_points: 3,
+      approved_parent: true, approved_child: true)
+    LedgerAwardCeremony.start_ceremony("Ceremony #3 since first bonus created.")
     luser.update_current_points
     assert_in_delta(3.0, luser.current_up_points, 0.0000001)
-    LedgerAwardCeremony.start_ceremony
+    LedgerAwardCeremony.start_ceremony("Ceremony #4 since first bonus created.")
     luser.update_current_points
     assert_in_delta(3.0 + 3.0 * 0.97, luser.current_up_points, 0.0000001)
+
+    # Try undeleting the original bonus link.  Should fail.
+    assert_raise(ActiveRecord::RecordInvalid, "Undelete unique bonus") do
+      LedgerDelete.mark_records([lbonus_link], false,
+        LedgerUser.find(0), "Should fail", "Testing undeletion of First Bonus.")
+    end
+    luser.reload
+    luser.update_current_points
+    assert_in_delta(3.0 + 3.0 * 0.97, luser.current_up_points, 0.0000001)
+
+    # Delete the second bonus, should have no bonus being applied.
+    assert_equal(LedgerDelete,
+      LedgerDelete.mark_records([lbonus_second_link], true,
+        LedgerUser.find(0), "Should work.",
+        "Deleting the second unique bonus.").class,
+      "Delete didn't work?")
+    luser.reload # Deletion of bonus side-affects the LedgerUser record.
+    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    luser.update_current_points
+    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+
+    # Now undelete the first bonus.  Should work this time.
+    assert_equal(LedgerDelete,
+      LedgerDelete.mark_records([lbonus_link], false,
+        LedgerUser.find(0), "Should work.", "Undeleting the first bonus.")
+        .class,
+      "Undelete didn't work?")
+    luser.reload
+    assert_in_delta(
+      1.0 +
+      1.0 * 0.97 +
+      1.0 * 0.97 * 0.97 +
+      1.0 * 0.97 * 0.97 * 0.97,
+      luser.current_up_points, 0.0000001
+    )
+    luser.update_current_points
+    assert_in_delta(
+      1.0 +
+      1.0 * 0.97 +
+      1.0 * 0.97 * 0.97 +
+      1.0 * 0.97 * 0.97 * 0.97,
+      luser.current_up_points, 0.0000001
+    )
+    LedgerAwardCeremony.start_ceremony("Ceremony #5 since first bonus created.")
+    luser.update_current_points
+    assert_in_delta(
+      1.0 +
+      1.0 * 0.97 +
+      1.0 * 0.97 * 0.97 +
+      1.0 * 0.97 * 0.97 * 0.97 +
+      1.0 * 0.97 * 0.97 * 0.97 * 0.97,
+      luser.current_up_points, 0.0000001
+    )
+    # TODO: Test approval changes too.
   end
 end

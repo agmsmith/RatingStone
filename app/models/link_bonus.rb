@@ -11,18 +11,19 @@ class LinkBonus < LinkBase
 
   def set_default_description
     return unless string1.empty?
-    self.string1 = "#{child.to_s.truncate(80)} will be getting a " \
-      "#{bonus_points} point bonus each week after ceremony " \
-      "#{original_ceremony}.  Explanation of bonus is in " \
-      "#{parent.to_s.truncate(80)}."
+    self.string1 = "Bonus of #{bonus_points} points after ceremony " \
+      "##{original_ceremony}."
   end
 
   ##
-  # Pre-approve the child by default.  Since this is a system created link,
-  # no need for a separate approval step.
-  def initial_approval_state
-    approvals = super
-    approvals[APPROVE_CHILD] = true
-    approvals
+  # The approval or deletion state has changed.  Add (if add is true) or remove
+  # the accumulated bonuses from the user.  Assume we are called only after the
+  # deletion or approval state changes in a way that changes the bonus.  The
+  # caller will save the bonus_user record for us.
+  def add_or_remove_bonus(generations, add)
+    bonus_change = bonus_points *
+      LedgerAwardCeremony.accumulated_bonus(generations)
+    bonus_change = -bonus_change unless add
+    bonus_user.current_up_points += bonus_change
   end
 end

@@ -12,7 +12,8 @@ class LedgerChangeMarking < LedgerBase
   def context_s
     ledger_count = AuxLedger.where(parent_id: original_version_id).count
     link_count = AuxLink.where(parent_id: original_version_id).count
-    "#{ledger_count} Ledger #{"Object".pluralize(ledger_count)}, " \
+    "New state: #{new_marking_state}, " \
+      "#{ledger_count} Ledger #{"Object".pluralize(ledger_count)}, " \
       "#{link_count} Link #{"Object".pluralize(link_count)}"
   end
 
@@ -55,7 +56,7 @@ class LedgerChangeMarking < LedgerBase
     creator_user = luser.original_version
     raise RatingStoneErrors,
       "#mark_records: Wrong type of input, #{creator_user} " \
-      "should be a LedgerUser." unless creator_user.is_a?(LedgerUser)
+        "should be a LedgerUser." unless creator_user.is_a?(LedgerUser)
 
     # Method name to actually do the marking work depends on our class.
     marking_method_symbol = marking_method_name
@@ -113,8 +114,8 @@ class LedgerChangeMarking < LedgerBase
       else
         raise ActiveRecord::Rollback,
           "Nothing was changed in #{self.class.name} changing marking " \
-          "#{marking_method_symbol} requested by #{luser}, aborting the " \
-          "useless transaction."
+            "#{marking_method_symbol} requested by #{luser}, aborting the " \
+            "useless transaction."
       end
     end # End transaction.
     returned_record
