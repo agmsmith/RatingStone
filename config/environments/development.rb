@@ -35,7 +35,7 @@ Rails.application.configure do
 
   # Store uploaded files on the local file system (see config/storage.yml
   # for options).
-  config.active_storage.service = :local
+  # config.active_storage.service = :local
 
   # Fix for database busy with multithreaded ActiveStorage purges and SQLite3
   # database; run the job immediately, don't actually queue it for later.

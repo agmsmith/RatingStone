@@ -34,7 +34,7 @@ Rails.application.configure do
   config.action_controller.allow_forgery_protection = false
 
   # Store uploaded files on the local file system in a temporary directory.
-  config.active_storage.service = :test
+  # config.active_storage.service = :test
 
   # Fix for database busy with multithreaded ActiveStorage purges and SQLite3
   # database; run the job immediately, don't actually queue it for later.
