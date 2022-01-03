@@ -4,9 +4,11 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 ruby "3.1.0"
 
 # Bundle edge Rails instead: gem "rails", github: "rails/rails", branch: "main"
+#gem "rails", "~> 7"
+
 # AGMS20220102 Use a different branch of Rails since the release doesn't work with Ruby 3.1.0.  Once Rails 7.0.1 comes out, go back to the main Rails.
 gem "rails", github: "rails/rails", branch: "7-0-stable"
-#gem "rails", "~> 7"
+gem "net-smtp", require: false # A missing dependency for the mail gem.
 
 # The original asset pipeline for Rails [https://github.com/rails/sprockets-rails]
 gem "sprockets-rails"
@@ -67,6 +69,7 @@ group :test do
   gem "webdrivers"
   gem "minitest"
   gem "minitest-reporters"
+  gem "rails-controller-testing"
 end
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
