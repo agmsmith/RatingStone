@@ -7,10 +7,9 @@
 # Ignore bundler config.
 /.bundle
 
-# Ignore the default SQLite database and the test ones.
+# Ignore the default SQLite database.
 /db/*.sqlite3
-/db/*.sqlite3-journal
-/db/test.sqlite*
+/db/*.sqlite3-*
 
 # Ignore the generated documentation files.  Just keep the ones inside
 # the nested RCS directory.  Usually you "co -u" the files there, then
@@ -29,16 +28,13 @@
 /storage/*
 !/storage/.keep
 
+# Ignore pidfiles, but keep the directory.
+/tmp/pids/*
+!/tmp/pids/
+!/tmp/pids/.keep
+
 /public/assets
-.byebug_history
+/public/docs
 
 # Ignore master key for decrypting credentials and more.
 # /config/master.key
-
-/public/docs
-/public/packs
-/public/packs-test
-/node_modules
-/yarn-error.log
-yarn-debug.log*
-.yarn-integrity
