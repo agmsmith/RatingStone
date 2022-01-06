@@ -274,7 +274,6 @@ DEPENDENCIES
   kramdown
   minitest
   minitest-reporters
-  net-smtp
   numbers_in_words
   pg
   puma
