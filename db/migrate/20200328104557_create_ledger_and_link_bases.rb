@@ -1,4 +1,4 @@
-class CreateLedgerAndLinkBases < ActiveRecord::Migration[6.0]
+class CreateLedgerAndLinkBases < ActiveRecord::Migration[7.0]
   def change
     create_table :ledger_bases, force: false, comment: "Ledger objects base class and record.  Don't force: cascade deletes since this is a write-once ledger where usually nothing gets deleted (except during points expired object garbage collection)." do |t|
       t.string :type, default: "LedgerBase", comment: "Names the ActiveRecord subclass used to load this row, turning on single table inheritance."

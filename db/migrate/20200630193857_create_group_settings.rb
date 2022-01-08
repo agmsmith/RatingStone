@@ -1,4 +1,4 @@
-class CreateGroupSettings < ActiveRecord::Migration[6.0]
+class CreateGroupSettings < ActiveRecord::Migration[7.0]
   def change
     create_table :group_settings, comment: "Extra information for each LedgerFullGroup object is stored in this table." do |t|
       t.references :ledger_full_group, null: false, foreign_key: {to_table: :ledger_bases, name: "fk_rails_groupsettingsgroup"}, comment: "Points to the LedgerFullGroup (a LedgerBase subclass) that this record contains the extra settings for."
