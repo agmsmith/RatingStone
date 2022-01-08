@@ -70,7 +70,7 @@ Rails.application.configure do
   # Use :test for internal testing, :smtp for normal mail server.
   config.action_mailer.delivery_method = :smtp
 
-  ActionMailer::Base.smtp_settings = {
+  config.action_mailer.smtp_settings = {
     :address => 'smtp.gmail.com',
     :port => '587',
     :authentication => :plain,
