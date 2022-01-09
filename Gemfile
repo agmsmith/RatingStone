@@ -15,6 +15,9 @@ gem "sassc-rails"
 # CSS3 styles and javascript to build responsive, mobile-first web pages.
 gem 'bootstrap-sass'
 
+# Need jQuery for BootStrap's Javascript to work.
+gem 'jquery-rails'
+
 # For password hashing.
 gem 'bcrypt'
 

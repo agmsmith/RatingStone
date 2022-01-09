@@ -1,14 +1,6 @@
 /*
- * This is a manifest file that'll be compiled into application.css, which will include all the files
- * listed below.
- *
  * Any CSS (and SCSS, if configured) file within this directory, lib/assets/stylesheets, or any plugin's
  * vendor/assets/stylesheets directory can be referenced here using a relative path.
- *
- * You're free to add application-wide styles to this file and they'll appear at the bottom of the
- * compiled file so the styles you add here take precedence over styles defined in any other CSS
- * files in this directory. Styles in this file should be added after the last require_* statement.
- * It is generally better to create a new file per style scope.
  *
  * For BootStrap, use @import instead of require...
  * *= require_tree .
@@ -18,4 +10,351 @@
 // "bootstrap-sprockets" must be imported before "bootstrap" and "bootstrap/variables"
 @import "bootstrap-sprockets";
 @import "bootstrap";
+
+/* mixins, variables, etc. */
+
+$gray-medium-light: #eaeaea; /* Rather than using Bootstrap's $gray-light etc. */
+
+@mixin box_sizing {
+  -moz-box-sizing:    border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing:         border-box;
+}
+
+/* universal */
+
+body {
+  /* padding-top: 60px; - makes navbar cover text in small screen sizes */
+}
+
+section {
+  overflow: auto;
+}
+
+.center {
+  text-align: center;
+  h1 {
+    margin-bottom: 10px;
+  }
+}
+
+.float-right {
+  display: block;
+  float: right;
+}
+
+.post-subject {
+  color: black;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+/* For displaying objects that have been deleted, could be a DIV or a LI etc. */
+.deleted {
+  color: red;
+}
+
+.description-box {
+  border: 2px double #ddd;
+  padding: 4px;
+  @include box_sizing;
+}
+
+.description-form-box {
+  @extend .description-box;
+  margin-bottom: 10px;
+}
+
+/* When a post is a reply to some other post and that other post hasn't
+   authorised it, this is used for highlighting the other post.  Same if the
+   post has been put in a group but the group hasn't authorised it.  Usually
+   used as the class for a hypertext link to the offending link record, but
+   also gets applied to other things. */
+.unapproved-link {
+  color: red;
+}
+
+/* forms */
+
+/* Users can resize the text boxes to make them larger if needed. */
+textarea {
+  resize: vertical;
+}
+
+input, textarea, select, .uneditable-input {
+  border: 1px solid #888;
+  margin-bottom: 10px;
+  @include box_sizing;
+}
+
+input {
+  height: auto !important;
+}
+
+/* Full width also means it shrinks (crops) width when small, rather than
+   making a scroll bar appear. */
+.button-full-width {
+  width: 100%;
+}
+
+/* Reason text area for (un)delete, make it 100% so it shrinks. */
+.delete-reason {
+  width: 100%;
+}
+
+#error_explanation {
+  color: red;
+  ul {
+    color: red;
+    margin: 0 0 30px 0;
+  }
+}
+
+.field_with_errors {
+  @extend .has-error;
+  .form-control {
+    color: $state-danger-text;
+  }
+}
+
+.checkbox {
+  margin-top: -10px;
+  margin-bottom: 10px;
+  span {
+    margin-left: 20px;
+    font-weight: normal;
+  }
+}
+
+#session_remember_me {
+  width: auto;
+  margin-left: 0;
+}
+
+/* typography */
+
+h1, h2, h3, h4, h5, h6 {
+  line-height: 1;
+}
+
+h1 {
+  font-size: 3em;
+  letter-spacing: -2px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+h2 {
+  font-size: 2em;
+  letter-spacing: -1px;
+  margin-bottom: 30px;
+  text-align: center;
+  font-weight: normal;
+  color: $gray-light;
+}
+
+h3 {
+  font-size: 1.5em;
+  letter-spacing: 0px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-weight: normal;
+  color: $gray-light;
+}
+
+p {
+  font-size: 1.1em;
+  line-height: 1.7em;
+}
+
+/* header */
+
+#logo {
+  float: left;
+  margin-right: 10px;
+  font-size: 1.7em;
+  color: white;
+  text-transform: uppercase;
+  letter-spacing: -1px;
+  padding-top: 9px;
+  font-weight: bold;
+  &:hover {
+    color: white;
+    text-decoration: none;
+  }
+}
+
+/* footer */
+
+footer {
+  margin-top: 45px;
+  padding-top: 5px;
+  border-top: 1px solid $gray-medium-light;
+  color: $gray-light;
+  a {
+    color: $gray;
+    &:hover {
+      color: $gray-darker;
+    }
+  }
+  small {
+    float: left;
+  }
+  ul {
+    float: right;
+    list-style: none;
+    li {
+      float: left;
+      margin-left: 15px;
+    }
+  }
+}
+
+/* sidebar */
+
+aside {
+  section.user_info {
+    margin-top: 20px;
+  }
+  section {
+    padding: 10px 0;
+    margin-top: 20px;
+    &:first-child {
+      border: 0;
+      padding-top: 0;
+    }
+    span {
+      display: block;
+      margin-bottom: 3px;
+      line-height: 1;
+    }
+    h1 {
+      font-size: 1.4em;
+      text-align: left;
+      letter-spacing: -1px;
+      margin-bottom: 3px;
+      margin-top: 3px;
+    }
+  }
+}
+
+/* Things used when displaying a user. */
+
+.gravatar {
+  float: left;
+  margin-right: 10px;
+}
+
+.gravatar_edit {
+  margin-top: 15px;
+}
+
+.user_avatars {
+  overflow: auto;
+  margin-top: 10px;
+  .gravatar {
+    margin: 1px 1px;
+  }
+  a {
+    padding: 0;
+  }
+}
+
+/* Users index */
+
+.users {
+  list-style: none;
+  margin: 0;
+  li {
+    overflow: auto;
+    padding: 10px 0;
+    border-bottom: 1px solid $gray-lighter;
+    .deletebutton {
+      display: block;
+      float: right;
+    }
+  }
+}
+
+/* Ledger Objects index */
+
+.list-ledger-objects {
+  list-style: none inside;
+  margin: 0; /* Remove bullet indent, Opera browser. */
+  padding: 0; /* Remove bullet indent, Mozilla and Safari browsers. */
+  li {
+    overflow: auto;
+    padding: 10px 0;
+    border-bottom: 1px solid $gray-lighter;
+    .deleted {
+      color: red;
+    }
+    .not-allowed-to-view {
+      color: $gray-light;
+    }
+    .content {
+      color: black;
+      .group-name {
+        font-size: 1.2em;
+        letter-spacing: +1px;
+        font-weight: bold;
+      }
+    }
+  }
+}
+
+/* Word Counter page */
+
+.wordcount-sectiontitle {
+  color: black;
+  font-size: 1.5em;
+  font-weight: bold;
+  letter-spacing: 0px;
+  margin-top: 10px;
+  margin-bottom: 0px;
+  text-align: left;
+}
+
+/* Unidentified stuff */
+
+aside {
+  textarea {
+    height: 100px;
+    margin-bottom: 5px;
+  }
+}
+
+span.image {
+  margin-top: 10px;
+  input {
+    border: 0;
+  }
+}
+
+/* miscellaneous */
+
+.debug_dump {
+  clear: both;
+  width: 100%;
+  @include box_sizing;
+}
+
+/* From the Diffy 3.4.0 Gem, CSS_COLORBLIND_1.  Used for highlighting
+   differences in a before and after text comparison in the word counter.
+   Blue "inserted" text made darker and highlit made lighter, to make it
+   overall easier to read the blue. */
+
+.diff{overflow:auto;}
+.diff ul{background:#fff;overflow:auto;font-size:13px;list-style:none;margin:0;padding:0;display:table;width:100%;}
+.diff del, .diff ins{display:block;text-decoration:none;}
+.diff li{padding:0; display:table-row;margin: 0;height:1em;}
+.diff li.ins{background:#ddf; color:#006}
+.diff li.del{background:#fee; color:#b00}
+.diff li:hover{background:#ffc}
+/* try 'whitespace:pre;' if you don't want lines to wrap */
+.diff del, .diff ins, .diff span{white-space:pre-wrap;font-family:courier;}
+.diff del strong{font-weight:normal;background:#fcc;}
+.diff ins strong{font-weight:normal;background:#aaf;}
+.diff li.diff-comment { display: none; }
+.diff li.diff-block-info { background: none repeat scroll 0 0 gray; }
 
