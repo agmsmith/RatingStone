@@ -9,6 +9,7 @@ pwd
 # Delete temporary files, usually from compiling assets/Yarn.
 rm -rvf tmp/* node_modules/.cache/*
 mkdir -vp tmp/pids
+touch tmp/pids/.keep
 
 # Empty out the log files to save disk space.
 for filename in ./log/*.log
