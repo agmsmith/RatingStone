@@ -11,7 +11,8 @@ class ApplicationController < ActionController::Base
   # has a bug which interprets that header as Content-Type.  Its ID string:
   # "Mozilla/3.0 (compatible; NetPositive/2.2.1; BeOS)"
   def fix_nosniff
-    unless request.headers["HTTP_USER_AGENT"].include?("NetPositive/")
+    agent = request.headers["HTTP_USER_AGENT"]
+    if agent && !agent.include?("NetPositive/")
       response.headers["X-Content-Type-Options"] = "nosniff"
     end
   end
