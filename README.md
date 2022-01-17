@@ -1,7 +1,7 @@
 # The Rating Stone Project
 
-This is a social media web site with an experimental reputation system,
-built on top of the training application from [*Ruby on Rails Tutorial:
+This is a social media web site with an experimental forgetful reputation
+system, built on top of the training application from [*Ruby on Rails Tutorial:
 Learn Web Development with Rails*](https://www.railstutorial.org/)
 (6th Edition) by [Michael Hartl](https://www.michaelhartl.com/).
 
@@ -9,9 +9,9 @@ Learn Web Development with Rails*](https://www.railstutorial.org/)
 
 The [Rating Stone web site](https://ratingstone.agmsmith.ca/) lets you
 vote up, down or "meh" on all sorts of things (including the usual posts
-and pictures).  Find those things easily using our category tree.  Unlike other
-systems, we've made it slightly less evil - it forgives the past and avoids
-appealing to the addictive side of Human nature.
+and pictures).  Unlike other systems, we've made it slightly less evil -
+it forgives the past, and avoids appealing to the addictive side of
+Human nature.
 
 You can find out more about <em>Rating Stone</em>'s theoretical underpinnings
 in the related paper [A Less Dystopian Reputation System](http://web.ncf.ca/au829/WeekendReports/20190201/AGMSReputationSystem.html).
@@ -34,11 +34,10 @@ is available jointly under the MIT License and the Beerware License.  See
 ## Getting started
 
 To get started with the app, clone the repo and then install the needed gems
-(assuming Ruby 2.7 and Rails 6.0 are already installed):
+(assuming Ruby 3.1.0 and Rails 7.0.1 are already installed):
 
 ```
 $ bundle install --without production
-$ yarn install --check-files
 ```
 
 Next, create the database:
