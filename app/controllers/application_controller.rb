@@ -7,8 +7,10 @@ class ApplicationController < ActionController::Base
 
   # Only put in the X-Content-Type-Options=nosniff in the HTTP response header,
   # when the web browser is not BeOS's NetPositive.  We took it out of the
-  # default headers, so it doesn't show up in error pages etc.  NetPositive
-  # has a bug which interprets that header as Content-Type.  Its ID string:
+  # default headers (see config/application.rb), so it doesn't show up in
+  # error pages etc.  NetPositive has a bug which interprets that header as
+  # Content-Type, and thus saves the web page to a file rather than displaying
+  # it.  A typical BeOS R5.0.3 NetPositive has an ID string of:
   # "Mozilla/3.0 (compatible; NetPositive/2.2.1; BeOS)"
   def fix_nosniff
     agent = request.headers["HTTP_USER_AGENT"]

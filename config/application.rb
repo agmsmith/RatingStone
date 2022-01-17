@@ -31,8 +31,9 @@ module RatingStone
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
 
-    # Get rid of that X-Content-Type-Options=nosniff HTTP header which BeOS
-    # NetPositive misinterprets as the content type.
+    # Get rid of that "X-Content-Type-Options: nosniff" HTTP header which BeOS
+    # NetPositive misinterprets as the content type.  It's reinserted in
+    # response headers later on by ApplicationController.
     config.action_dispatch.default_headers.delete("X-Content-Type-Options")
   end
 end
