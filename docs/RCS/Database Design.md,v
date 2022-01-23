@@ -1,9 +1,14 @@
-head	1.76;
+head	1.77;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.77
+date	2022.01.23.01.11.37;	author agmsmith;	state Exp;
+branches;
+next	1.76;
 
 1.76
 date	2021.09.12.21.49.00;	author agmsmith;	state Exp;
@@ -391,14 +396,14 @@ desc
 @
 
 
-1.76
+1.77
 log
-@Added LinkBonusUnique class rather than adding a boolean to LinkBonus.
+@Correct award_number to new original_ceremony naming.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.75 2021/09/12 21:32:16 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.76 2021/09/12 21:49:00 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -1023,7 +1028,10 @@ do that.
   including this one.  In other words, a sequence counter starting at 1.  So if
   rating points were assigned at the beginning of time, before any awards, the
   faded value of the points after a particular award ceremony would be original
-  points * (fade ** award_number).
+  points * (fade ** ceremony_number).  Though in practice, we count
+  "generations" as the difference between the latest ceremony number and
+  the ceremony number when an object was created.  Then fade to the
+  power of "generations".
 * completed_at Time stamp for when the award ceremony was completed.  The start
   time is in the usual created_at time stamp for this record.  The web site is
   offline (by design) while the awards are being calculated.
@@ -1512,7 +1520,7 @@ current_up_points:float
 rails generate model LinkBase type:string
 parent:references child:references creator:references deleted:boolean
 pending:boolean rating_points_spent:float rating_points_boost_child:float
-rating_points_boost_parent:float rating_direction:string award_number:integer
+rating_points_boost_parent:float rating_direction:string original_ceremony:integer
 
 rails generate model AuxLedger parent:references child:references
 
@@ -1686,9 +1694,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.75 2021/09/12 21:32:16 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.76 2021/09/12 21:49:00 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.76  2021/09/12 21:49:00  agmsmith
+Added LinkBonusUnique class rather than adding a boolean to LinkBonus.
+
 Revision 1.75  2021/09/12 21:32:16  agmsmith
 More LinkBonus details.
 
@@ -1927,6 +1938,27 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.76
+log
+@Added LinkBonusUnique class rather than adding a boolean to LinkBonus.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.75 2021/09/12 21:32:16 agmsmith Exp agmsmith $</SMALL>
+d628 4
+a631 1
+  points * (fade ** award_number).
+d1120 1
+a1120 1
+rating_points_boost_parent:float rating_direction:string award_number:integer
+d1294 1
+a1294 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.75 2021/09/12 21:32:16 agmsmith Exp agmsmith $
+d1297 3
 @
 
 
