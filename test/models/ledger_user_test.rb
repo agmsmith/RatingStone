@@ -144,9 +144,9 @@ class LedgerUserTest < ActiveSupport::TestCase
       approved_parent: true, approved_child: true)
     assert_equal(1, lbonus_second_link.errors.size,
       "Should fail to save a second unique bonus.")
-    assert_equal("This LinkBonusUnique isn't unique - " \
+    assert_equal("Creating a LinkBonusUnique which isn't unique - " \
       "there are other LinkBonus records with the same parent of " \
-      "#{lpost}.",
+      "#{lpost} and child #{luser}.",
       lbonus_second_link.errors[:validate_uniqueness].first)
     LedgerAwardCeremony.start_ceremony("Ceremony #2 since first bonus created.")
     luser.update_current_points
@@ -171,7 +171,7 @@ class LedgerUserTest < ActiveSupport::TestCase
     assert_in_delta(3.0 + 3.0 * 0.97, luser.current_up_points, 0.0000001)
 
     # Try undeleting the original bonus link.  Should fail.
-    assert_raise(ActiveRecord::RecordInvalid, "Undelete unique bonus") do
+    assert_raise(RatingStoneErrors, "Undelete unique bonus") do
       LedgerDelete.mark_records([lbonus_link], false,
         LedgerUser.find(0), "Should fail", "Testing undeletion of First Bonus.")
     end
