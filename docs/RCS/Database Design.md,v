@@ -1,9 +1,14 @@
-head	1.77;
+head	1.78;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.78
+date	2022.01.29.21.13.04;	author agmsmith;	state Exp;
+branches;
+next	1.77;
 
 1.77
 date	2022.01.23.01.11.37;	author agmsmith;	state Exp;
@@ -396,14 +401,15 @@ desc
 @
 
 
-1.77
+1.78
 log
-@Correct award_number to new original_ceremony naming.
+@Switch to using meh points to receive the weekly allowance of
+reputation bonuses.  Solves several problems to do it that way.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.76 2021/09/12 21:49:00 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.77 2022/01/23 01:11:37 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -818,9 +824,9 @@ serious or distinct enough.
   and 1 down), and use them as inputs to various different sorting algorithms.
   Until someone redoes the statistical theory, we'll split meh points 50% to
   each of up and down.  But once we have better math, we can use meh directly.
-  When they have all faded away to close to zero (less than 0.01, equivalent to
-  3 years of fading one point) then the record can be garbage collected from
-  the current database, freeing up storage.  Changed as needed.
+  When they have all faded away to close to zero (total less than 0.01,
+  equivalent to 3 years of fading one point) then the record can be garbage
+  collected from the current database, freeing up storage.  Changed as needed.
 * current_ceremony integer The number of the awards ceremony that the current
   points were calculated for.  0 means before the first ceremony.  Set to -1
   (perhaps when importing a database) to force a recalculation of current
@@ -901,13 +907,15 @@ and other external people); a group should be created by fans instead.
 * Elsewhere, the user is referenced by the record id number of the original
   version of the LedgerUser record.  Though for export or federated systems
   we'd need a GUID or an id+server pair.
-* Points awarded per week cached value from the most recent award ceremony.
+* Allowance points awarded at most recent award ceremony, mostly for
+  informational use.
   Computed by considering various achievement records (such as e-mail verified,
   passport photo uploaded, had tea with the sysop, bought some bonus points)
-  attached to the LedgerUser record by links.  A user can always spend their
-  weekly award even if their reputation is negative.  If it is net positive,
-  they can spend their net reputation too, down to zero.  Unspent awards get
-  added to their up reputation.
+  attached to the LedgerUser record by LinkBonus links.  The allowance
+  award points are considered to be added to the user's meh reputation after
+  each ceremony (the actual calculation is done on demand).  A user can spend
+  their meh reputation points, down to zero.  While their up is larger than
+  their down, they can spend up points too.  Points taken from meh first.
 
 
 #### *LedgerCompany* < LedgerUser
@@ -1058,13 +1066,18 @@ The LedgerAwardCeremony class has functions for keeping track of the latest
 award ceremony and starting a new one (invoked by a weekly cron script on the
 web server or manually).
 
-Bonuses are kept track of by linking the user to various things (category or a
-post explaining the bonus), possibly multiple times for some or singletons for
-others (like e-mail activation).  There's a category for +1 weekly entitlement
-point for a good year of posting, another one for -1 weekly point of annual
-inactivity, or no bonus for just doing a minor amount of posting during the
-year.  Those bonus links are made during the award ceremony on the anniversary
-of a user's account activation.
+Bonuses are kept track of by linking the user with LinkBonus records to various
+things (category or a post explaining the bonus), possibly multiple times for
+some or singletons for others (like e-mail activation).  There's a category for
++1 weekly entitlement point for a good year of posting, another one for -1
+weekly point of annual inactivity, or no bonus for just doing a minor amount of
+posting during the year.  Those bonus links are made during the award ceremony
+on the anniversary of a user's account activation.
+
+As mentioned elsewhere, the weekly allowance bonus points are added to the
+user's meh score each week (theoretically just after the ceremony is done).
+The user can spend meh points and if their up is more than their down points,
+the extra up points can be spent too, though their meh will be used first.
 
 
 ### *LedgerBirthday* < LedgerMedia
@@ -1464,14 +1477,13 @@ an e-mail address once the bonus for having a tested e-mail has expired.  Some
 bonuses like the e-mail one will be limited to only one existing at a time.
 
 The total of all bonus points at the award ceremony is pegged between 0 and
-100.  The user also gets to spend that many points even if their net reputation
-is negative, to avoid totally silencing them.  The weekly running total of
-bonus points and their spending is stored in the User record, outside the
-ledger system, so we don't have to recalculate it every time the user wants to
-spend a point.
+100 and becomes their week's allowance.  The user also gets to spend that many
+points even if their net reputation is negative, to avoid totally silencing
+them.  The weekly allowance and week's spending is stored in the User record,
+outside the ledger system, mostly for informational purposes.
 
 * points integer Number of bonus points per week, added or subtracted from the
-  user's Up points at each awards ceremony.  Negative is usually some sort of
+  user's Meh points at each awards ceremony.  Negative is usually some sort of
   penalty, such as for spamming or otherwise annoying too many people.
 
 #### *LinkBonusUnique* < LinkBonus
@@ -1694,9 +1706,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.76 2021/09/12 21:49:00 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.77 2022/01/23 01:11:37 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.77  2022/01/23 01:11:37  agmsmith
+Correct award_number to new original_ceremony naming.
+
 Revision 1.76  2021/09/12 21:49:00  agmsmith
 Added LinkBonusUnique class rather than adding a boolean to LinkBonus.
 
@@ -1938,6 +1953,54 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.77
+log
+@Correct award_number to new original_ceremony naming.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.76 2021/09/12 21:49:00 agmsmith Exp agmsmith $</SMALL>
+d418 3
+a420 3
+  When they have all faded away to close to zero (less than 0.01, equivalent to
+  3 years of fading one point) then the record can be garbage collected from
+  the current database, freeing up storage.  Changed as needed.
+d501 2
+a502 1
+* Points awarded per week cached value from the most recent award ceremony.
+d505 5
+a509 4
+  attached to the LedgerUser record by links.  A user can always spend their
+  weekly award even if their reputation is negative.  If it is net positive,
+  they can spend their net reputation too, down to zero.  Unspent awards get
+  added to their up reputation.
+d660 12
+a671 7
+Bonuses are kept track of by linking the user to various things (category or a
+post explaining the bonus), possibly multiple times for some or singletons for
+others (like e-mail activation).  There's a category for +1 weekly entitlement
+point for a good year of posting, another one for -1 weekly point of annual
+inactivity, or no bonus for just doing a minor amount of posting during the
+year.  Those bonus links are made during the award ceremony on the anniversary
+of a user's account activation.
+d1071 4
+a1074 5
+100.  The user also gets to spend that many points even if their net reputation
+is negative, to avoid totally silencing them.  The weekly running total of
+bonus points and their spending is stored in the User record, outside the
+ledger system, so we don't have to recalculate it every time the user wants to
+spend a point.
+d1077 1
+a1077 1
+  user's Up points at each awards ceremony.  Negative is usually some sort of
+d1300 1
+a1300 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.76 2021/09/12 21:49:00 agmsmith Exp agmsmith $
+d1303 3
 @
 
 
