@@ -26,7 +26,6 @@ class LedgerUserTest < ActiveSupport::TestCase
     )
     user.activate
     luser = user.ledger_user
-    luser.birthday = Time.new(2020, 2, 20, 20, 20, 20) # Palindromic date.
     luser.save!
     assert_equal(luser.id, user.ledger_user_id, "LedgerUser should be in User")
     assert_equal(luser.id, luser.creator_id, "Users should be created by self")

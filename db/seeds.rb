@@ -72,7 +72,6 @@ if User.where(name: "Anonymous Internet Browser").empty?
     password_confirmation: pw,
     admin: false)
   internet_ledger = internet_user.ledger_user # Will create ledger record.
-  internet_ledger.birthday = DateTime.new(2020,2,2,2,2,2)
   internet_ledger.save!
   internet_user.activate
 end
@@ -90,7 +89,6 @@ if User.where(name: "Mike Davison").empty?
   mike_user.update_attribute(:password_digest,
    '$2a$12$F4kOjn3bCMtcP/ebvORdGOnkDhEhSAhnq/2TahVSNF4TMxaGCHhBe')
   mike_ledger = mike_user.ledger_user # Will create ledger record.
-  mike_ledger.birthday = DateTime.new(2021,6,28,18,31,55)
   mike_ledger.save!
   mike_user.activate
 end
