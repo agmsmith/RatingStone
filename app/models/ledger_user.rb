@@ -3,7 +3,6 @@
 class LedgerUser < LedgerBase
   alias_attribute :name, :string1
   alias_attribute :email, :string2
-  alias_attribute :birthday, :date1
 
   after_create :user_after_create
 

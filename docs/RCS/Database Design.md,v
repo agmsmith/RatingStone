@@ -1,9 +1,14 @@
-head	1.78;
+head	1.79;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.79
+date	2022.01.31.21.58.19;	author agmsmith;	state Exp;
+branches;
+next	1.78;
 
 1.78
 date	2022.01.29.21.13.04;	author agmsmith;	state Exp;
@@ -401,15 +406,14 @@ desc
 @
 
 
-1.78
+1.79
 log
-@Switch to using meh points to receive the weekly allowance of
-reputation bonuses.  Solves several problems to do it that way.
+@More on awarding Meh points.  User record described, vs LedgerUser.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.77 2022/01/23 01:11:37 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.78 2022/01/29 21:13:04 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -901,14 +905,23 @@ link instead (if you are allowed to).
 Idenfities a particular user.  We don't have placeholder users (for celebrities
 and other external people); a group should be created by fans instead.
 
-* User_id Points to a user's record in the separate Users database (see
-  RailsTutorial) which has passwords, e-mail addresses and other private
-  information.
-* Elsewhere, the user is referenced by the record id number of the original
-  version of the LedgerUser record.  Though for export or federated systems
+* name string The name the user wants to display naming themselves.  Write-once.
+* email string The mail address of the user.  Write-once.
+
+Elsewhere in the User table, we keep track of non-ledger (no version history)
+user information:
+
+* ledger_user_id Points to the original LedgerUser record corresponding to
+  this user.  Note that later versions of it are created whenever the e-mail
+  or name is changed.  Though for export or federated systems
   we'd need a GUID or an id+server pair.
-* Allowance points awarded at most recent award ceremony, mostly for
-  informational use.
+* name Latest screen name of the user.
+* email Latest e-mail address of the user, the user is "Activated" when it has
+  been verified by sending a test e-mail.
+* Various other login related password digests and activation tokens, see the
+  Rails Tutorial for their explanations.
+* weeks_allowance float Number of bonus reputation points the user got for this
+  week's allowance at the awards ceremony.  Limited to be between 0 and 100.
   Computed by considering various achievement records (such as e-mail verified,
   passport photo uploaded, had tea with the sysop, bought some bonus points)
   attached to the LedgerUser record by LinkBonus links.  The allowance
@@ -916,6 +929,9 @@ and other external people); a group should be created by fans instead.
   each ceremony (the actual calculation is done on demand).  A user can spend
   their meh reputation points, down to zero.  While their up is larger than
   their down, they can spend up points too.  Points taken from meh first.
+* weeks_spending float Number of points the user has spent so far this week,
+  reset to zero at the next ceremony.  May exceed their allowance if they spend
+  up points too (if they have more up than down).
 
 
 #### *LedgerCompany* < LedgerUser
@@ -1077,7 +1093,11 @@ on the anniversary of a user's account activation.
 As mentioned elsewhere, the weekly allowance bonus points are added to the
 user's meh score each week (theoretically just after the ceremony is done).
 The user can spend meh points and if their up is more than their down points,
-the extra up points can be spent too, though their meh will be used first.
+the extra up points can be spent too, though their meh will be used first.  In
+the future if users are particularly obnoxious, we can also limit the spending
+of meh points to ones above the down points, but then we'd need another
+mechanism to make sure they can still spend their allowance points in all
+situations.
 
 
 ### *LedgerBirthday* < LedgerMedia
@@ -1706,9 +1726,13 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.77 2022/01/23 01:11:37 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.78 2022/01/29 21:13:04 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.78  2022/01/29 21:13:04  agmsmith
+Switch to using meh points to receive the weekly allowance of
+reputation bonuses.  Solves several problems to do it that way.
+
 Revision 1.77  2022/01/23 01:11:37  agmsmith
 Correct award_number to new original_ceremony naming.
 
@@ -1953,6 +1977,37 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.78
+log
+@Switch to using meh points to receive the weekly allowance of
+reputation bonuses.  Solves several problems to do it that way.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.77 2022/01/23 01:11:37 agmsmith Exp agmsmith $</SMALL>
+d495 9
+a503 5
+* User_id Points to a user's record in the separate Users database (see
+  RailsTutorial) which has passwords, e-mail addresses and other private
+  information.
+* Elsewhere, the user is referenced by the record id number of the original
+  version of the LedgerUser record.  Though for export or federated systems
+d505 7
+a511 2
+* Allowance points awarded at most recent award ceremony, mostly for
+  informational use.
+d519 3
+d683 5
+a687 1
+the extra up points can be spent too, though their meh will be used first.
+d1316 1
+a1316 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.77 2022/01/23 01:11:37 agmsmith Exp agmsmith $
+d1319 4
 @
 
 
