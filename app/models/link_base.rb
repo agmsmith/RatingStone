@@ -287,7 +287,7 @@ class LinkBase < ApplicationRecord
     # make Up go negative if something funny is going on).
     creator.with_lock do
       creator.current_meh_points -= rating_points_spent
-      if (creator.current_meh_points < 0.0)
+      if creator.current_meh_points < 0.0
         creator.current_up_points += creator.current_meh_points
         creator.current_meh_points = 0.0
       end

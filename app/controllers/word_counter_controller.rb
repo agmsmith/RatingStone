@@ -33,6 +33,7 @@ class WordCounterController < ApplicationController
   def update
     @vo_script = params[:vo_script]
     @selected_expansions = Hash.new(false)
+
     if @vo_script
       # Use an empty script if Clear button pressed, otherwise remove the blank
       # line that the Form textarea adds at front, depending on the browser.
@@ -43,11 +44,26 @@ class WordCounterController < ApplicationController
       EXPANSION_SYMBOLS.each do |a_symbol|
         @selected_expansions[a_symbol] = true if params[a_symbol]
       end
-    else # First time run, use some demo text and default settings.
+    else # First time, set checkboxes to default settings.
+      @vo_script = ""
+      EXPANSION_SYMBOLS.each do |a_symbol|
+        @selected_expansions[a_symbol] = true
+      end
+      @selected_expansions[:exp_numbers_and] = false
+      @selected_expansions[:exp_numbers_dash] = false
+      @selected_expansions[:exp_psalms] = false
+      @selected_expansions[:exp_say_area_code] = false
+      @selected_expansions[:exp_say_telephone_number] = false
+      @selected_expansions[:exp_slash_per_always] = false
+      @selected_expansions[:exp_slash_slash_always] = false
+    end
+
+    if params[:commit] == "Example" # Example button pressed for demo script.
       @vo_script = <<~DEFAULTSCRIPT
         To start - click Clear and paste your script in here, replacing this example.
 
-        Some examples (and test cases we haven't implemented yet):
+        Some examples (and test cases we haven't implemented yet).  Scroll down
+        to the "Changes Made" section to have a better idea of what's going on:
 
         URLs - Uniform Resource Locators
         Visit https://user:password@ratingstone.agmsmith.ca/server01/about/
@@ -180,17 +196,6 @@ class WordCounterController < ApplicationController
         English units dictionary - not implemented unless someone wants it.
         The pool heater raises the water temperature by 10-15F, at 20GPM (1.5 hp motor), which uses 150,000 BTU/hour from burning logs.  With 2" pipes (32' long), it's flowing at 5 mph.
       DEFAULTSCRIPT
-
-      EXPANSION_SYMBOLS.each do |a_symbol|
-        @selected_expansions[a_symbol] = true
-      end
-      @selected_expansions[:exp_numbers_and] = false
-      @selected_expansions[:exp_numbers_dash] = false
-      @selected_expansions[:exp_psalms] = false
-      @selected_expansions[:exp_say_area_code] = false
-      @selected_expansions[:exp_say_telephone_number] = false
-      @selected_expansions[:exp_slash_per_always] = false
-      @selected_expansions[:exp_slash_slash_always] = false
     end
 
     # Spaces to avoid edge conditions.  Three spaces so "9" at very end can have

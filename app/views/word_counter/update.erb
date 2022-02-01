@@ -30,7 +30,7 @@
           word count of their scripts, by converting numbers, URLS, statistics,
           dates, etc, into spoken words.</p>
       </div>
-      <p><b>Instructions:</b> Hit Clear, paste your script into the box,
+      <p><b>Instructions:</b> Paste your script into the box,
         then "<%= yield(:button_text) %>."  The count will display just above
         the box, along with the number of words you’ve gained!  Scroll further
         down for advanced options.</p>
@@ -45,11 +45,14 @@
   </div>
 
   <div class="row">
-    <div class="col-xs-8">
+    <div class="col-xs-6">
       <%= submit_tag(yield(:button_text), class: "btn btn-primary button-full-width") %>
     </div>
-    <div class="col-xs-4">
+    <div class="col-xs-3">
       <p><%= submit_tag("Clear", class: "btn btn-info button-full-width") %></p>
+    </div>
+    <div class="col-xs-3">
+      <p><%= submit_tag("Example", class: "btn btn-info button-full-width") %></p>
     </div>
   </div>
 
