@@ -69,6 +69,7 @@ class LedgerUser < LedgerBase
   # the given ceremony number.  Called by update_current_points, with a lock on
   # this object already in effect, will save it too later on.
   def update_current_bonus_points_since(old_ceremony, last_ceremony)
+    weekly_allowance = 0.0
     # Note that LinkBonus used in a query implies searches for LinkBonusUnique
     # too, but only if the single table inhertance system knows that the
     # LinkBonusUnique exists, thus the dummy reference.  The .class afterwards
@@ -84,8 +85,17 @@ class LedgerUser < LedgerBase
       generations = last_ceremony - start_ceremony
       # Note that zero or negative generations means no bonus, so you don't get
       # the bonus until the next ceremony after the bonus is created.
-      self.current_up_points += a_bonus.bonus_points *
+      self.current_meh_points += a_bonus.bonus_points *
         LedgerAwardCeremony.accumulated_bonus(generations)
+      weekly_allowance += a_bonus.bonus_points
+    end
+
+    user_record = User.find_by(ledger_user_id: original_version_id)
+    if user_record # Don't create a new one here, recursive mess otherwise.
+      weekly_allowance = 0.0 if weekly_allowance < 0.0
+      weekly_allowance = 100.0 if weekly_allowance > 100.0
+      user_record.update_columns(weeks_allowance: weekly_allowance,
+        weeks_spending: 0.0)
     end
   end
 

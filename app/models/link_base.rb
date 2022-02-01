@@ -283,13 +283,19 @@ class LinkBase < ApplicationRecord
     end
 
     # Check that the creator has enough points to spend for creating this link.
+    # Take them from Meh first, and any extra needed come off Up (which may
+    # make Up go negative if something funny is going on).
     creator.with_lock do
-      creator.current_up_points -= rating_points_spent
+      creator.current_meh_points -= rating_points_spent
+      if (creator.current_meh_points < 0.0)
+        creator.current_up_points += creator.current_meh_points
+        creator.current_meh_points = 0.0
+      end
       if creator.current_up_points < 0.0
         logger.warn("#distribute_rating_points: Negative balance of " \
           "#{creator.current_up_points} points after creating link " \
           "#{self} for creator #{creator}.  " \
-          "Perhaps you should check for fraud?")
+          "Perhaps you should check for fraud or bugs?")
       end
       creator.save!
     end

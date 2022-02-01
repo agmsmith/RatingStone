@@ -24,6 +24,6 @@ class LinkBonus < LinkBase
     bonus_change = bonus_points *
       LedgerAwardCeremony.accumulated_bonus(generations)
     bonus_change = -bonus_change unless add
-    bonus_user.current_up_points += bonus_change
+    bonus_user.current_meh_points += bonus_change
   end
 end

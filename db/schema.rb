@@ -57,7 +57,7 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
     t.boolean "is_latest_version", default: true
     t.integer "creator_id", null: false
     t.boolean "bool1", default: false
-    t.integer "number1", default: 0
+    t.bigint "number1", default: 0
     t.string "string1", default: ""
     t.string "string2", default: ""
     t.text "text1", default: ""
@@ -82,7 +82,7 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
     t.integer "parent_id", null: false
     t.integer "child_id", null: false
     t.integer "creator_id", null: false
-    t.integer "number1", default: 0
+    t.bigint "number1", default: 0
     t.string "string1", default: ""
     t.boolean "deleted", default: false
     t.boolean "approved_parent", default: false
@@ -116,7 +116,8 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
     t.string "reset_digest"
     t.datetime "reset_sent_at", precision: 6
     t.bigint "ledger_user_id"
-    t.float "entitlement_remaining", default: 0.0
+    t.float "weeks_allowance", default: 0.0
+    t.float "weeks_spending", default: 0.0
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 

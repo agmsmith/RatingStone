@@ -293,8 +293,6 @@ class LedgerBase < ApplicationRecord
     last_ceremony = LedgerAwardCeremony.last_ceremony
     return if current_ceremony >= last_ceremony # Current is still good.
 
-    # Out of date, if just fading is needed then it's fairly simple.
-
     with_lock do
       # Will be updating our current values so it is a critical section.
       # In case two processes try to update simultaneously, one will get the
@@ -359,15 +357,29 @@ class LedgerBase < ApplicationRecord
           end
         end # find_each
 
+        # Add accumulated faded weekly allowance points for all time.
+        update_current_bonus_points_since(original_ceremony, last_ceremony)
+
         # Remove points spent in creating links.  Doesn't matter if it's a
         # deleted link, it still counts as spent points for fraud reasons.
 
         links_created.find_each do |a_link|
-          self.current_up_points -= a_link.rating_points_spent
+          generations = last_ceremony - a_link.original_ceremony
+          if generations < 0
+            logger.warn("#update_current_points: Ceremony number " \
+              "#{a_link.original_ceremony} is in the future, for #{a_link}, " \
+              "created by object #{self}.  Ignoring spending on " \
+              "that future link (check for fraud? recalculate it?).")
+            next
+          end
+          fade_factor = LedgerAwardCeremony::FADE**generations
+          amount = a_link.rating_points_spent * fade_factor
+          self.current_meh_points -= amount
+          if current_meh_points < 0.0 # Ran out of Meh, take remainder off Up.
+            self.current_up_points += current_meh_points
+            self.current_meh_points = 0.0
+          end
         end
-
-        # And add accumulated faded weekly allowance points for all time.
-        update_current_bonus_points_since(original_ceremony, last_ceremony)
       end # full recalculation
 
       # Check for negative points, a sign of missing records if small,

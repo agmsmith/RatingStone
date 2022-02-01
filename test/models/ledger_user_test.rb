@@ -103,19 +103,19 @@ class LedgerUserTest < ActiveSupport::TestCase
     # Check that the weekly bonus appears in the next ceremony and both
     # accumulates and fades in the ones after that.
     luser.update_current_points
-    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_meh_points, 0.0000001)
     LedgerAwardCeremony.start_ceremony
     luser.update_current_points
-    assert_in_delta(10.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(10.0, luser.current_meh_points, 0.0000001)
     LedgerAwardCeremony.start_ceremony
     luser.update_current_points
-    assert_in_delta(10.0 + 10.0 * 0.97, luser.current_up_points, 0.0000001)
+    assert_in_delta(10.0 + 10.0 * 0.97, luser.current_meh_points, 0.0000001)
     # See if a full recalculation gives the same number.
-    luser.current_up_points = -2
+    luser.current_meh_points = -2
     luser.current_ceremony = -1
     luser.save!
     luser.update_current_points
-    assert_in_delta(10.0 + 10.0 * 0.97, luser.current_up_points, 0.0000001)
+    assert_in_delta(10.0 + 10.0 * 0.97, luser.current_meh_points, 0.0000001)
   end
 
   test "Shouldn't be able to add a second unique bonus" do
@@ -135,7 +135,7 @@ class LedgerUserTest < ActiveSupport::TestCase
       !lbonus_link.deleted, "Unique Bonus link should be fully approved.")
     LedgerAwardCeremony.start_ceremony("Ceremony #1 since first bonus created.")
     luser.update_current_points
-    assert_in_delta(1.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(1.0, luser.current_meh_points, 0.0000001)
 
     # Make the second link, should fail.
     lbonus_second_link = LinkBonusUnique.create(creator_id: 0,
@@ -149,12 +149,12 @@ class LedgerUserTest < ActiveSupport::TestCase
       lbonus_second_link.errors[:validate_uniqueness].first)
     LedgerAwardCeremony.start_ceremony("Ceremony #2 since first bonus created.")
     luser.update_current_points
-    assert_in_delta(1.0 + 1.0 * 0.97, luser.current_up_points, 0.0000001)
+    assert_in_delta(1.0 + 1.0 * 0.97, luser.current_meh_points, 0.0000001)
 
     # Does full recalculation match incremental?
     luser.request_full_point_recalculation
     luser.update_current_points
-    assert_in_delta(1.0 + 1.0 * 0.97, luser.current_up_points, 0.0000001)
+    assert_in_delta(1.0 + 1.0 * 0.97, luser.current_meh_points, 0.0000001)
 
     # Try deleting the old bonus link and make a new one.
     LedgerDelete.mark_records([lbonus_link], true,
@@ -164,10 +164,10 @@ class LedgerUserTest < ActiveSupport::TestCase
       approved_parent: true, approved_child: true)
     LedgerAwardCeremony.start_ceremony("Ceremony #3 since first bonus created.")
     luser.update_current_points
-    assert_in_delta(3.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(3.0, luser.current_meh_points, 0.0000001)
     LedgerAwardCeremony.start_ceremony("Ceremony #4 since first bonus created.")
     luser.update_current_points
-    assert_in_delta(3.0 + 3.0 * 0.97, luser.current_up_points, 0.0000001)
+    assert_in_delta(3.0 + 3.0 * 0.97, luser.current_meh_points, 0.0000001)
 
     # Try undeleting the original bonus link.  Should fail.
     assert_raise(RatingStoneErrors, "Undelete unique bonus") do
@@ -176,7 +176,7 @@ class LedgerUserTest < ActiveSupport::TestCase
     end
     luser.reload
     luser.update_current_points
-    assert_in_delta(3.0 + 3.0 * 0.97, luser.current_up_points, 0.0000001)
+    assert_in_delta(3.0 + 3.0 * 0.97, luser.current_meh_points, 0.0000001)
 
     # Delete the second bonus, should have no bonus being applied.
     assert_equal(LedgerDelete,
@@ -184,10 +184,10 @@ class LedgerUserTest < ActiveSupport::TestCase
         LedgerUser.find(0), "Should work.",
         "Deleting the second unique bonus.").class,
       "Delete didn't work?")
-    luser.reload # Deletion of bonus side-affects the LedgerUser record.
-    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    luser.reload # Deletion of bonus side-effects the LedgerUser record.
+    assert_in_delta(0.0, luser.current_meh_points, 0.0000001)
     luser.update_current_points
-    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_meh_points, 0.0000001)
 
     # Now undelete the first bonus.  Should work this time.
     assert_equal(LedgerDelete,
@@ -201,7 +201,7 @@ class LedgerUserTest < ActiveSupport::TestCase
       1.0 * 0.97 +
       1.0 * 0.97 * 0.97 +
       1.0 * 0.97 * 0.97 * 0.97,
-      luser.current_up_points, 0.0000001
+      luser.current_meh_points, 0.0000001
     )
     luser.update_current_points
     assert_in_delta(
@@ -209,7 +209,7 @@ class LedgerUserTest < ActiveSupport::TestCase
       1.0 * 0.97 +
       1.0 * 0.97 * 0.97 +
       1.0 * 0.97 * 0.97 * 0.97,
-      luser.current_up_points, 0.0000001
+      luser.current_meh_points, 0.0000001
     )
     LedgerAwardCeremony.start_ceremony("Ceremony #5 since first bonus created.")
     luser.update_current_points
@@ -219,8 +219,8 @@ class LedgerUserTest < ActiveSupport::TestCase
       1.0 * 0.97 * 0.97 +
       1.0 * 0.97 * 0.97 * 0.97 +
       1.0 * 0.97 * 0.97 * 0.97 * 0.97,
-      luser.current_up_points, 0.0000001
+      luser.current_meh_points, 0.0000001
     )
-    # TODO: Test approval changes too.
+    # TODO: Test approval changes too.  See if points get spent.  See if points get received.
   end
 end

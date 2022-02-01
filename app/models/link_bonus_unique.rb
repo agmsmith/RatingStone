@@ -28,7 +28,7 @@ class LinkBonusUnique < LinkBonus
     if approved_parent && approved_child && !hub.new_marking_state
       if duplicate_linkbonus_exists?
         raise RatingStoneErrors, "#mark_deleted: Some other equivalent " \
-        "LinkBonus is active when trying to undelete record #{self}."
+          "LinkBonus is active when trying to undelete record #{self}."
       end
     end
     super
