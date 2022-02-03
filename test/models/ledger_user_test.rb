@@ -221,6 +221,36 @@ class LedgerUserTest < ActiveSupport::TestCase
       1.0 * 0.97 * 0.97 * 0.97 * 0.97,
       luser.current_meh_points, 0.0000001
     )
-    # TODO: Test approval changes too.  See if points get spent.  See if points get received.
+  end
+
+  test "See if points get spent properly." do
+    luser = ledger_users(:reader_user)
+    user = luser.user # Create corresponding User, with allowances fields.
+    luser.update_current_points
+    assert_in_delta(0.0, luser.current_meh_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_down_points, 0.0000001)
+    LedgerAwardCeremony.start_ceremony
+    luser.update_current_points
+    assert_in_delta(0.0, luser.current_meh_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_down_points, 0.0000001)
+    LedgerAwardCeremony.start_ceremony
+    luser.update_current_points
+    assert_in_delta(10.0, luser.current_meh_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_down_points, 0.0000001)
+    LedgerAwardCeremony.start_ceremony
+    luser.update_current_points
+    assert_in_delta(10.0 * 0.97 + 10.0, luser.current_meh_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_down_points, 0.0000001)
+    luser.request_full_point_recalculation
+    luser.update_current_points
+    assert_in_delta(10.0 * 0.97 + 10.0, luser.current_meh_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_up_points, 0.0000001)
+    assert_in_delta(0.0, luser.current_down_points, 0.0000001)
+  # FIXME: bleeble
   end
 end
+

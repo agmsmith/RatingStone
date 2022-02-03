@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+bonus_reader:
+  type: 'LinkBonusUnique'
+  creator: reader_user
+  number1: 10
+  parent: lpost_bonus10
+  child: reader_user
+  string1: 'Adding a weekly bonus of 10 points to reader user.'
+  approved_parent: true
+  approved_child: true
+  original_ceremony: 1
+

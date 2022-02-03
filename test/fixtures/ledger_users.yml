@@ -9,55 +9,66 @@ root_ledger_user_fixture:
   id: 0
   creator_id: 0
   string1: 'Fixture created Root User Object'
+  string2: 'root@example.com'
 
 group_creator_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:group_creator_user) %>
   string1: 'Creator of a group'
+  string2: 'groupcreator@example.com'
 
 group_owner_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:group_owner_user) %>
   string1: 'Owner of a group'
+  string2: 'groupowner@example.com'
 
 message_moderator_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:message_moderator_user) %>
   string1: 'Moderator of messages in a group'
+  string2: 'moderator1@example.com'
 
 message_moderator2_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:message_moderator2_user) %>
   string1: 'Second moderator of messages in a group, banned'
+  string2: 'moderator2@example.com'
 
 member_moderator_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:member_moderator_user) %>
   string1: 'Moderator of members in a group'
+  string2: 'membermoderator@example.com'
 
 meta_moderator_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:meta_moderator_user) %>
   string1: 'Moderator of opinions in a group'
+  string2: 'metamoderator@example.com'
 
 member_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:member_user) %>
   string1: 'Member of a group'
+  string2: 'plainmember@example.com'
   current_up_points: 10.0
 
 reader_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:reader_user) %>
   string1: 'Reader of a group'
+  string2: 'reader@example.com'
 
 undesirable_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:undesirable_user) %>
   string1: 'An undesirable user who gets banned'
+  string2: 'undesirable@example.com'
 
 outsider_user:
   type: 'LedgerUser'
   creator_id: <%= ActiveRecord::FixtureSet.identify(:outsider_user) %>
   string1: 'A user not in any groups'
+  string2: 'outsider@example.com'
 
