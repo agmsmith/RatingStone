@@ -96,11 +96,15 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
   test "Incremental Recalculation of Rating Points" do
     # Make a post, and add reply posts over time, with points spent to link
     # in the replies.  Also do approvals, and test deletion effects on points.
+    user_member = ledger_users(:member_user)
+    user_member.user # Make sure corresponding user record exists.
+    user_member.update_current_points
+    user_member.current_meh_points = 10.0
+    user_member.save!
     LedgerAwardCeremony.clear_ceremony_cache
     LedgerAwardCeremony.start_ceremony
     assert_equal(1, LedgerAwardCeremony.last_ceremony,
       "Should just have one Ceremony in the test database at this point.")
-    user_member = ledger_users(:member_user)
     user_outsider = ledger_users(:outsider_user)
     lpost1 = LedgerPost.create!(creator: user_outsider,
       subject: "First Post", content: "The **Post** created by an outsider.")
@@ -115,11 +119,11 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     assert_equal(1, reply_1_2.original_ceremony)
     assert_in_delta(0.0, lpost1.current_meh_points, 0.0000001, "Not approved.")
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001, "Approved points")
-    assert_in_delta(9.0, user_member.current_up_points, 0.0000001, "Spent them")
+    assert_in_delta(8.7, user_member.current_meh_points, 0.0000001, "Spent them")
 
     # Incremental update in the same ceremony week should do nothing.
-    lpost1.reload.update_current_points
-    lpost2.reload.update_current_points
+    lpost1.update_current_points
+    lpost2.update_current_points
     assert_in_delta(0.0, lpost1.current_meh_points, 0.0000001)
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001)
 

@@ -83,20 +83,21 @@ class LedgerUser < LedgerBase
         old_ceremony
       end
       generations = last_ceremony - start_ceremony
+
       # Note that zero or negative generations means no bonus, so you don't get
       # the bonus until the next ceremony after the bonus is created.
-      if generations > 0
-        self.current_meh_points += a_bonus.bonus_points *
-          LedgerAwardCeremony.accumulated_bonus(generations)
-        weekly_allowance += a_bonus.bonus_points
-      end
+      next if generations <= 0
+
+      self.current_meh_points += a_bonus.bonus_points *
+        LedgerAwardCeremony.accumulated_bonus(generations)
+      weekly_allowance += a_bonus.bonus_points
     end
 
-    user_record = User.find_by(ledger_user_id: original_version_id)
-    if user_record # Don't create a new one here, recursive mess otherwise.
+    user = User.find_by(ledger_user_id: original_version_id)
+    user&.with_lock do
       weekly_allowance = 0.0 if weekly_allowance < 0.0
       weekly_allowance = 100.0 if weekly_allowance > 100.0
-      user_record.update_columns(weeks_allowance: weekly_allowance,
+      user.update_columns(weeks_allowance: weekly_allowance,
         weeks_spending: 0.0)
     end
   end

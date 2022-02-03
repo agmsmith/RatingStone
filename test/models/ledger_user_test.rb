@@ -230,27 +230,43 @@ class LedgerUserTest < ActiveSupport::TestCase
     assert_in_delta(0.0, luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)
     assert_in_delta(0.0, luser.current_down_points, 0.0000001)
-    LedgerAwardCeremony.start_ceremony
+    user.reload
+    assert_in_delta(0.0, user.weeks_allowance, 0.0000001)
+    assert_in_delta(0.0, user.weeks_spending, 0.0000001)
+    LedgerAwardCeremony.start_ceremony # Ceremony #1 starts.
     luser.update_current_points
     assert_in_delta(0.0, luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)
     assert_in_delta(0.0, luser.current_down_points, 0.0000001)
-    LedgerAwardCeremony.start_ceremony
+    user.reload
+    assert_in_delta(0.0, user.weeks_allowance, 0.0000001)
+    assert_in_delta(0.0, user.weeks_spending, 0.0000001)
+    LedgerAwardCeremony.start_ceremony # 2 starts, fixture LinkBonus active now.
     luser.update_current_points
     assert_in_delta(10.0, luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)
     assert_in_delta(0.0, luser.current_down_points, 0.0000001)
-    LedgerAwardCeremony.start_ceremony
+    user.reload
+    assert_in_delta(10.0, user.weeks_allowance, 0.0000001)
+    assert_in_delta(0.0, user.weeks_spending, 0.0000001)
+    LedgerAwardCeremony.start_ceremony # 3, another week of existing bonus.
     luser.update_current_points
     assert_in_delta(10.0 * 0.97 + 10.0, luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)
     assert_in_delta(0.0, luser.current_down_points, 0.0000001)
+    user.reload
+    assert_in_delta(10.0, user.weeks_allowance, 0.0000001)
+    assert_in_delta(0.0, user.weeks_spending, 0.0000001)
+
+    # Verify full recalculation the same as incremental.
     luser.request_full_point_recalculation
     luser.update_current_points
     assert_in_delta(10.0 * 0.97 + 10.0, luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)
     assert_in_delta(0.0, luser.current_down_points, 0.0000001)
-  # FIXME: bleeble
+    user.reload
+    assert_in_delta(10.0, user.weeks_allowance, 0.0000001)
+    assert_in_delta(0.0, user.weeks_spending, 0.0000001)
+    # FIXME: bleeble
   end
 end
-

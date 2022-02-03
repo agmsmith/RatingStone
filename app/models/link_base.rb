@@ -273,32 +273,18 @@ class LinkBase < ApplicationRecord
   # current ceremony number and add the rating points to the child and parent
   # objects (subject to approval) and subtract from the creator (always).
   def distribute_rating_points
-    # Sanity check that the point amounts add up.
     if rating_points_spent < rating_points_boost_parent +
         rating_points_boost_child
-      logger.warn("#distribute_rating_points: Boosts " \
-        "#{rating_points_boost_parent + rating_points_boost_child - rating_points_spent} " \
-        "more points than were spent in creating the link #{self}.  " \
-        "Perhaps it's fraud?")
+      raise RatingStoneErrors,
+        "#distribute_rating_points: Boosts " \
+          "#{rating_points_boost_parent + rating_points_boost_child - rating_points_spent} " \
+          "more points than were spent in creating the link #{self}.  " \
+          "Perhaps it's fraud?"
     end
 
-    # Check that the creator has enough points to spend for creating this link.
-    # Take them from Meh first, and any extra needed come off Up (which may
-    # make Up go negative if something funny is going on).
-    creator.with_lock do
-      creator.current_meh_points -= rating_points_spent
-      if creator.current_meh_points < 0.0
-        creator.current_up_points += creator.current_meh_points
-        creator.current_meh_points = 0.0
-      end
-      if creator.current_up_points < 0.0
-        logger.warn("#distribute_rating_points: Negative balance of " \
-          "#{creator.current_up_points} points after creating link " \
-          "#{self} for creator #{creator}.  " \
-          "Perhaps you should check for fraud or bugs?")
-      end
-      creator.save!
-    end
+    # Spend the points from the creator for creating this link, throws an
+    # exception if not enough available.
+    creator.spend_points(rating_points_spent)
 
     self.original_ceremony = LedgerAwardCeremony.last_ceremony
 

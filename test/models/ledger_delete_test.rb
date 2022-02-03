@@ -4,6 +4,12 @@ require "test_helper"
 
 class LedgerDeleteTest < ActiveSupport::TestCase
   test "deleting records" do
+    # Give the root user some points to spend so we can test deletion etc.
+    root_user = LedgerUser.find(0)
+    root_user.update_current_points
+    root_user.current_meh_points = 100.0
+    root_user.save!
+
     original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String One")
     original_lbase.save!
     assert(original_lbase.type == "LedgerBase")
@@ -38,7 +44,7 @@ class LedgerDeleteTest < ActiveSupport::TestCase
       assert_not(x.original_version.deleted) if x.is_a?(LedgerBase)
     end
     ledger_delete = LedgerDelete.mark_records(records_to_delete, true,
-      LedgerUser.first, "Some Context", "Testing deletion.")
+      root_user, "Some Context", "Testing deletion.")
     assert_equal(ledger_delete.reason, "Testing deletion.")
     assert_equal(ledger_delete.context, "Some Context")
     all_deleted_records.each do |x|
@@ -73,7 +79,7 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     all_undeleted_records = original_lbase.all_versions.to_a
     all_undeleted_records.push(link_original_second)
     ledger_undelete = LedgerDelete.mark_records(records_to_undelete, false,
-      LedgerUser.first, "Some Other Context", "Testing undeletion.")
+      root_user, "Some Other Context", "Testing undeletion.")
     assert_equal(ledger_undelete.reason, "Testing undeletion.")
     all_undeleted_records.each do |x|
       x.reload

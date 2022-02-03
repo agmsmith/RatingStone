@@ -272,6 +272,47 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # Do the bookkeeping for spending some points (usually to create a link).
+  # Takes them off current Meh, and Up if not enough Meh and Up is greater than
+  # Down.  Also updates the User weekly spending.  Throws an exception if there
+  # aren't enough points.
+  def spend_points(amount)
+    if amount < 0.0
+      raise RatingStoneErrors,
+        "#spend_points: Spending a negative number (#{amount}) of points " \
+          "from #{self}."
+    end
+    return if amount == 0.0
+
+    update_current_points # Also verifies that "self" is original version.
+    with_lock do
+      self.current_meh_points -= amount
+      available_up = current_up_points - current_down_points
+      if current_meh_points < 0.0 && current_meh_points + available_up >= 0.0
+        self.current_up_points += current_meh_points
+        self.current_meh_points = 0.0
+      end
+      if current_meh_points < 0.0
+        reload # To make debugging easier, restore current points.
+        raise RatingStoneErrors,
+          "#spend_points: Don't have #{amount} available points to spend " \
+            "from ^#{current_up_points} ~#{current_meh_points} " \
+            "v#{current_down_points} #{self}."
+      end
+
+      # Update weekly spend for UI information display.  Ignore when self is
+      # not a LedgerUser or no User record has been created.
+      user = User.find_by(ledger_user_id: id)
+      user&.with_lock do
+        user.weeks_spending += amount
+        user.save!
+      end
+      save!
+    end
+    self
+  end
+
+  ##
   # Make sure the current_(down|meh|up)_points rating points are up to date.
   # Call this before modifying current points, or even just reading them.
   #
