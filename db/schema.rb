@@ -10,8 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_08_211619) do
-
+ActiveRecord::Schema[7.0].define(version: 2021_01_08_211619) do
   create_table "aux_ledgers", force: :cascade do |t|
     t.integer "parent_id", null: false
     t.integer "child_id", null: false
@@ -61,14 +60,14 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
     t.string "string1", default: ""
     t.string "string2", default: ""
     t.text "text1", default: ""
-    t.datetime "date1", precision: 6
+    t.datetime "date1"
     t.float "current_down_points", default: 0.0
     t.float "current_meh_points", default: 0.0
     t.float "current_up_points", default: 0.0
     t.integer "current_ceremony", default: -1
     t.integer "original_ceremony", default: -1
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["amended_id"], name: "index_ledger_bases_on_amended_id"
     t.index ["creator_id"], name: "index_ledger_bases_on_creator_id"
     t.index ["number1"], name: "index_ledger_bases_on_number1"
@@ -93,8 +92,8 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
     t.string "rating_direction_parent", default: "M"
     t.string "rating_direction_child", default: "M"
     t.integer "original_ceremony", default: -1
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.index ["child_id"], name: "index_link_bases_on_child_id"
     t.index ["creator_id"], name: "index_link_bases_on_creator_id"
     t.index ["number1"], name: "index_link_bases_on_number1"
@@ -105,16 +104,16 @@ ActiveRecord::Schema.define(version: 2021_01_08_211619) do
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
-    t.datetime "created_at", precision: 6, null: false
-    t.datetime "updated_at", precision: 6, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
     t.string "password_digest"
     t.string "remember_digest"
     t.boolean "admin", default: false
     t.string "activation_digest"
     t.boolean "activated", default: false
-    t.datetime "activated_at", precision: 6
+    t.datetime "activated_at"
     t.string "reset_digest"
-    t.datetime "reset_sent_at", precision: 6
+    t.datetime "reset_sent_at"
     t.bigint "ledger_user_id"
     t.float "weeks_allowance", default: 0.0
     t.float "weeks_spending", default: 0.0
