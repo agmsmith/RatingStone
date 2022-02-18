@@ -111,6 +111,14 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_metric, "Expand Metric Terms") %>
+      <%= check_box_tag(:exp_metric, true, @selected_expansions[:exp_metric]) %>
+      <p>Metric units are expanded into words, including squares, slashes and
+         dots.  1.2 L/°C or 3 kW⋅h² becomes:
+         1.2 litres per degree celsius or 3 kilowatt-hours squared</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_urls, "Expand URLs") %>
       <%= check_box_tag(:exp_urls, true, @selected_expansions[:exp_urls]) %>
       <p>Adds words "dot", "slash", "at" and "colon" for the separators in a

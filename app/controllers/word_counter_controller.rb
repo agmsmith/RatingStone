@@ -22,7 +22,7 @@ class WordCounterController < ApplicationController
   EXPANSION_SYMBOLS = [ # In alphabetical order for easier manual additions.
     :exp_atsignletter, :exp_atsignnumber, :exp_comma_space, :exp_dash_to_to,
     :exp_dollars, :exp_hashtag, :exp_hyphens,
-    :exp_leadingohs, :exp_leadingzeroes, :exp_na_telephone,
+    :exp_leadingohs, :exp_leadingzeroes, :exp_metric, :exp_na_telephone,
     :exp_number_of, :exp_numbers, :exp_numbers_and, :exp_numbers_dash,
     :exp_percent, :exp_psalms, :exp_say_area_code, :exp_say_chapter,
     :exp_say_telephone_number,
@@ -62,10 +62,52 @@ class WordCounterController < ApplicationController
       @vo_script = <<~DEFAULTSCRIPT
         To start - click Clear and paste your script in here, replacing this example.
 
-        Some examples (and test cases we haven't implemented yet).  Scroll down
-        to the "Changes Made" section to have a better idea of what's going on:
+        Here are some examples (and test cases we haven't implemented yet).
+        Set or clear the checkboxes in "Expansion Options" at the bottom of the
+        web page to turn on or off these expansions.  Scroll down to the
+        "Changes Made" section to have a better visual idea of what's going on:
 
-        URLs - Uniform Resource Locators
+        Metric Units:
+        Expands numbers followed by metric units into words.
+        The number is followed by a metric unit (like 12cm), optionally
+        followed by more metric units separated by slashes or centered dots
+        (3.4 kg/m² or 0.2 kW⋅h).  The slash is replaced by "per" and the dot by
+        a dash (which may be replaced by a space if you have the remove dashes
+        between words option on).  The metric units can be followed by a single
+        digit (raised or not) for square or cube: 1.2cm2 and 1.2cm² become
+        "one point two centimetres squared".
+        Using raised numbers, we have linear kilometres
+        2.3km¹ for length, square kilometre 34km² for area, and
+        cubic kilometres 12 km³ for volume.
+        We're using the standard symbols and names from
+        https://usma.org/detailed-list-of-metric-system-units-symbols-and-prefixes
+        Units:
+        L or l for litre, same as 1/1000m³.  cc for cubic centimetres.
+        s for second, min for minute, h for hour, d for day, Hz or hz for hertz.
+        m for metre.  g for gram.  A for ampere, C for coulomb, W for watt,
+        J for joule, V for volt.  K for kelvin, "°C" for celsius (C already
+        used), mol for mole.  cd for candela, N for newton, Pa for pascal.
+        Prefixes:
+        Y - yotta, Z - zetta, E - exa, P - peta, T - tera, G - giga, M - mega,
+        k - kilo, h - hecto, da - deca, d - deci, c - centi, m - milli,
+        µ - micro, n - nano, p - pico, f - femto, a - atto, z - zepto,
+        y - yocto.  No prefix for just the unit.
+        Examples:
+        Our pool heater can heat 3m3 per minute, of water with a density of
+        1.0 g/cm3, increasing the temperature by 5°C with 20,000W of energy
+        (1.3kg/h of natural gas).  With 5cm diameter (19.63cm2 cross sectional
+        area), that's a 1km/h flow speed (1.0m/min, nope actually 16.67m/min).
+        Tests, some of which don't work:
+        3L, 3 l, 3 mL, 3ml, 23 L/km, 12cc, 2.3kWh, 2.3 MW⋅h, 1.2 L/°C or 3 kW⋅h²
+        2.4 kwh (lower case W), 3 mg/kg/d.  12 cc/d, 1 V/ys.
+        My car gets 4.1L / 100km.  Though 4.1L/100km doesn't work (needs spaces
+        since it's the "/ to per" rule, not a metric expansion).
+        1950's vs 1950s or 1,950s?
+        Recipes with 2 Eggs won't work.  But 2 eggs is fine.
+        1am and 3 pm, are usually not attometres or picometres so ignore these.
+        How long is 1 µm?  1 splash is enough.
+
+        URLs - Uniform Resource Locators:
         Visit https://user:password@ratingstone.agmsmith.ca/server01/about/
         for more information or search on www.google.com
         (https://www.google.ca/search?hl=en-CA&q=Real+Count) for hints/tips or
@@ -129,7 +171,7 @@ class WordCounterController < ApplicationController
         / to per for numbers:
         Expand a slash to "per", but only if it's got a number at one end
         (not both; that would be a fraction).  He makes 3 door mats/hour.
-        Try some A/B testing.  3 l/100km and 50 miles/gallon.  But not 3/4.
+        Try some A/B testing.  3 L/100km and 50 miles/gallon.  But not 3/4.
         Eggs @ $2.35 / dozen.  Or one egg / $ 0.20.  That's 5 eggs/$1.
 
         / to per always:
@@ -151,7 +193,8 @@ class WordCounterController < ApplicationController
 
         4 digit dates:
         Save on word-costs in 2020, compared to 1990's fees.  Much better than
-        in the 1950s!  Notice that 50s and other decades aren't handled (yet).
+        in the 1950's!  Notice that 50's and other decades aren't handled (yet),
+        and the "s" may become "seconds" if you have metric expansion turned on.
         Is 1930 a date… or a military time?  Also note special wording for first
         ten years in a century and millenia:
         1000, 1009, 1066, 1803, 1900, 1901, 1920, 2000, 2001, 2009, 2010, 2099.
@@ -190,11 +233,10 @@ class WordCounterController < ApplicationController
         reading extended Tweets), would be "dot dot dot" and so on: Maybe…..
         try calling us in the evening.   ...or not.
 
-        Metric units dictionary - not implemented unless someone wants it.
-        Our pool heater can heat 3m3 per minute, of water with a density of 1.0 g/cm3, increasing the temperature by 5C with 20,000W of energy (1.3kg/h of natural gas).  With 5cm diamater (19.63cm2 cross sectional area), that's a 8km/h flow speed.
-
         English units dictionary - not implemented unless someone wants it.
-        The pool heater raises the water temperature by 10-15F, at 20GPM (1.5 hp motor), which uses 150,000 BTU/hour from burning logs.  With 2" pipes (32' long), it's flowing at 5 mph.
+        The pool heater raises the water temperature by 10-15F, at 20GPM
+        (1.5 hp motor), which uses 150,000 BTU/hour from burning logs.  With
+        2" pipes (32' long), it's flowing at 5 mph.
       DEFAULTSCRIPT
     end
 
@@ -203,6 +245,7 @@ class WordCounterController < ApplicationController
     @expanded_script = "   " + @vo_script + "   "
 
     # Order of operations here is significant.
+    expand_metric if @selected_expansions[:exp_metric]
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
     expand_comma_space if @selected_expansions[:exp_comma_space]
@@ -524,6 +567,154 @@ class WordCounterController < ApplicationController
         end
       expanded_text += result[:digitafter]
       @expanded_script = result.pre_match + expanded_text + result.post_match
+    end
+  end
+
+  def expand_metric
+    # Look for a number followed by optional space followed by a metric term
+    # followed by optionally more metric terms.  The extra metric terms are
+    # separated by a slash or centered dot or a dash or nothing (like kWh).
+    # A metric term is a size prefix and a unit and can be followed by a digit
+    # or a raised digit for squared and cubed units.  Manually copy and paste
+    # regular expression for five terms, since capture by name overwrites the
+    # portions it repeatedly found for an expression (would be nice if they
+    # used nested arrays of match results).
+    re = %r{
+      (?<thingbefore>[[:digit:]]+(\.[[:digit:]]+)?) # So 3. Eggs doesn't expand.
+      [[:space:]]*
+      (?!am|pm) # Not followed by am or pm, pico metres and attometres conflict.
+      (?<term1>
+        (?<scaleprefix1>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
+        (?<unit1>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<powerpostfix1>(1|2|3|(¹)|(²)|(³)))?
+      )
+      (?<term2>
+        [[:space:]]*(?<separator2>(/|⋅))?[[:space:]]*
+        (?<scaleprefix2>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
+        (?<unit2>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<powerpostfix2>(1|2|3|(¹)|(²)|(³)))?
+      )?
+      (?<term3>
+        [[:space:]]*(?<separator3>(/|⋅))?[[:space:]]*
+        (?<scaleprefix3>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
+        (?<unit3>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<powerpostfix3>(1|2|3|(¹)|(²)|(³)))?
+      )?
+      (?<term4>
+        [[:space:]]*(?<separator4>(/|⋅))?[[:space:]]*
+        (?<scaleprefix4>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
+        (?<unit4>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<powerpostfix4>(1|2|3|(¹)|(²)|(³)))?
+      )?
+      (?<term5>
+        [[:space:]]*(?<separator5>(/|⋅))?[[:space:]]*
+        (?<scaleprefix5>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
+        (?<unit5>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<powerpostfix5>(1|2|3|(¹)|(²)|(³)))?
+      )?
+      (?<thingafter>[[^/⋅]&&[[:punct:]][[:space:]]]) # Punct or space, not / or ⋅
+    }x
+
+    scaleprefix_to_name = {
+      "Y" => "yotta",
+      "Z" => "zetta",
+      "E" => "exa",
+      "P" => "peta",
+      "T" => "tera",
+      "G" => "giga",
+      "M" => "mega",
+      "k" => "kilo",
+      "h" => "hecto",
+      "da" => "deca",
+      "d" => "deci",
+      "c" => "centi",
+      "m" => "milli",
+      "µ" => "micro",
+      "n" => "nano",
+      "p" => "pico",
+      "f" => "femto",
+      "a" => "atto",
+      "z" => "zepto",
+      "y" => "yocto",
+    }
+
+    unit_to_name = {
+      "L" => "litre",
+      "l" => "litre",
+      "cc" => "cubic centimetre",
+      "s" => "second",
+      "min" => "minute",
+      "h" => "hour",
+      "d" => "day",
+      "Hz" => "hertz",
+      "hz" => "hertz",
+      "m" => "metre",
+      "g" => "gram",
+      "A" => "ampere",
+      "C" => "coulomb",
+      "W" => "watt",
+      "J" => "joule",
+      "V" => "volt",
+      "K" => "kelvin",
+      "°C" => "degrees celsius",
+      "mol" => "mole",
+      "cd" => "candela",
+      "N" => "newton",
+      "Pa" => "pascal",
+    }
+
+    while (result = re.match(@expanded_script))
+      expanded_terms = ""
+
+      # Find the last multiplicative unit, so we can pluralize it.  Otherwise
+      # the first unit gets pluralized, if the number isn't 1.0.  So 3 kW/h
+      # becomes 3 kilowatts per hour, while 3 kW⋅h becomes 3 kilowatt-hours,
+      # 1.0 kW/h becomes 1 kilowatt per hour, 1 kW⋅h becomes 1 kilowatt-hour.
+      last_multiplicative_term_index = 0
+      (2..5).each do |i| # 2.. since first term doesn't have a separator.
+        break unless result.named_captures["term#{i}"]
+        if result.named_captures["separator#{i}"] != "/"
+          last_multiplicative_term_index = i
+        end
+      end
+      plural_term_index = if result[:thingbefore].to_f == 1.0
+        0 # Zero means nothing is pluralized, for when we have 1 thing.
+      elsif last_multiplicative_term_index > 0
+        last_multiplicative_term_index
+      else
+        1 # Default is the first term, works for multiple divisive ones too.
+      end
+
+      (1..5).each do |i|
+        break unless result.named_captures["term#{i}"]
+
+        separator = result.named_captures["separator#{i}"]
+        expanded_terms += if i == 1
+          "" # No separator before the first term.
+        elsif separator == "/"
+          " per "
+        else
+          "-" # Replace a centered dot or nothing with a dash: kWh -> kW-h.
+        end
+
+        prefix = result.named_captures["scaleprefix#{i}"]
+        wordy_prefix = scaleprefix_to_name[prefix]
+        expanded_terms += wordy_prefix if wordy_prefix
+
+        unit = result.named_captures["unit#{i}"]
+        wordy_unit = unit_to_name[unit]
+        wordy_unit = wordy_unit.pluralize if i == plural_term_index && wordy_unit
+        expanded_terms += wordy_unit ? wordy_unit : unit
+
+        power = result.named_captures["powerpostfix#{i}"]
+        if power == "2" || power == "²"
+          expanded_terms += " squared"
+        elsif power == "3" || power == "³"
+          expanded_terms += " cubed"
+        end
+      end
+      @expanded_script = result.pre_match + result[:thingbefore] + " " +
+        expanded_terms + result[:thingafter] + result.post_match
     end
   end
 
