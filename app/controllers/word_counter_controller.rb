@@ -102,9 +102,19 @@ class WordCounterController < ApplicationController
         2.4 kwh (lower case W), 3 mg/kg/d.  12 cc/d, 1 V/ys.
         My car gets 4.1L / 100km.  Though 4.1L/100km doesn't work (needs spaces
         since it's the "/ to per" rule, not a metric expansion).
-        1950's vs 1950s or 1,950s?
-        Recipes with 2 Eggs won't work.  But 2 eggs is fine.
+        Also 1950s or 50s are not seconds (2 or 4 digits and an "s").
+        1950's vs 1950s or 1,950s or 50s or 50's or 500s or 5s or 0.1s?
+        Recipes with 2 Eggs won't work.  But 2 eggs is fine,
+        2. Eggs too (decimal with no fraction is not considered a quantity).
         1am and 3 pm, are usually not attometres or picometres so ignore these.
+        Some others rejected: 2nd, 3 mpg, 4 mph, 5 had, 6 has, 7 And, 8 mins,
+        9 ALL, 10 all.
+        Plurals - if the number isn't unity then pluralize the last multiplier
+        unit, or first before a divisor unit (a guess at doing plurals).
+        For example, grass grows at 1 cm/d or 2 cm/d.
+        The hydro-electric dam water usage is 1 ML/kWh or 2 ML/kWh.
+        Your solar panel puts out 1 kWh/d or 2kWh/d.
+        Can have up to 5 units like 3kWgCh/d or 4 m⋅s/kW⋅h⋅K.
         How long is 1 µm?  1 splash is enough.
 
         URLs - Uniform Resource Locators:
@@ -580,9 +590,14 @@ class WordCounterController < ApplicationController
     # portions it repeatedly found for an expression (would be nice if they
     # used nested arrays of match results).
     re = %r{
-      (?<thingbefore>[[:digit:]]+(\.[[:digit:]]+)?) # So 3. Eggs doesn't expand.
+      # Avoid two or four year plural dates like "20s" or "1920s".
+      (?![[:space:]][0-9][0-9]([0-9][0-9])?s[[[:punct:]][[:space:]]])
+      # Need a number, with an optional decimal point and digits after it,
+      # but reject decimal without fractional digits, like "3. Eggs".
+      (?<thingbefore>[^.[[:digit:]]](?<number>[[:digit:]]+(\.[[:digit:]]+)?))
       [[:space:]]*
-      (?!am|pm) # Not followed by am or pm, pico metres and attometres conflict.
+      # Reject things that usually aren't metric units after a number.
+      (?!am|pm|mpg|mph|had|has|nd|And|mins|[Aa][Ll][Ll])
       (?<term1>
         (?<scaleprefix1>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
         (?<unit1>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
@@ -667,23 +682,22 @@ class WordCounterController < ApplicationController
       expanded_terms = ""
 
       # Find the last multiplicative unit, so we can pluralize it.  Otherwise
-      # the first unit gets pluralized, if the number isn't 1.0.  So 3 kW/h
-      # becomes 3 kilowatts per hour, while 3 kW⋅h becomes 3 kilowatt-hours,
-      # 1.0 kW/h becomes 1 kilowatt per hour, 1 kW⋅h becomes 1 kilowatt-hour.
-      last_multiplicative_term_index = 0
+      # the first pre-divisor unit gets pluralized, if the number isn't 1.0.
+      # So 3 kW/h becomes 3 kilowatts per hour, while 3 kW⋅h becomes
+      # 3 kilowatt-hours, 1.0 kW/h becomes 1 kilowatt per hour, 1 kW⋅h becomes
+      # 1 kilowatt-hour.  2 mm/kWh becomes 2 millimetres per kilowatt-hour.
+      # 3 ms/kWh becomes 3 metre-seconds per kilowatt-hour.
+      plural_term_index = 1
       (2..5).each do |i| # 2.. since first term doesn't have a separator.
         break unless result.named_captures["term#{i}"]
-        if result.named_captures["separator#{i}"] != "/"
-          last_multiplicative_term_index = i
+        if result.named_captures["separator#{i}"] == "/"
+          plural_term_index = i - 1
+          break
+        else # A multiplicative term.
+          plural_term_index = i
         end
       end
-      plural_term_index = if result[:thingbefore].to_f == 1.0
-        0 # Zero means nothing is pluralized, for when we have 1 thing.
-      elsif last_multiplicative_term_index > 0
-        last_multiplicative_term_index
-      else
-        1 # Default is the first term, works for multiple divisive ones too.
-      end
+      plural_term_index = 0 if result[:number].to_f == 1.0
 
       (1..5).each do |i|
         break unless result.named_captures["term#{i}"]
