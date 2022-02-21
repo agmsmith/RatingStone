@@ -200,8 +200,8 @@ class WordCounterController < ApplicationController
         an AI to figure out the context). # $9 leaves # alone.  Price set
         to$4each (adds spaces if needed).  Commas every 3 digits $456,789,62.22
         Postfixes of millions are handled by the "Fix $ Million Dollars" option,
-        like $ 12.3456 hundred dollars, $ 5 thousand, $1.2 Millions,
-        $ 100 billion, $2 trillion dollars.
+        like $ 12.345 hundred dollars, $ 5 thousand, $1.2 Millions,
+        $ 3.99999999999 billion, $2 trillion dollars.  Or just $2 dollars.
         But we don't know what format negative dollars are in; need examples.
 
         4 digit dates:
@@ -862,14 +862,14 @@ class WordCounterController < ApplicationController
       \$[[:space:]]* # Starts with a dollar sign of course.
       (?<number>[0-9]+(,[0-9][0-9][0-9])*)
       (?<fraction>\.[0-9]+)?
-      [[:space:]]*(?<illions>hundred|thousand|million|billion|trillion)s?
+      [[:space:]]*(?<illions>hundred|thousand|million|billion|trillion|dollar)s?
       ([[:space:]]*dollars?)? # Throw away an excess "dollar(s)".
       }xi # Case insensitive for MILLION and million.
     while (result = re.match(@expanded_script))
       number = if result[:fraction]
         (result[:number].delete(",") + result[:fraction]).to_f
       else
-        (result[:number].delete(",")).to_f
+        result[:number].delete(",").to_f
       end
       number *= case result[:illions]
       when /hundred/i
@@ -882,11 +882,20 @@ class WordCounterController < ApplicationController
         1000000000
       when /trillion/i
         1000000000000
-      else
+      else # Things like $2 dollars.
         1
       end
-      number = number.to_i if number % 1.0 == 0.0 # If no fraction, use int.
-      @expanded_script = result.pre_match + "$ #{number}" + result.post_match
+      # Note closeness to zero test calibrated for $ 3.99999999999 billion.
+      # Add a bit before testing so 3.9 % 0.01 = 0.00999999999999983 avoided.
+      printable_number = if (number + 0.000001) % 1.0 < 0.0001
+        number.to_i # As an integer, it will get printed without a .0 at end.
+      elsif (number + 0.00000001) % 0.01 < 0.000001
+        format("%.2f", number) # Has only pennies, force 2 digits.
+      else # Some odd sort of fraction, don't try to pretty print it.
+        number
+      end
+      @expanded_script = result.pre_match + "$ #{printable_number}" +
+        result.post_match
     end
   end
 
