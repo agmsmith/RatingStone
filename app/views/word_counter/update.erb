@@ -111,6 +111,14 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_plural_dates, "Fix Plural Dates") %>
+      <%= check_box_tag(:exp_plural_dates, true, @selected_expansions[:exp_plural_dates]) %>
+      <p>Add an apostrophe to plural 4 digit years and 2 digit decades so they
+        don't get confused with metric seconds.  1950s becomes 1950's,
+        20s becomes 20's.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_metric, "Expand Metric Terms") %>
       <%= check_box_tag(:exp_metric, true, @selected_expansions[:exp_metric]) %>
       <p>Metric units are expanded into words, including squares, slashes and
@@ -246,6 +254,14 @@
         (to avoid clobbering minus signs and dashes) have the hyphen removed.
         Note that there is a separate dash option for numbers converted to
         words.  voice-over becomes: voice over</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:exp_millions, "Fix $ Million Dollars") %>
+      <%= check_box_tag(:exp_millions, true, @selected_expansions[:exp_millions]) %>
+      <p>Rewrite "$ 3 Million" as "$3000000" so that later steps read it as
+        "three million dollars", not "three dollar Million".
+        Works from hundreds to trillions.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">

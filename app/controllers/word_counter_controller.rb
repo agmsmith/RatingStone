@@ -22,10 +22,10 @@ class WordCounterController < ApplicationController
   EXPANSION_SYMBOLS = [ # In alphabetical order for easier manual additions.
     :exp_atsignletter, :exp_atsignnumber, :exp_comma_space, :exp_dash_to_to,
     :exp_dollars, :exp_hashtag, :exp_hyphens,
-    :exp_leadingohs, :exp_leadingzeroes, :exp_metric, :exp_na_telephone,
-    :exp_number_of, :exp_numbers, :exp_numbers_and, :exp_numbers_dash,
-    :exp_percent, :exp_psalms, :exp_say_area_code, :exp_say_chapter,
-    :exp_say_telephone_number,
+    :exp_leadingohs, :exp_leadingzeroes, :exp_metric, :exp_millions,
+    :exp_na_telephone, :exp_number_of, :exp_numbers, :exp_numbers_and,
+    :exp_numbers_dash, :exp_percent, :exp_plural_dates, :exp_psalms,
+    :exp_say_area_code, :exp_say_chapter, :exp_say_telephone_number,
     :exp_slash_per_always, :exp_slash_per_number, :exp_slash_slash_always,
     :exp_urls, :exp_www, :exp_years,
   ]
@@ -199,12 +199,15 @@ class WordCounterController < ApplicationController
         And $9.99 million needs to be manually fixed up (otherwise we'd need
         an AI to figure out the context). # $9 leaves # alone.  Price set
         to$4each (adds spaces if needed).  Commas every 3 digits $456,789,62.22
+        Postfixes of millions are handled by the "Fix $ Million Dollars" option,
+        like $ 12.3456 hundred dollars, $ 5 thousand, $1.2 Millions,
+        $ 100 billion, $2 trillion dollars.
         But we don't know what format negative dollars are in; need examples.
 
         4 digit dates:
         Save on word-costs in 2020, compared to 1990's fees.  Much better than
-        in the 1950's!  Notice that 50's and other decades aren't handled (yet),
-        and the "s" may become "seconds" if you have metric expansion turned on.
+        in the 1950's!  Notice that 50s and the "s" may become "seconds" if
+        you have metric expansion turned on and Fix Plural Dates off.
         Is 1930 a date… or a military time?  Also note special wording for first
         ten years in a century and millenia:
         1000, 1009, 1066, 1803, 1900, 1901, 1920, 2000, 2001, 2009, 2010, 2099.
@@ -255,6 +258,7 @@ class WordCounterController < ApplicationController
     @expanded_script = "   " + @vo_script + "   "
 
     # Order of operations here is significant.
+    expand_plural_dates if @selected_expansions[:exp_plural_dates]
     expand_metric if @selected_expansions[:exp_metric]
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
@@ -270,6 +274,7 @@ class WordCounterController < ApplicationController
     expand_slash_per_always if @selected_expansions[:exp_slash_per_always]
     expand_slash_slash_always if @selected_expansions[:exp_slash_slash_always]
     expand_hyphens if @selected_expansions[:exp_hyphens]
+    expand_millions if @selected_expansions[:exp_millions]
     expand_dollars if @selected_expansions[:exp_dollars]
     expand_years if @selected_expansions[:exp_years]
     expand_leading_zeroes if @selected_expansions[:exp_leadingzeroes]
@@ -580,6 +585,22 @@ class WordCounterController < ApplicationController
     end
   end
 
+  def expand_plural_dates
+    # Look for a 4 digit or 2 digit number followed by an "s".  Insert an
+    # apostrophe between the number and the "s".  Fixes years and decades as
+    # being interpreted as metic number of seconds.
+    re = %r{
+      (?<thingbefore>[[:space:]])
+      (?<number>[0-9][0-9]([0-9][0-9])?)
+      s
+      (?<thingafter>[[[:punct:]][[:space:]]])
+    }x
+    while (result = re.match(@expanded_script))
+      @expanded_script = result.pre_match + result[:thingbefore] +
+        result[:number] + "'s" + result[:thingafter] + result.post_match
+    end
+  end
+
   def expand_metric
     # Look for a number followed by optional space followed by a metric term
     # followed by optionally more metric terms.  The extra metric terms are
@@ -590,8 +611,6 @@ class WordCounterController < ApplicationController
     # portions it repeatedly found for an expression (would be nice if they
     # used nested arrays of match results).
     re = %r{
-      # Avoid two or four year plural dates like "20s" or "1920s".
-      (?![[:space:]][0-9][0-9]([0-9][0-9])?s[[[:punct:]][[:space:]]])
       # Need a number, with an optional decimal point and digits after it,
       # but reject decimal without fractional digits, like "3. Eggs".
       (?<thingbefore>[^.[[:digit:]]](?<number>[[:digit:]]+(\.[[:digit:]]+)?))
@@ -835,13 +854,53 @@ class WordCounterController < ApplicationController
     end
   end
 
+  def expand_millions
+    # Look for $ number MILLION and replace it with $ (number * 1000000).
+    # Fixes the awkwardness of "$1.23 MILLION" becoming "one dollar and
+    # twenty three cents MILLION".  Also do billion and trillion.
+    re = %r{
+      \$[[:space:]]* # Starts with a dollar sign of course.
+      (?<number>[0-9]+(,[0-9][0-9][0-9])*)
+      (?<fraction>\.[0-9]+)?
+      [[:space:]]*(?<illions>hundred|thousand|million|billion|trillion)s?
+      ([[:space:]]*dollars?)? # Throw away an excess "dollar(s)".
+      }xi # Case insensitive for MILLION and million.
+    while (result = re.match(@expanded_script))
+      number = if result[:fraction]
+        (result[:number].delete(",") + result[:fraction]).to_f
+      else
+        (result[:number].delete(",")).to_f
+      end
+      number *= case result[:illions]
+      when /hundred/i
+        100
+      when /thousand/i
+        1000
+      when /million/i
+        1000000
+      when /billion/i
+        1000000000
+      when /trillion/i
+        1000000000000
+      else
+        1
+      end
+      number = number.to_i if number % 1.0 == 0.0 # If no fraction, use int.
+      @expanded_script = result.pre_match + "$ #{number}" + result.post_match
+    end
+  end
+
   def expand_dollars
     # Look for $ 123,456.78 type things.  The fractional .78 (two digits
     # means cents, otherwise it's a decimal fraction) and commas and space
     # after the dollar sign are optional.
     # $12.34 becomes "twelve dollars and thirty four cents"
     # $1.234 becomes "one point two three four dollars"
-    re = /\$[[:space:]]*(?<number>[0-9]+(,[0-9][0-9][0-9])*)(?<fraction>\.[0-9]+)?/
+    re = %r{
+      \$[[:space:]]*
+      (?<number>[0-9]+(,[0-9][0-9][0-9])*)
+      (?<fraction>\.[0-9]+)?
+      }x
     while (result = re.match(@expanded_script))
       number = result[:number].delete(",")
       fraction = result[:fraction] # Remember it includes the period in front.
