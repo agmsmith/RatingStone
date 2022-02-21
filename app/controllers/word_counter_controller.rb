@@ -139,9 +139,9 @@ class WordCounterController < ApplicationController
 
         Comma Space:
         Add a space, after commas inside words.  This,or that.  But doesn't
-        affect the word count.  1,2 since comma is okay without spaces inside
-        a number.  But "Awkwardly," he said, shouldn't get a space. 9,thing
-        and something,9 or x,9, are also unspaced.
+        affect the word count.  1,2 3,456,79 since comma is okay without spaces
+        inside a number.  But "Awkwardly," he said, shouldn't get a space.
+        9,thing and something,9 are also spaced.
 
         Psalms
         Optionally (default is off) biblical references to X:Y-Z are expanded
@@ -199,8 +199,8 @@ class WordCounterController < ApplicationController
         Save $1,234.56 on word-costs, @$1.125/word.  Fractional
         dollars like coal @ $ 12.125 are handled too.  $.12ea currently doesn't
         work (rarely seen it in real life, except that one time, use $0.12ea).
-        And $9.99 million needs to be manually fixed up (otherwise we'd need
-        an AI to figure out the context). # $9 leaves # alone.  Price set
+        And $9.99 million no longer needs to be manually fixed up.
+        # $9 leaves # alone.  Price set
         to$4each (adds spaces if needed).  Commas every 3 digits $456,789,62.22
         Postfixes of millions are handled by the "Fix $ Million Dollars" option,
         like $ 12.345 hundred dollars, $ 5 thousand, $1.2 Millions,
