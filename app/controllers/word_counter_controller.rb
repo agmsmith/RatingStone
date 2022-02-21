@@ -84,14 +84,16 @@ class WordCounterController < ApplicationController
         Units:
         L or l for litre, same as 1/1000m³.  cc for cubic centimetres.
         s for second, min for minute, h for hour, d for day, Hz or hz for hertz.
-        m for metre.  g for gram.  A for ampere, C for coulomb, W for watt,
-        J for joule, V for volt.  K for kelvin, "°C" for celsius (C already
-        used), mol for mole.  cd for candela, N for newton, Pa for pascal.
+        m for metre.  g for gram.  A for ampere, W for watt,
+        J for joule, V for volt.  "°C" for celsius, Pa for pascal.
+        Ignored units: K for kelvin, C for coulomb, mol for mole,
+        cd for candela, N for newton.
         Prefixes:
-        Y - yotta, Z - zetta, E - exa, P - peta, T - tera, G - giga, M - mega,
+        G - giga, M - mega,
         k - kilo, h - hecto, da - deca, d - deci, c - centi, m - milli,
-        µ - micro, n - nano, p - pico, f - femto, a - atto, z - zepto,
-        y - yocto.  No prefix for just the unit.
+        µ - micro, n - nano, no prefix for just the unit.
+        Ignored prefixes: Y - yotta, Z - zetta, E - exa, P - peta, T - tera,
+        p - pico, f - femto, a - atto, z - zepto, y - yocto.
         Examples:
         Our pool heater can heat 3m3 per minute, of water with a density of
         1.0 g/cm3, increasing the temperature by 5°C with 20,000W of energy
@@ -138,7 +140,8 @@ class WordCounterController < ApplicationController
         Comma Space:
         Add a space, after commas inside words.  This,or that.  But doesn't
         affect the word count.  1,2 since comma is okay without spaces inside
-        a number.
+        a number.  But "Awkwardly," he said, shouldn't get a space. 9,thing
+        and something,9 or x,9, are also unspaced.
 
         Psalms
         Optionally (default is off) biblical references to X:Y-Z are expanded
@@ -202,6 +205,7 @@ class WordCounterController < ApplicationController
         Postfixes of millions are handled by the "Fix $ Million Dollars" option,
         like $ 12.345 hundred dollars, $ 5 thousand, $1.2 Millions,
         $ 3.99999999999 billion, $2 trillion dollars.  Or just $2 dollars.
+        With over $6M in revenue and $500k dollars in profitability.
         But we don't know what format negative dollars are in; need examples.
 
         4 digit dates:
@@ -618,32 +622,34 @@ class WordCounterController < ApplicationController
       # Reject things that usually aren't metric units after a number.
       (?!am|pm|mpg|mph|had|has|nd|And|mins|[Aa][Ll][Ll])
       (?<term1>
-        (?<scaleprefix1>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
-        (?<unit1>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        # (?<scaleprefix1>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
+        (?<scaleprefix1>(G|M|k|h|(da)|d|c|m|µ|n))?
+        # (?<unit1>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<unit1>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|W|J|V|(°C)|(Pa)))
         (?<powerpostfix1>(1|2|3|(¹)|(²)|(³)))?
       )
       (?<term2>
         [[:space:]]*(?<separator2>(/|⋅))?[[:space:]]*
-        (?<scaleprefix2>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
-        (?<unit2>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<scaleprefix2>(G|M|k|h|(da)|d|c|m|µ|n))?
+        (?<unit2>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|W|J|V|(°C)|(Pa)))
         (?<powerpostfix2>(1|2|3|(¹)|(²)|(³)))?
       )?
       (?<term3>
         [[:space:]]*(?<separator3>(/|⋅))?[[:space:]]*
-        (?<scaleprefix3>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
-        (?<unit3>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<scaleprefix3>(G|M|k|h|(da)|d|c|m|µ|n))?
+        (?<unit3>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|W|J|V|(°C)|(Pa)))
         (?<powerpostfix3>(1|2|3|(¹)|(²)|(³)))?
       )?
       (?<term4>
         [[:space:]]*(?<separator4>(/|⋅))?[[:space:]]*
-        (?<scaleprefix4>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
-        (?<unit4>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<scaleprefix4>(G|M|k|h|(da)|d|c|m|µ|n))?
+        (?<unit4>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|W|J|V|(°C)|(Pa)))
         (?<powerpostfix4>(1|2|3|(¹)|(²)|(³)))?
       )?
       (?<term5>
         [[:space:]]*(?<separator5>(/|⋅))?[[:space:]]*
-        (?<scaleprefix5>(Y|Z|E|P|T|G|M|k|h|(da)|d|c|m|µ|n|p|f|a|z|y))?
-        (?<unit5>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|C|W|J|V|K|(°C)|(mol)|(cd)|N|(Pa)))
+        (?<scaleprefix5>(G|M|k|h|(da)|d|c|m|µ|n))?
+        (?<unit5>(L|l|(cc)|s|(min)|h|d|(Hz)|(hz)|m|g|A|W|J|V|(°C)|(Pa)))
         (?<powerpostfix5>(1|2|3|(¹)|(²)|(³)))?
       )?
       (?<thingafter>[[^/⋅]&&[[:punct:]][[:space:]]]) # Punct or space, not / or ⋅
@@ -806,10 +812,11 @@ class WordCounterController < ApplicationController
   end
 
   def expand_comma_space
-    # Add a space after commas, if needed, and not inside a number.
+    # Add a space after commas, if needed, and not inside a number or with
+    # punctuation after it like "Absolutely," replied Georges.
     @expanded_script = @expanded_script
-      .gsub(/([^[[:space:]]]),([^[[:digit:]][[:space:]]])/, "\\1, \\2")
-      .gsub(/([^[[:space:]][[:digit:]]]),([^[[:space:]]])/, "\\1, \\2")
+      .gsub(/([^[[:space:]]]),([^[[:digit:]][[:space:]][[:punct:]]])/, "\\1, \\2")
+      .gsub(/([^[[:space:]][[:digit:]]]),([^[[:space:]][[:punct:]]])/, "\\1, \\2")
   end
 
   def expand_psalms
@@ -857,14 +864,22 @@ class WordCounterController < ApplicationController
   def expand_millions
     # Look for $ number MILLION and replace it with $ (number * 1000000).
     # Fixes the awkwardness of "$1.23 MILLION" becoming "one dollar and
-    # twenty three cents MILLION".  Also do billion and trillion.
+    # twenty three cents MILLION".  Also do billion and trillion and K and M.
     re = %r{
       \$[[:space:]]* # Starts with a dollar sign of course.
       (?<number>[0-9]+(,[0-9][0-9][0-9])*)
       (?<fraction>\.[0-9]+)?
-      [[:space:]]*(?<illions>hundred|thousand|million|billion|trillion|dollar)s?
-      ([[:space:]]*dollars?)? # Throw away an excess "dollar(s)".
-      }xi # Case insensitive for MILLION and million.
+      [[:space:]]*(?<illions>
+        (hundreds?)|
+        (thousands?)|
+        (millions?)|
+        (billions?)|
+        (trillions?)|
+        (dollars?)| # So "$ 2 dollars" doesn't become "two dollars dollars".
+        K|M)
+      ([[:space:]]*dollars?)? # Throw away excess "dollar(s)".
+      (?<thingafter>[[[:space:]][[:punct:]]])
+      }xi # Case insensitive for MILLION and million, K or k, M or m.
     while (result = re.match(@expanded_script))
       number = if result[:fraction]
         (result[:number].delete(",") + result[:fraction]).to_f
@@ -874,9 +889,9 @@ class WordCounterController < ApplicationController
       number *= case result[:illions]
       when /hundred/i
         100
-      when /thousand/i
+      when /thousand/i, /K/i
         1000
-      when /million/i
+      when /million/i, /M/i
         1000000
       when /billion/i
         1000000000
@@ -895,7 +910,7 @@ class WordCounterController < ApplicationController
         number
       end
       @expanded_script = result.pre_match + "$ #{printable_number}" +
-        result.post_match
+        result[:thingafter] + result.post_match
     end
   end
 
