@@ -1,0 +1,195 @@
+To start - click Clear and paste your script in here, replacing this example.
+
+Here are some examples (and test cases we haven't implemented yet).
+Set or clear the checkboxes in "Expansion Options" at the bottom of the
+web page to turn on or off these expansions.  Scroll down to the
+"Changes Made" section to have a better visual idea of what's going on:
+
+Metric Units:
+Expands numbers followed by metric units into words.
+The number is followed by a metric unit (like twelve centimetres), optionally
+followed by more metric units separated by slashes or centered dots
+(three point four kilograms per metre squared or zero point two kilowatt hours).  The slash is replaced by "per" and the dot by
+a dash (which may be replaced by a space if you have the remove dashes
+between words option on).  The metric units can be followed by a single
+digit (raised or not) for square or cube: one point two centimetres squared and one point two centimetres squared become
+"one point two centimetres squared".
+Using raised numbers, we have linear kilometres
+two point three kilometres for length, square kilometre thirty four kilometres squared for area, and
+cubic kilometres twelve kilometres cubed for volume.
+We're using the standard symbols and names from
+https colon slash slash usma dot org slash detailed dash list dash of dash metric dash system dash units dash symbols dash and dash prefixes
+Units:
+L or l for litre, same as one/one thousand metres cubed.  cc for cubic centimetres.
+s for second, min for minute, h for hour, d for day, Hz or hz for hertz.
+m for metre.  g for gram.  A for ampere, W for watt,
+J for joule, V for volt.  "°C" for celsius, Pa for pascal.
+Ignored units: K for kelvin, C for coulomb, mol for mole,
+cd for candela, N for newton.
+Prefixes:
+G - giga, M - mega,
+k - kilo, h - hecto, da - deca, d - deci, c - centi, m - milli,
+µ - micro, n - nano, no prefix for just the unit.
+Ignored prefixes: Y - yotta, Z - zetta, E - exa, P - peta, T - tera,
+p - pico, f - femto, a - atto, z - zepto, y - yocto.
+Examples:
+Our pool heater can heat three metres cubed per minute, of water with a density of
+one point zero gram per centimetre cubed, increasing the temperature by five degrees celsius with twenty thousand watts of energy
+(one point three kilograms per hour of natural gas).  With five centimetres diameter (nineteen point six three centimetres squared cross sectional
+area), that's a one kilometre per hour flow speed (one point zero metre per minute, nope actually sixteen point six seven metres per minute).
+Tests, some of which don't work:
+three litres, three litres, three millilitres, three millilitres, twenty three litres per kilometre, twelve cubic centimetres, two point three kilowatt hours, two point three megawatt hours, one point two litres per degrees celsius or three kilowatt hours squared
+two point four kwh (lower case W), three milligrams per kilogram per day.  twelve cubic centimetres per day, one V/ys.
+My car gets four point one litres per one hundred kilometres.  Though four point one L per one hundred kilometres doesn't work (needs spaces
+since it's the "/ to per" rule, not a metric expansion).
+Also nineteen fifty's or fifty's are not seconds (two or four digits and an "s").
+nineteen fifty's vs nineteen fifty's or one thousand nine hundred and fifty seconds or fifty's or fifty's or five hundred seconds or five seconds or zero point one seconds?
+Recipes with two Eggs have exa gram gram seconds (but no longer doing Exa).
+two point zero seconds vs two.s vs two seconds (decimal with no fraction is not considered a quantity
+since that's often used as a list prefix, like "two. Ms. Jones Arrives").
+one am and three pm, are usually not attometres or picometres so ignore these.
+Some others rejected: 2nd, three mpg, four mph, five had, six has, seven And, eight mins,
+nine ALL, ten all.
+Plurals - if the number isn't unity then pluralize the last multiplier
+unit, or first before a divisor unit (a guess at doing plurals).
+For example, grass grows at one centimetre per day or two centimetres per day.
+The hydro electric dam water usage is one megalitre per kilowatt hour or two megalitres per kilowatt hour.
+Your solar panel puts out one kilowatt hour per day or two kilowatt hours per day.
+Can have up to five units like three kilowatt gram pascal hours per day or four metre seconds per kilowatt hour joule.
+How long is one micrometre?  one splash is enough.
+
+URLs - Uniform Resource Locators:
+Visit https colon slash slash user colon password at ratingstone dot agmsmith dot ca slash server oh one slash about slash
+for more information or search on double-u double-u double-u dot google dot com
+(https colon slash slash double-u double-u double-u dot google dot ca slash search question mark hl equals en dash CA ampersand q equals Real plus Count) for hints/tips or
+write to the sysop @ agmsrepsys at gmail dot com.  Get the files from
+ftp colon slash slash anonymous colon password at example dot com slash public slash and check the
+site with a dash double-u double-u double-u dot tpsgc dash pwgsc dot gc dot ca for job listings.
+Note that happy@home doesn't get expanded.
+
+Telephone numbers:
+Give us a call at one-eight hundred-JKLHYDE (one area code eight hundred number five five five four nine three three), or area code six one three number five five five seven six four eight,
+or locally it's telephone number five five five seven six four eight.  telephone number five five five one two three four extension four three two specifies an extension, as does
+one area code two two two number five five five one two three four extension one two three four or even (area code six one three number five five five one two three four extension five four three two).  In
+all cases the extension number is read as separate digits.  But
+nine billion eight hundred and seventy six million five hundred and forty three thousand two hundred and ten is just a number (add dashes or spaces to make it a
+telephone number).  telephone number two one one, telephone number three one one,… telephone number nine one one are special cases.  We also do
+metric like one area code eight hundred number five four three two two two three extension three.
+
+Comma Space:
+Add a space, after commas inside words.  This, or that.  But doesn't
+affect the word count.  one,two three thousand four hundred and fifty six,seventy nine since comma is okay without spaces
+inside a number.  But "Awkwardly," he said, shouldn't get a space.
+nine, thing and something, nine are also spaced.
+
+Psalms
+Optionally (default is off) biblical references to X:Y Z are expanded
+to chapter X and verse Y through Z, but only if requested, and
+"chapter" can be optional too.  Well, it actually only looks for
+numbers (no leading zeroes) around a colon.  Some examples found online:
+Psalms eighty six:five, King James Version.
+John three : sixteen New Revised Standard Version.
+one Cor. thirteen:four, fifteen : twelve to nineteen.
+But half of fifteen:twelve to oh nine and none of fifteen:oh one two to nineteen due to leading zeroes.
+
+Dashed - Numbers:
+From nineteen twenty to thirty a dash between two numbers becomes "to".  Even
+one point two dollars to two dollars and fifty cents are expanded.  A long work day runs from nine to five.  But
+not - between words.  We handle all these dashes in case you
+somehow type them in: - ‐ ‑ ‒ – — ⸺ ⸻ ﹘ ﹣ －
+
+At signs before words.
+On Facebook at sign RealCount is number one in the category!  But @ is not expanded
+with a space after it.  Also Needs@ a space before it.  Doit@now!
+should not change.  By the way, e mails like someone at gmail dot com are
+handled by URL expansion.
+
+At signs before numbers and dollars.
+three at seventy five cents is a good price.  Almost like buying two at thirty five cents each.  Sell
+coal at twelve one/eight.
+
+Percent after a Number:
+That's a forty to fifty percent savings!  fifty percent more with a space after it. %x x% aren't
+numbers.  Save fifty percent each.
+
+# Hashtag:
+Look for hashtag theanswer where the # is before a word and there is a space
+in front, so middle#hash or just # won't get expanded.
+
+# Number:
+Look for number twenty two or number one hundred and twenty three where the # is before the number.
+ninety nine# doesn't expand, same as a#nine.
+
+/ to per for numbers:
+Expand a slash to "per", but only if it's got a number at one end
+(not both; that would be a fraction).  He makes three door mats/hour.
+Try some A/B testing.  three L per one hundred kilometres and fifty miles/gallon.  But not three/four.
+Eggs at two dollars and thirty five cents per dozen.  Or one egg per twenty cents.  That's five eggs per one dollar.
+
+/ to per always:
+Expand a slash to "per" in all remaining situations.  Option is off by
+default.  A/B, nine per A, A per nine, nine / nine, three/four.
+
+/ to slash always:
+Expand a slash to "slash" in all remaining situations.  This option is
+off by default.  A/B, nine per A, A per nine, nine / nine, three/four.
+
+Dollars and cents.
+Save one thousand two hundred and thirty four dollars and fifty six cents on word costs, at one point one two five dollars per word.  Fractional
+dollars like coal at twelve point one two five dollars are handled too.  $.twelve ea currently doesn't
+work (rarely seen it in real life, except that one time, use twelve cents ea).
+And nine million nine hundred and ninety thousand dollars no longer needs to be manually fixed up.
+# nine dollars leaves # alone.  Price set
+to four dollars each (adds spaces if needed).  Commas every three digits four hundred and fifty six thousand seven hundred and eighty nine dollars,sixty two point two two
+Postfixes of millions are handled by the "Fix $ Million Dollars" option,
+like one thousand two hundred and thirty four dollars and fifty cents, five thousand dollars, one million two hundred thousand dollars,
+three billion nine hundred and ninety nine million nine hundred and ninety nine thousand nine hundred and ninety nine dollars and ninety nine cents, two trillion dollars.  Or just two dollars.
+With over six million dollars in revenue and five hundred thousand dollars in profitability.
+But we don't know what format negative dollars are in; need examples.
+
+four digit dates:
+Save on word costs in twenty twenty, compared to nineteen ninety's fees.  Much better than
+in the nineteen fifty's!  Notice that fifty's and the "s" may become "seconds" if
+you have metric expansion turned on and Fix Plural Dates off.
+Is nineteen thirty a date… or a military time?  Also note special wording for first
+ten years in a century and millenia:
+one thousand, one thousand and nine, ten sixty six, eighteen hundred and three, nineteen hundred, nineteen hundred and one, nineteen twenty, two thousand, two thousand and one, two thousand and nine, twenty ten, twenty ninety nine.
+
+Leading zero numbers:
+But call before twenty twenty.twelve point zero seven at six:oh one a.m. (that's December 7th, twenty twenty,
+oh six oh one military time) or try in the evening at nineteen thirty.  We're also open
+from eight a.m. to seven:oh five pm or seven:fifteen pm on Saturdays.  Note that twelve hundred and one, four point zero one or two thousand and eleven
+isn't expanded since there is a number before the oh one or near it with
+a comma or period in the way.
+
+Numbers, commas and minus signs:
+Only minus one thousand two hundred and thirty four point five six seconds remain before this offer expires!  There's an
+option to remove the "and" in long numbers and the - dash between
+some number words.  one,two,three should be separate numbers, but plus three million four hundred and fifty six thousand seven hundred and eighty nine
+is one number (commas only on the three seconds) and thirty four,fifty six thousand seven hundred and eighty nine point zero is just mangled.
+
+Dashes between Words:
+Remove dashes directly between words (no spaces).  Voice over,
+twenty three, hot dog, hyper text, tele phone, foot ball,
+game pad, yet more, cauli flower, the end, finally done.  Though
+nine⸺pad, yet⸻eight, seven to six and so -on- don't get converted (also see dashed
+numbers).
+
+double-u double-u double-u:
+Changes "double-u double-u double-u" (surrounded by spaces or punctuation) to
+double u double u double u.  Dashes are persistent, otherwise it's
+a ridiculous word count.  Originally (7th or 8th century) the W sound
+in Germanic was written as "uu" in Latin, which is carved in stone as
+"vv" thus the W letter shape and why it is also a double U.
+Yes, this is a cheap way of getting more words, but you do have to say
+it three times and that takes real time, and that is money.  Monetary
+reasoning in action :-)
+
+Ellipsis - not implemented unless someone wants it (probably just for
+reading extended Tweets), would be "dot dot dot" and so on: Maybe…..
+try calling us in the evening.   ...or not.
+
+English units dictionary - not implemented unless someone wants it.
+The pool heater raises the water temperature by ten to fifteen F, at twenty GPM
+(one point five hp motor), which uses one hundred and fifty thousand BTU/hour from burning logs.  With
+two" pipes (thirty two' long), it's flowing at five mph.

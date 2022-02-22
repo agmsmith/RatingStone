@@ -106,8 +106,9 @@ class WordCounterController < ApplicationController
         since it's the "/ to per" rule, not a metric expansion).
         Also 1950s or 50s are not seconds (2 or 4 digits and an "s").
         1950's vs 1950s or 1,950s or 50s or 50's or 500s or 5s or 0.1s?
-        Recipes with 2 Eggs won't work.  But 2 eggs is fine,
-        2. Eggs too (decimal with no fraction is not considered a quantity).
+        Recipes with 2 Eggs have exa gram gram seconds (but no longer doing Exa).
+        2.0s vs 2.s vs 2s (decimal with no fraction is not considered a quantity
+        since that's often used as a list prefix, like "2. Ms. Jones Arrives").
         1am and 3 pm, are usually not attometres or picometres so ignore these.
         Some others rejected: 2nd, 3 mpg, 4 mph, 5 had, 6 has, 7 And, 8 mins,
         9 ALL, 10 all.
@@ -116,7 +117,7 @@ class WordCounterController < ApplicationController
         For example, grass grows at 1 cm/d or 2 cm/d.
         The hydro-electric dam water usage is 1 ML/kWh or 2 ML/kWh.
         Your solar panel puts out 1 kWh/d or 2kWh/d.
-        Can have up to 5 units like 3kWgCh/d or 4 m⋅s/kW⋅h⋅K.
+        Can have up to 5 units like 3kWgPah/d or 4 m⋅s/kW⋅h⋅J.
         How long is 1 µm?  1 splash is enough.
 
         URLs - Uniform Resource Locators:
@@ -205,7 +206,7 @@ class WordCounterController < ApplicationController
         Postfixes of millions are handled by the "Fix $ Million Dollars" option,
         like $ 12.345 hundred dollars, $ 5 thousand, $1.2 Millions,
         $ 3.99999999999 billion, $2 trillion dollars.  Or just $2 dollars.
-        With over $6M in revenue and $500k dollars in profitability.
+        With over $6m in revenue and $5 hundred K dollar in profitability.
         But we don't know what format negative dollars are in; need examples.
 
         4 digit dates:
@@ -263,6 +264,7 @@ class WordCounterController < ApplicationController
 
     # Order of operations here is significant.
     expand_plural_dates if @selected_expansions[:exp_plural_dates]
+    expand_millions if @selected_expansions[:exp_millions]
     expand_metric if @selected_expansions[:exp_metric]
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
@@ -278,7 +280,6 @@ class WordCounterController < ApplicationController
     expand_slash_per_always if @selected_expansions[:exp_slash_per_always]
     expand_slash_slash_always if @selected_expansions[:exp_slash_slash_always]
     expand_hyphens if @selected_expansions[:exp_hyphens]
-    expand_millions if @selected_expansions[:exp_millions]
     expand_dollars if @selected_expansions[:exp_dollars]
     expand_years if @selected_expansions[:exp_years]
     expand_leading_zeroes if @selected_expansions[:exp_leadingzeroes]
