@@ -22,12 +22,13 @@ class WordCounterController < ApplicationController
   EXPANSION_SYMBOLS = [ # In alphabetical order for easier manual additions.
     :exp_atsignletter, :exp_atsignnumber, :exp_comma_space, :exp_dash_to_to,
     :exp_dollars, :exp_hashtag, :exp_hyphens,
-    :exp_leadingohs, :exp_leadingzeroes, :exp_metric, :exp_millions,
+    :exp_leadingohs, :exp_leadingzeroes, :exp_metric,
     :exp_na_telephone, :exp_number_of, :exp_numbers, :exp_numbers_and,
-    :exp_numbers_dash, :exp_percent, :exp_plural_dates, :exp_psalms,
+    :exp_numbers_dash, :exp_percent, :exp_psalms,
     :exp_say_area_code, :exp_say_chapter, :exp_say_telephone_number,
     :exp_slash_per_always, :exp_slash_per_number, :exp_slash_slash_always,
     :exp_urls, :exp_www, :exp_years,
+    :fix_10_digit_numbers, :fix_millions, :fix_plural_dates,
   ]
 
   def update
@@ -52,7 +53,6 @@ class WordCounterController < ApplicationController
       @selected_expansions[:exp_numbers_and] = false
       @selected_expansions[:exp_numbers_dash] = false
       @selected_expansions[:exp_psalms] = false
-      @selected_expansions[:exp_say_area_code] = false
       @selected_expansions[:exp_say_telephone_number] = false
       @selected_expansions[:exp_slash_per_always] = false
       @selected_expansions[:exp_slash_slash_always] = false
@@ -134,9 +134,12 @@ class WordCounterController < ApplicationController
         or locally it's 555-7648.  555-1234x432 specifies an extension, as does
         1-222-555-1234 ext. 1234 or even ((613) 555-1234 extension 5432).  In
         all cases the extension number is read as separate digits.  But
-        9876543210 is just a number (add dashes or spaces to make it a
-        telephone number).  211, 311,… 911 are special cases.  We also do
-        metric like 1.800.543.2223x3.
+        5554441234 is converted to a telephone number by the
+        "Fix Digits Only Phone Numbers" option, otherwise it would just be a
+        long regular number in the billions.  12345678901x4, is
+        eleven digits long.  211, 311,… 911 are special cases.
+        We also do metric like 1.800.543.2223x3.
+        There are options to turn on/off saying "area code" and "telephone number".
 
         Comma Space:
         Add a space, after commas inside words.  This,or that.  But doesn't
@@ -263,8 +266,9 @@ class WordCounterController < ApplicationController
     @expanded_script = "   " + @vo_script + "   "
 
     # Order of operations here is significant.
-    expand_plural_dates if @selected_expansions[:exp_plural_dates]
-    expand_millions if @selected_expansions[:exp_millions]
+    fix_plural_dates if @selected_expansions[:fix_plural_dates]
+    fix_10_digit_numbers if @selected_expansions[:fix_10_digit_numbers]
+    fix_millions if @selected_expansions[:fix_millions]
     expand_metric if @selected_expansions[:exp_metric]
     expand_urls if @selected_expansions[:exp_urls]
     expand_na_telephone if @selected_expansions[:exp_na_telephone]
@@ -425,6 +429,28 @@ class WordCounterController < ApplicationController
     end
   end
 
+  def fix_10_digit_numbers
+    # Look for 10 or 11 digits in a row and convert that to a North American
+    # telephone number with dashes.  Later stages can then read it aloud as
+    # a telphone number rather than a plain number.
+    re = %r{
+      (?<thingbefore>[[:space:]])
+      (?<leadingone>1)?
+      (?<areacode>[2-9][0-9][0-9])
+      (?<exchange>[2-9][0-9][0-9])
+      (?<number>[0-9][0-9][0-9][0-9])
+      (?<thingafter>[^0-9])
+      }x
+    while (result = re.match(@expanded_script))
+      @expanded_script = result.pre_match + result[:thingbefore] +
+        (result[:leadingone] ? "1-" : "") +
+        result[:areacode] + "-" +
+        result[:exchange] + "-" +
+        result[:number] +
+        result[:thingafter] + result.post_match
+    end
+  end
+
   # Convert a string number to individual digits.  "0123" becomes
   # "zero one two three", not "one two three" or "one hundred and twenty three".
   def number_to_digits(number_string)
@@ -490,13 +516,12 @@ class WordCounterController < ApplicationController
       if result[:areacode]
         expanded_text += "area code " if @selected_expansions[:exp_say_area_code]
         expanded_text += area_code_to_words(result[:areacode]) + " "
-      end
-      if @selected_expansions[:exp_say_telephone_number]
-        expanded_text += if result[:areacode]
-          "number "
-        else # No area code in front, say the whole thing.
-          "telephone number "
+        if @selected_expansions[:exp_say_area_code] ||
+            @selected_expansions[:exp_say_telephone_number]
+          expanded_text += "number "
         end
+      elsif @selected_expansions[:exp_say_telephone_number]
+        expanded_text += "telephone number " # Local number, no area code.
       end
       expanded_text += number_to_digits(result[:exchange]) + " " +
         number_to_digits(result[:number])
@@ -590,7 +615,7 @@ class WordCounterController < ApplicationController
     end
   end
 
-  def expand_plural_dates
+  def fix_plural_dates
     # Look for a 4 digit or 2 digit number followed by an "s".  Insert an
     # apostrophe between the number and the "s".  Fixes years and decades as
     # being interpreted as metic number of seconds.
@@ -862,7 +887,7 @@ class WordCounterController < ApplicationController
     end
   end
 
-  def expand_millions
+  def fix_millions
     # Look for $ number MILLION and replace it with $ (number * 1000000).
     # Fixes the awkwardness of "$1.23 MILLION" becoming "one dollar and
     # twenty three cents MILLION".  Also do billion and trillion and K and M.

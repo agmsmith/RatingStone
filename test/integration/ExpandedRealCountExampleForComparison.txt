@@ -69,12 +69,15 @@ Note that happy@home doesn't get expanded.
 
 Telephone numbers:
 Give us a call at one-eight hundred-JKLHYDE (one area code eight hundred number five five five four nine three three), or area code six one three number five five five seven six four eight,
-or locally it's telephone number five five five seven six four eight.  telephone number five five five one two three four extension four three two specifies an extension, as does
+or locally it's five five five seven six four eight.  five five five one two three four extension four three two specifies an extension, as does
 one area code two two two number five five five one two three four extension one two three four or even (area code six one three number five five five one two three four extension five four three two).  In
 all cases the extension number is read as separate digits.  But
-nine billion eight hundred and seventy six million five hundred and forty three thousand two hundred and ten is just a number (add dashes or spaces to make it a
-telephone number).  telephone number two one one, telephone number three one one,… telephone number nine one one are special cases.  We also do
-metric like one area code eight hundred number five four three two two two three extension three.
+area code five five five number four four four one two three four is converted to a telephone number by the
+"Fix Digits Only Phone Numbers" option, otherwise it would just be a
+long regular number in the billions.  one area code two three four number five six seven eight nine zero one extension four, is
+eleven digits long.  two one one, three one one,… nine one one are special cases.
+We also do metric like one area code eight hundred number five four three two two two three extension three.
+There are options to turn on/off saying "area code" and "telephone number".
 
 Comma Space:
 Add a space, after commas inside words.  This, or that.  But doesn't

@@ -111,16 +111,25 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_plural_dates, "Fix Plural Dates") %>
-      <%= check_box_tag(:exp_plural_dates, true, @selected_expansions[:exp_plural_dates]) %>
+      <%= label_tag(:fix_plural_dates, "Fix Plural Dates") %>
+      <%= check_box_tag(:fix_plural_dates, true, @selected_expansions[:fix_plural_dates]) %>
       <p>Add an apostrophe to plural 4 digit years and 2 digit decades so they
         don't get confused with metric seconds.  1950s becomes 1950's,
         20s becomes 20's.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-      <%= label_tag(:exp_millions, "Fix $ Million Dollars") %>
-      <%= check_box_tag(:exp_millions, true, @selected_expansions[:exp_millions]) %>
+      <%= label_tag(:fix_10_digit_numbers, "Fix Digits Only Phone Numbers") %>
+      <%= check_box_tag(:fix_10_digit_numbers, true,
+        @selected_expansions[:fix_10_digit_numbers]) %>
+      <p>Convert a 10 or 11 digit number into a North American telephone number
+        with parts separated by dashes.  That way it won't be read as just a
+        number.  Later steps can then convert it to telephone words.</p>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+      <%= label_tag(:fix_millions, "Fix $ Million Dollars") %>
+      <%= check_box_tag(:fix_millions, true, @selected_expansions[:fix_millions]) %>
       <p>Rewrite "$ 3 Million" as "$3000000" so that later steps read it as
         "three million dollars", not "three dollar Million".
         Works from hundreds to trillions, $3m and $ 4.5 K work too.</p>
@@ -156,15 +165,13 @@
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_say_area_code, "Say Area Code") %>
       <%= check_box_tag(:exp_say_area_code, true, @selected_expansions[:exp_say_area_code]) %>
-      <p>Says "area code" before the area code portion of a telephone number.  1 (800) 234-5678 becomes: one area code eight hundred two three four five six seven eight.</p>
+      <p>Says "area code" before the area code portion of a telephone number and "number" after the area code.  1 (800) 234-5678 becomes: one area code eight hundred number two three four five six seven eight.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
       <%= label_tag(:exp_say_telephone_number, "Say Telephone Number") %>
       <%= check_box_tag(:exp_say_telephone_number, true, @selected_expansions[:exp_say_telephone_number]) %>
-      <p>Says "telephone number" before the local portion of a telephone number.
-        Shortened to just "number" if there is an area code too.  800-234-5678
-        becomes: eight hundred number two three four five six seven eight.</p>
+      <p>Says "telephone number" before a local (no area code) telephone number.  234-5678 becomes: telephone number two three four five six seven eight.</p>
     </div>
 
     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
