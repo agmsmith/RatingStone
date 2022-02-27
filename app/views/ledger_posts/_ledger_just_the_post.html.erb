@@ -15,7 +15,7 @@
     ledger_base_path(ledger_post) %> posted <%=
     time_ago_in_words(ledger_post.created_at)
     %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.</span>
-  <% # Show replies both up and down, with links and unapproved flags.
+  <% # Show groups, replies both up and down, with links and unapproved flags.
     my_replies = LinkReply.where(
       original_post_id: ledger_post.original_version_id,
       deleted: false).order(created_at: :asc)
@@ -24,64 +24,71 @@
       reply_post_id: ledger_post.original_version_id,
       deleted: false).order(created_at: :asc)
     replied_to_count = replied_to.count
-    if my_replies_count > 0 || replied_to_count > 0 %>
+    my_groups = LinkGroupContent.where(
+      content_id: ledger_post.original_version_id,
+      deleted: false).order(created_at: :asc)
+    my_groups_count = my_groups.count
+    comma_needed = false # For separating group, reply, quotes sections.
+    if my_groups_count > 0 || my_replies_count > 0 || replied_to_count > 0 %>
       <BR>
       <% if replied_to_count > 0 %>
-        Replied to <%=
-          "#{replied_to_count} #{'post'.pluralize(replied_to_count)}" %>:
+        <%= "#{replied_to_count} #{'quote'.pluralize(replied_to_count)}" %>:
         <% replied_to.each do |a_reply_link|
           reply_post = a_reply_link&.original_post&.latest_version %>
           <%= if reply_post
-            link_to "##{a_reply_link.original_post_id}",
-              ledger_post_path(reply_post), title: "#{reply_post}"
+          link_to "##{a_reply_link.original_post_id}",
+            ledger_post_path(reply_post), title: "#{reply_post}"
           else # Post is missing or really deleted.
             "##{a_reply_link.original_post_id}"
-          end %><% # Add "unapproved" after the reply number if not approved.
+          end %><% # Add "unapproved" after the quote number if not approved.
           if !a_reply_link.approved_child || !a_reply_link.approved_parent
             %>-<%= link_to "unapproved", link_base_path(a_reply_link),
-            class: "unapproved-link" %><% end %>
-        <% end
-        # Surprising that you can do this sort of convoluted thing in .erb
-        # files, just for appending a comma without any spaces before it.
-        if my_replies_count > 0 %>,<% end %>
-      <% end %>
-      <% if my_replies_count > 0 %>
+            class: "unapproved-link" %><%
+          end
+        end # replied_to.each
+        comma_needed = true 
+      end # if replied_to_count
+      %><%
+      if my_replies_count > 0
+      %><% if comma_needed %>,<% end %>
         <%= "#{my_replies_count} #{'reply'.pluralize(my_replies_count)}:" %>
         <% my_replies.each do |a_reply_link|
           reply_post = a_reply_link&.reply_post&.latest_version %>
           <%= if reply_post
             link_to "##{a_reply_link.reply_post_id}",
               ledger_post_path(reply_post), title: "#{reply_post}"
-          else
-            "##{a_reply_link.reply_post_id}"
-          end %><%
+            else
+              "##{a_reply_link.reply_post_id}"
+            end %><% # Add "unapproved" after the reply number if not approved.
           if !a_reply_link.approved_child || !a_reply_link.approved_parent
             %>-<%= link_to "unapproved", link_base_path(a_reply_link),
-            class: "unapproved-link" %><% end %>
-        <% end %>
-      <% end %>
-  <% end %>
-  <% # List the groups this post is in, if any.
-    my_groups = LinkGroupContent.where(
-      content_id: ledger_post.original_version_id,
-      deleted: false).order(created_at: :asc)
-    my_groups_count = my_groups.count
-    if my_groups_count > 0 %>
-      <BR>
-      <%= "In #{my_groups_count} #{'group'.pluralize(my_groups_count)}:" %>
-      <% my_groups.each do |a_group_link|
-        my_group = a_group_link&.group&.latest_version %>
-        <%= if my_group
-          link_to "##{a_group_link.group_id}", ledger_group_path(my_group),
-            title: "#{my_group}"
-        else # Record doesn't exist.
-          "##{a_group_link.group_id}"
-        end %><%
-        if !a_group_link.approved_child || !a_group_link.approved_parent
-            %>-<%= link_to "unapproved", link_base_path(a_group_link),
-            class: "unapproved-link" %><% end
-        %>&nbsp;(<%= my_group.name %>)
-      <% end %>
-  <% end %>
-<% end %>
+            class: "unapproved-link" %><%
+          end
+        end # my_replies.each
+        comma_needed = true 
+      end # if my_replies_count
+      %><%
+      if my_groups_count > 0
+      %><% if comma_needed %>,<% end %>
+        <%= "#{my_groups_count} #{'group'.pluralize(my_groups_count)}:" %>
+        <% my_groups.each do |a_group_link|
+          my_group = a_group_link&.group&.latest_version %>
+          <%= if my_group
+            link_to "##{a_group_link.group_id}", ledger_group_path(my_group),
+              title: "#{my_group}"
+          else # Record doesn't exist.
+            "##{a_group_link.group_id}"
+          end %><% # Add "unapproved" after the group number if not approved.
+          if !a_group_link.approved_child || !a_group_link.approved_parent
+              %>-<%= link_to "unapproved", link_base_path(a_group_link),
+              class: "unapproved-link" %><%
+          end
+        end # my_groups.each
+        comma_needed = true 
+      end # if my_groups_count
+      %>
+  <% end # if any replies or groups
+  %>
+<% end # allowed_to_view
+%>
 
