@@ -1,5 +1,11 @@
 <% provide(:page_title, 'Edit Post') %>
 <% provide(:button_text, 'Save Changes') %>
+<% points_available = if @ledger_object
+     @ledger_object.creator.original_version.points_available
+   else
+     0.0
+   end
+   points_used = 0.0 %>
 
 <h1>Editing <%= @ledger_object.base_s %></h1>
 
@@ -22,7 +28,6 @@
       </div>
       <%= f.label :summary_of_changes %>
       <%= f.text_field :summary_of_changes, class: 'form-control' %>
-      <%= f.submit yield(:button_text), class: "btn btn-primary button-full-width" %>
     </div>
 
     <div class="col-xs-12 col-md-6">
@@ -40,6 +45,7 @@
                 a_group = LedgerSubgroup.find_by(id: group_id)
                 if a_group
                   group_name = a_group.to_s
+                  points_used += 1.0
                 elsif group_id > 0
                   group_name = "Unknown (#{group_id})"
                 else
@@ -69,6 +75,7 @@
                 a_post = LedgerPost.find_by(id: replyto_id)
                 if a_post
                   replyto_name = a_post.to_s
+                  points_used += 1.0
                 elsif replyto_id > 0
                   replyto_name = "Unknown (#{replyto_id})"
                 else
@@ -85,6 +92,19 @@
       </ul>
     </div>
 
+    <div class="col-xs-12">
+      <H2><%= "#{points_available} #{'point'.pluralize(points_available)}"
+        %> available, <%= "#{points_used} #{'point'.pluralize(points_used)}"
+        %> used, <% points_remaining = points_available - points_used %><%=
+        "#{points_remaining} #{'point'.pluralize(points_remaining)}"
+        %> remain.</H2>
+      <% if points_remaining >= 0.0 %>
+        <%= f.submit yield(:button_text), class: "btn btn-primary button-full-width" %>
+      <% else %>
+        Can't Save!  Need more points to put the "<%= yield(:button_text)
+        %>" button here.
+      <% end %>
+    </div>
   </div>
 <% end %>
 

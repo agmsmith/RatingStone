@@ -14,7 +14,7 @@ class LedgerPostsController < LedgerBasesController
   # additional data specifying inherited groups and the link back to the post
   # being replied to.  Set it up and let the user edit it.
   def reply
-    original_post = LedgerPost.find(params[:id])
+    original_post = LedgerPost.find(params[:id]) # Can be any version of post.
     @ledger_object = LedgerPost.new(
       creator_id: current_ledger_user.original_version_id,
       subject: original_post.subject,
@@ -25,10 +25,8 @@ class LedgerPostsController < LedgerBasesController
     @ledger_object.new_replytos << original_post.original_version_id
 
     # Add group links.  Same groups as the original post, plus user's group.
-    original_group_links = LinkGroupContent.where(
-      content_id: original_post.original_version_id, deleted: false
-    )
-    original_group_links.each do |a_link|
+    LinkGroupContent.where(content_id: original_post.original_version_id,
+      deleted: false).each do |a_link|
       @ledger_object.new_groups << a_link.group_id
     end
     home_link = LinkHomeGroup.find_by(
@@ -36,18 +34,19 @@ class LedgerPostsController < LedgerBasesController
     )
     home_group = home_link.child if home_link
     @ledger_object.new_groups << home_group.original_version_id if home_group
-
-    side_load_params(@ledger_object) # Mostly to get the "Add a new..." entries.
     render("edit")
   end
 
   # See parent class for generic show() method.
 
   def update
-    if @ledger_object.nil?
-      @ledger_object = LedgerPost.new(
-        creator_id: current_ledger_user.original_version_id
-      )
+    if @ledger_object.nil? # Editing a new object, create in-memory record.
+      @ledger_object = LedgerPost.new(creator_id:
+        current_ledger_user.original_version_id)
+      home_link = LinkHomeGroup.find_by(parent_id:
+        current_ledger_user.original_version_id)
+      home_group = home_link.child if home_link
+      @ledger_object.new_groups << home_group.original_version_id if home_group
     end
     super
   end
@@ -81,8 +80,9 @@ class LedgerPostsController < LedgerBasesController
   end
 
   # For information that isn't exactly part of this @ledger_object, side save
-  # it into related records specific to the object class.
-  # TODO: move this to the model class, makes more sense there, if we can get transactions to work.
+  # it into related records (create them) specific to the object class.  Returns
+  # true if successful.  If it fails, return false with validation error
+  # message strings appended to new_object, or just throw an exception.
   def side_save(new_object)
     return false unless super
 
@@ -96,7 +96,12 @@ class LedgerPostsController < LedgerBasesController
       if a_group
         link_group = LinkGroupContent.new(group_id: a_group.original_version_id,
           content_id: new_object.original_version_id,
-          creator_id: current_ledger_user.original_version_id)
+          creator_id: current_ledger_user.original_version_id,
+          rating_points_spent: 1.0,
+          rating_points_boost_parent: 0.5,
+          rating_points_boost_child: 0.5,
+          rating_direction_parent: "U",
+          rating_direction_child: "U")
         unless link_group.save
           new_object.errors.add(:base,
             "Failed to make link to Group #{group_id}.")
@@ -118,11 +123,15 @@ class LedgerPostsController < LedgerBasesController
       next if reply_id <= 0
       original_post = LedgerPost.find_by(id: reply_id)
       if original_post
-        link_post = LinkReply.new(
-          original_post_id: original_post.original_version_id,
+        link_post = LinkReply.new(original_post_id:
+          original_post.original_version_id,
           reply_post_id: new_object.original_version_id,
-          creator_id: current_ledger_user.original_version_id
-        )
+          creator_id: current_ledger_user.original_version_id,
+          rating_points_spent: 1.0,
+          rating_points_boost_parent: 0.5,
+          rating_points_boost_child: 0.5,
+          rating_direction_parent: "U",
+          rating_direction_child: "U")
         unless link_post.save
           new_object.errors.add(:base,
             "Failed to make link back to original #{original_post} for " \

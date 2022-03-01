@@ -7,10 +7,21 @@ class LedgerAwardCeremony < LedgerBase
   alias_attribute :completed_at, :date1
   alias_attribute :comment, :string1
 
+  DAYS_PER_CEREMONY = 7
+  # Number of days between ceremonies.  Usually a week, but that's up to the
+  # system operator (usually a cron job).  Used in expiry estimates.
+
   FADE = 0.97
+  FADE_LOG = Math.log(FADE)
   # How much to fade ratings points by in an awards ceremony.  The 0.97 factor
   # Cuts things down to about 1% of their original size after 3 years of weekly
   # fading.
+
+  FADED_TO_NOTHING = 0.01
+  # When you have this many points or less, a LinkBase is considered to be
+  # faded away enough to be expired and worth garbage collecting.  LedgerBase
+  # objects are also considered expired when they have no links to them and
+  # the largest of their current points is this big.
 
   FADED_BONUS_TABLE_SIZE = 500
   FADED_BONUS_CONVERGED = 1.0 / (1.0 - FADE)

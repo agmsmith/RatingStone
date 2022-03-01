@@ -44,10 +44,5 @@ Rails.application.routes.draw do
       post 'unapprove'
     end
   end
-
-  # Clipboard for saving objects to use later.
-  resources :clips, only: [:new, :index, :edit, :update, :destroy]
-  post '/clip_ledger/:id', to: 'clips#create_ledger'
-  post '/clip_link/:id', to: 'clips#create_link'
 end
 

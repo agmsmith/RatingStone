@@ -258,6 +258,48 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # Estimate the date when this object will expire.  It's the time based on
+  # when the largest number of points received from links to this object gets
+  # reduced to 0.01.
+  def expiry_time
+    last_ceremony = LedgerAwardCeremony.last_ceremony
+    biggest_points = 0.0
+    link_ups.or(link_downs).where(deleted: false).find_each do |a_link|
+      generations = last_ceremony - a_link.original_ceremony
+      next if generations < 0 # Ignore future links.
+      fade_factor = LedgerAwardCeremony::FADE**generations
+
+      if a_link.child_id == id
+        amount = a_link.rating_points_boost_child * fade_factor
+        biggest_points = amount if biggest_points < amount
+      end
+
+      if a_link.parent_id == id
+        amount = a_link.rating_points_boost_parent * fade_factor
+        biggest_points = amount if biggest_points < amount
+      end
+    end # find_each
+
+    # How many generations does it take to fade to FADED_TO_NOTHING (0.01)?
+    return Time.now if biggest_points <= LedgerAwardCeremony::FADED_TO_NOTHING
+
+    decay_generations = Math.log(LedgerAwardCeremony::FADED_TO_NOTHING /
+      biggest_points) / LedgerAwardCeremony::FADE_LOG
+    Time.now +
+      LedgerAwardCeremony::DAYS_PER_CEREMONY.day * decay_generations.ceil
+  end
+
+  ##
+  # Returns the number of rating points available for spending from this object.
+  def points_available
+    update_current_points
+    available = current_meh_points
+    up_delta = current_up_points - current_down_points
+    available += up_delta if up_delta > 0.0
+    available
+  end
+
+  ##
   # If things get too messy, you can recalculate everything.  Mostly used when
   # bonuses get undeleted, reapproved, etc.  Even so, it won't accurately
   # account for points during deleted periods in the past - the variations in
@@ -463,8 +505,7 @@ class LedgerBase < ApplicationRecord
     # after the save, update original_id after the save.
     if original_id.nil?
       ceremony = LedgerAwardCeremony.last_ceremony
-      update_columns(original_id: id,
-        original_ceremony: ceremony, current_ceremony: ceremony)
+      update_columns(original_id: id, original_ceremony: ceremony)
     else
       # This is a newer version of the record, update pointers back in the
       # original version.  Use a lock to protect the critical section
