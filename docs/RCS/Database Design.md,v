@@ -1,9 +1,14 @@
-head	1.79;
+head	1.80;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.80
+date	2022.03.01.21.47.47;	author agmsmith;	state Exp;
+branches;
+next	1.79;
 
 1.79
 date	2022.01.31.21.58.19;	author agmsmith;	state Exp;
@@ -406,14 +411,15 @@ desc
 @
 
 
-1.79
+1.80
 log
-@More on awarding Meh points.  User record described, vs LedgerUser.
+@Add a virtual Link for creating objects, but represented by fields
+within the object rather than a separate Link record.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.78 2022/01/29 21:13:04 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.79 2022/01/31 21:58:19 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -815,6 +821,21 @@ serious or distinct enough.
   Conceptually there is a LinkCreator record that links the object to the
   creator, with zero reference points allocated.  To cut down on such a common
   record, it's implied by the creator_id field.  Write-once.
+* rating_points_spent_creating float  The number of points spent on creating
+  this Ledger object by the creator.  Includes transaction fees.  Since every
+  object has a creator, the data about the creation spending is stored here in
+  the object, rather than making a separate LinkBase record for every object.
+  It also means we avoid the worries about approvals and deletion that come
+  with a LinkBase record.  Though if the creator of a LedgerObject is changed,
+  the points used for creating it will be charged to the new creator and
+  uncharged from the original creator, backdated to the original ceremony.
+  Write-once.
+* rating_points_boost_self float  The number of points used to boost the rating
+  of this object, during creation.  The difference between this and
+  rating_points_spent_creating is the transaction fee.  Write-once.
+* rating_direction_self string  Use U for up, D for down or M for meh.
+  Controls how points spent during creation modify this object's rating.
+  Write-once.
 * current_down_points float Changed as needed.
 * current_meh_points float Changed as needed.
 * current_up_points float Number of rating points in each of the directions for
@@ -1726,9 +1747,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.78 2022/01/29 21:13:04 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.79 2022/01/31 21:58:19 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.79  2022/01/31 21:58:19  agmsmith
+More on awarding Meh points.  User record described, vs LedgerUser.
+
 Revision 1.78  2022/01/29 21:13:04  agmsmith
 Switch to using meh points to receive the weekly allowance of
 reputation bonuses.  Solves several problems to do it that way.
@@ -1977,6 +2001,22 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.79
+log
+@More on awarding Meh points.  User record described, vs LedgerUser.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.78 2022/01/29 21:13:04 agmsmith Exp agmsmith $</SMALL>
+d405 15
+d1331 1
+a1331 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.78 2022/01/29 21:13:04 agmsmith Exp agmsmith $
+d1334 3
 @
 
 

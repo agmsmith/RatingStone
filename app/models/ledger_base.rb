@@ -21,12 +21,14 @@
 class LedgerBase < ApplicationRecord
   validate :validate_ledger_original_creator_used,
     :validate_ledger_type_same_between_versions
+  before_create :base_before_create
   after_create :base_after_create
 
   # Always have a creator, but "optional: false" makes it reload the creator
   # object every time we do something with an object.  So just require it to
   # be non-NULL in the database definition.
   belongs_to :creator, class_name: :LedgerBase, optional: true
+  has_many :objects_created, class_name: :LedgerBase, foreign_key: :creator_id
 
   belongs_to :original, class_name: :LedgerBase, optional: true
   belongs_to :amended, class_name: :LedgerBase, optional: true
@@ -363,18 +365,20 @@ class LedgerBase < ApplicationRecord
   # the current time (time is based on award ceremony sequence numbers) and
   # adds in weekly bonus points (mostly for LedgerUsers).
   #
-  # If a full recalculation is requested it does a lot more:
+  # If a full recalculation is requested it does a lot more, adding in received
+  # points first, then subtracting spent points.  That order is needed since
+  # spending can take points off up or meh, depending on the current balance.
   # * Add up the points from all the links referencing this LedgerBase object,
   #   fading each one appropriately by how far in the past it is.
-  # * Then removes faded points spent in creating other objects.
   # * Then adds on faded weekly bonus points.
+  # * Then removes faded points spent in creating other objects.
   def update_current_points
     raise RatingStoneErrors,
       "#update_current_points: Not the original version!  #{self}" \
       unless original_version?
 
     last_ceremony = LedgerAwardCeremony.last_ceremony
-    return if current_ceremony >= last_ceremony # Current is still good.
+    return self if current_ceremony >= last_ceremony # Current is still good.
 
     with_lock do
       # Will be updating our current values so it is a critical section.
@@ -440,6 +444,26 @@ class LedgerBase < ApplicationRecord
           end
         end # find_each
 
+        # Add the points received during creation.  There's an imaginary
+        # link between the creator and this object, which is actually
+        # represented by fields inside this object to save on database
+        # operations.
+
+        generations = last_ceremony - original_ceremony
+        if generations < 0
+          logger.warn("#update_current_points: Ceremony number " \
+            "#{original_ceremony} is in the future, for #{self}.  Ignoring " \
+            "creation rating points from that future.")
+        else
+          fade_factor = LedgerAwardCeremony::FADE**generations
+          amount = rating_points_boost_self * fade_factor
+          case rating_direction_self
+          when "D" then self.current_down_points += amount
+          when "M" then self.current_meh_points += amount
+          when "U" then self.current_up_points += amount
+          end
+        end
+
         # Add accumulated faded weekly allowance points for all time.
         update_current_bonus_points_since(original_ceremony, last_ceremony)
 
@@ -457,6 +481,26 @@ class LedgerBase < ApplicationRecord
           end
           fade_factor = LedgerAwardCeremony::FADE**generations
           amount = a_link.rating_points_spent * fade_factor
+          self.current_meh_points -= amount
+          if current_meh_points < 0.0 # Ran out of Meh, take remainder off Up.
+            self.current_up_points += current_meh_points
+            self.current_meh_points = 0.0
+          end
+        end
+
+        # Remove points spent on creating Ledger objects.
+
+        objects_created.find_each do |an_object|
+          generations = last_ceremony - an_object.original_ceremony
+          if generations < 0
+            logger.warn("#update_current_points: Ceremony number " \
+              "#{an_object.original_ceremony} is in the future, " \
+              "for #{an_object}, which was created by object #{self}.  " \
+              "Ignoring spending on that future link.")
+            next
+          end
+          fade_factor = LedgerAwardCeremony::FADE**generations
+          amount = an_object.rating_points_spent_creating * fade_factor
           self.current_meh_points -= amount
           if current_meh_points < 0.0 # Ran out of Meh, take remainder off Up.
             self.current_up_points += current_meh_points
@@ -491,6 +535,34 @@ class LedgerBase < ApplicationRecord
   end
 
   private
+
+  ##
+  # Before creating a Ledger Object, subtract points spent from the creator.
+  # Throw an exception if there aren't enough points.
+  def base_before_create
+    return if creator.nil? # You'll get a database NULL exception soon.
+
+    if rating_points_spent_creating < rating_points_boost_self
+      raise RatingStoneErrors,
+        "#base_before_create: Boosts " \
+          "#{rating_points_boost_self - rating_points_spent_creating} " \
+          "more points than were spent in creating the object #{self}.  " \
+          "Perhaps it's fraud?"
+    end
+
+    # Spend the points from the creator for creating this object, throws an
+    # exception if not enough available.
+    creator.original_version.spend_points(rating_points_spent_creating)
+
+    # Add on the points from the creator.
+    if rating_points_boost_self > 0.0
+      case rating_direction_self
+      when "D" then self.current_down_points += rating_points_boost_self
+      when "M" then self.current_meh_points += rating_points_boost_self
+      when "U" then self.current_up_points += rating_points_boost_self
+      end
+    end
+  end
 
   ##
   # If this is an amended ledger record, now that it has been created, go back

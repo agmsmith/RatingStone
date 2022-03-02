@@ -6,6 +6,7 @@ class LinkBonus < LinkBase
   alias_attribute :bonus_explanation_id, :parent_id
   alias_attribute :bonus_user, :child
   alias_attribute :bonus_user_id, :child_id
+  alias_attribute :reason, :string1
 
   before_create :set_default_description
 
