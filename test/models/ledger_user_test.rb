@@ -4,8 +4,8 @@ require "test_helper"
 
 class LedgerUserTest < ActiveSupport::TestCase
   def setup
-    # Create the root user/object and sysop user.
-    Rails.application.load_seed
+    # Create the root user/object and sysop user.  Not needed, done as fixtures.
+    # Rails.application.load_seed
   end
 
   test "Root user zero should exist" do

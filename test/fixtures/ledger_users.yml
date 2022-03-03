@@ -10,6 +10,8 @@ root_ledger_user_fixture:
   creator_id: 0
   string1: 'Fixture created Root User Object'
   string2: 'root@example.com'
+  current_meh_points: 1000.0
+  current_ceremony: 0 # So it doesn't recalculate and find it has no points.
 
 group_creator_user:
   type: 'LedgerUser'
