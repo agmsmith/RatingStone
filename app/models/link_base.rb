@@ -272,12 +272,41 @@ class LinkBase < ApplicationRecord
   # For newly created records (with approval flags now set), update it to the
   # current ceremony number and add the rating points to the child and parent
   # objects (subject to approval) and subtract from the creator (always).
+  # Assume default spending if the points are negative.
   def distribute_rating_points
-    if rating_points_spent < rating_points_boost_parent +
-        rating_points_boost_child
+    # If the user didn't specify the amount to spend, assume a default.  
+    if rating_points_spent < 0.0
+      self.rating_points_spent = LedgerAwardCeremony::DEFAULT_SPEND_FOR_LINK
+    end
+
+    # Default is half and half, if both parent and child spending not specified.
+    if rating_points_boost_parent < 0.0 && rating_points_boost_child < 0.0
+      self.rating_points_boost_parent = self.rating_points_boost_child =
+        (rating_points_spent - LedgerAwardCeremony::LINK_TRANSACTION_FEE) / 2.0
+    elsif rating_points_boost_parent < 0.0
+      self.rating_points_boost_parent =
+        rating_points_spent - rating_points_boost_child -
+        LedgerAwardCeremony::LINK_TRANSACTION_FEE
+    elsif rating_points_boost_child < 0.0
+      self.rating_points_boost_child =
+        rating_points_spent - rating_points_boost_parent -
+        LedgerAwardCeremony::LINK_TRANSACTION_FEE
+    end
+
+    if rating_points_boost_parent < 0.0 || rating_points_boost_child < 0.0
       raise RatingStoneErrors,
-        "#distribute_rating_points: Boosts " \
-          "#{rating_points_boost_parent + rating_points_boost_child - rating_points_spent} " \
+        "#distribute_rating_points: Not enough points available?  Parent " \
+          "boost #{rating_points_boost_parent} or child boost " \
+          "#{rating_points_boost_child} is negative when creating the " \
+          "link #{self}."
+    end
+  
+    if rating_points_boost_parent + rating_points_boost_child >
+        rating_points_spent
+      over_boost = rating_points_boost_parent + rating_points_boost_child -
+        rating_points_spent
+      raise RatingStoneErrors,
+        "#distribute_rating_points: Boosts #{over_boost} " \
           "more points than were spent in creating the link #{self}.  " \
           "Perhaps it's fraud?"
     end

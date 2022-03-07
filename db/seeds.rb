@@ -10,7 +10,7 @@
 
 # If needed, create the root LedgerBase object, which is its own creator.
 if LedgerBase.all.empty?
-  ActiveRecord::Base.connection.execute("INSERT into ledger_bases (id, type, number1, string1, string2, text1, creator_id, original_id, current_meh_points, original_ceremony, current_ceremony, date1, created_at, updated_at) VALUES (0, 'LedgerUser', 0, 'Root LedgerBase Object', 'agmsmith@ncf.ca', 'The special root object/user which we need to manually create with a creator id of itself.  Then initial system objects can be created with it as their creator.  AGMS20200206', 0, 0, 1000.0, 0, 0, '0001-01-01 00:00:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);")
+  ActiveRecord::Base.connection.execute("INSERT into ledger_bases (id, type, number1, string1, string2, text1, creator_id, original_id, rating_points_spent_creating, rating_points_boost_self, current_meh_points, original_ceremony, current_ceremony, date1, created_at, updated_at) VALUES (0, 'LedgerUser', 0, 'Root LedgerBase Object', 'agmsmith@ncf.ca', 'The special root object/user which we need to manually create with a creator id of itself.  Then initial system objects can be created with it as their creator.  AGMS20200206', 0, 0, 0.0, 0.0, 1000.0, 0, 0, '0001-01-01 00:00:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);")
   root_luser = LedgerBase.find(0)
   root_user = User.create!(
     id: 0,
@@ -37,7 +37,9 @@ if !Rails.env.test?
     unless User.exists?(name: "System Operator #{i}")
       pw = SecureRandom.hex(35)
       sysop_luser = LedgerUser.create!(creator_id: 0,
-        name: "System Operator #{i}", email: "sysop#{i}@example.com")
+        name: "System Operator #{i}", email: "sysop#{i}@example.com",
+        rating_points_spent_creating: 20.0,
+        current_ceremony: LedgerAwardCeremony::last_ceremony)
       sysop_user = User.create!(
         name: sysop_luser.name,
         email: sysop_luser.email,
@@ -49,6 +51,26 @@ if !Rails.env.test?
     end
   end
 
+  # Add a standard bonus description.
+  bonus_for_activation = LedgerPost.new(creator_id: 0,
+    rating_points_spent_creating: 10.0, rating_points_boost_self: 9.0,
+    rating_direction_self: "U", subject: "Bonus for Activation",
+    content: "Once you have activated your account, by e-mail verification, " \
+      "you get a **10 Point** allowance after each awards ceremony " \
+      "(usually a week apart).\n\nNote that over time the bonus will fade and " \
+      "eventually expire, and you'll have to verify your e-mail again.",
+    summary_of_changes: "Initial version, AGMS20220301.")
+  bonus_for_activation.save!
+
+  # Big bonus for the new root user, test mode uses fixtures for this.
+  if root_luser
+    bonus_link = LinkBonusUnique.new(creator_id: 0, bonus_user_id: 0,
+      bonus_explanation: bonus_for_activation, bonus_points: 1000,
+      rating_points_spent: 10 + 1.0 / 16, reason: "Root should have a bonus.",
+      approved_parent: true, approved_child: true)
+    bonus_link.save!
+  end
+
   # Check that we got the right ID numbers for the sysops, and now create the
   # associated new user records, which would have interfered with sequentially
   # creating LedgerUser records.
@@ -58,43 +80,16 @@ if !Rails.env.test?
     if (sysop_luser.original_version_id != i)
       raise "Bug: Sysop User #{i} #{sysop_luser} doesn't have LedgerUser ##{i}."
     end
-    sysop_luser.set_up_new_user
+    sysop_luser.set_up_new_user # Makes home group etc.
+    LinkBonusUnique.create!(creator_id: 0, bonus_user: sysop_luser,
+    bonus_explanation: bonus_for_activation, bonus_points: 10,
+    rating_points_spent: 20,
+    rating_points_boost_parent: 1,
+    rating_points_boost_child: 19,
+    approved_parent: true, approved_child: true,
+    reason: "Extra bonus for #{sysop_luser.name}.")
   end
 end
-
-# Add some standard bonus descriptions.
-bonus_for_activation = LedgerPost.new(creator_id: 0,
-  rating_points_spent_creating: 10.0, rating_points_boost_self: 9.0,
-  rating_direction_self: "U", subject: "Bonus for Activation",
-  content: "Once you have activated your account, by e-mail verification, " \
-    "you get a **10 Point** allowance after each awards ceremony " \
-    "(usually a week apart).\n\nNote that over time the bonus will fade and " \
-    "eventually expire, and you'll have to verify your e-mail again.",
-  summary_of_changes: "Initial version, AGMS20220301.")
-bonus_for_activation.save!
-
-
-# Give some users a bonus.
-
-bonus_link = LinkBonusUnique.new(creator_id: 0, bonus_user_id: 0,
-  bonus_explanation: bonus_for_activation, bonus_points: 1000,
-  rating_points_spent: 10,
-  approved_parent: true, approved_child: true,
-  reason: "Root should have a bonus.")
-bonus_link.save!
-
-(1..9).each do |i|
-  sysop_luser = LedgerUser.find_by(name: "System Operator #{i}")
-  next unless sysop_luser
-  LinkBonusUnique.create!(creator_id: 0, bonus_user: sysop_luser,
-  bonus_explanation: bonus_for_activation, bonus_points: 10,
-  rating_points_spent: 20,
-  rating_points_boost_parent: 1,
-  rating_points_boost_child: 19,
-  approved_parent: true, approved_child: true,
-  reason: "Basic bonus for #{sysop_luser.name}.")
-end
-
 
 # Create a dummy user to represent anonymous Internet browsers and search engines.
 if User.where(name: "Anonymous Internet Browser").empty?
@@ -161,13 +156,14 @@ if Rails.env.development?
       name: name,
       email: email,
       password: pw,
-      password_confirmation: pw,
-      activated: true,
-      activated_at: Time.zone.now)
+      password_confirmation: pw)
+    a_user.activate
     luser = a_user.ledger_user
     # Add the person to one of three groups.  Role based on iteration level.
     LinkRole.create!(group: group_records[n % 3], user: luser,
-      priority: n / 3 * 10 + 10, creator_id: 0)
+      priority: n / 3 * 10 + 10, creator_id: 0, rating_points_spent: 10.0,
+      rating_points_boost_parent: 0.0, rating_points_boost_child: 10.0,
+      approved_parent: true, approved_child: true)
   end
 
   # Make some LedgerPosts for some users.  Use Markdown formatting.  Arrange
@@ -182,19 +178,22 @@ if Rails.env.development?
     lgroup = luser.home_group
     lpost = LedgerPost.create!(subject: subject, content: content,
       creator: user.ledger_user)
-    LinkGroupContent.create!(parent: lgroup, child: lpost, creator: luser)
+    LinkGroupContent.create!(parent: lgroup, child: lpost, creator: luser,
+      approved_parent: true, approved_child: true)
     previous_lpost = posts.sample
     if previous_lpost # Make this a reply to some previous post.
-      LinkReply.create!(parent: previous_lpost, child: lpost, creator: luser)
+      LinkReply.create!(parent: previous_lpost, child: lpost, creator: luser,
+        approved_parent: true, approved_child: true)
     end
     posts << lpost
   end
   # Add a cycle to the reply graph; first post is a reply to the last post.
-  LinkReply.create!(parent: posts.last, child: posts.first, creator_id: 0)
+  LinkReply.create!(parent: posts.last, child: posts.first, creator_id: 0,
+    approved_parent: true, approved_child: true)
 
   # And for extra fun, make it a reply to a second post too.
   LinkReply.create!(parent: posts.second_to_last, child: posts.first,
-    creator_id: 0)
+    creator_id: 0, approved_parent: true, approved_child: true)
 
   # Graphical post.  Need to use URL that starts with a slash, or it won't work
   # when viewed in some sub-pages.
@@ -202,10 +201,12 @@ if Rails.env.development?
     "![RatingStone Icon](/apple-touch-icon.png){:align=\"right\"}Here is a " \
     "post with Kramdown markup containing an image, set to float to the right.",
     creator_id: 0)
-  LinkGroupContent.create!(parent: group_records[3], child: post, creator_id: 0)
+  LinkGroupContent.create!(parent: group_records[3], child: post, creator_id: 0,
+    approved_parent: true, approved_child: true)
 
   # Make all links approved, not the usual case.
-  LinkBase.where(approved_parent: false)
-    .or(LinkBase.where(approved_child: false))
-    .update_all(approved_parent: true, approved_child: true)
+  unapproved_count = LinkBase.where(approved_parent: false).
+    or(LinkBase.where(approved_child: false)).count
+  puts "#{LedgerBase.count} Ledger Objects created, #{LinkBase.count} links, " \
+    "including #{unapproved_count} unapproved links."
 end

@@ -23,6 +23,25 @@ class LedgerAwardCeremony < LedgerBase
   # objects are also considered expired when they have no links to them and
   # the largest of their current points is this big.
 
+  DEFAULT_SPEND_FOR_LINK = 0.25
+  DEFAULT_SPEND_FOR_OBJECT = 0.5
+  # If you don't specify the amount to spend for creating an object or a link,
+  # this is the number of points it will cost.  For links, after the fee, the
+  # cost is split half and half on parent and child objects.
+
+  LINK_TRANSACTION_FEE = 1.0 / 32.0
+  OBJECT_TRANSACTION_FEE = 1.0 / 16.0
+  # When you spend points to create a new object or link, a base transaction
+  # fee is charged to cover database and disk storage costs for the new records.
+  # The fee will be larger for larger objects (like uploading a picture or video
+  # file).  The main idea is to discourage high frequency trading, and farming
+  # points, and wasting our disk storage.
+
+  MAXIMUM_BONUS_PER_CEREMONY = 100.0
+  # You can get up to this many bonus points per week.  Any extra bonuses are
+  # ignored.  This is so that wealthy people can't excessively increase their
+  # reputation.
+
   FADED_BONUS_TABLE_SIZE = 500
   FADED_BONUS_CONVERGED = 1.0 / (1.0 - FADE)
   @accumulated_faded_bonus_table = nil
@@ -90,7 +109,7 @@ class LedgerAwardCeremony < LedgerBase
     # goes wrong, also leave @highest_ceremony valid in that case.
     transaction do
       ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1,
-        comment: comment_string)
+        rating_points_spent_creating: 10.0, comment: comment_string)
       ceremony.save!
       @highest_ceremony = nil # Current ceremony number changed, force updates.
 
@@ -115,7 +134,12 @@ class LedgerAwardCeremony < LedgerBase
   # the user if this is a user object.  Used in error messages.  Empty string
   # for none.
   def context_s
+    elapsed_time = if completed_at && created_at # Can be nil early on.
+      completed_at - created_at
+    else
+      -1
+    end
     "Award Ceremony ##{ceremony_number} completed at #{completed_at}, " \
-      "took #{(completed_at - created_at).round(1)} seconds"
+      "took #{elapsed_time.round(1)} seconds"
   end
 end

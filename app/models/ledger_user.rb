@@ -32,10 +32,14 @@ class LedgerUser < LedgerBase
     if home_group.nil?
       latest_name = latest_version.name
       lfgroup = LedgerFullGroup.create!(creator_id: original_version_id,
-        name: latest_name,
-        description: "Personal Posts by #{latest_name}")
-      LinkHomeGroup.create!(creator_id: original_version_id,
-        parent_id: original_version_id, child: lfgroup)
+        name: latest_name, description: "Personal Posts by #{latest_name}",
+        rating_points_spent_creating: 0.0, rating_points_boost_self: 0.0)
+      LinkHomeGroup.create!(creator_id: 0, # Root will pay for it.
+        parent_id: original_version_id, child: lfgroup,
+        approved_parent: true, approved_child: true,
+        rating_points_spent: 1.0,
+        rating_points_boost_parent: 0.0,
+        rating_points_boost_child: 1.0)
     end
   end
 
@@ -75,8 +79,11 @@ class LedgerUser < LedgerBase
     # LinkBonusUnique exists, thus the dummy reference.  The .class afterwards
     # is to pacify Rubocop.
     LinkBonusUnique.class
+    # Iterate through the bonuses from negative to positive, so that we can cut
+    # off excess positive bonuses which exceed the weekly total maximum.
     LinkBonus.where(approved_parent: true, approved_child: true,
-      deleted: false, bonus_user_id: original_version_id).each do |a_bonus|
+      deleted: false, bonus_user_id: original_version_id).
+      order(bonus_points: :asc).each do |a_bonus|
       start_ceremony = if old_ceremony < a_bonus.original_ceremony
         a_bonus.original_ceremony
       else
@@ -88,15 +95,23 @@ class LedgerUser < LedgerBase
       # the bonus until the next ceremony after the bonus is created.
       next if generations <= 0
 
-      self.current_meh_points += a_bonus.bonus_points *
+      # Chop down the bonus if it makes the weekly total go over the maximum.
+      bonus_points = a_bonus.bonus_points
+      if weekly_allowance + bonus_points >
+          LedgerAwardCeremony::MAXIMUM_BONUS_PER_CEREMONY
+        bonus_points =
+          LedgerAwardCeremony::MAXIMUM_BONUS_PER_CEREMONY - weekly_allowance
+      end
+
+      self.current_meh_points += bonus_points *
         LedgerAwardCeremony.accumulated_bonus(generations)
-      weekly_allowance += a_bonus.bonus_points
+      weekly_allowance += bonus_points
+      break if weekly_allowance >= LedgerAwardCeremony::MAXIMUM_BONUS_PER_CEREMONY
     end
 
     user = User.find_by(ledger_user_id: original_version_id)
     user&.with_lock do
       weekly_allowance = 0.0 if weekly_allowance < 0.0
-      weekly_allowance = 100.0 if weekly_allowance > 100.0
       user.update_columns(weeks_allowance: weekly_allowance,
         weeks_spending: 0.0)
     end

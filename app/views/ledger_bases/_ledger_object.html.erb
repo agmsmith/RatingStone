@@ -6,10 +6,8 @@
 <% else %>
   <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10 <%=
     ledger_object.deleted ? "deleted" : "content" %>">
-    <%= link_to "#{ledger_object.type} ##{ledger_object.id}",
-      ledger_base_path(ledger_object) %>
-    <%= ledger_object.context_s %><BR>
-    <small><%= ledger_object.created_at.getlocal %></small>
+    <%= ledger_object.type %>: <%= ledger_object.context_s %><BR>
+    <%= timestamp_html(ledger_object) %>
   </div>
   <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
     <%= render 'shared/ledger_delete_button',

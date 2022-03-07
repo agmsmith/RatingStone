@@ -346,10 +346,12 @@ class LedgerBase < ApplicationRecord
 
       # Update weekly spend for UI information display.  Ignore when self is
       # not a LedgerUser or no User record has been created.
-      user = User.find_by(ledger_user_id: id)
-      user&.with_lock do
-        user.weeks_spending += amount
-        user.save!
+      if is_a?(LedgerUser)
+        user = User.find_by(ledger_user_id: id)
+        user&.with_lock do
+          user.weeks_spending += amount
+          user.save!
+        end
       end
       save!
     end
@@ -488,7 +490,7 @@ class LedgerBase < ApplicationRecord
           end
         end
 
-        # Remove points spent on creating Ledger objects.
+        # Remove points spent on creating Ledger objects.  Deleted ones too.
 
         objects_created.find_each do |an_object|
           generations = last_ceremony - an_object.original_ceremony
@@ -538,9 +540,30 @@ class LedgerBase < ApplicationRecord
 
   ##
   # Before creating a Ledger Object, subtract points spent from the creator.
-  # Throw an exception if there aren't enough points.
+  # Throw an exception if there aren't enough points.  If specified points are
+  # negative, use a default value.
   def base_before_create
     return if creator.nil? # You'll get a database NULL exception soon.
+
+    # If you didn't specify the points to spend, assume a default.
+    if rating_points_spent_creating < 0.0
+      self.rating_points_spent_creating =
+        LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT
+    end
+
+    # If you didn't specify the points after the fee, assume the default fee.
+    if rating_points_boost_self < 0.0
+      self.rating_points_boost_self = rating_points_spent_creating -
+        LedgerAwardCeremony::OBJECT_TRANSACTION_FEE
+    end
+
+    if rating_points_boost_self < 0.0
+      raise RatingStoneErrors,
+        "#base_before_create: Ran out of points?  Can't spend a negative " \
+        "number of points to boost object #{self}.  " \
+        "#{rating_points_spent_creating} points " \
+        "spent, with #{rating_points_boost_self} allocated to boost."
+    end
 
     if rating_points_spent_creating < rating_points_boost_self
       raise RatingStoneErrors,

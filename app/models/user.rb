@@ -51,9 +51,21 @@ class User < ApplicationRecord
     update_attribute(:remember_digest, nil)
   end
 
-  # Activates an account.
+  # Activates an account.  And adds a bonus link if needed.
   def activate
+    return if activated
     update_columns(activated: true, activated_at: Time.zone.now)
+
+    # Add a bonus to the corresponding LedgerUser for e-mail verification done.
+    bonus_post = LedgerPost.where(subject: "Bonus for Activation").
+      order(created_at: :asc).first # Get oldest post with that subject.
+    return unless bonus_post # Odd, no post for describing the activation bonus.
+    luser = ledger_user # Creates LedgerUser if needed.
+    LinkBonusUnique.create!(creator_id: 0, bonus_user: luser,
+      bonus_explanation: bonus_post, bonus_points: 10, rating_points_spent: 1.0,
+      rating_points_boost_parent: 0.25, rating_points_boost_child: 0.75,
+      approved_parent: true, approved_child: true,
+      reason: "Bonus for activating #{luser} via e-mail verification.")
   end
 
   # Sends activation email.
@@ -83,10 +95,14 @@ class User < ApplicationRecord
   def ledger_user
     lu = LedgerUser.find_by(id: ledger_user_id) if ledger_user_id
     if lu.nil?
-      lu = LedgerUser.create!(creator_id: 0, name: name, email: email)
+      lu = LedgerUser.create!(creator_id: 0, name: name, email: email,
+        rating_points_spent_creating: # Initial points to cover home group.
+          LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT * 2 +
+          LedgerAwardCeremony::DEFAULT_SPEND_FOR_LINK,
+        current_ceremony: LedgerAwardCeremony::last_ceremony)
       self.ledger_user_id = lu.id # Need self.attr here to make it work.
       save!
-      lu.set_up_new_user
+      lu.set_up_new_user # Home group etc.
     else
       lu = lu.latest_version
     end

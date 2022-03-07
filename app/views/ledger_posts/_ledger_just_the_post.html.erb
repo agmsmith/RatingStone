@@ -11,17 +11,7 @@
     ledger_post.deleted ? "deleted" : "content" %>">
     <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
   </div>
-  <span class="timestamp"><%= link_to "##{ledger_post.id}",
-    ledger_base_path(ledger_post) %> posted <%=
-    time_ago_in_words(ledger_post.created_at)
-    %> ago&nbsp;- <small><%= ledger_post.created_at.getlocal %></small>.
-    <% expiry = ledger_post.expiry_time
-    if expiry <= Time.now %>
-      Expired.
-    <% else %>
-      Expires in <%= time_ago_in_words(expiry) %>.
-    <% end %>
-  </span>
+  <%= timestamp_html(ledger_post) %>
   <% # Show groups, replies both up and down, with links and unapproved flags.
     my_replies = LinkReply.where(
       original_post_id: ledger_post.original_version_id,

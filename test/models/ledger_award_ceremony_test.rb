@@ -96,44 +96,50 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
   test "Incremental Recalculation of Rating Points" do
     # Make a post, and add reply posts over time, with points spent to link
     # in the replies.  Also do approvals, and test deletion effects on points.
-    user_member = ledger_users(:member_user)
-    user_member.user # Make sure corresponding user record exists.
-    user_member.update_current_points
-    user_member.current_meh_points = 10.0
-    user_member.save!
-    LedgerAwardCeremony.clear_ceremony_cache
+    user_reader = ledger_users(:reader_user) # This user gets 10 points weekly.
+    user_reader.user # Make sure corresponding user record exists.
+    LedgerAwardCeremony.clear_ceremony_cache # Only needed when testing.
     LedgerAwardCeremony.start_ceremony
     assert_equal(1, LedgerAwardCeremony.last_ceremony,
       "Should just have one Ceremony in the test database at this point.")
     user_outsider = ledger_users(:outsider_user)
     lpost1 = LedgerPost.create!(creator: user_outsider,
       subject: "First Post", content: "The **Post** created by an outsider.")
-    lpost2 = LedgerPost.create!(creator: user_member,
+    lpost2 = LedgerPost.create!(creator: user_reader,
       subject: "First Reply", content: "The first reply to the *Post*.")
-    reply_1_2 = LinkReply.create!(creator: user_member,
+    reply_1_2 = LinkReply.create!(creator: user_reader,
       original_post: lpost1, reply_post: lpost2,
       string1: "Link post 2 as a reply to 1.",
       rating_points_spent: 1.0,
       rating_points_boost_parent: 0.2, rating_direction_parent: "M",
       rating_points_boost_child: 0.7, rating_direction_child: "U")
     assert_equal(1, reply_1_2.original_ceremony)
-    assert_in_delta(0.0, lpost1.current_meh_points, 0.0000001, "Not approved.")
+    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
+      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
+      lpost1.current_meh_points, 0.0000001, "Not approved so unchanged")
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001, "Approved points")
-    assert_in_delta(8.7, user_member.current_meh_points, 0.0000001, "Spent them")
+    assert_in_delta(10 * LedgerAwardCeremony::FADE -
+      LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT - # Created lpost2.
+      1.0, # Created reply_1_2.
+      user_reader.current_meh_points, 0.0000001, "Spent them")
 
     # Incremental update in the same ceremony week should do nothing.
     lpost1.update_current_points
     lpost2.update_current_points
-    assert_in_delta(0.0, lpost1.current_meh_points, 0.0000001)
+    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
+      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
+      lpost1.current_meh_points, 0.0000001)
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001)
 
     # Try to approve the parent end of the link, should do nothing since we're
     # using the owner of the child end.
-    marker = LedgerApprove.mark_records([reply_1_2], true, user_member,
+    marker = LedgerApprove.mark_records([reply_1_2], true, user_reader,
       "Testing incremental point recalculation.",
       "Turning on approval for wrong user, so reply approved.")
     assert_nil(marker, "Marking should do nothing, since changing nothing.")
-    assert_in_delta(0.0, lpost1.reload.current_meh_points, 0.0000001)
+    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
+      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
+      lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.7, lpost2.reload.current_up_points, 0.0000001)
 
     # Really approve the parent end of the link.
@@ -141,9 +147,13 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       "Testing incremental point recalculation.",
       "Turning on approval of original post, does it turn on the points?")
     assert(marker, "Marking should do something this time.")
-    assert_in_delta(0.0, lpost1.current_meh_points, 0.0000001)
+    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
+      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
+      lpost1.current_meh_points, 0.0000001)
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001)
-    assert_in_delta(0.2, lpost1.reload.current_meh_points, 0.0000001)
+    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
+      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE + 0.2,
+      lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.7, lpost2.reload.current_up_points, 0.0000001)
 
     # Delete the reply link, points should be affected.
@@ -154,7 +164,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
 
     # Turn off the approval of the child end of the link, while deleted.
-    LedgerApprove.mark_records([reply_1_2], false, user_member,
+    LedgerApprove.mark_records([reply_1_2], false, user_reader,
       "Testing incremental point recalculation.",
       "Unapproving the child end of the link while deleted.")
     assert_in_delta(0.0, lpost1.reload.current_meh_points, 0.0000001)
@@ -173,7 +183,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost2.reload.update_current_points
     assert_in_delta(0.2 * 0.97, lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
-    LedgerApprove.mark_records([reply_1_2], true, user_member,
+    LedgerApprove.mark_records([reply_1_2], true, user_reader,
       "Testing incremental point recalculation.",
       "Re-approving the child end of the link while undeleted.")
     assert_in_delta(0.2 * 0.97, lpost1.reload.current_meh_points, 0.0000001)
@@ -199,7 +209,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       lpost2.reload.current_up_points, 0.0000001)
 
     # Unapprove the child end again, and update the ceremony too.
-    LedgerApprove.mark_records([reply_1_2], false, user_member,
+    LedgerApprove.mark_records([reply_1_2], false, user_reader,
       "Testing incremental point recalculation.",
       "Unapproving the child end of the link while not deleted.")
     LedgerAwardCeremony.start_ceremony
