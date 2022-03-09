@@ -16,17 +16,18 @@ module ApplicationHelper
   ##
   # Return an HTML string showing the rating points of a LedgerObject.
   def points_html(lobject)
+    lorig = lobject.original_version # Points are stored in the original.
     result = ""
-    if lobject.current_up_points != 0
-      result += format("^%.2f ", lobject.current_up_points)
+    if lorig.current_up_points != 0
+      result += format("^%.2f ", lorig.current_up_points)
     end
-    if lobject.current_meh_points != 0
-      result += format("~%.2f ", lobject.current_meh_points)
+    if lorig.current_meh_points != 0
+      result += format("~%.2f ", lorig.current_meh_points)
     end
-    if lobject.current_down_points != 0
-      result += format("v%.2f ", lobject.current_down_points)
+    if lorig.current_down_points != 0
+      result += format("v%.2f ", lorig.current_down_points)
     end
-    result.strip!
+    result = result.strip
     result = "~" if result.empty?
     result
   end

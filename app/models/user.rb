@@ -3,7 +3,6 @@
 class User < ApplicationRecord
   before_save :downcase_email
   before_create :create_activation_digest
-  after_save :update_ledger_user
 
   attr_accessor :activation_token, :remember_token, :reset_token
 
@@ -100,13 +99,23 @@ class User < ApplicationRecord
           LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT * 2 +
           LedgerAwardCeremony::DEFAULT_SPEND_FOR_LINK,
         current_ceremony: LedgerAwardCeremony::last_ceremony)
-      self.ledger_user_id = lu.id # Need self.attr here to make it work.
+      self.ledger_user_id = lu.id
       save!
       lu.set_up_new_user # Home group etc.
     else
       lu = lu.latest_version
     end
     lu
+  end
+
+  # Make sure the corresponding LedgerUser has current e-mail and name.
+  def update_ledger_user_email_name
+    luser = ledger_user # Gets latest version of the data.
+    return if (luser.name == name) && (luser.email == email)
+    new_luser = luser.append_version
+    new_luser.name = name
+    new_luser.email = email
+    new_luser.save!
   end
 
   private
@@ -120,16 +129,5 @@ class User < ApplicationRecord
   def create_activation_digest
     self.activation_token  = User.new_token
     self.activation_digest = User.digest(activation_token)
-  end
-
-  # If there is a corresponding LedgerUser, update its name and email.
-  def update_ledger_user
-    return if ledger_user_id.nil?
-    luser = ledger_user # Gets latest version of the data.
-    return if (luser.name == name) && (luser.email == email)
-    new_luser = luser.append_version
-    new_luser.name = name
-    new_luser.email = email
-    new_luser.save!
   end
 end

@@ -91,6 +91,9 @@ class LedgerBase < ApplicationRecord
     new_entry.original_id = original_version_id # In case original_id is nil.
     new_entry.amended_id = original_version.amended_id # For consistency check.
     new_entry.original_ceremony = LedgerAwardCeremony.last_ceremony
+    new_entry.rating_points_spent_creating = -1.0
+    new_entry.rating_points_boost_self = -1.0
+    new_entry.rating_direction_self = "M"
     # Cached values not used (see original record) in amended, set to defaults.
     new_entry.deleted = false
     new_entry.expired_now = false
@@ -294,9 +297,10 @@ class LedgerBase < ApplicationRecord
   ##
   # Returns the number of rating points available for spending from this object.
   def points_available
-    update_current_points
-    available = current_meh_points
-    up_delta = current_up_points - current_down_points
+    lorig = original_version
+    lorig.update_current_points
+    available = lorig.current_meh_points
+    up_delta = lorig.current_up_points - lorig.current_down_points
     available += up_delta if up_delta > 0.0
     available
   end
@@ -326,7 +330,7 @@ class LedgerBase < ApplicationRecord
         "#spend_points: Spending a negative number (#{amount}) of points " \
           "from #{self}."
     end
-    return if amount == 0.0
+    return self if amount == 0.0
 
     update_current_points # Also verifies that "self" is original version.
     with_lock do
@@ -541,7 +545,8 @@ class LedgerBase < ApplicationRecord
   ##
   # Before creating a Ledger Object, subtract points spent from the creator.
   # Throw an exception if there aren't enough points.  If specified points are
-  # negative, use a default value.
+  # negative, use a default value.  Keep in mind that this is also used for
+  # later versions of an object, where the point tracking is in the original.
   def base_before_create
     return if creator.nil? # You'll get a database NULL exception soon.
 
@@ -577,12 +582,24 @@ class LedgerBase < ApplicationRecord
     # exception if not enough available.
     creator.original_version.spend_points(rating_points_spent_creating)
 
-    # Add on the points from the creator.
+    # Add on the points from the creator, to our original version.
     if rating_points_boost_self > 0.0
-      case rating_direction_self
-      when "D" then self.current_down_points += rating_points_boost_self
-      when "M" then self.current_meh_points += rating_points_boost_self
-      when "U" then self.current_up_points += rating_points_boost_self
+      lorig = original_version
+      if lorig == self
+        case rating_direction_self
+        when "D" then self.current_down_points += rating_points_boost_self
+        when "M" then self.current_meh_points += rating_points_boost_self
+        when "U" then self.current_up_points += rating_points_boost_self
+        end
+      else
+        lorig.with_lock do
+          case rating_direction_self
+          when "D" then lorig.current_down_points += rating_points_boost_self
+          when "M" then lorig.current_meh_points += rating_points_boost_self
+          when "U" then lorig.current_up_points += rating_points_boost_self
+          end
+          lorig.save!
+        end
       end
     end
   end

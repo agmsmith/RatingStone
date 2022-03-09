@@ -11,7 +11,19 @@ root_ledger_user_fixture:
   string1: 'Fixture created Root User Object'
   string2: 'root@example.com'
   current_meh_points: 1234.5
+  original_ceremony: 0
   current_ceremony: 0 # So it doesn't recalculate and find it has no points.
+
+michael_luser:
+  type: 'LedgerUser'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:michael_luser) %>
+  original_id: <%= ActiveRecord::FixtureSet.identify(:michael_luser) %>
+  string1: 'That Michael Test User'
+  string2: 'michael@example.com'
+  text1: "This Michael guy has lots of points so he can test things like making many posts and trying out pagination."
+  current_meh_points: 1000
+  original_ceremony: 0
+  current_ceremony: 0
 
 group_creator_user:
   type: 'LedgerUser'
@@ -19,6 +31,7 @@ group_creator_user:
   string1: 'Creator of a group'
   string2: 'groupcreator@example.com'
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 
 group_owner_user:
@@ -27,6 +40,7 @@ group_owner_user:
   string1: 'Owner of a group'
   string2: 'groupowner@example.com'
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 
 message_moderator_user:
@@ -35,6 +49,7 @@ message_moderator_user:
   string1: 'Moderator of messages in a group'
   string2: 'moderator1@example.com'
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 
 message_moderator2_user:
@@ -43,6 +58,7 @@ message_moderator2_user:
   string1: 'Second moderator of messages in a group, banned'
   string2: 'moderator2@example.com'
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 
 member_moderator_user:
@@ -51,6 +67,7 @@ member_moderator_user:
   string1: 'Moderator of members in a group'
   string2: 'membermoderator@example.com'
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 
 meta_moderator_user:
@@ -59,6 +76,7 @@ meta_moderator_user:
   string1: 'Moderator of opinions in a group'
   string2: 'metamoderator@example.com'
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 
 member_user:
@@ -68,6 +86,7 @@ member_user:
   string2: 'plainmember@example.com'
   current_up_points: 10
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 
 reader_user:
@@ -76,6 +95,7 @@ reader_user:
   string1: 'Reader of a group'
   string2: 'reader@example.com'
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 
 undesirable_user:
@@ -84,6 +104,7 @@ undesirable_user:
   string1: 'An undesirable user who gets banned'
   string2: 'undesirable@example.com'
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 
 outsider_user:
@@ -92,5 +113,6 @@ outsider_user:
   string1: 'A user not in any groups'
   string2: 'outsider@example.com'
   current_meh_points: 10
+  original_ceremony: 0
   current_ceremony: 0
 

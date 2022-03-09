@@ -47,6 +47,7 @@ class UsersController < ApplicationController
 
   def update
     if @user.update(user_params)
+      @user.update_ledger_user_email_name
       flash[:success] = "Profile updated."
       redirect_to(@user)
     else

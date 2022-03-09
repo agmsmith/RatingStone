@@ -7,7 +7,7 @@ michael:
   admin: true
   activated: true
   activated_at: <%= Time.zone.now %>
-  ledger_user_id: group_owner_user
+  ledger_user_id: <%= ActiveRecord::FixtureSet.identify(:michael_luser) %>
 
 archer:
   name: Sterling Archer

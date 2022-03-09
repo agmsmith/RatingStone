@@ -1,7 +1,7 @@
 <% provide(:page_title, 'Edit Post') %>
 <% provide(:button_text, 'Save Changes') %>
 <% points_available = if @ledger_object
-     @ledger_object.creator.original_version.points_available
+     @ledger_object.creator.points_available # TODO: should be logged in user.
    else
      0.0
    end
