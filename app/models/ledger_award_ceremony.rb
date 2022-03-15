@@ -85,6 +85,7 @@ class LedgerAwardCeremony < LedgerBase
   # be increasing sequential numbers, else fading will be excessive.
   def self.last_ceremony
     return @highest_ceremony if @highest_ceremony
+
     @highest_ceremony = maximum(:ceremony_number) # Find largest in database.
     @highest_ceremony = 0 unless @highest_ceremony # If no ceremonies done yet.
     @highest_ceremony

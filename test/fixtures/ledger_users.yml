@@ -10,7 +10,7 @@ root_ledger_user_fixture:
   creator_id: 0
   string1: 'Fixture created Root User Object'
   string2: 'root@example.com'
-  current_meh_points: 1234.5
+  current_meh_points: 1234.0
   original_ceremony: 0
   current_ceremony: 0 # So it doesn't recalculate and find it has no points.
 

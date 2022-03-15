@@ -17,7 +17,9 @@ class LinkGroupContent < LinkBase
   # (rather than having it hang around as a post waiting for moderation).
   def creator_owner?(luser)
     return true if super
+
     return true if permission_to_change_child_approval(luser)
+
     permission_to_change_parent_approval(luser) # More expensive method last.
   end
 
@@ -49,6 +51,7 @@ class LinkGroupContent < LinkBase
 
   def set_default_description
     return unless string1.empty?
+
     self.string1 = "#{child.to_s.truncate(80)} is content in group " \
       "#{parent.to_s.truncate(80)}."
   end

@@ -13,6 +13,7 @@ class LedgerUser < LedgerBase
   def user
     user_record = User.find_by(ledger_user_id: original_version_id)
     return user_record if user_record
+
     # Need to make a new User record, an unusual procedure.  Set it up so
     # a password reset to the user's email is needed for access.
     logger.warn("Creating a User for #{self}, an unusual reversed procedure.")
@@ -60,6 +61,7 @@ class LedgerUser < LedgerBase
       deleted: false, approved_parent: true, approved_child: true)
       .order(created_at: :desc).first
     return nil if latest_home.nil?
+
     home_page = latest_home.child.latest_version
     raise RatingStoneErrors, "Home page latest version from #{latest_home} " \
       "is not a LedgerFullGroup." unless home_page.is_a?(LedgerFullGroup)
@@ -82,8 +84,8 @@ class LedgerUser < LedgerBase
     # Iterate through the bonuses from negative to positive, so that we can cut
     # off excess positive bonuses which exceed the weekly total maximum.
     LinkBonus.where(approved_parent: true, approved_child: true,
-      deleted: false, bonus_user_id: original_version_id).
-      order(bonus_points: :asc).each do |a_bonus|
+      deleted: false, bonus_user_id: original_version_id)
+      .order(bonus_points: :asc).each do |a_bonus|
       start_ceremony = if old_ceremony < a_bonus.original_ceremony
         a_bonus.original_ceremony
       else

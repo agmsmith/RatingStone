@@ -274,7 +274,7 @@ class LinkBase < ApplicationRecord
   # objects (subject to approval) and subtract from the creator (always).
   # Assume default spending if the points are negative.
   def distribute_rating_points
-    # If the user didn't specify the amount to spend, assume a default.  
+    # If the user didn't specify the amount to spend, assume a default.
     if rating_points_spent < 0.0
       self.rating_points_spent = LedgerAwardCeremony::DEFAULT_SPEND_FOR_LINK
     end
@@ -300,7 +300,7 @@ class LinkBase < ApplicationRecord
           "#{rating_points_boost_child} is negative when creating the " \
           "link #{self}."
     end
-  
+
     if rating_points_boost_parent + rating_points_boost_child >
         rating_points_spent
       over_boost = rating_points_boost_parent + rating_points_boost_child -

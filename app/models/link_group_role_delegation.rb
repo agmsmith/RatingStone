@@ -12,6 +12,7 @@ class LinkGroupRoleDelegation < LinkBase
 
   def set_default_description
     return unless string1.empty?
+
     self.string1 = "#{child} is delegating membership " \
       "and other inquires to #{parent}.".truncate(255)
   end

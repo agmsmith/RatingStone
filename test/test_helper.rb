@@ -29,6 +29,13 @@ module ActiveSupport
       session[:user_id] = user.id
     end
 
+    # Common setup done before all tests.  ActiveSupport::TestCase resets the
+    # database to an initial state (using a cancelled transaction to run the
+    # test in), so we should also reset globals to match the initial state.
+    setup do
+      LedgerAwardCeremony.clear_ceremony_cache
+    end
+
     # Add more helper methods to be used by all tests here...
     include ApplicationHelper
   end

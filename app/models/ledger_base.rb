@@ -116,6 +116,7 @@ class LedgerBase < ApplicationRecord
   # that case)).
   def original_version
     return self if original_id.nil? || (original_id == id)
+
     original
   end
 
@@ -128,6 +129,7 @@ class LedgerBase < ApplicationRecord
   # this is an unsaved original record.
   def original_version_id
     return id if original_id.nil?
+
     original_id
   end
 
@@ -139,6 +141,7 @@ class LedgerBase < ApplicationRecord
   def latest_version
     latest = original_version.amended
     return latest unless latest.nil?
+
     self # We are the only and original version.
   end
 
@@ -154,6 +157,7 @@ class LedgerBase < ApplicationRecord
   def latest_version_id
     latest_id = original_version.amended_id
     return latest_id unless latest_id.nil?
+
     id # We are the only and original version.
   end
 
@@ -215,7 +219,9 @@ class LedgerBase < ApplicationRecord
   # user just has to be a group reader in one of them.
   def allowed_to_view?(luser)
     return true if creator_owner?(luser)
+
     return role_test?(luser, LinkRole::READER) if is_a?(LedgerSubgroup)
+
     # Test the user's status in groups for things (content) attached to groups.
     if is_a?(LedgerContent)
       LinkGroupContent.where(child_id: original_version_id, deleted: false,
@@ -272,6 +278,7 @@ class LedgerBase < ApplicationRecord
     link_ups.or(link_downs).where(deleted: false).find_each do |a_link|
       generations = last_ceremony - a_link.original_ceremony
       next if generations < 0 # Ignore future links.
+
       fade_factor = LedgerAwardCeremony::FADE**generations
 
       if a_link.child_id == id
@@ -565,9 +572,9 @@ class LedgerBase < ApplicationRecord
     if rating_points_boost_self < 0.0
       raise RatingStoneErrors,
         "#base_before_create: Ran out of points?  Can't spend a negative " \
-        "number of points to boost object #{self}.  " \
-        "#{rating_points_spent_creating} points " \
-        "spent, with #{rating_points_boost_self} allocated to boost."
+          "number of points to boost object #{self}.  " \
+          "#{rating_points_spent_creating} points " \
+          "spent, with #{rating_points_boost_self} allocated to boost."
     end
 
     if rating_points_spent_creating < rating_points_boost_self
@@ -657,6 +664,7 @@ class LedgerBase < ApplicationRecord
   # This is mostly a sanity check and may be removed if it's never triggered.
   def validate_ledger_original_creator_used
     return if creator.nil? # You'll get a database NULL exception soon.
+
     errors.add(:unoriginal_creator, "Creator #{creator} isn't the canonical " \
       "original version.") unless creator.original_version?
   end
@@ -666,6 +674,7 @@ class LedgerBase < ApplicationRecord
   # This is mostly a sanity check and may be removed if it's never triggered.
   def validate_ledger_type_same_between_versions
     return if latest_version_id == original_version_id # Only one version.
+
     errors.add(:type_change_between_versions, "Object #{self} has a " \
       "different type than the original version #{original_version}.") \
       unless type == original_version.type

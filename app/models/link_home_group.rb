@@ -13,6 +13,7 @@ class LinkHomeGroup < LinkBase
 
   def set_default_description
     return unless string1.empty?
+
     self.string1 = "Home page of #{parent} is #{child}.".truncate(255)
   end
 

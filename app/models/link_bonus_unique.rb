@@ -36,6 +36,7 @@ class LinkBonusUnique < LinkBonus
 
   def validate_uniqueness
     return unless duplicate_linkbonus_exists?
+
     errors.add(:validate_uniqueness, "Creating a LinkBonusUnique which isn't " \
       "unique - there are other LinkBonus records with the same parent of " \
       "#{parent} and child #{child}.")

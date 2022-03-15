@@ -42,6 +42,7 @@ class User < ApplicationRecord
   def authenticated?(digest_kind, token)
     digest = send("#{digest_kind}_digest")
     return false if digest.nil?
+
     BCrypt::Password.new(digest).is_password?(token)
   end
 
@@ -53,12 +54,14 @@ class User < ApplicationRecord
   # Activates an account.  And adds a bonus link if needed.
   def activate
     return if activated
+
     update_columns(activated: true, activated_at: Time.zone.now)
 
     # Add a bonus to the corresponding LedgerUser for e-mail verification done.
-    bonus_post = LedgerPost.where(subject: "Bonus for Activation").
-      order(created_at: :asc).first # Get oldest post with that subject.
+    bonus_post = LedgerPost.where(subject: "Bonus for Activation")
+      .order(created_at: :asc).first # Get oldest post with that subject.
     return unless bonus_post # Odd, no post for describing the activation bonus.
+
     luser = ledger_user # Creates LedgerUser if needed.
     LinkBonusUnique.create!(creator_id: 0, bonus_user: luser,
       bonus_explanation: bonus_post, bonus_points: 10, rating_points_spent: 1.0,
@@ -98,7 +101,7 @@ class User < ApplicationRecord
         rating_points_spent_creating: # Initial points to cover home group.
           LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT * 2 +
           LedgerAwardCeremony::DEFAULT_SPEND_FOR_LINK,
-        current_ceremony: LedgerAwardCeremony::last_ceremony)
+        current_ceremony: LedgerAwardCeremony.last_ceremony)
       self.ledger_user_id = lu.id
       save!
       lu.set_up_new_user # Home group etc.
@@ -112,6 +115,7 @@ class User < ApplicationRecord
   def update_ledger_user_email_name
     luser = ledger_user # Gets latest version of the data.
     return if (luser.name == name) && (luser.email == email)
+
     new_luser = luser.append_version
     new_luser.name = name
     new_luser.email = email

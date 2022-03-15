@@ -44,6 +44,7 @@ class LinkRole < LinkBase
   # Convert the numerical priority into words if no description yet.
   def set_default_role_description
     return unless description.empty?
+
     index = priority.to_i / 10 * 10
     index = BANNED if index < BANNED
     index = CREATOR if index > CREATOR

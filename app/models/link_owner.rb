@@ -15,6 +15,7 @@ class LinkOwner < LinkBase
 
   def set_default_description
     return unless string1.empty?
+
     self.string1 = "#{owner} is an owner of #{thing}.".truncate(255)
   end
 

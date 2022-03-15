@@ -12,6 +12,7 @@ class LinkBonus < LinkBase
 
   def set_default_description
     return unless string1.empty?
+
     self.string1 = "Bonus of #{bonus_points} points after ceremony " \
       "##{original_ceremony}."
   end

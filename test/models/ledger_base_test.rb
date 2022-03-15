@@ -191,18 +191,24 @@ class LedgerBaseTest < ActiveSupport::TestCase
     # callback gets run, test has_owners field, also test with a versioned
     # user and post.
     luser1 = LedgerUser.create!(name: "User One", email: "1@example.com",
-      creator_id: 0)
+      creator_id: 0, rating_points_spent_creating: 10, current_ceremony: 0)
     luser2 = LedgerUser.create!(name: "User Two A", email: "2@example.com",
-      creator_id: 0)
+      creator_id: 0, rating_points_spent_creating: 10, current_ceremony: 0)
     luser2 = luser2.append_version
     luser2.name = "User Two B"
     luser2.save!
     luser2.reload
     luser3 = LedgerUser.create!(name: "User Three A", email: "3@example.com",
-      creator_id: 0)
+      creator_id: 0, rating_points_spent_creating: 10, current_ceremony: 0)
     lpost = LedgerPost.create!(creator_id: luser1.original_version_id,
       subject: "Post by User One", content: "This is a **Post** by User One.")
+    assert_not(lpost.original.creator_owner?(luser2.original_version),
+      "New creator is not yet the owner.")
+    assert_not(lpost.creator_owner?(luser2),
+      "New creator is not yet the owner despite wrong version arguments.")
+    assert(lpost.creator_owner?(luser1))
     lpost = lpost.append_version
+    lpost.subject = "Modified post by User One taken over."
     lpost.content = "Version with User Two B as new creator."
     lpost.creator_id = luser2.original_version_id # Change creator.
     lpost.save!
@@ -214,6 +220,11 @@ class LedgerBaseTest < ActiveSupport::TestCase
       lpost.original_version.current_creator_id)
     assert_equal(luser1.original_version_id,
       lpost.original_version.creator_id)
+    assert(lpost.original.creator_owner?(luser2.original_version),
+      "Should have new creator as owner.")
+    assert(lpost.creator_owner?(luser2),
+      "Should have new creator as owner, despite wrong version arguments.")
+    assert_not(lpost.original_version.creator_owner?(luser1))
     luser3 = luser3.append_version
     luser3.email = "3B@example.com"
     luser3.name = "User Three B"
@@ -241,7 +252,9 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert(lowner.approved_child, "Child of link now approved")
     lpost.reload
     assert(lpost.creator_owner?(luser3),
-      "Should now have permission in #{lowner.reload}.")
+      "Should now have permission due to #{lowner.reload}.")
+    assert(lpost.creator_owner?(luser2))
+    assert_not(lpost.creator_owner?(luser1))
   end
 
   test "allowed_to_view? function" do

@@ -741,6 +741,7 @@ class WordCounterController < ApplicationController
       plural_term_index = 1
       (2..5).each do |i| # 2.. since first term doesn't have a separator.
         break unless result.named_captures["term#{i}"]
+
         if result.named_captures["separator#{i}"] == "/"
           plural_term_index = i - 1
           break

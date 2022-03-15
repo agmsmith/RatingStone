@@ -37,10 +37,14 @@ module ApplicationHelper
   # estimated expiry time.  Has a link to the raw object too.
   def timestamp_html(lobject)
     ("<span class=\"timestamp\">#{points_html(lobject)} " \
-    "<a href=\"#{ledger_base_path(lobject)}\">##{lobject.id}</a> " \
-    "created #{time_ago_in_words(lobject.created_at)} ago&nbsp;- <small>" \
-    "#{lobject.created_at.getlocal}.  " + (lobject.expiry_time <= Time.now ?
-    "Expired." : "Expires in #{time_ago_in_words(lobject.expiry_time)}.") +
-    "</small></span>").html_safe
+      "<a href=\"#{ledger_base_path(lobject)}\">##{lobject.id}</a> " \
+      "created #{time_ago_in_words(lobject.created_at)} ago&nbsp;- <small>" \
+      "#{lobject.created_at.getlocal}.  " +
+      (if lobject.expiry_time <= Time.now
+         "Expired."
+       else
+         "Expires in #{time_ago_in_words(lobject.expiry_time)}."
+       end) +
+      "</small></span>").html_safe
   end
 end

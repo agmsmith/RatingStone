@@ -92,6 +92,7 @@ class LedgerPostsController < LedgerBasesController
     new_object.new_groups.each do |group_item|
       group_id = group_item.to_i # Non-numbers show up as zero and get ignored.
       next if group_id <= 0
+
       a_group = LedgerSubgroup.find_by(id: group_id)
       if a_group
         link_group = LinkGroupContent.new(group_id: a_group.original_version_id,
@@ -121,6 +122,7 @@ class LedgerPostsController < LedgerBasesController
     new_object.new_replytos.each do |reply_item|
       reply_id = reply_item.to_i # Non-numbers show up as zero and get ignored.
       next if reply_id <= 0
+
       original_post = LedgerPost.find_by(id: reply_id)
       if original_post
         link_post = LinkReply.new(original_post_id:

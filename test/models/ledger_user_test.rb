@@ -26,52 +26,18 @@ class LedgerUserTest < ActiveSupport::TestCase
     )
     user.activate
     luser = user.ledger_user
-    luser.save!
     assert_equal(luser.id, user.ledger_user_id, "LedgerUser should be in User")
     assert_equal(luser.id, luser.creator_id, "Users should be created by self")
     assert(luser.creator_owner?(luser), "Users need to own self.")
     personal_group = luser.home_group
     assert_equal(personal_group.name, luser.name)
-  end
 
-  test "Changes in name and e-mail in a User should show up in LedgerUser" do
-    old_name = "Test Regular User"
-    new_name = "A New Name"
-
-    user = User.create!(
-      name: old_name,
-      email: "SomeEMail@SomeDomain.com",
-      password: "SomePassword",
-      password_confirmation: "SomePassword",
-      activated: true,
-      activated_at: Time.zone.now
-    )
-    luser = user.ledger_user
-    saved_original_luser_id = luser.id
-    assert_equal(luser.creator_id, saved_original_luser_id,
-      "Should have self as creator for a LedgerUser")
-    assert_equal(luser.name, user.name)
-    assert_equal(luser.email, user.email) # Note email is by now downcased.
-
-    user.name = new_name
-    assert_nil(luser.amended_id, "Should not yet be an amended user")
-    user.save!
-    luser.reload # Old ledger version record here, should still have old name.
-    assert_not_nil(luser.amended_id, "Should be an amended user after changes")
-    assert_equal(luser.name, old_name)
-    luser_modified = luser.latest_version
-    assert_equal(luser_modified.name, new_name)
-    assert_equal(luser_modified.id, user.ledger_user.id,
-      "Should get latest LedgerUser record version when asking User for it")
-    assert_equal(saved_original_luser_id, luser_modified.creator_id,
-      "Creator should be original LedgerUser record in amended record")
-    assert_not_equal(saved_original_luser_id, luser_modified.id)
-
-    new_email = "newmail@somewhere.com"
-    user.email = new_email
-    user.save!
-    luser = user.ledger_user
-    assert_equal(new_email, luser.email)
+    # Should always get latest version of the LedgerUser record from a User.
+    luser2 = luser.append_version
+    luser2.date1 = Time.now
+    luser2.text1 = "Normally this string of text isn't used for Users?"
+    luser2.save!
+    assert_equal(luser2.id, user.ledger_user.id)
   end
 
   test "Weekly bonus points should accumulate with fading" do

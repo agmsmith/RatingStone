@@ -44,6 +44,7 @@ class LedgerFullGroup < LedgerSubgroup
       end
       return true if points_spent >= group_setting.min_points_member_post &&
         points_spent <= group_setting.max_points_member_post
+
       error_messages&.push(
         "Need to spend between #{group_setting.min_points_member_post} and " \
           "#{group_setting.max_points_member_post} points on the " \
@@ -62,6 +63,7 @@ class LedgerFullGroup < LedgerSubgroup
       return true if points_spent >=
         group_setting.min_points_non_member_post &&
         points_spent <= group_setting.max_points_non_member_post
+
       error_messages&.push(
         "Need to spend between #{group_setting.min_points_non_member_post} " \
           "and #{group_setting.max_points_non_member_post} points on the " \
