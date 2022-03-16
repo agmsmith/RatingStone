@@ -46,12 +46,14 @@ class UsersController < ApplicationController
   end
 
   def update
-    if @user.update(user_params)
-      @user.update_ledger_user_email_name
-      flash[:success] = "Profile updated."
-      redirect_to(@user)
-    else
-      render("edit")
+    @user.transaction do # Rollback if update to LedgerUser fails.
+      if @user.update(user_params)
+        @user.update_ledger_user_email_name # Exception if not enough points.
+        flash[:success] = "Profile updated."
+        redirect_to(@user)
+      else
+        render("edit")
+      end
     end
   end
 

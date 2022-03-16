@@ -111,7 +111,9 @@ class User < ApplicationRecord
     lu
   end
 
-  # Make sure the corresponding LedgerUser has current e-mail and name.
+  # Make sure the corresponding LedgerUser has current e-mail and name.  Throws
+  # an exception if there aren't enough points available to create the new
+  # version of the LedgerUser record.
   def update_ledger_user_email_name
     luser = ledger_user # Gets latest version of the data.
     return if (luser.name == name) && (luser.email == email)

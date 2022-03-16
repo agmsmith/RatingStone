@@ -5,6 +5,8 @@ lpost_one:
   creator_id: 0
   string1: "First Fixture Subject"
   text1: 'The first ledger post, used for testing.'
+  rating_points_spent_creating: 0.0
+  rating_points_boost_self: 0.0
 
 lpost_two:
   type: 'LedgerPost'
@@ -12,6 +14,8 @@ lpost_two:
   string1: "Second Fixture Subject"
   text1: 'The second ledger post by a member, used for testing ownership.'
   has_owners: true
+  rating_points_spent_creating: 0.0
+  rating_points_boost_self: 0.0
 
 lpost_three:
   type: 'LedgerPost'
@@ -19,6 +23,8 @@ lpost_three:
   string1: "Third Fixture Subject"
   text1: 'The third ledger post by a member, used for testing points and reply links.'
   original_ceremony: 0
+  rating_points_spent_creating: 0.0
+  rating_points_boost_self: 0.0
 
 lpost_four:
   type: 'LedgerPost'
@@ -26,6 +32,8 @@ lpost_four:
   string1: "Fourth Fixture Subject"
   text1: 'The fourth ledger post by an outsider, will be a reply to third, used for testing points and reply links.'
   original_ceremony: 1
+  rating_points_spent_creating: 0.0
+  rating_points_boost_self: 0.0
 
 lpost_five:
   type: 'LedgerPost'
@@ -33,6 +41,8 @@ lpost_five:
   string1: "Fifth Fixture Subject"
   text1: 'The fifth ledger post by an outsider, will be another reply to third, used for testing points and reply links.'
   original_ceremony: 2
+  rating_points_spent_creating: 0.0
+  rating_points_boost_self: 0.0
 
 lpost_bonus10:
   type: 'LedgerPost'
@@ -40,4 +50,6 @@ lpost_bonus10:
   string1: "Bonus 10 Points"
   text1: 'You get a weekly bonus of 10 points.'
   original_ceremony: 0
+  rating_points_spent_creating: 10.0
+  rating_points_boost_self: 10.0
 
