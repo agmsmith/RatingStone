@@ -95,7 +95,14 @@ class LedgerUser < LedgerBase
 
       # Note that zero or negative generations means no bonus, so you don't get
       # the bonus until the next ceremony after the bonus is created.
-      next if generations <= 0
+      if generations <= 0
+        logger.warn("#update_current_bonus_points_since: Ceremony number " \
+              "#{a_bonus.original_ceremony} is in the future, for " \
+              "#{a_bonus}, while updating object #{self} for ceremonies " \
+              "#{old_ceremony} to #{last_ceremony}.  Ignoring bonus " \
+              "from that future link (check for fraud? recalculate it?).")
+        next
+      end
 
       # Chop down the bonus if it makes the weekly total go over the maximum.
       bonus_points = a_bonus.bonus_points

@@ -189,11 +189,11 @@ class LedgerUserTest < ActiveSupport::TestCase
     )
   end
 
-  test "See if points get spent properly." do
+  test "See if bonus points get received and recalculated properly" do
     luser = ledger_users(:reader_user)
-    user = luser.user # Create corresponding User, with allowances fields.
+    user = luser.user # Create corresponding User, with weeks_allowance field.
     luser.update_current_points
-    assert_in_delta(0.0, luser.current_meh_points, 0.0000001)
+    assert_in_delta(10.0, luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)
     assert_in_delta(0.0, luser.current_down_points, 0.0000001)
     user.reload
@@ -201,7 +201,7 @@ class LedgerUserTest < ActiveSupport::TestCase
     assert_in_delta(0.0, user.weeks_spending, 0.0000001)
     LedgerAwardCeremony.start_ceremony # Ceremony #1 starts.
     luser.update_current_points
-    assert_in_delta(0.0, luser.current_meh_points, 0.0000001)
+    assert_in_delta(10 * 0.97, luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)
     assert_in_delta(0.0, luser.current_down_points, 0.0000001)
     user.reload
@@ -209,7 +209,7 @@ class LedgerUserTest < ActiveSupport::TestCase
     assert_in_delta(0.0, user.weeks_spending, 0.0000001)
     LedgerAwardCeremony.start_ceremony # 2 starts, fixture LinkBonus active now.
     luser.update_current_points
-    assert_in_delta(10.0, luser.current_meh_points, 0.0000001)
+    assert_in_delta(10 * 0.97 * 0.97 + 10.0, luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)
     assert_in_delta(0.0, luser.current_down_points, 0.0000001)
     user.reload
@@ -217,14 +217,16 @@ class LedgerUserTest < ActiveSupport::TestCase
     assert_in_delta(0.0, user.weeks_spending, 0.0000001)
     LedgerAwardCeremony.start_ceremony # 3, another week of existing bonus.
     luser.update_current_points
-    assert_in_delta(10.0 * 0.97 + 10.0, luser.current_meh_points, 0.0000001)
+    assert_in_delta(10.0 * 0.97 * 0.97 * 0.97 + 10.0 * 0.97 + 10.0,
+      luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)
     assert_in_delta(0.0, luser.current_down_points, 0.0000001)
     user.reload
     assert_in_delta(10.0, user.weeks_allowance, 0.0000001)
     assert_in_delta(0.0, user.weeks_spending, 0.0000001)
 
-    # Verify full recalculation the same as incremental.
+    # Verify full recalculation the same as incremental, minus transient
+    # initial 10 points from the fixture record creation.
     luser.request_full_point_recalculation
     luser.update_current_points
     assert_in_delta(10.0 * 0.97 + 10.0, luser.current_meh_points, 0.0000001)
@@ -233,6 +235,5 @@ class LedgerUserTest < ActiveSupport::TestCase
     user.reload
     assert_in_delta(10.0, user.weeks_allowance, 0.0000001)
     assert_in_delta(0.0, user.weeks_spending, 0.0000001)
-    # FIXME: bleeble
   end
 end
