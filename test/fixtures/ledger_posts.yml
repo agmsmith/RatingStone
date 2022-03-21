@@ -47,8 +47,8 @@ lpost_five:
 lpost_bonus10:
   type: 'LedgerPost'
   creator_id: 0
-  string1: "Bonus 10 Points"
-  text1: 'You get a weekly bonus of 10 points.'
+  string1: "Bonus for 10 Points"
+  text1: 'You get a weekly bonus of 10 points just for testing.'
   original_ceremony: 0
   rating_points_spent_creating: 10.0
   rating_points_boost_self: 10.0

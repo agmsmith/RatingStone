@@ -319,6 +319,7 @@ class LinkBase < ApplicationRecord
 
     if approved_parent && rating_points_boost_parent > 0.0
       parent.with_lock do
+        parent.update_current_points
         case rating_direction_parent
         when "D" then parent.current_down_points += rating_points_boost_parent
         when "M" then parent.current_meh_points += rating_points_boost_parent
@@ -330,6 +331,7 @@ class LinkBase < ApplicationRecord
 
     if approved_child && rating_points_boost_child > 0.0
       child.with_lock do
+        child.update_current_points
         case rating_direction_child
         when "D" then child.current_down_points += rating_points_boost_child
         when "M" then child.current_meh_points += rating_points_boost_child

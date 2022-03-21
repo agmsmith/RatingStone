@@ -35,12 +35,17 @@ class LedgerUser < LedgerBase
       lfgroup = LedgerFullGroup.create!(creator_id: original_version_id,
         name: latest_name, description: "Personal Posts by #{latest_name}",
         rating_points_spent_creating: 0.0, rating_points_boost_self: 0.0)
-      LinkHomeGroup.create!(creator_id: 0, # Root will pay for it.
+      # Root gives points to user by creating this link, avoiding the problem
+      # of the LedgerUser creator change to be the user rather than Root,
+      # which would mess up the accounting badly.
+      LinkHomeGroup.create!(creator_id: 0,
         parent_id: original_version_id, child: lfgroup,
         approved_parent: true, approved_child: true,
-        rating_points_spent: 1.0,
-        rating_points_boost_parent: 0.0,
-        rating_points_boost_child: 1.0)
+        string1: "Special initial link between #{latest_name.truncate(80)} " \
+          "and their home page, paid for by the system.",
+        rating_points_spent: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT * 2,
+        rating_points_boost_parent: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT,
+        rating_points_boost_child: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT)
     end
   end
 
@@ -97,16 +102,17 @@ class LedgerUser < LedgerBase
       # the bonus until the next ceremony after the bonus is created.
       if generations <= 0
         logger.warn("#update_current_bonus_points_since: Ceremony number " \
-              "#{a_bonus.original_ceremony} is in the future, for " \
-              "#{a_bonus}, while updating object #{self} for ceremonies " \
-              "#{old_ceremony} to #{last_ceremony}.  Ignoring bonus " \
-              "from that future link (check for fraud? recalculate it?).")
+          "#{a_bonus.original_ceremony} is in the future, for " \
+          "#{a_bonus}, while updating object #{self} for ceremonies " \
+          "#{old_ceremony} to #{last_ceremony}.  Ignoring bonus " \
+          "from that future link (check for fraud? recalculate it?).")
         next
       end
 
-      # Chop down the bonus if it makes the weekly total go over the maximum.
+      # Chop down the bonus if it makes the weekly total go over the maximum,
+      # though root user and sysops (record id 0 through 9) don't have a limit.
       bonus_points = a_bonus.bonus_points
-      if weekly_allowance + bonus_points >
+      if id >= 10 && weekly_allowance + bonus_points >
           LedgerAwardCeremony::MAXIMUM_BONUS_PER_CEREMONY
         bonus_points =
           LedgerAwardCeremony::MAXIMUM_BONUS_PER_CEREMONY - weekly_allowance
@@ -118,6 +124,7 @@ class LedgerUser < LedgerBase
       break if weekly_allowance >= LedgerAwardCeremony::MAXIMUM_BONUS_PER_CEREMONY
     end
 
+    weekly_allowance = 0.0 if weekly_allowance < 0.0
     user = User.find_by(ledger_user_id: original_version_id)
     user&.with_lock do
       weekly_allowance = 0.0 if weekly_allowance < 0.0

@@ -324,6 +324,7 @@ class LedgerBase < ApplicationRecord
       current_meh_points: -3.0,
       current_up_points: -4.0
     )
+    self
   end
 
   ##
@@ -372,6 +373,7 @@ class LedgerBase < ApplicationRecord
   ##
   # Make sure the current_(down|meh|up)_points rating points are up to date.
   # Call this before modifying current points, or even just reading them.
+  # Returns self, or throws an exception if object is not original version.
   #
   # Most of the time the points are up to date and this method does nothing
   # quickly.  If the current points are too old, it fades them to catch up with
@@ -400,7 +402,7 @@ class LedgerBase < ApplicationRecord
       # actually need to do the work.  last_ceremony should remain valid since
       # award ceremonies are done in single tasking mode (web server taken down
       # and job run separately).
-      return if current_ceremony >= last_ceremony
+      return self if current_ceremony >= last_ceremony
 
       if current_ceremony >= 0 # Just need to fade points to catch up.
         generations = last_ceremony - current_ceremony

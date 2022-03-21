@@ -97,11 +97,13 @@ class User < ApplicationRecord
   def ledger_user
     lu = LedgerUser.find_by(id: ledger_user_id) if ledger_user_id
     if lu.nil?
+      # Create a new LedgerUser but spend zero points on it, since later on the
+      # user becomes their own creator, and would end up spending their own
+      # points on themself, which would make their recalculated points not
+      # equal their current points.  Root would also have wrong spending.
       lu = LedgerUser.create!(creator_id: 0, name: name, email: email,
-        rating_points_spent_creating: # Initial points to cover home group.
-          LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT * 2 +
-          LedgerAwardCeremony::DEFAULT_SPEND_FOR_LINK,
-        current_ceremony: LedgerAwardCeremony.last_ceremony)
+        rating_points_spent_creating: 0.0,
+        rating_points_boost_self: 0.0)
       self.ledger_user_id = lu.id
       save!
       lu.set_up_new_user # Home group etc.
