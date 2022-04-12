@@ -64,8 +64,10 @@ class User < ApplicationRecord
 
     luser = ledger_user # Creates LedgerUser if needed.
     LinkBonusUnique.create!(creator_id: 0, bonus_user: luser,
-      bonus_explanation: bonus_post, bonus_points: 10, rating_points_spent: 1.0,
-      rating_points_boost_parent: 0.25, rating_points_boost_child: 0.75,
+      bonus_explanation: bonus_post, bonus_points: 10,
+      expiry_ceremony: LedgerAwardCeremony.last_ceremony + 52,
+      rating_points_spent: 3.0,
+      rating_points_boost_parent: 1.0, rating_points_boost_child: 2.0,
       approved_parent: true, approved_child: true,
       reason: "Bonus for activating #{luser} via e-mail verification.")
   end

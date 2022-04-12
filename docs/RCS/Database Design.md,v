@@ -1,9 +1,19 @@
-head	1.80;
+head	1.82;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.82
+date	2022.04.11.23.17.09;	author agmsmith;	state Exp;
+branches;
+next	1.81;
+
+1.81
+date	2022.04.11.21.46.40;	author agmsmith;	state Exp;
+branches;
+next	1.80;
 
 1.80
 date	2022.03.01.21.47.47;	author agmsmith;	state Exp;
@@ -411,15 +421,14 @@ desc
 @
 
 
-1.80
+1.82
 log
-@Add a virtual Link for creating objects, but represented by fields
-within the object rather than a separate Link record.
+@Rename field to expiry_ceremony.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.79 2022/01/31 21:58:19 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.81 2022/04/11 21:46:40 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -1159,6 +1168,11 @@ B, object A is a list header and B is in the list, etc).
   original version's id number.  Write-once.
 * creator_id Identifies the LedgerUser who created this link.  Never NULL.  Use
   the original version's id number.  Write-once.
+* float1 Generic floating point number, usage defined by subclasses, default
+  0.0.  Write-once.
+* number1 Generic number for counting things, or referencing other database
+  tables, usage defined by subclasses, default -1.  Write-once.
+* string1 Generic string (up to 255 bytes), defined by subclasses.  Write-once.
 * deleted boolean True if there is a LedgerDelete record that deletes
   this record, otherwise false (this record is alive).  Any rating points
   gained by the child object through this link vanish when it is deleted, as if
@@ -1511,9 +1525,10 @@ know why they got that bonus, or perhaps a Category object (have a tree of
 bonuses).  Normal users can't create this kind of link other than indirectly
 through their actions.
 
-The links fade away as usual and expire, so your bonus for being a good poster
-in one year will last for typically 3 years before it expires (assuming the
-creator gave the link 1 point of its own).  Similarly you'll have to reenter
+The links fade away as usual and the bonus expires as well, so your bonus for
+being a good poster at one point in time will last for typically 1 year and
+then 3 years after creation it gets garbage collected (assuming the
+creator gave the link 1 point).  Similarly you'll have to reenter
 an e-mail address once the bonus for having a tested e-mail has expired.  Some
 bonuses like the e-mail one will be limited to only one existing at a time.
 
@@ -1521,18 +1536,25 @@ The total of all bonus points at the award ceremony is pegged between 0 and
 100 and becomes their week's allowance.  The user also gets to spend that many
 points even if their net reputation is negative, to avoid totally silencing
 them.  The weekly allowance and week's spending is stored in the User record,
-outside the ledger system, mostly for informational purposes.
+outside the ledger system, mostly for informational and user interface purposes.
 
-* points integer Number of bonus points per week, added or subtracted from the
-  user's Meh points at each awards ceremony.  Negative is usually some sort of
-  penalty, such as for spamming or otherwise annoying too many people.
+* bonus_points float Number of bonus points per week, added or subtracted from
+  the user's Meh points at each awards ceremony after original_ceremony.  So
+  you may have to wait up to a week to see your new bonus take effect.
+  Negative is usually some sort of penalty, such as for spamming or otherwise
+  annoying too many people.  Write-once.
+* expiry_ceremony integer The number of the ceremony where the bonus stops being
+  given out.  The expiry ceremony is needed so that the deletion from garbage
+  collecting a LinkBonus when it has faded away doesn't also retroactively
+  remove a lot of recently spent points (the spent points are far enough in the
+  past that their vanishing won't affect much).  Write-once.
 
 #### *LinkBonusUnique* < LinkBonus
 
-A subclass for bonuses which are unique.  There can only be one of these at a
-time linked to the same parent object.  For example, the activated e-mail
-bonus has to be unique, otherwise the user will just keep on activating more
-e-mail addresses to get more of a bonus.
+A subclass for bonuses which are unique.  There can only be one of these
+active at the same time linked to the same parent object.  For example,
+the activated e-mail bonus has to be unique, otherwise the user will just
+keep on activating more e-mail addresses to get more of a bonus.
 
 
 ## Auxiliary Classes
@@ -1747,9 +1769,16 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.79 2022/01/31 21:58:19 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.81 2022/04/11 21:46:40 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.81  2022/04/11 21:46:40  agmsmith
+Add an end ceremony to LinkBonus.  Avoids a problem with missing points.
+
+Revision 1.80  2022/03/01 21:47:47  agmsmith
+Add a virtual Link for creating objects, but represented by fields
+within the object rather than a separate Link record.
+
 Revision 1.79  2022/01/31 21:58:19  agmsmith
 More on awarding Meh points.  User record described, vs LedgerUser.
 
@@ -2001,6 +2030,61 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.81
+log
+@Add an end ceremony to LinkBonus.  Avoids a problem with missing points.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.80 2022/03/01 21:47:47 agmsmith Exp agmsmith $</SMALL>
+d1118 2
+a1119 2
+* end_ceremony integer The number of the ceremony where the bonus stops being
+  given out.  The end ceremony is needed so that the deletion from garbage
+d1344 1
+a1344 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.80 2022/03/01 21:47:47 agmsmith Exp agmsmith $
+d1347 3
+@
+
+
+1.80
+log
+@Add a virtual Link for creating objects, but represented by fields
+within the object rather than a separate Link record.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.79 2022/01/31 21:58:19 agmsmith Exp agmsmith $</SMALL>
+d743 5
+d1100 4
+a1103 3
+The links fade away as usual and expire, so your bonus for being a good poster
+in one year will last for typically 3 years before it expires (assuming the
+creator gave the link 1 point of its own).  Similarly you'll have to reenter
+d1111 1
+a1111 1
+outside the ledger system, mostly for informational purposes.
+d1113 10
+a1122 3
+* points integer Number of bonus points per week, added or subtracted from the
+  user's Meh points at each awards ceremony.  Negative is usually some sort of
+  penalty, such as for spamming or otherwise annoying too many people.
+d1126 4
+a1129 4
+A subclass for bonuses which are unique.  There can only be one of these at a
+time linked to the same parent object.  For example, the activated e-mail
+bonus has to be unique, otherwise the user will just keep on activating more
+e-mail addresses to get more of a bonus.
+d1344 1
+a1344 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.79 2022/01/31 21:58:19 agmsmith Exp agmsmith $
+d1347 4
 @
 
 

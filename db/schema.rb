@@ -59,11 +59,11 @@ ActiveRecord::Schema[7.0].define(version: 2021_01_08_211619) do
     t.float "rating_points_boost_self", default: -1.0
     t.string "rating_direction_self", default: "M"
     t.boolean "bool1", default: false
+    t.datetime "date1"
     t.bigint "number1", default: 0
     t.string "string1", default: ""
     t.string "string2", default: ""
     t.text "text1", default: ""
-    t.datetime "date1"
     t.float "current_down_points", default: 0.0
     t.float "current_meh_points", default: 0.0
     t.float "current_up_points", default: 0.0
@@ -84,7 +84,8 @@ ActiveRecord::Schema[7.0].define(version: 2021_01_08_211619) do
     t.integer "parent_id", null: false
     t.integer "child_id", null: false
     t.integer "creator_id", null: false
-    t.bigint "number1", default: 0
+    t.float "float1", default: 0.0
+    t.bigint "number1", default: -1
     t.string "string1", default: ""
     t.boolean "deleted", default: false
     t.boolean "approved_parent", default: false
@@ -121,6 +122,7 @@ ActiveRecord::Schema[7.0].define(version: 2021_01_08_211619) do
     t.float "weeks_allowance", default: 0.0
     t.float "weeks_spending", default: 0.0
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["ledger_user_id"], name: "index_users_on_ledger_user_id", unique: true
   end
 
   add_foreign_key "aux_ledgers", "ledger_bases", column: "child_id"

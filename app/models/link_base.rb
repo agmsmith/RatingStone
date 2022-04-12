@@ -161,7 +161,7 @@ class LinkBase < ApplicationRecord
           when "U" then child.current_up_points += amount
           end
           if is_a?(LinkBonus)
-            add_or_remove_bonus(generations, hub.new_marking_state)
+            add_or_remove_bonus(hub.new_marking_state)
           end
           child.save!
         end
@@ -225,7 +225,7 @@ class LinkBase < ApplicationRecord
         when "U" then child.current_up_points += amount
         end
         if is_a?(LinkBonus)
-          add_or_remove_bonus(generations, !hub.new_marking_state)
+          add_or_remove_bonus(!hub.new_marking_state)
         end
         child.save!
       end

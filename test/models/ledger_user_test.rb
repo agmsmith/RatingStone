@@ -63,7 +63,8 @@ class LedgerUserTest < ActiveSupport::TestCase
         "e-mail address!")
     lbonus_link = LinkBonus.create!(creator_id: 0,
       bonus_explanation: lbonus_explanation, bonus_user: luser,
-      bonus_points: 10, approved_parent: true, approved_child: true,
+      bonus_points: 10, expiry_ceremony: 8,
+      approved_parent: true, approved_child: true,
       rating_points_spent: 2.0,
       rating_points_boost_parent: 1.0,
       rating_points_boost_child: 1.0)
@@ -109,7 +110,7 @@ class LedgerUserTest < ActiveSupport::TestCase
 
     lbonus_link = LinkBonusUnique.create!(creator_id: 0,
       bonus_explanation: lpost, bonus_user: luser, bonus_points: 1,
-      approved_parent: true, approved_child: true,
+      expiry_ceremony: 8, approved_parent: true, approved_child: true,
       rating_points_spent: 1.0,
       rating_points_boost_parent: 0.5,
       rating_points_boost_child: 0.5)
@@ -165,6 +166,7 @@ class LedgerUserTest < ActiveSupport::TestCase
     # Make a new bonus link.
     lbonus_second_link = LinkBonusUnique.create!(creator_id: 0,
       bonus_explanation: lpost, bonus_user: luser, bonus_points: 3,
+      expiry_ceremony: 8,
       approved_parent: true, approved_child: true,
       rating_points_spent: 1.0,
       rating_points_boost_parent: 0.0,

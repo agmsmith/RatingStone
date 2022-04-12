@@ -96,18 +96,24 @@ class LedgerUser < LedgerBase
       else
         old_ceremony
       end
-      generations = last_ceremony - start_ceremony
+      expiry_ceremony = a_bonus.expiry_ceremony
 
-      # Note that zero or negative generations means no bonus, so you don't get
-      # the bonus until the next ceremony after the bonus is created.
-      if generations <= 0
-        logger.warn("#update_current_bonus_points_since: Ceremony number " \
-          "#{a_bonus.original_ceremony} is in the future, for " \
-          "#{a_bonus}, while updating object #{self} for ceremonies " \
-          "#{old_ceremony} to #{last_ceremony}.  Ignoring bonus " \
-          "from that future link (check for fraud? recalculate it?).")
-        next
+      generations_fade = if last_ceremony <= expiry_ceremony
+        0 # Bonus hasn't ended yet, no extra fading needed.
+      else # Bonus ended in the past, fade the accumulated bonus a bit.
+        last_ceremony - expiry_ceremony
       end
+
+      generations_bonus = if expiry_ceremony > last_ceremony
+        last_ceremony - start_ceremony
+      else # Bonus has ended earlier in time.
+        expiry_ceremony - start_ceremony
+      end
+
+      # Note that zero or negative generations means no bonus.  Usually happens
+      # in first week when the bonus doesn't take effect yet, or for a far
+      # future bonus.
+      next if generations_bonus <= 0
 
       # Chop down the bonus if it makes the weekly total go over the maximum,
       # though root user and sysops (record id 0 through 9) don't have a limit.
@@ -119,7 +125,8 @@ class LedgerUser < LedgerBase
       end
 
       self.current_meh_points += bonus_points *
-        LedgerAwardCeremony.accumulated_bonus(generations)
+        LedgerAwardCeremony.accumulated_bonus(generations_bonus) *
+        LedgerAwardCeremony::FADE**generations_fade
       weekly_allowance += bonus_points
       break if weekly_allowance >= LedgerAwardCeremony::MAXIMUM_BONUS_PER_CEREMONY
     end
@@ -127,7 +134,6 @@ class LedgerUser < LedgerBase
     weekly_allowance = 0.0 if weekly_allowance < 0.0
     user = User.find_by(ledger_user_id: original_version_id)
     user&.with_lock do
-      weekly_allowance = 0.0 if weekly_allowance < 0.0
       user.update_columns(weeks_allowance: weekly_allowance,
         weeks_spending: 0.0)
     end

@@ -66,6 +66,7 @@ if !Rails.env.test?
   if root_luser
     bonus_link = LinkBonusUnique.new(creator_id: 0, bonus_user_id: 0,
       bonus_explanation: bonus_for_activation, bonus_points: 1000,
+      expiry_ceremony: 100000,
       rating_points_spent: 10 + 1.0 / 16, reason: "Root should have a bonus.",
       approved_parent: true, approved_child: true)
     bonus_link.save!
@@ -83,6 +84,7 @@ if !Rails.env.test?
     sysop_luser.set_up_new_user # Makes home group etc.
     LinkBonusUnique.create!(creator_id: 0, bonus_user: sysop_luser,
     bonus_explanation: bonus_for_activation, bonus_points: 10,
+    expiry_ceremony: 100000,
     rating_points_spent: 20,
     rating_points_boost_parent: 1,
     rating_points_boost_child: 19,
