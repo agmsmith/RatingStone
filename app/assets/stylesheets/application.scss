@@ -1,13 +1,13 @@
-/*
+/* AGMS20220601
  * Any CSS (and SCSS, if configured) file within this directory, lib/assets/stylesheets, or any plugin's
  * vendor/assets/stylesheets directory can be referenced here using a relative path.
  *
  * For BootStrap, use @import instead of require...
- * *= require_tree .
- * *= require_self
+ *   StarEqual require_tree .
+ *   StarEqual require_self
+ * "bootstrap-sprockets" must be imported before "bootstrap" and
+ * "bootstrap/variables"
  */
-
-// "bootstrap-sprockets" must be imported before "bootstrap" and "bootstrap/variables"
 @import "bootstrap-sprockets";
 @import "bootstrap";
 

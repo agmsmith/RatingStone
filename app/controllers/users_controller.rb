@@ -61,7 +61,7 @@ class UsersController < ApplicationController
 
   def user_params # Sanitise the inputs from the submitted form data.
     params.require(:user).permit(:name, :email, :password,
-      :password_confirmation)
+      :password_confirmation, :fancy_labels)
   end
 
   # Before filters
