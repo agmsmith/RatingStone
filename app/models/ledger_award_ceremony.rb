@@ -64,31 +64,35 @@ class LedgerAwardCeremony < LedgerBase
   # weekly.  Multiply that by the number of weekly bonus points to get the
   # long term effect on total points of a user.  After a number of iterations
   # it converges on 1/(1-FADE).
-  def self.accumulated_bonus(elapsed_ceremonies)
-    return 0.0 if elapsed_ceremonies < 1
-    return FADED_BONUS_CONVERGED if elapsed_ceremonies >= FADED_BONUS_TABLE_SIZE
+  class << self
+    def accumulated_bonus(elapsed_ceremonies)
+      return 0.0 if elapsed_ceremonies < 1
+      return FADED_BONUS_CONVERGED if elapsed_ceremonies >= FADED_BONUS_TABLE_SIZE
 
-    if @accumulated_faded_bonus_table.nil?
-      accumulated = 0.0
-      @accumulated_faded_bonus_table = Array.new(FADED_BONUS_TABLE_SIZE) do
-        prev = accumulated # Previous value used so array[0] starts at zero.
-        accumulated = accumulated * FADE + 1.0
-        prev
+      if @accumulated_faded_bonus_table.nil?
+        accumulated = 0.0
+        @accumulated_faded_bonus_table = Array.new(FADED_BONUS_TABLE_SIZE) do
+          prev = accumulated # Previous value used so array[0] starts at zero.
+          accumulated = accumulated * FADE + 1.0
+          prev
+        end
       end
+      @accumulated_faded_bonus_table[elapsed_ceremonies]
     end
-    @accumulated_faded_bonus_table[elapsed_ceremonies]
   end
 
   ##
   # Class function to find the number of the last ceremony done.  Zero if no
   # ceremonies done yet, else number of highest ceremony.  They're assumed to
   # be increasing sequential numbers, else fading will be excessive.
-  def self.last_ceremony
-    return @highest_ceremony if @highest_ceremony
+  class << self
+    def last_ceremony
+      return @highest_ceremony if @highest_ceremony
 
-    @highest_ceremony = maximum(:ceremony_number) # Find largest in database.
-    @highest_ceremony = 0 unless @highest_ceremony # If no ceremonies done yet.
-    @highest_ceremony
+      @highest_ceremony = maximum(:ceremony_number) # Find largest in database.
+      @highest_ceremony = 0 unless @highest_ceremony # If no ceremonies done yet.
+      @highest_ceremony
+    end
   end
 
   ##
@@ -96,38 +100,42 @@ class LedgerAwardCeremony < LedgerBase
   # since the test framework sometimes leaves the @highest_ceremony unchanged.
   # Other than that, you don't need to call this since the ceremony is
   # performed in single tasking mode when the web server isn't running.
-  def self.clear_ceremony_cache
-    @highest_ceremony = nil
+  class << self
+    def clear_ceremony_cache
+      @highest_ceremony = nil
+    end
   end
 
   ##
   # Class function to start an award ceremony.  Usually called by a weekly cron
   # script on the web server, but can also be triggered manually.  Returns the
   # new ceremony record.  You can provide a descriptive comment if you wish.
-  def self.start_ceremony(comment_string = "Routine ceremony.")
-    result = nil
-    # Wrap this in a transaction so the ceremony gets cancelled if something
-    # goes wrong, also leave @highest_ceremony valid in that case.
-    transaction do
-      ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1,
-        rating_points_spent_creating: 10.0, comment: comment_string)
-      ceremony.save!
-      @highest_ceremony = nil # Current ceremony number changed, force updates.
+  class << self
+    def start_ceremony(comment_string = "Routine ceremony.")
+      result = nil
+      # Wrap this in a transaction so the ceremony gets cancelled if something
+      # goes wrong, also leave @highest_ceremony valid in that case.
+      transaction do
+        ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1,
+          rating_points_spent_creating: 10.0, comment: comment_string)
+        ceremony.save!
+        @highest_ceremony = nil # Current ceremony number changed, force updates.
 
-      # Do the ceremony processing.  Currently the actual fading work is done
-      # incrementally on request (see #update_current_points).  May later do
-      # garbage collection here of obsolete forgotten links and objects.
-      sleep(2) unless Rails.env.test?
-      ceremony.completed_at = Time.zone.now
-      ceremony.save!
+        # Do the ceremony processing.  Currently the actual fading work is done
+        # incrementally on request (see #update_current_points).  May later do
+        # garbage collection here of obsolete forgotten links and objects.
+        sleep(2) unless Rails.env.test?
+        ceremony.completed_at = Time.zone.now
+        ceremony.save!
 
-      result = ceremony
-      logger.info("  Awards ceremony ##{ceremony.ceremony_number} completed " \
-        "successfully after #{ceremony.completed_at - ceremony.created_at} " \
-        "seconds.")
+        result = ceremony
+        logger.info("  Awards ceremony ##{ceremony.ceremony_number} completed " \
+          "successfully after #{ceremony.completed_at - ceremony.created_at} " \
+          "seconds.")
+      end
+      clear_ceremony_cache if result.nil?
+      result
     end
-    clear_ceremony_cache if result.nil?
-    result
   end
 
   ##

@@ -17,18 +17,22 @@ class User < ApplicationRecord
   has_secure_password
 
   # Returns the hash digest of the given string, useful for making test users.
-  def self.digest(string)
-    cost = if ActiveModel::SecurePassword.min_cost
-      BCrypt::Engine::MIN_COST
-    else
-      BCrypt::Engine.cost
+  class << self
+    def digest(string)
+      cost = if ActiveModel::SecurePassword.min_cost
+        BCrypt::Engine::MIN_COST
+      else
+        BCrypt::Engine.cost
+      end
+      BCrypt::Password.create(string, cost: cost)
     end
-    BCrypt::Password.create(string, cost: cost)
   end
 
   # Returns a random token string, 22 safe for URL use characters.
-  def self.new_token
-    SecureRandom.urlsafe_base64
+  class << self
+    def new_token
+      SecureRandom.urlsafe_base64
+    end
   end
 
   # Remember logins using a persistent cookie value, we just store a digest.

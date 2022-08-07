@@ -29,8 +29,10 @@ class LedgerChangeMarking < LedgerBase
   # undelete, approve vs unapprove in the new state flag).  The method
   # returns true if it did something, false if it did nothing, raises an
   # exception if something goes wrong.
-  def self.marking_method_name
-    :mark_not_implemented_for_base_class_ledger_change_marking
+  class << self
+    def marking_method_name
+      :mark_not_implemented_for_base_class_ledger_change_marking
+    end
   end
 
   ##
@@ -49,75 +51,77 @@ class LedgerChangeMarking < LedgerBase
   # delete comes from.  Returns the LedgerChangeMarking record on success, nil
   # on nothing to do, raises an exception if something goes wrong (permission
   # denied usually).
-  def self.mark_records(record_collection, new_marking_state, luser,
-    context = nil, reason = nil)
-    return nil if record_collection.nil? || record_collection.empty?
+  class << self
+    def mark_records(record_collection, new_marking_state, luser,
+      context = nil, reason = nil)
+      return nil if record_collection.nil? || record_collection.empty?
 
-    creator_user = luser.original_version
-    raise RatingStoneErrors,
-      "#mark_records: Wrong type of input, #{creator_user} " \
-        "should be a LedgerUser." unless creator_user.is_a?(LedgerUser)
+      creator_user = luser.original_version
+      raise RatingStoneErrors,
+        "#mark_records: Wrong type of input, #{creator_user} " \
+          "should be a LedgerUser." unless creator_user.is_a?(LedgerUser)
 
-    # Method name to actually do the marking work depends on our class.
-    marking_method_symbol = marking_method_name
+      # Method name to actually do the marking work depends on our class.
+      marking_method_symbol = marking_method_name
 
-    # Create a LedgerChangeMarking (usually a subclass like LedgerDelete)
-    # instance as the hub for the operation, and wrap it in a transaction in
-    # case an error exception (such as not having priviledges to delete
-    # something) happens.
-    returned_record = nil
-    transaction do
-      hub_record = new(creator_id: creator_user.id)
-      hub_record.context = context if context
-      hub_record.reason = reason if reason
-      hub_record.new_marking_state = new_marking_state
-      hub_record.save!
+      # Create a LedgerChangeMarking (usually a subclass like LedgerDelete)
+      # instance as the hub for the operation, and wrap it in a transaction in
+      # case an error exception (such as not having priviledges to delete
+      # something) happens.
+      returned_record = nil
+      transaction do
+        hub_record = new(creator_id: creator_user.id)
+        hub_record.context = context if context
+        hub_record.reason = reason if reason
+        hub_record.new_marking_state = new_marking_state
+        hub_record.save!
 
-      # Copy the records into sets of ID numbers.  That way if someone gave us
-      # a relation as input, and deleting items modifies the relation as it is
-      # being traversed, we won't get odd behaviour (doubled items etc).  Also
-      # being a Set means no duplicates in case someone asked to delete several
-      # different versions of an object (we just delete the original).
-      ledger_ids = Set.new
-      link_ids = Set.new
-      record_collection.each do |a_record|
-        if a_record.is_a?(LedgerBase)
-          ledger_ids.add(a_record.original_version_id)
-        elsif a_record.is_a?(LinkBase)
-          link_ids.add(a_record.id)
+        # Copy the records into sets of ID numbers.  That way if someone gave us
+        # a relation as input, and deleting items modifies the relation as it is
+        # being traversed, we won't get odd behaviour (doubled items etc).  Also
+        # being a Set means no duplicates in case someone asked to delete several
+        # different versions of an object (we just delete the original).
+        ledger_ids = Set.new
+        link_ids = Set.new
+        record_collection.each do |a_record|
+          if a_record.is_a?(LedgerBase)
+            ledger_ids.add(a_record.original_version_id)
+          elsif a_record.is_a?(LinkBase)
+            link_ids.add(a_record.id)
+          else
+            logger.error("#mark_records Unknown kind of record: #{a_record}.")
+          end
+        end
+
+        changed_something = false
+        ledger_ids.each do |an_id|
+          a_record = LedgerBase.find(an_id)
+          a_record.with_lock do
+            if a_record.send(marking_method_symbol, hub_record)
+              changed_something = true
+              AuxLedger.create!(parent_id: hub_record.id, child_id: an_id)
+            end
+          end
+        end
+        link_ids.each do |an_id|
+          a_record = LinkBase.find(an_id)
+          a_record.with_lock do
+            if a_record.send(marking_method_symbol, hub_record)
+              changed_something = true
+              AuxLink.create!(parent_id: hub_record.id, child_id: an_id)
+            end
+          end
+        end
+        if changed_something
+          returned_record = hub_record
         else
-          logger.error("#mark_records Unknown kind of record: #{a_record}.")
+          raise ActiveRecord::Rollback,
+            "Nothing was changed in #{self.class.name} changing marking " \
+              "#{marking_method_symbol} requested by #{luser}, aborting the " \
+              "useless transaction."
         end
-      end
-
-      changed_something = false
-      ledger_ids.each do |an_id|
-        a_record = LedgerBase.find(an_id)
-        a_record.with_lock do
-          if a_record.send(marking_method_symbol, hub_record)
-            changed_something = true
-            AuxLedger.create!(parent_id: hub_record.id, child_id: an_id)
-          end
-        end
-      end
-      link_ids.each do |an_id|
-        a_record = LinkBase.find(an_id)
-        a_record.with_lock do
-          if a_record.send(marking_method_symbol, hub_record)
-            changed_something = true
-            AuxLink.create!(parent_id: hub_record.id, child_id: an_id)
-          end
-        end
-      end
-      if changed_something
-        returned_record = hub_record
-      else
-        raise ActiveRecord::Rollback,
-          "Nothing was changed in #{self.class.name} changing marking " \
-            "#{marking_method_symbol} requested by #{luser}, aborting the " \
-            "useless transaction."
-      end
-    end # End transaction.
-    returned_record
+      end # End transaction.
+      returned_record
+    end
   end
 end
