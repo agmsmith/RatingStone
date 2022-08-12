@@ -1,6 +1,14 @@
     <header class="navbar navbar-inverse">
       <div class="container-fluid">
         <%= link_to "Rating Stone", root_path, id: "logo" %>
+        <%= luser = current_user&.ledger_user
+          if luser # Logged in, display name and current points available.
+            link_to " #{luser.name} #{points_html(luser)}",
+              current_user, id: "user_title"
+          else # Not logged in, don't display anything extra.
+            ""
+          end
+        %>
         <nav>
           <ul class="nav navbar-nav navbar-right">
             <li><%= link_to "Home", root_path %></li>
