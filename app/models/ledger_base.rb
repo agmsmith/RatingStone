@@ -270,11 +270,24 @@ class LedgerBase < ApplicationRecord
 
   ##
   # Estimate the date when this object will expire.  It's the time based on
-  # when the largest number of points received from links to this object gets
-  # reduced to 0.01.
+  # when the total number of points (all categories - up, down, meh all added
+  # together) received from links to this object gets reduced to 0.01.
   def expiry_time
+    # The original version of an object stores the points, and
+    # that's what the related links reference too.
+    return original_version.expiry_time unless original_version?
+
     last_ceremony = LedgerAwardCeremony.last_ceremony
-    biggest_points = 0.0
+    total_points = 0.0
+
+    # Include the points awarded to this object upon creation.
+    generations = last_ceremony - original_ceremony
+    if generations >= 0 # Only counts if it's not in the future.
+      fade_factor = LedgerAwardCeremony::FADE**generations
+      total_points += rating_points_boost_self * fade_factor
+    end
+
+    # Add in the points from links to this object.
     link_ups.or(link_downs).where(deleted: false).find_each do |a_link|
       generations = last_ceremony - a_link.original_ceremony
       next if generations < 0 # Ignore future links.
@@ -282,21 +295,19 @@ class LedgerBase < ApplicationRecord
       fade_factor = LedgerAwardCeremony::FADE**generations
 
       if a_link.child_id == id
-        amount = a_link.rating_points_boost_child * fade_factor
-        biggest_points = amount if biggest_points < amount
+        total_points += a_link.rating_points_boost_child * fade_factor
       end
 
       if a_link.parent_id == id
-        amount = a_link.rating_points_boost_parent * fade_factor
-        biggest_points = amount if biggest_points < amount
+        total_points += a_link.rating_points_boost_parent * fade_factor
       end
     end # find_each
 
     # How many generations does it take to fade to FADED_TO_NOTHING (0.01)?
-    return Time.now if biggest_points <= LedgerAwardCeremony::FADED_TO_NOTHING
+    return Time.now if total_points <= LedgerAwardCeremony::FADED_TO_NOTHING
 
     decay_generations = Math.log(LedgerAwardCeremony::FADED_TO_NOTHING /
-      biggest_points) / LedgerAwardCeremony::FADE_LOG
+      total_points) / LedgerAwardCeremony::FADE_LOG
     Time.now +
       LedgerAwardCeremony::DAYS_PER_CEREMONY.day * decay_generations.ceil
   end

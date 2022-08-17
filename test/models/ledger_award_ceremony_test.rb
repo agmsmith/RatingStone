@@ -237,4 +237,17 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
   end
+
+  test "Expiry Times" do
+    # Check that the expiry time is sensible.  Should be when the total number
+    # of points (all categories) assigned to an object fade away to 0.01.
+    ceremony_number = LedgerAwardCeremony.last_ceremony
+    lpost = ledger_posts(:lpost_bonus10) # This one has 10 points upon creation.
+    lpost.update_current_points
+    assert_in_delta(10.0 , lpost.current_meh_points, 0.0000001)
+    assert_in_delta(Time.now + LedgerAwardCeremony::DAYS_PER_CEREMONY.day *
+      (Math.log(LedgerAwardCeremony::FADED_TO_NOTHING /
+      10.0) / LedgerAwardCeremony::FADE_LOG.ceil),
+      lpost.expiry_date, 0.0000001)
+  end
 end
