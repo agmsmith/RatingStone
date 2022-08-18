@@ -245,9 +245,34 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost = ledger_posts(:lpost_bonus10) # This one has 10 points upon creation.
     lpost.update_current_points
     assert_in_delta(10.0 , lpost.current_meh_points, 0.0000001)
-    assert_in_delta(Time.now + LedgerAwardCeremony::DAYS_PER_CEREMONY.day *
+    assert_in_delta(Time.now +
+      LedgerAwardCeremony::DAYS_PER_CEREMONY.days *
       (Math.log(LedgerAwardCeremony::FADED_TO_NOTHING /
-      10.0) / LedgerAwardCeremony::FADE_LOG.ceil),
-      lpost.expiry_date, 0.0000001)
+      lpost.current_meh_points) / LedgerAwardCeremony::FADE_LOG).ceil,
+      lpost.expiry_time, 1.0)
+    generations = (Math.log(LedgerAwardCeremony::FADED_TO_NOTHING /
+      lpost.current_meh_points) / LedgerAwardCeremony::FADE_LOG).ceil
+    assert(generations > 100, "Should take many generations to fade away.")
+    assert_in_delta(lpost.current_meh_points *
+      LedgerAwardCeremony::FADE**generations, 0.01, 0.0001,
+      "Should have faded to just below 0.01 after that many generations.")
+    assert_in_delta(lpost.expiry_time - Time.now,
+        LedgerAwardCeremony::DAYS_PER_CEREMONY.days *
+        generations, 3600, "Time should correspond to generations, within " \
+        " an hour due to time zone glitches.")
+    LedgerAwardCeremony.start_ceremony
+    lpost.update_current_points
+    assert_in_delta(Time.now +
+      LedgerAwardCeremony::DAYS_PER_CEREMONY.days *
+      (Math.log(LedgerAwardCeremony::FADED_TO_NOTHING /
+      lpost.current_meh_points) / LedgerAwardCeremony::FADE_LOG).ceil,
+      lpost.expiry_time, 1.0)
+    LedgerAwardCeremony.start_ceremony
+    lpost.update_current_points
+    assert_in_delta(Time.now +
+      LedgerAwardCeremony::DAYS_PER_CEREMONY.days *
+      (Math.log(LedgerAwardCeremony::FADED_TO_NOTHING /
+      lpost.current_meh_points) / LedgerAwardCeremony::FADE_LOG).ceil,
+      lpost.expiry_time, 1.0)
   end
 end

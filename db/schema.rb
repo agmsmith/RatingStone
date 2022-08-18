@@ -56,7 +56,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_06_01_182053) do
     t.boolean "is_latest_version", default: true
     t.integer "creator_id", null: false
     t.float "rating_points_spent_creating", default: -1.0
-    t.float "rating_points_boost_self", default: -1.0
+    t.float "rating_points_boost_self", default: 0.0
     t.string "rating_direction_self", default: "M"
     t.boolean "bool1", default: false
     t.datetime "date1"
@@ -91,8 +91,8 @@ ActiveRecord::Schema[7.0].define(version: 2022_06_01_182053) do
     t.boolean "approved_parent", default: false
     t.boolean "approved_child", default: false
     t.float "rating_points_spent", default: -1.0
-    t.float "rating_points_boost_parent", default: -1.0
-    t.float "rating_points_boost_child", default: -1.0
+    t.float "rating_points_boost_parent", default: 0.0
+    t.float "rating_points_boost_child", default: 0.0
     t.string "rating_direction_parent", default: "M"
     t.string "rating_direction_child", default: "M"
     t.integer "original_ceremony", default: -1
