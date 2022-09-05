@@ -1,9 +1,14 @@
-head	1.84;
+head	1.85;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.85
+date	2022.09.04.21.32.26;	author agmsmith;	state Exp;
+branches;
+next	1.84;
 
 1.84
 date	2022.08.18.18.05.38;	author agmsmith;	state Exp;
@@ -431,14 +436,16 @@ desc
 @
 
 
-1.84
+1.85
 log
-@Oops, forgot one rating_points_spent_creating negative case.
+@Don't charge creation to creator for LedgerUser objects, since they
+are their own creators and that would leave them with no points
+after creation.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.83 2022/08/18 17:59:12 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.84 2022/08/18 18:05:38 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -849,7 +856,9 @@ serious or distinct enough.
   worries about approvals and deletion that come with a LinkBase record.
   Though if the creator of a LedgerObject is changed, the points used for
   creating it will be charged to the new creator and uncharged from the
-  original creator, backdated to the original ceremony.  Write-once.
+  original creator, backdated to the original ceremony.  Note that LedgerUser
+  objects don't charge their creator for creation, since they are their own
+  creator (which was done for link auto-approval reasons).  Write-once.
 * rating_points_boost_self float  The number of points used to boost the rating
   of this object, during creation.  The difference between this and
   rating_points_spent_creating is the transaction fee.  Should not be negative.
@@ -1783,9 +1792,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.83 2022/08/18 17:59:12 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.84 2022/08/18 18:05:38 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.84  2022/08/18 18:05:38  agmsmith
+Oops, forgot one rating_points_spent_creating negative case.
+
 Revision 1.83  2022/08/18 17:59:12  agmsmith
 Set default points for parent/child/self boost to zero.  Can have negative
 for amount spent to show that standard amounts will be spent to creat the
@@ -2052,6 +2064,24 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.84
+log
+@Oops, forgot one rating_points_spent_creating negative case.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.83 2022/08/18 17:59:12 agmsmith Exp agmsmith $</SMALL>
+d414 3
+a416 1
+  original creator, backdated to the original ceremony.  Write-once.
+d1350 1
+a1350 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.83 2022/08/18 17:59:12 agmsmith Exp agmsmith $
+d1353 3
 @
 
 

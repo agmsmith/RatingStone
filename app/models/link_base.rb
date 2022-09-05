@@ -278,7 +278,8 @@ class LinkBase < ApplicationRecord
     if rating_points_spent < 0.0
       self.rating_points_spent = LedgerAwardCeremony::DEFAULT_SPEND_FOR_LINK
       self.rating_points_boost_parent = self.rating_points_boost_child =
-        (rating_points_spent - LedgerAwardCeremony::LINK_TRANSACTION_FEE) / 2.0
+        (rating_points_spent *
+        (1.0 - LedgerAwardCeremony::LINK_TRANSACTION_FEE_RATE)) / 2.0
     end
 
     if rating_points_boost_parent < 0.0 || rating_points_boost_child < 0.0

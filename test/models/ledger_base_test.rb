@@ -191,15 +191,18 @@ class LedgerBaseTest < ActiveSupport::TestCase
     # callback gets run, test has_owners field, also test with a versioned
     # user and post.
     luser1 = LedgerUser.create!(name: "User One", email: "1@example.com",
-      creator_id: 0, rating_points_spent_creating: 10, current_ceremony: 0)
+      creator_id: 0, rating_points_spent_creating: 10,
+      rating_points_boost_self: 7)
     luser2 = LedgerUser.create!(name: "User Two A", email: "2@example.com",
-      creator_id: 0, rating_points_spent_creating: 10, current_ceremony: 0)
+      creator_id: 0, rating_points_spent_creating: 10,
+      rating_points_boost_self: 8)
     luser2 = luser2.append_version
     luser2.name = "User Two B"
     luser2.save!
     luser2.reload
     luser3 = LedgerUser.create!(name: "User Three A", email: "3@example.com",
-      creator_id: 0, rating_points_spent_creating: 10, current_ceremony: 0)
+      creator_id: 0, rating_points_spent_creating: 10,
+      rating_points_boost_self: 9)
     lpost = LedgerPost.create!(creator_id: luser1.original_version_id,
       subject: "Post by User One", content: "This is a **Post** by User One.")
     assert_not(lpost.original.creator_owner?(luser2.original_version),

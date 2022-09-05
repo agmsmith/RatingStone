@@ -29,8 +29,8 @@ class LedgerAwardCeremony < LedgerBase
   # this is the number of points it will cost.  For links, after the fee, the
   # cost is split half and half on parent and child objects.
 
-  LINK_TRANSACTION_FEE = 1.0 / 32.0
-  OBJECT_TRANSACTION_FEE = 1.0 / 16.0
+  LINK_TRANSACTION_FEE_RATE = 1.0 / 32.0
+  OBJECT_TRANSACTION_FEE_RATE = 1.0 / 16.0
   # When you spend points to create a new object or link, a base transaction
   # fee is charged to cover database and disk storage costs for the new records.
   # The fee will be larger for larger objects (like uploading a picture or video
@@ -117,7 +117,8 @@ class LedgerAwardCeremony < LedgerBase
       # goes wrong, also leave @highest_ceremony valid in that case.
       transaction do
         ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1,
-          rating_points_spent_creating: 10.0, comment: comment_string)
+          rating_points_spent_creating: 10.0, rating_points_boost_self: 10.0,
+          comment: comment_string)
         ceremony.save!
         @highest_ceremony = nil # Current ceremony number changed, force updates.
 

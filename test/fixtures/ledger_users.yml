@@ -20,8 +20,11 @@ michael_luser:
   original_id: <%= ActiveRecord::FixtureSet.identify(:michael_luser) %>
   string1: 'That Michael Test User'
   string2: 'michael@example.com'
-  text1: "This Michael guy has lots of points so he can test things like making many posts and trying out pagination."
+  text1: "This Michael guy has lots of temporary points so he can test things like making many posts and trying out pagination."
   current_meh_points: 1000
+  # But no real points if you do a recalc.
+  rating_points_spent_creating: 1.0
+  rating_points_boost_self: 0.0
   original_ceremony: 0
   current_ceremony: 0
 

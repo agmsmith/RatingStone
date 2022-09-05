@@ -91,8 +91,7 @@ class LedgerBase < ApplicationRecord
     new_entry.original_id = original_version_id # In case original_id is nil.
     new_entry.amended_id = original_version.amended_id # For consistency check.
     new_entry.original_ceremony = LedgerAwardCeremony.last_ceremony
-    new_entry.rating_points_spent_creating = -1.0
-    new_entry.rating_points_boost_self = -1.0
+    new_entry.rating_points_spent_creating = -1.0 # Will use default amount.
     new_entry.rating_direction_self = "M"
     # Cached values not used (see original record) in amended, set to defaults.
     new_entry.deleted = false
@@ -428,6 +427,9 @@ class LedgerBase < ApplicationRecord
         # is to evaluate reputation points spent on this object by adding up
         # spending received from all undeleted link objects that have this
         # object as a child or as a parent or both (but that's rare).
+        # Second stage is to subtract spending on creating objects, done after
+        # adding up received points so that temporarily negative meh counts
+        # don't happen by accident.
         # OPTIMIZE: Theoretically we should count ranges of times when the link
         # existed in the past in an undeleted and approved state, but for
         # simplicity we just check the current state.  This could lead to
@@ -497,6 +499,9 @@ class LedgerBase < ApplicationRecord
         # deleted link, it still counts as spent points for fraud reasons.
 
         links_created.find_each do |a_link|
+          # Negative cost links are from YML fixture test data, skip them.
+          next if a_link.rating_points_spent < 0.0
+
           generations = last_ceremony - a_link.original_ceremony
           if generations < 0
             logger.warn("#update_current_points: Ceremony number " \
@@ -517,6 +522,14 @@ class LedgerBase < ApplicationRecord
         # Remove points spent on creating Ledger objects.  Deleted ones too.
 
         objects_created.find_each do |an_object|
+          # Skip LedgerUsers, which create themselves in effect and can't
+          # really charge themselves for it (would have no points to spend
+          # immediately after creation), but don't skip later versions.
+          # Also skip negative cost ones, which are from YML fixture test data.
+          next if
+            (an_object.is_a?(LedgerUser) && an_object.original_version?) ||
+              an_object.rating_points_spent_creating < 0.0
+
           generations = last_ceremony - an_object.original_ceremony
           if generations < 0
             logger.warn("#update_current_points: Ceremony number " \
@@ -535,7 +548,7 @@ class LedgerBase < ApplicationRecord
         end
       end # full recalculation
 
-      # Check for negative points, a sign of missing records if small,
+      # Check for negative points, a sign of missing (expired) records if small,
       # a bug or fraud if large.  Operator should look into it; maybe forcing
       # a full recalculation will fix it.
       #
@@ -545,7 +558,6 @@ class LedgerBase < ApplicationRecord
       # have negative Up points.  If we changed that into Down points and made
       # Up zero, the user could then re-approve the big Up, and have more Up
       # points to spend.
-
       if current_down_points < 0.0 || current_meh_points < 0.0 ||
           current_up_points < 0.0
         logger.warn("#update_current_points: Negative rating points " \
@@ -574,20 +586,13 @@ class LedgerBase < ApplicationRecord
     if rating_points_spent_creating < 0.0
       self.rating_points_spent_creating =
         LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT
+      self.rating_points_boost_self = -1
     end
 
-    # If you didn't specify the points after the fee, assume the default fee.
+    # If you want to have the maximum legal boost, specify a negative number.
     if rating_points_boost_self < 0.0
-      self.rating_points_boost_self = rating_points_spent_creating -
-        LedgerAwardCeremony::OBJECT_TRANSACTION_FEE
-    end
-
-    if rating_points_boost_self < 0.0
-      raise RatingStoneErrors,
-        "#base_before_create: Ran out of points?  Can't spend a negative " \
-          "number of points to boost object #{self}.  " \
-          "#{rating_points_spent_creating} points " \
-          "spent, with #{rating_points_boost_self} allocated to boost."
+      self.rating_points_boost_self = rating_points_spent_creating *
+        (1.0 - LedgerAwardCeremony::OBJECT_TRANSACTION_FEE_RATE)
     end
 
     if rating_points_spent_creating < rating_points_boost_self
@@ -599,8 +604,14 @@ class LedgerBase < ApplicationRecord
     end
 
     # Spend the points from the creator for creating this object, throws an
-    # exception if not enough available.
-    creator.original_version.spend_points(rating_points_spent_creating)
+    # exception if not enough available.  Note that creating a LedgerUser is
+    # free, since they end up with themselves as their creator (self as creator
+    # is done for auto-approval of links reasons).  So they would end up with
+    # no points to spend, if they were charged for their own creation.  Though
+    # still charge for duplicates (appended versions) of a LedgerUser so things
+    # like name changes aren't free.
+    creator.original_version.spend_points(rating_points_spent_creating) unless
+      is_a?(LedgerUser) && original_version?
 
     # Add on the points from the creator, to our original version.
     if rating_points_boost_self > 0.0

@@ -93,7 +93,8 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
   test "Incremental Recalculation of Rating Points" do
     # Make a post, and add reply posts over time, with points spent to link
     # in the replies.  Also do approvals, and test deletion effects on points.
-    user_reader = ledger_users(:reader_user) # This user gets 10 points weekly.
+    user_reader = ledger_users(:reader_user) # This user gets 10 points weekly,
+    # and starts with 10 extra meh points, which will vanish when recalculated.
     user_reader.user # Make sure corresponding user record exists.
     LedgerAwardCeremony.start_ceremony
     assert_equal(1, LedgerAwardCeremony.last_ceremony,
@@ -111,21 +112,20 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       rating_points_boost_parent: 0.2, rating_direction_parent: "M",
       rating_points_boost_child: 0.7, rating_direction_child: "U")
     assert_equal(1, reply_1_2.original_ceremony)
-    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
-      lpost1.current_meh_points, 0.0000001, "Not approved so unchanged")
+    default_object_boost = LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT *
+      (1.0 - LedgerAwardCeremony::OBJECT_TRANSACTION_FEE_RATE)
+    assert_in_delta(default_object_boost, lpost1.current_meh_points, 0.0000001,
+      "Not approved so unchanged")
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001, "Approved points")
-    assert_in_delta(10 * LedgerAwardCeremony::FADE -
+    assert_in_delta(10 * LedgerAwardCeremony::FADE - # Initial 10 points, faded.
       LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT - # Created lpost2.
       1.0, # Created reply_1_2 by spending 1.0 points.
-      user_reader.current_meh_points, 0.0000001, "Spent them")
+      user_reader.current_meh_points, 0.0000001, "User should have spent this")
 
     # Incremental update in the same ceremony week should do nothing.
     lpost1.update_current_points
     lpost2.update_current_points
-    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
-      lpost1.current_meh_points, 0.0000001)
+    assert_in_delta(default_object_boost, lpost1.current_meh_points, 0.0000001)
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001)
 
     # Try to approve the parent end of the link, should do nothing since we're
@@ -134,9 +134,8 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       "Testing incremental point recalculation.",
       "Turning on approval for wrong user, so reply approved.")
     assert_nil(marker, "Marking should do nothing, since changing nothing.")
-    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
-      lpost1.reload.current_meh_points, 0.0000001)
+    assert_in_delta(default_object_boost, lpost1.reload.current_meh_points,
+      0.0000001)
     assert_in_delta(0.7, lpost2.reload.current_up_points, 0.0000001)
 
     # Really approve the parent end of the link.
@@ -146,39 +145,33 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     assert(marker, "Marking should do something this time.")
     lpost1.reload
     lpost2.reload
-    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE +
+    assert_in_delta(default_object_boost +
       0.2, # 0.2 from the approved LinkReply parent end.
       lpost1.current_meh_points, 0.0000001)
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001)
-    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
-      lpost2.current_meh_points, 0.0000001)
+    assert_in_delta(default_object_boost, lpost2.current_meh_points, 0.0000001)
 
     # Delete the reply link, points should be affected.
     LedgerDelete.mark_records([reply_1_2], true, user_outsider,
       "Testing incremental point recalculation.",
       "Deleting the LinkReply, does it turn off the points?")
-    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
-      lpost1.reload.current_meh_points, 0.0000001)
+    assert_in_delta(default_object_boost, lpost1.reload.current_meh_points,
+      0.0000001)
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
 
     # Turn off the approval of the child end of the link, while deleted.
     LedgerApprove.mark_records([reply_1_2], false, user_reader,
       "Testing incremental point recalculation.",
       "Unapproving the child end of the link while deleted.")
-    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE,
-      lpost1.reload.current_meh_points, 0.0000001)
+    assert_in_delta(default_object_boost, lpost1.reload.current_meh_points,
+      0.0000001)
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
 
     # Undelete the reply link, points should be affected.
     LedgerDelete.mark_records([reply_1_2], false, user_outsider,
       "Testing incremental point recalculation.",
       "Undeleting the LinkReply, does it turn on the points?")
-    assert_in_delta(LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE +
+    assert_in_delta(default_object_boost +
       0.2, # 0.2 from the approved LinkReply parent end.
       lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
@@ -187,16 +180,14 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     LedgerAwardCeremony.start_ceremony
     lpost1.reload.update_current_points
     lpost2.reload.update_current_points
-    assert_in_delta((LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE +
-      0.2) * 0.97, lpost1.reload.current_meh_points, 0.0000001)
+    assert_in_delta((default_object_boost + 0.2) * 0.97,
+      lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
     LedgerApprove.mark_records([reply_1_2], true, user_reader,
       "Testing incremental point recalculation.",
       "Re-approving the child end of the link while undeleted.")
-    assert_in_delta((LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE +
-      0.2) * 0.97, lpost1.reload.current_meh_points, 0.0000001)
+    assert_in_delta((default_object_boost + 0.2) * 0.97,
+      lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.7 * 0.97, lpost2.reload.current_up_points, 0.0000001)
 
     # Recalculate the points from the beginning.
@@ -204,9 +195,8 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost2.update_attribute(:current_ceremony, -1)
     lpost1.update_current_points
     lpost2.update_current_points
-    assert_in_delta((LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE +
-      0.2) * 0.97, lpost1.reload.current_meh_points, 0.0000001)
+    assert_in_delta((default_object_boost + 0.2) * 0.97,
+      lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.7 * 0.97, lpost2.reload.current_up_points, 0.0000001)
 
     # Recalculate with another ceremony.
@@ -215,9 +205,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost2.request_full_point_recalculation
     lpost1.update_current_points
     lpost2.update_current_points
-    assert_in_delta((LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE +
-      0.2) * 0.97 * 0.97,
+    assert_in_delta((default_object_boost + 0.2) * 0.97 * 0.97,
       lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.7 * 0.97 * 0.97,
       lpost2.reload.current_up_points, 0.0000001)
@@ -231,11 +219,37 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost2.update_attribute(:current_ceremony, -3)
     lpost1.update_current_points
     lpost2.update_current_points
-    assert_in_delta((LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT -
-      LedgerAwardCeremony::OBJECT_TRANSACTION_FEE +
-      0.2) * 0.97 * 0.97 * 0.97,
+    assert_in_delta((default_object_boost + 0.2) * 0.97 * 0.97 * 0.97,
       lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
+
+    # Check that the points spent and gained by user_reader are correct.
+    # History:
+    # Starts with 10 meh points, from YML fixture test data, will disappear later.
+    # Ceremony #1, +0 points (bonus starts after ceremony #1), 10 fades to 9.7
+    # Create lpost2, 0.5 points.
+    # Create reply link, 1.0 points, 0.2 boost parent.
+    # Failed LedgerApprove, 0 points.
+    # Create LedgerApprove/false, 0.5 points.
+    # Ceremony #2, +10 points.
+    # Create LedgerApprove/true, 0.5 points.
+    # Ceremony #3, +10 points.
+    # Create LedgerApprove/false, 0.5 points.
+    # Ceremony #4, +10 points.
+    user_reader.update_current_points
+    expected_points = ((((10 * 0.97) -
+      0.5 - 1.0 - 0.5) * 0.97 + 10.0 -
+      0.5) * 0.97 + 10.0 -
+      0.5) * 0.97 + 10
+    assert_in_delta(expected_points, user_reader.current_meh_points, 0.0000001)
+
+    user_reader.request_full_point_recalculation
+    user_reader.update_current_points
+    expected_points = ((((0 * 0.97) - # It is actually zero points initially.
+      0.5 - 1.0 - 0.5) * 0.97 + 10.0 -
+      0.5) * 0.97 + 10.0 -
+      0.5) * 0.97 + 10
+    assert_in_delta(expected_points, user_reader.current_meh_points, 0.0000001)
   end
 
   test "Expiry Times" do
