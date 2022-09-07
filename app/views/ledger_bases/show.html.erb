@@ -24,15 +24,27 @@
           @ledger_object.creator.user %><BR></span>
       <span class="object-content">
         Bool1: <%= @ledger_object.bool1 %><BR>
+        Date1: <%= @ledger_object.date1 %><BR>
         Number1: <%= @ledger_object.number1 %><BR>
         String1: <%= @ledger_object.string1 %><BR>
         String2: <%= @ledger_object.string2 %><BR>
         Text1: <%= @ledger_object.text1 %><BR>
-        Date1: <%= @ledger_object.date1 %><BR>
         Deleted: <%= @ledger_object.deleted %><BR>
-        Down points: <%= @ledger_object.current_down_points %><BR>
-        Meh points: <%= @ledger_object.current_meh_points %><BR>
-        Up points: <%= @ledger_object.current_up_points %><BR>
+        Has other Owners: <%= @ledger_object.has_owners %><BR>
+        Creation Total Spent: <%= @ledger_object.rating_points_spent_creating %><BR>
+        Creation Points to Self: <%= @ledger_object.rating_points_boost_self %><BR>
+        Self Points Direction: <%= @ledger_object.rating_direction_self %><BR>
+        Original Ceremony: <%= @ledger_object.original_ceremony %><BR>
+        Currently at Ceremony: <%=
+        if @ledger_object.current_ceremony != LedgerAwardCeremony.last_ceremony
+          "#{@ledger_object.current_ceremony} (latest is #{
+          LedgerAwardCeremony.last_ceremony})"
+        else
+          "#{@ledger_object.current_ceremony}"
+        end %><BR>
+        Current Down Points: <%= @ledger_object.current_down_points %><BR>
+        Current Meh Points: <%= @ledger_object.current_meh_points %><BR>
+        Current Up Points: <%= @ledger_object.current_up_points %><BR>
       </span>
 
       <span class="timestamp">

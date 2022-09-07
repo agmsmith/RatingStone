@@ -14,7 +14,8 @@ module ApplicationHelper
   end
 
   ##
-  # Return an HTML string showing the rating points of a LedgerObject.
+  # Return an HTML string showing the rating points of a LedgerObject,
+  # displayed in the style preferred by the current user.
   def points_html(lobject)
     lorig = lobject.original_version # Points are stored in the original.
     result = ""
