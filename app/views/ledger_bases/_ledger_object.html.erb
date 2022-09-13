@@ -5,7 +5,7 @@
   </div>
 <% else %>
   <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10 <%=
-    ledger_object.deleted ? "deleted" : "content" %>">
+    ledger_object.deleted? ? "deleted" : "content" %>">
     <%= ledger_object.type %>: <%= ledger_object.context_s %><BR>
     <%= timestamp_html(ledger_object) %>
   </div>

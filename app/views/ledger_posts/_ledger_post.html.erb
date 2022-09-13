@@ -5,7 +5,9 @@
   </div>
 <% else %>
   <div class="col-xs-3 col-sm-2 col-md-2 col-lg-1">
-    <%= link_to gravatar_for(ledger_post.creator.user, size: 50),
+    <%= # Note we are showing the creator of this particular version of the
+     # post, not the original or current creator.
+     link_to gravatar_for(ledger_post.creator.user, size: 50),
       ledger_post.creator.user %>
     <span class="user"><%= link_to ledger_post.creator.name,
       ledger_post.creator.user %></span>

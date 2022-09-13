@@ -1,9 +1,14 @@
-head	1.85;
+head	1.86;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.86
+date	2022.09.13.19.51.39;	author agmsmith;	state Exp;
+branches;
+next	1.85;
 
 1.85
 date	2022.09.04.21.32.26;	author agmsmith;	state Exp;
@@ -436,16 +441,15 @@ desc
 @
 
 
-1.85
+1.86
 log
-@Don't charge creation to creator for LedgerUser objects, since they
-are their own creators and that would leave them with no points
-after creation.
+@Decide that deleted flag in LedgerBase objects applies to all
+versions of that object at once.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.84 2022/08/18 18:05:38 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.85 2022/09/04 21:32:26 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -811,14 +815,17 @@ serious or distinct enough.
   detecting race conditions (when saving for the first time, it's a copy of the
   original record's amended_id field, and that shouldn't have changed when it
   comes time to save the new version, unless there is a race condition bug).
-  Usually we delete or undelete all versions of an object, but if we ever
-  delete/undelete just some versions, this will point to the latest not deleted
-  version.  Changed as needed.
+  Usually we delete or undelete the original version of an object and assume it
+  applies to all versions, but if we ever delete/undelete just some versions,
+  this will point to the latest not deleted version.  Changed as needed.
 * deleted boolean True if there is a LedgerDelete record that is
-  currently deleting this record, otherwise false (record is alive).  A deleted
-  object just shows a warning message to the user when an attempt is made to
-  display it.  Rating points are accumulated as usual.  That way we can
-  undelete this record if needed.  Changed as needed.
+  currently deleting this record, otherwise false (record is alive).  Ignored
+  for non-original versions of an object - they defer to the state of the
+  original version's deleted field (may change that later if there's a need for
+  having only some versions of an object being deleted).  A deleted object just
+  shows a warning message to the user when an attempt is made to display it.
+  Rating points are accumulated as usual.  That way we can undelete this record
+  if needed.  Changed as needed.
 * expired_now boolean False.  When true, the record will be permanently deleted
   (not just marked as deleted) at the next award ceremony.  Note that LinkBase
   records that reference this record get permanently deleted at the same time
@@ -1792,9 +1799,14 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.84 2022/08/18 18:05:38 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/CottagePC/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.85 2022/09/04 21:32:26 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.85  2022/09/04 21:32:26  agmsmith
+Don't charge creation to creator for LedgerUser objects, since they
+are their own creators and that would leave them with no points
+after creation.
+
 Revision 1.84  2022/08/18 18:05:38  agmsmith
 Oops, forgot one rating_points_spent_creating negative case.
 
@@ -2064,6 +2076,34 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.85
+log
+@Don't charge creation to creator for LedgerUser objects, since they
+are their own creators and that would leave them with no points
+after creation.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.84 2022/08/18 18:05:38 agmsmith Exp agmsmith $</SMALL>
+d369 3
+a371 3
+  Usually we delete or undelete all versions of an object, but if we ever
+  delete/undelete just some versions, this will point to the latest not deleted
+  version.  Changed as needed.
+d373 7
+a379 4
+  currently deleting this record, otherwise false (record is alive).  A deleted
+  object just shows a warning message to the user when an attempt is made to
+  display it.  Rating points are accumulated as usual.  That way we can
+  undelete this record if needed.  Changed as needed.
+d1353 1
+a1353 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.84 2022/08/18 18:05:38 agmsmith Exp agmsmith $
+d1356 5
 @
 
 

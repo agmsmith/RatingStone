@@ -5,7 +5,7 @@
   </div>
 <% else %>
   <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10 <%=
-    ledger_group.deleted ? "deleted" : "content" %>">
+    ledger_group.deleted? ? "deleted" : "content" %>">
     <%= link_to "#{ledger_group.type} ##{ledger_group.id}",
       ledger_base_path(ledger_group) %>
     <span class="group-name"><%= ledger_group.name %></span>

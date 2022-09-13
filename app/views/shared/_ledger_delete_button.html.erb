@@ -1,5 +1,5 @@
 <% if ledger_object.creator_owner?(current_ledger_user) %>
-  <% if ledger_object.deleted %>
+  <% if ledger_object.deleted? %>
     <%= form_with(url: undelete_ledger_base_path(ledger_object),
       local: true, action: :undelete, method: :post) do |f| %>
       <%= f.submit "Undelete #{ledger_object.base_s}",

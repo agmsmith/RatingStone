@@ -232,6 +232,14 @@ class LedgerBase < ApplicationRecord
   end
 
   ##
+  # The deletion state of an object is stored in the original record.  Later
+  # versions of the object defer to it, so all versions are deleted at the
+  # same time or undeleted.
+  def deleted?
+    original_version.deleted
+  end
+
+  ##
   # Find out who deleted me.  Returns a list of LedgerDelete records, with the
   # most recent first.  Works by searching the AuxLedger records for references
   # to our original record ID.
@@ -255,9 +263,10 @@ class LedgerBase < ApplicationRecord
       "allowed to delete record #{self}." unless creator_owner?(luser)
 
     # All we usually have to do is to set/clear the deleted flag in the
-    # original record.  Feature creep would be to delete specific versions of
-    # a record; not implemented.  Subclasses can implement more if they wish,
-    # such as fancier permission checks.
+    # original record (we are only given original records).  Feature creep
+    # would be to delete specific versions of a record; not implemented.
+    # Subclasses can implement more if they wish, such as fancier permission
+    # checks.
     if deleted != hub.new_marking_state
       self.deleted = hub.new_marking_state
       save!
@@ -328,7 +337,7 @@ class LedgerBase < ApplicationRecord
   # account for points during deleted periods in the past - the variations in
   # the past are ignored in the currently not too complicated recalculation.
   def request_full_point_recalculation
-    update_columns(
+    original_version.update_columns(
       current_ceremony: -1,
       current_down_points: -2.0,
       current_meh_points: -3.0,

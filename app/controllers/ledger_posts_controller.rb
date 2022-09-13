@@ -4,8 +4,8 @@ class LedgerPostsController < LedgerBasesController
   # See parent class for generic create() method.
 
   def index
-    @ledger_objects = LedgerPost.where(deleted: false,
-      is_latest_version: true,).order(created_at: :desc)
+    @ledger_objects = LedgerPost.where(is_latest_version: true)
+      .order(created_at: :desc)
       .paginate(page: params[:page])
   end
 
@@ -14,18 +14,18 @@ class LedgerPostsController < LedgerBasesController
   # additional data specifying inherited groups and the link back to the post
   # being replied to.  Set it up and let the user edit it.
   def reply
-    original_post = LedgerPost.find(params[:id]) # Can be any version of post.
+    prior_post = LedgerPost.find(params[:id]) # Can be any version of post.
     @ledger_object = LedgerPost.new(
       creator_id: current_ledger_user.original_version_id,
-      subject: original_post.subject,
-      content: "Say something about " + original_post.content,
+      subject: prior_post.subject,
+      content: "Say something about " + prior_post.content,
     )
 
     # Add reply links.  Just start by replying to the original message.
-    @ledger_object.new_replytos << original_post.original_version_id
+    @ledger_object.new_replytos << prior_post.original_version_id
 
     # Add group links.  Same groups as the original post, plus user's group.
-    LinkGroupContent.where(content_id: original_post.original_version_id,
+    LinkGroupContent.where(content_id: prior_post.original_version_id,
       deleted: false,).each do |a_link|
       @ledger_object.new_groups << a_link.group_id
     end
@@ -123,10 +123,10 @@ class LedgerPostsController < LedgerBasesController
       reply_id = reply_item.to_i # Non-numbers show up as zero and get ignored.
       next if reply_id <= 0
 
-      original_post = LedgerPost.find_by(id: reply_id)
-      if original_post
+      prior_post = LedgerPost.find_by(id: reply_id)
+      if prior_post
         link_post = LinkReply.new(original_post_id:
-          original_post.original_version_id,
+          prior_post.original_version_id,
           reply_post_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id,
           rating_points_spent: 1.0,
@@ -136,7 +136,7 @@ class LedgerPostsController < LedgerBasesController
           rating_direction_child: "U",)
         unless link_post.save
           new_object.errors.add(:base,
-            "Failed to make link back to original #{original_post} for " \
+            "Failed to make link back to original #{prior_post} for " \
               "reply #{new_object}.",)
           link_post.errors.each do |error_key, error_value|
             new_object.errors.add(error_key, error_value)

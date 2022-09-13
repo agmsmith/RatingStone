@@ -42,8 +42,8 @@ class LedgerBasesController < ApplicationController
   end
 
   def index
-    @ledger_objects = LedgerBase.where(deleted: false,
-      is_latest_version: true,).order(created_at: :desc)
+    @ledger_objects = LedgerBase.where(is_latest_version: true)
+      .order(created_at: :desc)
       .paginate(page: params[:page])
   end
 
