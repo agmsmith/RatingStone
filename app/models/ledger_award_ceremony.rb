@@ -118,7 +118,7 @@ class LedgerAwardCeremony < LedgerBase
       transaction do
         ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1,
           rating_points_spent_creating: 10.0, rating_points_boost_self: 10.0,
-          comment: comment_string)
+          comment: comment_string,)
         ceremony.save!
         @highest_ceremony = nil # Current ceremony number changed, force updates.
 

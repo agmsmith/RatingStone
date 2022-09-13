@@ -21,12 +21,12 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     amended_lbase.string1 = "The string changed a second time."
     amended_lbase.save!
     second_lbase = LedgerPost.new(creator_id: 0, subject: "Second Test",
-      content: "A second LedgerBase record, actually a post.")
+      content: "A second LedgerBase record, actually a post.",)
     second_lbase.save!
     link_original_second = LinkBase.new(creator_id: 0, parent: original_lbase,
       child: second_lbase, rating_points_spent: 1,
       rating_points_boost_parent: 0.25, rating_points_boost_child: 0.5,
-      rating_direction_parent: "U", rating_direction_child: "D")
+      rating_direction_parent: "U", rating_direction_child: "D",)
     link_original_second.save!
     original_lbase.reload
 
@@ -44,7 +44,7 @@ class LedgerDeleteTest < ActiveSupport::TestCase
       assert_not(x.original_version.deleted) if x.is_a?(LedgerBase)
     end
     ledger_delete = LedgerDelete.mark_records(records_to_delete, true,
-      root_user, "Some Context", "Testing deletion.")
+      root_user, "Some Context", "Testing deletion.",)
     assert_equal(ledger_delete.reason, "Testing deletion.")
     assert_equal(ledger_delete.context, "Some Context")
     all_deleted_records.each do |x|
@@ -79,7 +79,7 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     all_undeleted_records = original_lbase.all_versions.to_a
     all_undeleted_records.push(link_original_second)
     ledger_undelete = LedgerDelete.mark_records(records_to_undelete, false,
-      root_user, "Some Other Context", "Testing undeletion.")
+      root_user, "Some Other Context", "Testing undeletion.",)
     assert_equal(ledger_undelete.reason, "Testing undeletion.")
     all_undeleted_records.each do |x|
       x.reload
@@ -113,15 +113,15 @@ class LedgerDeleteTest < ActiveSupport::TestCase
   test "delete needs permission" do
     assert_raise(RatingStoneErrors) do
       LedgerDelete.mark_records([ledger_posts(:lpost_one)], true,
-        ledger_users(:member_user), "Testing delete from wrong user.")
+        ledger_users(:member_user), "Testing delete from wrong user.",)
     end
     assert_raise(RatingStoneErrors) do
       LedgerDelete.mark_records([ledger_posts(:lpost_one)], false,
-        ledger_users(:member_user), "Testing undelete on someone else's thing.")
+        ledger_users(:member_user), "Testing undelete on someone else's thing.",)
     end
     ldelete = LedgerDelete.mark_records([ledger_posts(:lpost_two)], true,
       ledger_users(:member_user), "My Context",
-      "Testing delete by creator, should work.")
+      "Testing delete by creator, should work.",)
     assert_equal(ldelete.class.name, "LedgerDelete")
     assert(ldelete.new_marking_state)
     assert_equal("Testing delete by creator, should work.", ldelete.reason)
@@ -129,14 +129,14 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     assert(ledger_posts(:lpost_two).reload.deleted)
     lundelete = LedgerDelete.mark_records([ledger_posts(:lpost_two)], false,
       ledger_users(:outsider_user), "That Context",
-      "Testing undelete by owner, should work.")
+      "Testing undelete by owner, should work.",)
     assert_equal(lundelete.class.name, "LedgerDelete")
     assert_not(lundelete.new_marking_state)
     assert_not(ledger_posts(:lpost_two).reload.deleted)
     assert_equal("Testing undelete by owner, should work.", lundelete.reason)
     ldelete = LedgerDelete.mark_records([ledger_posts(:lpost_two)], true,
       ledger_users(:outsider_user),
-      "Testing delete by owner (not creator), should work.")
+      "Testing delete by owner (not creator), should work.",)
     assert_equal(ldelete.aux_ledger_descendants.count, 1)
   end
 
@@ -156,7 +156,7 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     luser.name = "Later #{link.creator.name}"
     luser.save!
     assert_equal("LedgerDelete",
-      LedgerDelete.mark_records([link], true, luser).class.name)
+      LedgerDelete.mark_records([link], true, luser).class.name,)
     link.reload
     assert(link.deleted)
 
@@ -171,13 +171,13 @@ class LedgerDeleteTest < ActiveSupport::TestCase
     luser = ledger_posts(:lpost_two).creator.latest_version
     assert_not_equal(luser.original_version_id, link.creator_id)
     assert_equal("LedgerDelete",
-      LedgerDelete.mark_records([link], true, luser).class.name)
+      LedgerDelete.mark_records([link], true, luser).class.name,)
     link.reload
     assert(link.deleted)
     luser = ledger_users(:message_moderator_user)
     assert_not_equal(luser.original_version_id, link.creator_id)
     assert_equal("LedgerDelete",
-      LedgerDelete.mark_records([link], false, luser).class.name)
+      LedgerDelete.mark_records([link], false, luser).class.name,)
     link.reload
     assert_not(link.deleted)
   end

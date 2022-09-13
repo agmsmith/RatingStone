@@ -7,7 +7,7 @@ class LinkGroupRoleDelegationTest < ActiveSupport::TestCase
     lsubgroup = ledger_subgroups(:group_dogs)
     lfullgroup = ledger_full_groups(:group_all)
     kdelegate = LinkGroupRoleDelegation.new(delegate_to: lsubgroup,
-      subgroup: lfullgroup)
+      subgroup: lfullgroup,)
     assert_not(kdelegate.valid?, "Should check types of link endpoints.")
     assert_equal(3, kdelegate.errors.messages.count, "Should be some errors.")
     assert(kdelegate.errors.messages.include?(:creator))
@@ -15,7 +15,7 @@ class LinkGroupRoleDelegationTest < ActiveSupport::TestCase
     assert(kdelegate.errors.messages.include?(:nonsubgroup))
 
     kdelegate = LinkGroupRoleDelegation.new(delegate_to: lfullgroup,
-      subgroup: lsubgroup, creator_id: 0)
+      subgroup: lsubgroup, creator_id: 0,)
     assert(kdelegate.valid?)
     kdelegate.save!
   end

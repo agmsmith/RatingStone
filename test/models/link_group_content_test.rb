@@ -10,12 +10,12 @@ class LinkGroupContentTest < ActiveSupport::TestCase
 
     # Normal situation should be valid.
     link_group = LinkGroupContent.new(parent: lsubgroup, child: lpost,
-      creator: luser_post_creator)
+      creator: luser_post_creator,)
     assert(link_group.valid?)
 
     # Child and parent reversed.  Type problem should be detected.
     link_group = LinkGroupContent.new(parent: lpost, child: lsubgroup,
-      creator: luser_post_creator)
+      creator: luser_post_creator,)
     assert_not(link_group.valid?)
     assert_equal(link_group.errors.count, 2)
   end

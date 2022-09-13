@@ -244,15 +244,15 @@ class LinkBase < ApplicationRecord
   # is mostly a sanity check and may be removed if it's never triggered.
   def validate_link_original_versions_referenced
     errors.add(:unoriginal_parent,
-      "Parent isn't the original version: #{parent}") \
+      "Parent isn't the original version: #{parent}",) \
       if parent && parent.original_version_id != parent_id
 
     errors.add(:unoriginal_child,
-      "Child isn't the original version: #{child}") \
+      "Child isn't the original version: #{child}",) \
       if child && child.original_version_id != child_id
 
     errors.add(:unoriginal_creator,
-      "Creator isn't the original version: #{creator}") \
+      "Creator isn't the original version: #{creator}",) \
         if creator && creator.original_version_id != creator_id
   end
 

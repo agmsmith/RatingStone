@@ -73,7 +73,7 @@ class User < ApplicationRecord
       rating_points_spent: 3.0,
       rating_points_boost_parent: 1.0, rating_points_boost_child: 2.0,
       approved_parent: true, approved_child: true,
-      reason: "Bonus for activating #{luser} via e-mail verification.")
+      reason: "Bonus for activating #{luser} via e-mail verification.",)
   end
 
   # Sends activation email.
@@ -85,7 +85,7 @@ class User < ApplicationRecord
   def create_reset_digest
     self.reset_token = User.new_token
     update_columns(reset_digest: User.digest(reset_token),
-      reset_sent_at: Time.zone.now)
+      reset_sent_at: Time.zone.now,)
   end
 
   # Sends password reset email.
@@ -109,7 +109,7 @@ class User < ApplicationRecord
       # equal their current points.  Root would also have wrong spending.
       lu = LedgerUser.create!(creator_id: 0, name: name, email: email,
         rating_points_spent_creating: 0.0,
-        rating_points_boost_self: 0.0)
+        rating_points_boost_self: 0.0,)
       self.ledger_user_id = lu.id
       save!
       lu.set_up_new_user # Home group etc.

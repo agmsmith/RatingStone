@@ -20,7 +20,7 @@ class LedgerUser < LedgerBase
     pw = SecureRandom.hex
     user_record = User.create!(ledger_user_id: original_version_id,
       name: name, email: email, password: pw, password_confirmation: pw,
-      admin: false, activated: false)
+      admin: false, activated: false,)
     user_record.activate
     user_record
   end
@@ -34,7 +34,7 @@ class LedgerUser < LedgerBase
       latest_name = latest_version.name
       lfgroup = LedgerFullGroup.create!(creator_id: original_version_id,
         name: latest_name, description: "Personal Posts by #{latest_name}",
-        rating_points_spent_creating: 0.0, rating_points_boost_self: 0.0)
+        rating_points_spent_creating: 0.0, rating_points_boost_self: 0.0,)
       # Root gives points to user by creating this link, avoiding the problem
       # of the LedgerUser creator change to be the user rather than Root,
       # which would mess up the accounting badly.
@@ -45,7 +45,7 @@ class LedgerUser < LedgerBase
           "and their home page, paid for by the system.",
         rating_points_spent: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT * 2,
         rating_points_boost_parent: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT,
-        rating_points_boost_child: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT)
+        rating_points_boost_child: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT,)
     end
   end
 
@@ -54,7 +54,7 @@ class LedgerUser < LedgerBase
   # feed.  Currently it's just their own posts.
   def feed
     LedgerPost.where(creator_id: original_version_id,
-      is_latest_version: true).order(created_at: :desc)
+      is_latest_version: true,).order(created_at: :desc)
   end
 
   ##
@@ -63,7 +63,7 @@ class LedgerUser < LedgerBase
   # LinkHomeGroup record.
   def home_group
     latest_home = LinkHomeGroup.where(parent_id: original_version_id,
-      deleted: false, approved_parent: true, approved_child: true)
+      deleted: false, approved_parent: true, approved_child: true,)
       .order(created_at: :desc).first
     return nil if latest_home.nil?
 
@@ -89,7 +89,7 @@ class LedgerUser < LedgerBase
     # Iterate through the bonuses from negative to positive, so that we can cut
     # off excess positive bonuses which exceed the weekly total maximum.
     LinkBonus.where(approved_parent: true, approved_child: true,
-      deleted: false, bonus_user_id: original_version_id)
+      deleted: false, bonus_user_id: original_version_id,)
       .order(bonus_points: :asc).each do |a_bonus|
       start_ceremony = if old_ceremony < a_bonus.original_ceremony
         a_bonus.original_ceremony
@@ -135,7 +135,7 @@ class LedgerUser < LedgerBase
     user = User.find_by(ledger_user_id: original_version_id)
     user&.with_lock do
       user.update_columns(weeks_allowance: weekly_allowance,
-        weeks_spending: 0.0)
+        weeks_spending: 0.0,)
     end
   end
 
