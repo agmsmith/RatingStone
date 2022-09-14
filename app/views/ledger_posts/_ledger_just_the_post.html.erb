@@ -14,7 +14,7 @@
   <%= timestamp_html(ledger_post) %>
   <% # Show groups, replies both up and down, with links and unapproved flags.
     my_replies = LinkReply.where(
-      original_post_id: ledger_post.original_version_id,
+      prior_post_id: ledger_post.original_version_id,
       deleted: false).order(created_at: :asc)
     my_replies_count = my_replies.count
     replied_to = LinkReply.where(
@@ -31,12 +31,12 @@
       <% if replied_to_count > 0 %>
         <%= "#{replied_to_count} #{'quote'.pluralize(replied_to_count)}" %>:
         <% replied_to.each do |a_reply_link|
-          reply_post = a_reply_link&.original_post&.latest_version %>
+          reply_post = a_reply_link&.prior_post&.latest_version %>
           <%= if reply_post
-          link_to "##{a_reply_link.original_post_id}",
+          link_to "##{a_reply_link.prior_post_id}",
             ledger_post_path(reply_post), title: "#{reply_post}"
           else # Post is missing or really deleted.
-            "##{a_reply_link.original_post_id}"
+            "##{a_reply_link.prior_post_id}"
           end %><% # Add "unapproved" after the quote number if not approved.
           if !a_reply_link.approved_child || !a_reply_link.approved_parent
             %>-<%= link_to "unapproved", link_base_path(a_reply_link),

@@ -36,12 +36,12 @@ class LinkBase < ApplicationRecord
   end
 
   ##
-  # See if the given user is allowed to delete this link.  Default has to be
-  # the creator of the record.  You can't have owners of a link, though owners
-  # do get involved for approvals of link ends, but that's a separate concept.
-  # Returns true if they have permission.  Subclasses may override this to add
-  # more people (such as group message moderators being able to delete links
-  # attaching posts to their group).
+  # Returns true if the given user is allowed to delete this link.  Default is
+  # to be the creator of the record.  You can't have owners of a link, though
+  # owners do get involved for approvals of link ends, but that's a separate
+  # concept (but we keep the name this way to be compatible with LedgerBase).
+  # Subclasses may override this to add more people (such as group message
+  # moderators being able to delete links attaching posts to their group).
   def creator_owner?(luser)
     raise RatingStoneErrors,
       "Need a LedgerUser, not a #{luser.class.name} " \

@@ -106,7 +106,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost2 = LedgerPost.create!(creator: user_reader,
       subject: "First Reply", content: "The first reply to the *Post*.")
     reply_1_2 = LinkReply.create!(creator: user_reader,
-      original_post: lpost1, reply_post: lpost2,
+      prior_post: lpost1, reply_post: lpost2,
       string1: "Link post 2 as a reply to 1.",
       rating_points_spent: 1.0,
       rating_points_boost_parent: 0.2, rating_direction_parent: "M",

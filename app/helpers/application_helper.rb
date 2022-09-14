@@ -3,6 +3,12 @@
 module ApplicationHelper
   include Rails.application.routes.url_helpers # For ledger_base_path()
 
+  DIRECTION_LABELS = {
+    'U' => ["Up ", "^", "👍 "],
+    'M' => ["Meh ", "~", "🤏 "],
+    'D' => ["Down ", "v", "👎 "],
+  }
+
   # Returns the full web page title with an optional per-page subtitle.
   def full_title(page_title = "")
     base_title = "Rating Stone"
@@ -11,6 +17,18 @@ module ApplicationHelper
     else
       page_title + " | " + base_title
     end
+  end
+
+  ##
+  # Return an HTML string formatted to show a single point value and its
+  # direction ("U", "M", "D"), displayed in the style preferred by the current
+  # user.
+  def point_html(direction, points)
+    label_style = current_user&.fancy_labels
+    label_style = 0 if label_style.nil? || label_style < 0
+    label_style = 2 if label_style > 2
+
+    DIRECTION_LABELS[direction][label_style] + format("%.2f", points)
   end
 
   ##
@@ -29,17 +47,17 @@ module ApplicationHelper
     label_style = 2 if label_style > 2
 
     if lorig.current_up_points != 0
-      result += ["Up ", "^", "👍 "][label_style] +
+      result += DIRECTION_LABELS['U'][label_style] +
         format("%.2f", lorig.current_up_points)
     end
     if lorig.current_meh_points != 0
       result += " / " unless result.empty?
-      result += ["Meh ", "~", "🤏 "][label_style] +
+      result += DIRECTION_LABELS['M'][label_style] +
         format("%.2f", lorig.current_meh_points)
     end
     if lorig.current_down_points != 0
       result += " / " unless result.empty?
-      result += ["Down ", "v", "👎 "][label_style] +
+      result += DIRECTION_LABELS['D'][label_style] +
         format("%.2f", lorig.current_down_points)
     end
     result = result.strip

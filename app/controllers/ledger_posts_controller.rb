@@ -125,13 +125,9 @@ class LedgerPostsController < LedgerBasesController
 
       prior_post = LedgerPost.find_by(id: reply_id)
       if prior_post
-        link_post = LinkReply.new(original_post_id:
-          prior_post.original_version_id,
+        link_post = LinkReply.new(prior_post_id: prior_post.original_version_id,
           reply_post_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id,
-          rating_points_spent: 1.0,
-          rating_points_boost_parent: 0.5,
-          rating_points_boost_child: 0.5,
           rating_direction_parent: "U",
           rating_direction_child: "U")
         unless link_post.save
