@@ -26,7 +26,7 @@ class LedgerPostsController < LedgerBasesController
 
     # Add group links.  Same groups as the original post, plus user's group.
     LinkGroupContent.where(content_id: prior_post.original_version_id,
-      deleted: false,).each do |a_link|
+      deleted: false).each do |a_link|
       @ledger_object.new_groups << a_link.group_id
     end
     home_link = LinkHomeGroup.find_by(
@@ -102,10 +102,10 @@ class LedgerPostsController < LedgerBasesController
           rating_points_boost_parent: 0.5,
           rating_points_boost_child: 0.5,
           rating_direction_parent: "U",
-          rating_direction_child: "U",)
+          rating_direction_child: "U")
         unless link_group.save
           new_object.errors.add(:base,
-            "Failed to make link to Group #{group_id}.",)
+            "Failed to make link to Group #{group_id}.")
           link_group.errors.each do |error_key, error_value|
             new_object.errors.add(error_key, error_value)
           end
@@ -133,11 +133,11 @@ class LedgerPostsController < LedgerBasesController
           rating_points_boost_parent: 0.5,
           rating_points_boost_child: 0.5,
           rating_direction_parent: "U",
-          rating_direction_child: "U",)
+          rating_direction_child: "U")
         unless link_post.save
           new_object.errors.add(:base,
             "Failed to make link back to original #{prior_post} for " \
-              "reply #{new_object}.",)
+              "reply #{new_object}.")
           link_post.errors.each do |error_key, error_value|
             new_object.errors.add(error_key, error_value)
           end
@@ -145,7 +145,7 @@ class LedgerPostsController < LedgerBasesController
         end
       else
         new_object.errors.add(:base,
-          "Original post #{reply_item} does not exist.",)
+          "Original post #{reply_item} does not exist.")
         return false
       end
     end

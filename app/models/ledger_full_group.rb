@@ -89,7 +89,7 @@ class LedgerFullGroup < LedgerSubgroup
     # See which roles the user has been assigned, lowest priority one first.
     roles = LinkRole.where(parent_id: original_version_id,
       child_id: luser_original_id, deleted: false,
-      approved_parent: true, approved_child: true,).order(priority: :asc)
+      approved_parent: true, approved_child: true).order(priority: :asc)
 
     # Banned takes precedence, even if other roles were assigned.
     low_role = roles.first

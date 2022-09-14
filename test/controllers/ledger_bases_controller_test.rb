@@ -27,7 +27,7 @@ class LedgerBasesControllerTest < ActionDispatch::IntegrationTest
   test "should destroy for right LedgerPost owner" do
     log_in_as(users(:michael))
     lpost = LedgerPost.new(creator: users(:michael).ledger_user,
-      content: "A test post from Michael.", subject: "Michael's Post",)
+      content: "A test post from Michael.", subject: "Michael's Post")
     lpost.save!
     assert_difference "LedgerBase.count", 1 do
       delete ledger_base_path(lpost)

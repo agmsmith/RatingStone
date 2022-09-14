@@ -13,7 +13,7 @@ class LedgerBasesController < ApplicationController
 
     LedgerDelete.mark_records([@ledger_object], true, current_ledger_user,
       "Web site manual delete by user logged in from address " \
-        "#{request.env["REMOTE_ADDR"]}.", params[:reason],) # Reason can be nil.
+        "#{request.env["REMOTE_ADDR"]}.", params[:reason]) # Reason can be nil.
     feedback_text = "Ledger Object " +
       @ledger_object.to_s.truncate(60, separator: " ") +
       " deleted"
@@ -31,7 +31,7 @@ class LedgerBasesController < ApplicationController
 
     LedgerDelete.mark_records([@ledger_object], false, current_ledger_user,
       "Web site manual undelete by user logged in from address " \
-        "#{request.env["REMOTE_ADDR"]}.", params[:reason],) # Reason can be nil.
+        "#{request.env["REMOTE_ADDR"]}.", params[:reason]) # Reason can be nil.
     feedback_text = "Ledger Object " +
       @ledger_object.to_s.truncate(60, separator: " ") +
       " undeleted"

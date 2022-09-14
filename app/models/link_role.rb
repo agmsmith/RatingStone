@@ -55,7 +55,7 @@ class LinkRole < LinkBase
 
   def validate_parent_and_child_types
     errors.add(:nongroup, "Parent object needs to be a LedgerFullGroup " \
-      "for #{self}",) unless group.is_a?(LedgerFullGroup)
+      "for #{self}") unless group.is_a?(LedgerFullGroup)
     errors.add(:nonuser, "Child object needs to be a LedgerUser for #{self}") \
       unless user.is_a?(LedgerUser)
   end

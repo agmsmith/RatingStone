@@ -207,7 +207,7 @@ class LedgerBase < ApplicationRecord
     my_original = original_version
     return LinkOwner.exists?(parent_id: luser_original_id,
       child_id: my_original.id, deleted: false, approved_parent: true,
-      approved_child: true,) if my_original.has_owners
+      approved_child: true) if my_original.has_owners
     false
   end
 
@@ -224,7 +224,7 @@ class LedgerBase < ApplicationRecord
     # Test the user's status in groups for things (content) attached to groups.
     if is_a?(LedgerContent)
       LinkGroupContent.where(child_id: original_version_id, deleted: false,
-        approved_parent: true, approved_child: true,).each do |a_link|
+        approved_parent: true, approved_child: true).each do |a_link|
         return true if a_link.group.role_test?(luser, LinkRole::READER)
       end
     end
@@ -699,7 +699,7 @@ class LedgerBase < ApplicationRecord
     return if creator.nil? # You'll get a database NULL exception soon.
 
     errors.add(:unoriginal_creator, "Creator #{creator} isn't the canonical " \
-      "original version.",) unless creator.original_version?
+      "original version.") unless creator.original_version?
   end
 
   ##
@@ -709,7 +709,7 @@ class LedgerBase < ApplicationRecord
     return if latest_version_id == original_version_id # Only one version.
 
     errors.add(:type_change_between_versions, "Object #{self} has a " \
-      "different type than the original version #{original_version}.",) \
+      "different type than the original version #{original_version}.") \
       unless type == original_version.type
   end
 end

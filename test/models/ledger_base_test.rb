@@ -7,13 +7,13 @@ class LedgerBaseTest < ActiveSupport::TestCase
     original_lbase = LedgerBase.new(creator_id: 0, string1: "Some String One")
     assert_nil(original_lbase.id, "No ID number before saving")
     assert_equal(-1, original_lbase.original_ceremony,
-      "No ceremony number before saving",)
+      "No ceremony number before saving")
     assert(original_lbase.save, "Save should succeed.")
     assert_not_nil(original_lbase.id, "Has an ID number after saving")
     assert_equal(original_lbase.id, original_lbase.original_id,
-      "original_id of the original record should be the same as its ID number",)
+      "original_id of the original record should be the same as its ID number")
     assert_equal(LedgerAwardCeremony.last_ceremony,
-      original_lbase.original_ceremony, "Current ceremony number after saving",)
+      original_lbase.original_ceremony, "Current ceremony number after saving")
   end
 
   test "creator always required" do
@@ -34,7 +34,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
     lbase = LedgerBase.new(creator: later_creator, string1: "Just One")
     assert_not(lbase.save)
     assert_equal(lbase.errors[:unoriginal_creator].first,
-      "Creator #{later_creator} isn't the canonical original version.",)
+      "Creator #{later_creator} isn't the canonical original version.")
   end
 
   test "new verison must be same type as original" do
@@ -152,7 +152,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
   test "current_creator function" do
     luser = ledger_users(:outsider_user)
     lpost = LedgerPost.create!(creator_id: luser.id, subject: "Some Post",
-      content: "A post created by somebody.",)
+      content: "A post created by somebody.")
     assert_equal(lpost.current_creator_id, luser.id)
     luser = luser.append_version
     luser.name = "Outsider Version 2"
@@ -192,23 +192,23 @@ class LedgerBaseTest < ActiveSupport::TestCase
     # user and post.
     luser1 = LedgerUser.create!(name: "User One", email: "1@example.com",
       creator_id: 0, rating_points_spent_creating: 10,
-      rating_points_boost_self: 7,)
+      rating_points_boost_self: 7)
     luser2 = LedgerUser.create!(name: "User Two A", email: "2@example.com",
       creator_id: 0, rating_points_spent_creating: 10,
-      rating_points_boost_self: 8,)
+      rating_points_boost_self: 8)
     luser2 = luser2.append_version
     luser2.name = "User Two B"
     luser2.save!
     luser2.reload
     luser3 = LedgerUser.create!(name: "User Three A", email: "3@example.com",
       creator_id: 0, rating_points_spent_creating: 10,
-      rating_points_boost_self: 9,)
+      rating_points_boost_self: 9)
     lpost = LedgerPost.create!(creator_id: luser1.original_version_id,
-      subject: "Post by User One", content: "This is a **Post** by User One.",)
+      subject: "Post by User One", content: "This is a **Post** by User One.")
     assert_not(lpost.original.creator_owner?(luser2.original_version),
-      "New creator is not yet the owner.",)
+      "New creator is not yet the owner.")
     assert_not(lpost.creator_owner?(luser2),
-      "New creator is not yet the owner despite wrong version arguments.",)
+      "New creator is not yet the owner despite wrong version arguments.")
     assert(lpost.creator_owner?(luser1))
     lpost = lpost.append_version
     lpost.subject = "Modified post by User One taken over."
@@ -216,17 +216,17 @@ class LedgerBaseTest < ActiveSupport::TestCase
     lpost.creator_id = luser2.original_version_id # Change creator.
     lpost.save!
     assert_equal(luser2.original_version_id,
-      lpost.creator_id,)
+      lpost.creator_id)
     assert_equal(luser2.original_version_id,
-      lpost.current_creator_id,)
+      lpost.current_creator_id)
     assert_equal(luser2.original_version_id,
-      lpost.original_version.current_creator_id,)
+      lpost.original_version.current_creator_id)
     assert_equal(luser1.original_version_id,
-      lpost.original_version.creator_id,)
+      lpost.original_version.creator_id)
     assert(lpost.original.creator_owner?(luser2.original_version),
-      "Should have new creator as owner.",)
+      "Should have new creator as owner.")
     assert(lpost.creator_owner?(luser2),
-      "Should have new creator as owner, despite wrong version arguments.",)
+      "Should have new creator as owner, despite wrong version arguments.")
     assert_not(lpost.original_version.creator_owner?(luser1))
     luser3 = luser3.append_version
     luser3.email = "3B@example.com"
@@ -239,23 +239,23 @@ class LedgerBaseTest < ActiveSupport::TestCase
     assert_not(lpost.creator_owner?(luser3))
     lowner = LinkOwner.create!(parent_id: luser3.original_version_id,
       child_id: lpost.original_version_id,
-      creator_id: luser3.original_version_id,)
+      creator_id: luser3.original_version_id)
     assert(lowner.approved_parent,
-      "Parent of ownership link should be approved since it created link",)
+      "Parent of ownership link should be approved since it created link")
     assert_not(lowner.approved_child,
-      "Child of ownership link should not yet be approved",)
+      "Child of ownership link should not yet be approved")
     lpost.reload # Also makes it forget cached original record.
     assert(lpost.original_version.has_owners)
     assert_not(lpost.creator_owner?(luser3),
-      "Permission not approved yet in #{lowner}.",)
+      "Permission not approved yet in #{lowner}.")
     LedgerApprove.mark_records([lowner], true, luser2,
       "Testing creator_owner?",
-      "Creator of post approving ownership change.",)
+      "Creator of post approving ownership change.")
     lowner.reload
     assert(lowner.approved_child, "Child of link now approved")
     lpost.reload
     assert(lpost.creator_owner?(luser3),
-      "Should now have permission due to #{lowner.reload}.",)
+      "Should now have permission due to #{lowner.reload}.")
     assert(lpost.creator_owner?(luser2))
     assert_not(lpost.creator_owner?(luser1))
   end
@@ -267,7 +267,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
     # of the group it is in.
     luser = ledger_users(:outsider_user)
     lpost = LedgerPost.create!(creator: luser, subject: "Some Subject",
-      content: "This is a test post to see if people can view it.",)
+      content: "This is a test post to see if people can view it.")
     assert(lpost.allowed_to_view?(luser))
     user_ins = [
       ledger_users(:group_creator_user),
@@ -299,7 +299,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
 
     # Add the post to a subgroup.  First with a partially unapproved group link.
     group_content = LinkGroupContent.create!(parent: lgroup, child: lpost,
-      creator: luser,)
+      creator: luser)
     (user_ins + user_outs).each do |x|
       assert_not(lpost.allowed_to_view?(x), "#{x} should not be able to view.")
     end
@@ -307,7 +307,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
     # Now approve the group end of the link between post and group.
     assert_equal("LedgerApprove", LedgerApprove.mark_records([group_content],
       true, ledger_users(:message_moderator_user), "Inside a test.",
-      "Because we want to see who can view an approved post.",).class.name,)
+      "Because we want to see who can view an approved post.").class.name)
     user_ins.each do |x|
       assert(lpost.allowed_to_view?(x), "#{x} should be able to view.")
     end
@@ -318,7 +318,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
     # Now delete the approval.
     assert_equal("LedgerDelete", LedgerDelete.mark_records([group_content],
       true, ledger_users(:message_moderator_user), "Inside a test again.",
-      "Want to see if deleting a group content link works.",).class.name,)
+      "Want to see if deleting a group content link works.").class.name)
     (user_ins + user_outs).each do |x|
       assert_not(lpost.allowed_to_view?(x), "#{x} should not be able to view.")
     end

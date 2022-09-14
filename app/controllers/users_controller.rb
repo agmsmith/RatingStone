@@ -42,7 +42,7 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
     redirect_to(root_url) unless @user.activated
     @lposts = LedgerPost.where(creator_id: @user.ledger_user_id,
-      deleted: false,).order(:created_at).paginate(page: params[:page])
+      deleted: false).order(:created_at).paginate(page: params[:page])
   end
 
   def update
@@ -61,7 +61,7 @@ class UsersController < ApplicationController
 
   def user_params # Sanitise the inputs from the submitted form data.
     params.require(:user).permit(:name, :email, :password,
-      :password_confirmation, :fancy_labels,)
+      :password_confirmation, :fancy_labels)
   end
 
   # Before filters

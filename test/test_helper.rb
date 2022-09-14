@@ -50,7 +50,7 @@ module ActionDispatch
         email: user.email,
         password: password,
         remember_me: remember_me,
-      } },)
+      } })
     end
   end
 end

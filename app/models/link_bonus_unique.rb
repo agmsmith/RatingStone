@@ -39,7 +39,7 @@ class LinkBonusUnique < LinkBonus
 
     errors.add(:validate_uniqueness, "Creating a LinkBonusUnique which isn't " \
       "unique - there are other LinkBonus records with the same parent of " \
-      "#{parent} and child #{child}.",)
+      "#{parent} and child #{child}.")
   end
 
   private
@@ -50,6 +50,6 @@ class LinkBonusUnique < LinkBonus
   # created but unsaved records, and that works correctly.
   def duplicate_linkbonus_exists?
     LinkBonus.where(parent: parent, child: child, deleted: false,
-      approved_parent: true, approved_child: true,).where.not(id: id).exists?
+      approved_parent: true, approved_child: true).where.not(id: id).exists?
   end
 end
