@@ -392,7 +392,7 @@ class LedgerBase < ApplicationRecord
   ##
   # Make sure the current_(down|meh|up)_points rating points are up to date.
   # Call this before modifying current points, or even just reading them.
-  # Returns self, or throws an exception if object is not original version.
+  # Returns the object where the points are stored (usually original version).
   #
   # Most of the time the points are up to date and this method does nothing
   # quickly.  If the current points are too old, it fades them to catch up with
@@ -407,9 +407,7 @@ class LedgerBase < ApplicationRecord
   # * Then adds on faded weekly bonus points.
   # * Then removes faded points spent in creating other objects.
   def update_current_points
-    raise RatingStoneErrors,
-      "#update_current_points: Not the original version!  #{self}" \
-      unless original_version?
+    return original_version.update_current_points unless original_version?
 
     last_ceremony = LedgerAwardCeremony.last_ceremony
     return self if current_ceremony >= last_ceremony # Current is still good.
