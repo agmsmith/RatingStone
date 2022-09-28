@@ -4,9 +4,9 @@ module ApplicationHelper
   include Rails.application.routes.url_helpers # For ledger_base_path()
 
   DIRECTION_LABELS = {
-    'U' => ["Up ", "^", "👍 "],
-    'M' => ["Meh ", "~", "🤏 "],
-    'D' => ["Down ", "v", "👎 "],
+    "U" => ["Up ", "^", "👍 "],
+    "M" => ["Meh ", "~", "🤏 "],
+    "D" => ["Down ", "v", "👎 "],
   }
 
   # Returns the full web page title with an optional per-page subtitle.
@@ -47,17 +47,17 @@ module ApplicationHelper
     label_style = 2 if label_style > 2
 
     if lorig.current_up_points != 0
-      result += DIRECTION_LABELS['U'][label_style] +
+      result += DIRECTION_LABELS["U"][label_style] +
         format("%.2f", lorig.current_up_points)
     end
     if lorig.current_meh_points != 0
       result += " / " unless result.empty?
-      result += DIRECTION_LABELS['M'][label_style] +
+      result += DIRECTION_LABELS["M"][label_style] +
         format("%.2f", lorig.current_meh_points)
     end
     if lorig.current_down_points != 0
       result += " / " unless result.empty?
-      result += DIRECTION_LABELS['D'][label_style] +
+      result += DIRECTION_LABELS["D"][label_style] +
         format("%.2f", lorig.current_down_points)
     end
     result = result.strip
