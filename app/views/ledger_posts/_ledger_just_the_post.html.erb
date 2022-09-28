@@ -1,16 +1,27 @@
-<% if !ledger_post.allowed_to_view?(current_ledger_user) %>
-  <div class="not-allowed-to-view">
-    <%= "#{ledger_post.base_s} You don't have permission to view this object." %>
-  </div>
+<% ledger_post.update_current_points
+  if !ledger_post.allowed_to_view?(current_ledger_user) %>
+    <div class="not-allowed-to-view">
+      <%= "#{ledger_post.base_s} You don't have permission to view this object." %>
+    </div>
 <% else %>
-  <div class="<%= # Subject and content, in red via class "deleted" if deleted.
-    ledger_post.deleted? ? "deleted" : "post-subject" %>">
-    <%= ledger_post.subject.empty? ? "<No Subject>" : ledger_post.subject %>
-  </div>
-  <div class="description-box <%=
-    ledger_post.deleted? ? "deleted" : "content" %>">
-    <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
-  </div>
+  <% # Deleted post being displayed to an outsider, don't reveal anything.
+    if ledger_post.deleted? && !ledger_post.creator_owner?(current_ledger_user) %>
+    <div class="post-subject deleted">
+      Deleted title not shown.
+    </div>
+    <div class="description-box">
+      Deleted content not shown.
+    </div>
+  <% # Not hidden from the user, but may be deleted.
+  else %>
+    <div class="<%= # Subject and content, in red via class "deleted" if deleted.
+      ledger_post.deleted? ? "deleted " : "" %>post-subject">
+      <%= ledger_post.subject.empty? ? "<No Subject>" : ledger_post.subject %>
+    </div>
+    <div class="description-box content">
+      <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
+    </div>
+  <% end %>
   <%= timestamp_html(ledger_post) %>
   <% # Show groups, replies both up and down, with links and unapproved flags.
     my_replies = LinkReply.where(
