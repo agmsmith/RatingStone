@@ -46,6 +46,17 @@ class LedgerBase < ApplicationRecord
   has_many :aux_link_downs, class_name: :AuxLink, foreign_key: :parent_id
   has_many :aux_link_descendants, through: :aux_link_downs, source: :child
 
+  DEFAULT_SPEND_FOR_OBJECT = 0.5
+  # If you don't specify the amount to spend for creating an object, this is
+  # the number of points it will cost.
+
+  OBJECT_TRANSACTION_FEE_RATE = 1.0 / 16.0
+  # When you spend points to create a new object, a base transaction fee is
+  # charged to cover database and disk storage costs for the new records.
+  # The fee will be larger for larger objects (like uploading a picture or video
+  # file).  The main idea is to discourage high frequency trading, and farming
+  # points, and wasting our disk storage.
+
   ##
   # Return a user readable description of the object.  Besides some unique
   # identification so we can find it in the database, have some readable
@@ -591,15 +602,14 @@ class LedgerBase < ApplicationRecord
 
     # If you didn't specify the points to spend, assume a default.
     if rating_points_spent_creating < 0.0
-      self.rating_points_spent_creating =
-        LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT
+      self.rating_points_spent_creating = DEFAULT_SPEND_FOR_OBJECT
       self.rating_points_boost_self = -1
     end
 
     # If you want to have the maximum legal boost, specify a negative number.
     if rating_points_boost_self < 0.0
       self.rating_points_boost_self = rating_points_spent_creating *
-        (1.0 - LedgerAwardCeremony::OBJECT_TRANSACTION_FEE_RATE)
+        (1.0 - OBJECT_TRANSACTION_FEE_RATE)
     end
 
     if rating_points_spent_creating < rating_points_boost_self

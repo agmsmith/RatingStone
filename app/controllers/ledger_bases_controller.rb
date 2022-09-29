@@ -75,9 +75,9 @@ class LedgerBasesController < ApplicationController
   def update
     # Subclasses create their specific class instance @ledger_object if needed
     # (initial @ledger_object is nil if the user is editing a new record rather
-    # than an existing one) then call super.  Related link objects (like the
-    # link to the original post for a reply) can be created on the fly from
-    # values in params, see side_load_params method.
+    # than an existing one) in their update(), then call super.  Related link
+    # objects (like the link to the original post for a reply) can be created
+    # on the fly from values in params, see side_load_params method.
     if params[:preview]
       # Set the new values but don't save it, and keep same ID.  So you can
       # preview markdown text and continue editing it.

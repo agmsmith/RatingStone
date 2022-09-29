@@ -11,6 +11,15 @@ class LinkBase < ApplicationRecord
   has_many :aux_link_ups, class_name: :AuxLink, foreign_key: :child_id
   has_many :aux_link_ancestors, through: :aux_link_ups, source: :parent
 
+  DEFAULT_SPEND_FOR_LINK = 0.25
+  # If you don't specify the amount to spend for creating a link, this is the
+  # number of points it will cost.  After the fee, the default is to split the
+  # points half and half on parent and child objects.
+
+  LINK_TRANSACTION_FEE_RATE = 1.0 / 32.0
+  # When you spend points to create a new link, a base transaction fee is
+  # charged to cover database and disk storage costs for the new records.
+
   # Indices into an array of booleans showing parent and child approvals.
   APPROVE_PARENT = 0
   APPROVE_CHILD = 1
@@ -276,10 +285,10 @@ class LinkBase < ApplicationRecord
   def distribute_rating_points
     # If the user didn't specify the amount to spend, assume a default.
     if rating_points_spent < 0.0
-      self.rating_points_spent = LedgerAwardCeremony::DEFAULT_SPEND_FOR_LINK
+      self.rating_points_spent = DEFAULT_SPEND_FOR_LINK
       self.rating_points_boost_parent = self.rating_points_boost_child =
         (rating_points_spent *
-        (1.0 - LedgerAwardCeremony::LINK_TRANSACTION_FEE_RATE)) / 2.0
+        (1.0 - LINK_TRANSACTION_FEE_RATE)) / 2.0
     end
 
     if rating_points_boost_parent < 0.0 || rating_points_boost_child < 0.0

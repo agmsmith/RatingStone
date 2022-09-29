@@ -23,20 +23,6 @@ class LedgerAwardCeremony < LedgerBase
   # objects are also considered expired when they have no links to them and
   # the largest of their current points is this big.
 
-  DEFAULT_SPEND_FOR_LINK = 0.25
-  DEFAULT_SPEND_FOR_OBJECT = 0.5
-  # If you don't specify the amount to spend for creating an object or a link,
-  # this is the number of points it will cost.  For links, after the fee, the
-  # cost is split half and half on parent and child objects.
-
-  LINK_TRANSACTION_FEE_RATE = 1.0 / 32.0
-  OBJECT_TRANSACTION_FEE_RATE = 1.0 / 16.0
-  # When you spend points to create a new object or link, a base transaction
-  # fee is charged to cover database and disk storage costs for the new records.
-  # The fee will be larger for larger objects (like uploading a picture or video
-  # file).  The main idea is to discourage high frequency trading, and farming
-  # points, and wasting our disk storage.
-
   MAXIMUM_BONUS_PER_CEREMONY = 100.0
   # You can get up to this many bonus points per week.  Any extra bonuses are
   # ignored.  This is so that wealthy people can't excessively increase their

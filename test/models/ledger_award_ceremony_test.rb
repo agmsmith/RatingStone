@@ -112,13 +112,13 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       rating_points_boost_parent: 0.2, rating_direction_parent: "M",
       rating_points_boost_child: 0.7, rating_direction_child: "U")
     assert_equal(1, reply_1_2.original_ceremony)
-    default_object_boost = LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT *
-      (1.0 - LedgerAwardCeremony::OBJECT_TRANSACTION_FEE_RATE)
+    default_object_boost = LedgerBase::DEFAULT_SPEND_FOR_OBJECT *
+      (1.0 - LedgerBase::OBJECT_TRANSACTION_FEE_RATE)
     assert_in_delta(default_object_boost, lpost1.current_meh_points, 0.0000001,
       "Not approved so unchanged")
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001, "Approved points")
     assert_in_delta(10 * LedgerAwardCeremony::FADE - # Initial 10 points, faded.
-      LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT - # Created lpost2.
+      LedgerBase::DEFAULT_SPEND_FOR_OBJECT - # Created lpost2.
       1.0, # Created reply_1_2 by spending 1.0 points.
       user_reader.current_meh_points, 0.0000001, "User should have spent this")
 

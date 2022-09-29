@@ -29,9 +29,8 @@ class LedgerPostsController < LedgerBasesController
       deleted: false).each do |a_link|
       @ledger_object.new_groups << a_link.group_id
     end
-    home_link = LinkHomeGroup.find_by(
-      parent_id: current_ledger_user.original_version_id,
-    )
+    home_link = LinkHomeGroup.find_by(parent_id:
+      current_ledger_user.original_version_id)
     home_group = home_link.child if home_link
     @ledger_object.new_groups << home_group.original_version_id if home_group
     render("edit")
@@ -41,8 +40,11 @@ class LedgerPostsController < LedgerBasesController
 
   def update
     if @ledger_object.nil? # Editing a new object, create in-memory record.
-      @ledger_object = LedgerPost.new(creator_id:
-        current_ledger_user.original_version_id)
+      @ledger_object = LedgerPost.new(
+        creator_id: current_ledger_user.original_version_id,
+        summary_of_changes: "New post.",
+        rating_direction_self: "U",
+      )
       home_link = LinkHomeGroup.find_by(parent_id:
         current_ledger_user.original_version_id)
       home_group = home_link.child if home_link
@@ -98,9 +100,6 @@ class LedgerPostsController < LedgerBasesController
         link_group = LinkGroupContent.new(group_id: a_group.original_version_id,
           content_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id,
-          rating_points_spent: 1.0,
-          rating_points_boost_parent: 0.5,
-          rating_points_boost_child: 0.5,
           rating_direction_parent: "U",
           rating_direction_child: "U")
         unless link_group.save

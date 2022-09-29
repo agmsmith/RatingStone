@@ -43,9 +43,9 @@ class LedgerUser < LedgerBase
         approved_parent: true, approved_child: true,
         string1: "Special initial link between #{latest_name.truncate(80)} " \
           "and their home page, paid for by the system.",
-        rating_points_spent: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT * 2,
-        rating_points_boost_parent: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT,
-        rating_points_boost_child: LedgerAwardCeremony::DEFAULT_SPEND_FOR_OBJECT)
+        rating_points_spent: DEFAULT_SPEND_FOR_OBJECT * 2,
+        rating_points_boost_parent: DEFAULT_SPEND_FOR_OBJECT,
+        rating_points_boost_child: DEFAULT_SPEND_FOR_OBJECT)
     end
   end
 
