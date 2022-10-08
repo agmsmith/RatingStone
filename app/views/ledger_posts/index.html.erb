@@ -6,16 +6,18 @@
 <ul class="list-ledger-objects">
 <% hidden_count = 0
   @ledger_objects.each do |an_object|
-    if an_object.is_a?(LedgerPost) && an_object.latest_version? %>
-      <%= render 'ledger_posts/ledger_post', { ledger_post: an_object } %>
-    <% else
+    if an_object.is_a?(LedgerPost) && an_object.latest_version? &&
+    !an_object.deleted?
+      %><%= render 'ledger_posts/ledger_post_plain', { ledger_post: an_object }
+    %><% else
       hidden_count += 1
     end
   end %>
 </ul>
 <% if hidden_count != 0 %>
-  <p><%= "#{hidden_count} #{'post'.pluralize(hidden_count)} " \
-    "#{(hidden_count == 1) ? 'was' : 'were'}" %> hidden (not latest version).</p>
+<p><%= "#{hidden_count} #{'post'.pluralize(hidden_count)} " \
+    "#{(hidden_count == 1) ? 'was' : 'were'}"
+  %> hidden (not latest version or deleted).</p>
 <% end %>
 <%= will_paginate @ledger_objects %>
 

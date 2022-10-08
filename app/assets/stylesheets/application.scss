@@ -52,6 +52,7 @@ section {
 /* For displaying objects that have been deleted, could be a DIV or a LI etc. */
 .deleted {
   color: red;
+  text-decoration: line-through;
 }
 
 .description-box {

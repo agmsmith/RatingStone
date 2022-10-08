@@ -11,7 +11,7 @@ class LedgerPostsController < LedgerBasesController
   end
 
   def index
-    @ledger_objects = LedgerPost.where(is_latest_version: true)
+    @ledger_objects = LedgerPost
       .order(created_at: :desc)
       .paginate(page: params[:page])
   end
