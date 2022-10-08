@@ -3,6 +3,13 @@
 class LedgerPostsController < LedgerBasesController
   # See parent class for generic create() method.
 
+  def edit
+    if @ledger_object
+      @ledger_object.summary_of_changes = "Edited version of #{@ledger_object}."
+    end
+    super
+  end
+
   def index
     @ledger_objects = LedgerPost.where(is_latest_version: true)
       .order(created_at: :desc)
@@ -17,8 +24,9 @@ class LedgerPostsController < LedgerBasesController
     prior_post = LedgerPost.find(params[:id]) # Can be any version of post.
     @ledger_object = LedgerPost.new(
       creator_id: current_ledger_user.original_version_id,
-      subject: prior_post.subject,
+      subject: "Re: " + prior_post.subject,
       content: "Say something about " + prior_post.content,
+      summary_of_changes: "Reply to #{prior_post}.",
     )
 
     # Add reply links.  Just start by replying to the original message.
