@@ -86,8 +86,8 @@ module ApplicationHelper
   # Return an HTML string showing the creation time of a LedgerObject, and the
   # estimated expiry time.
   def timestamp_html(lobject)
-    ("<span class=\"timestamp\"><small>" \
+    "<span class=\"timestamp\"><small>" \
       "#{lobject.created_at.getlocal}." \
-      "</small></span>").html_safe
+      "</small></span>".html_safe
   end
 end
