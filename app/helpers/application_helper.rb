@@ -66,9 +66,10 @@ module ApplicationHelper
   end
 
   ##
+  # OBSOLETE: Just keeping around for code copying.
   # Return an HTML string showing the creation time of a LedgerObject, and the
   # estimated expiry time.  Has a link to the raw object too.
-  def timestamp_html(lobject)
+  def timestamp_old_html(lobject)
     ("<span class=\"timestamp\">#{points_html(lobject)} " \
       "<a href=\"#{ledger_base_path(lobject)}\">##{lobject.id}</a> " \
       "created #{time_ago_in_words(lobject.created_at)} ago&nbsp;- <small>" \
@@ -78,6 +79,15 @@ module ApplicationHelper
        else
          "Expires in #{time_ago_in_words(lobject.expiry_time)}."
        end) +
+      "</small></span>").html_safe
+  end
+
+  ##
+  # Return an HTML string showing the creation time of a LedgerObject, and the
+  # estimated expiry time.
+  def timestamp_html(lobject)
+    ("<span class=\"timestamp\"><small>" \
+      "#{lobject.created_at.getlocal}." \
       "</small></span>").html_safe
   end
 end

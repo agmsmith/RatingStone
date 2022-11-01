@@ -35,5 +35,9 @@ module RatingStone
     # NetPositive misinterprets as the content type.  It's reinserted in
     # response headers later on by ApplicationController.
     config.action_dispatch.default_headers.delete("X-Content-Type-Options")
+
+    # Add a few keywords for the "rails notes" command to search for.
+    # NOTES: is the usual format, with TODO, OPTIMIZE, FIXME as default tags.
+    config.annotations.register_tags("OBSOLETE")
   end
 end

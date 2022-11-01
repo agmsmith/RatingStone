@@ -38,6 +38,11 @@ section {
   }
 }
 
+.float-left {
+  display: block;
+  float: left;
+}
+
 .float-right {
   display: block;
   float: right;
@@ -56,9 +61,11 @@ section {
 }
 
 .description-box {
-  border: 2px double #ddd;
-  padding: 4px;
-  @include box_sizing;
+  /* KramDown does text as paragraphs, so there's frequently an extra blank
+     space at the bottom of the content box.  Remove it. */
+  p:last-child {
+    margin-bottom: 0px;
+  }
 }
 
 .description-form-box {
@@ -273,6 +280,16 @@ aside {
   a {
     padding: 0;
   }
+}
+
+.post-gravatar-box {
+  display: block;
+  float: left;
+  width: 18em;
+  margin-right: 5px;
+  margin-bottom: 5px;
+  padding: 5px;
+  border: 2px double #ddd;
 }
 
 /* Users index */

@@ -1,14 +1,11 @@
-<% # Display a LedgerPost object plainly as possible, just a subject line and a
+<%
+  # Display a LedgerPost object plainly as possible, just a subject line and a
   # box of text, each just inside a <DIV>.  You can click on the subject to see
   # the detailed view of the post.  No extra buttons, no statistics.  Can be
   # useful for listing posts, and as part of fancier displays with buttons.
-  if !ledger_post.allowed_to_view?(current_ledger_user) %>
-    <div class="not-allowed-to-view">
-      <%= "#{ledger_post.base_s} You don't have permission to view this object." %>
-    </div>
-<% else %>
-  <% # Deleted post being displayed to an outsider, don't reveal anything.
-    if ledger_post.deleted? && !ledger_post.creator_owner?(current_ledger_user) %>
+
+  # Deleted post being displayed to an outsider, don't reveal anything.
+  if ledger_post.deleted? && !ledger_post.creator_owner?(current_ledger_user) %>
     <div class="post-subject deleted">
       Deleted title not shown.
     </div>
@@ -28,5 +25,3 @@
       <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
     </div>
   <% end %>
-<% end # allowed_to_view
-%>

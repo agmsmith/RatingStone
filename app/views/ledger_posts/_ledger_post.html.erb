@@ -4,29 +4,17 @@
     <%= "#{ledger_post.base_s} You don't have permission to view this object." %>
   </div>
 <% else %>
-  <div class="col-xs-3 col-sm-2 col-md-2 col-lg-1">
-    <%= # Note we are showing the creator of this particular version of the
-     # post, not the original or current creator.
-     link_to gravatar_for(ledger_post.creator.user, size: 50),
-      ledger_post.creator.user %>
-    <span class="user"><%= link_to ledger_post.creator.name,
-      ledger_post.creator.user %></span>
-  </div>
-  <div class="col-xs-9 col-sm-7 col-md-7 col-lg-9">
+  <div class="col-xs-12">
+    <div class="post-gravatar-box">
+      <%= # Note we are showing the creator of this particular version of the
+       # post, not the original or current creator.
+       link_to gravatar_for(ledger_post.creator.user, size: 50),
+         ledger_post.creator.user %>
+      <%= link_to ledger_post.creator.name, ledger_post.creator.user %><br>
+      <%= timestamp_html(ledger_post) %>
+    </div>
     <%= render "ledger_posts/ledger_post_plain",
       { ledger_post: ledger_post } %>
-  </div>
-  <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
-    <%= button_to "Details", ledger_post_path(ledger_post),
-        method: :get, class: 'btn btn-default button-full-width' %><br>
-    <%= button_to "Reply", reply_ledger_post_path(ledger_post),
-        method: :get, class: 'btn btn-default button-full-width' %><br>
-    <% if ledger_post.creator_owner?(current_ledger_user) %>
-      <%= button_to "Edit", edit_ledger_post_path(ledger_post),
-        method: :get, class: 'btn btn-success button-full-width' %><br>
-    <% end %>
-    <%= render 'shared/ledger_delete_button',
-      { ledger_object: ledger_post } %>
   </div>
 <% end %>
 </li>
