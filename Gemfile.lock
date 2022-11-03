@@ -98,7 +98,7 @@ GEM
     diffy (3.4.2)
     erubi (1.11.0)
     execjs (2.8.1)
-    faker (2.23.0)
+    faker (3.0.0)
       i18n (>= 1.8.11, < 2)
     ffi (1.15.5)
     globalid (1.0.0)
@@ -285,4 +285,4 @@ RUBY VERSION
    ruby 3.1.2p20
 
 BUNDLED WITH
-   2.3.24
+   2.3.25
