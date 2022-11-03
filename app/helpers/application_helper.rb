@@ -4,9 +4,11 @@ module ApplicationHelper
   include Rails.application.routes.url_helpers # For ledger_base_path()
 
   DIRECTION_LABELS = {
-    "U" => ["Up ", "^", "👍 "],
+    "U" => ["Up ", "^", "👍 "], # Note space after sometimes, style dependent.
     "M" => ["Meh ", "~", "🤏 "],
     "D" => ["Down ", "v", "👎 "],
+    "R" => ["Reply", "R", "🗩"],
+    "Q" => ["Quote", "Q", "🔃"],
   }
 
   # Returns the full web page title with an optional per-page subtitle.

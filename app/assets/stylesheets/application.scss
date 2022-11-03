@@ -48,19 +48,33 @@ section {
   float: right;
 }
 
-.post-subject {
-  color: black;
-  font-size: 1.5em;
-  font-weight: bold;
-}
-
 /* For displaying objects that have been deleted, could be a DIV or a LI etc. */
 .deleted {
   color: red;
   text-decoration: line-through;
 }
 
+/* General text of some sort, like a description of a Group. */
 .description-box {
+  border: 2px double #ddd;
+  padding: 4px;
+  @include box_sizing;
+}
+
+/* For entering generic description text. */
+.description-form-box {
+  @extend .description-box;
+  margin-bottom: 10px;
+}
+
+.post-subject {
+  color: black;
+  font-size: 1.5em;
+  font-weight: bold;
+}
+
+/* For displaying the text content of a post, usually below a subject line. */
+.post-text-content {
   /* KramDown does text as paragraphs, so there's frequently an extra blank
      space at the bottom of the content box.  Remove it. */
   p:last-child {
@@ -68,9 +82,9 @@ section {
   }
 }
 
-.description-form-box {
-  @extend .description-box;
-  margin-bottom: 10px;
+/* For entering the text of a post.  Usually just Kramdown input plain text. */
+.post-text-content-form {
+  @extend .description-form-box;
 }
 
 /* When a post is a reply to some other post and that other post hasn't

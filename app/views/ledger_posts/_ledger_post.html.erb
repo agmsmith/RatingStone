@@ -6,12 +6,22 @@
 <% else %>
   <div class="col-xs-12">
     <div class="post-gravatar-box">
-      <%= # Note we are showing the creator of this particular version of the
-       # post, not the original or current creator.
-       link_to gravatar_for(ledger_post.creator.user, size: 50),
-         ledger_post.creator.user %>
+      <%= # Will need the label style this user prefers, for several things.
+        label_style = current_user&.fancy_labels
+        label_style = 0 if label_style.nil? || label_style < 0
+        label_style = 2 if label_style > 2
+
+        # Note we are showing the creator of this particular version of the
+        # post, not the original or current creator.
+        link_to gravatar_for(ledger_post.creator.user, size: 50),
+          ledger_post.creator.user %>
       <%= link_to ledger_post.creator.name, ledger_post.creator.user %><br>
-      <%= timestamp_html(ledger_post) %>
+      <%= timestamp_html(ledger_post) %><br>
+      <%= ApplicationHelper::DIRECTION_LABELS["R"][label_style] +
+          format(" %d", ledger_post.reply_count) %>&nbsp; <%=
+          ApplicationHelper::DIRECTION_LABELS["Q"][label_style] +
+          format(" %d", ledger_post.quote_count) %>&nbsp; <%=
+          points_html(ledger_post) %>
     </div>
     <%= render "ledger_posts/ledger_post_plain",
       { ledger_post: ledger_post } %>

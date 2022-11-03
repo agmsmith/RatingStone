@@ -16,7 +16,7 @@
       <%= f.text_field :subject, class: 'form-control' %>
       <%= f.label :content %>
       <%= f.text_area :content, class: 'form-control' %>
-      <div class="description-form-box">
+      <div class="post-text-content-form">
         <%= f.submit "Update Preview", name: "preview",
           class: "btn btn-primary float-right" %>
         <%= Kramdown::Document.new(@ledger_object.content)

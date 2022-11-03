@@ -9,7 +9,7 @@
     <div class="post-subject deleted">
       Deleted title not shown.
     </div>
-    <div class="description-box">
+    <div class="post-text-content">
       Deleted content not shown.
     </div>
   <% # Not hidden from the user, but may be deleted.
@@ -18,7 +18,7 @@
       ledger_post.deleted? ? "deleted " : "" %>post-subject">
       <%= ledger_post.subject.empty? ? "<No Subject>" : ledger_post.subject %>
     </div>
-    <div class="description-box content">
+    <div class="post-text-content">
       <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
     </div>
   <% end %>
