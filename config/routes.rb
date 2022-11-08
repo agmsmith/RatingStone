@@ -24,11 +24,12 @@ Rails.application.routes.draw do
     end
   end
 
-  # The usual actions for displaying/editing posts, plus reply.
+  # The usual actions for displaying/editing posts, plus reply and quote.
   resources :ledger_posts,
    only: [:new, :create, :index, :show, :edit, :update] do
     member do
       get 'reply'
+      get 'quote'
     end
   end
   patch '/ledger_posts', to: 'ledger_posts#update' # For update without an ID.

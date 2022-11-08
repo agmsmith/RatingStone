@@ -271,7 +271,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       "Should have faded to just below 0.01 after that many generations.")
     assert_in_delta(lpost.expiry_time - Time.now,
       LedgerAwardCeremony::DAYS_PER_CEREMONY.days *
-      generations, 3600, "Time should correspond to generations, within " \
+      generations, 3601, "Time should correspond to generations, within " \
         " an hour due to time zone glitches.")
     LedgerAwardCeremony.start_ceremony
     lpost.update_current_points

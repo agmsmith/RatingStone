@@ -3,12 +3,15 @@
 module ApplicationHelper
   include Rails.application.routes.url_helpers # For ledger_base_path()
 
+  ##
+  # Various variations (user preference) on some standard labels for things.
+  # RELATED: Also update users/_name_email_password_form.html.erb
   DIRECTION_LABELS = {
     "U" => ["Up ", "^", "👍 "], # Note space after sometimes, style dependent.
     "M" => ["Meh ", "~", "🤏 "],
     "D" => ["Down ", "v", "👎 "],
     "R" => ["Reply", "R", "🗩"],
-    "Q" => ["Quote", "Q", "🔃"],
+    "Q" => ["Quote", "Q", "“”"],
   }
 
   # Returns the full web page title with an optional per-page subtitle.

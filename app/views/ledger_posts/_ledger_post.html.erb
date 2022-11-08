@@ -17,11 +17,17 @@
           ledger_post.creator.user %>
       <%= link_to ledger_post.creator.name, ledger_post.creator.user %><br>
       <%= timestamp_html(ledger_post) %><br>
-      <%= ApplicationHelper::DIRECTION_LABELS["R"][label_style] +
-          format(" %d", ledger_post.reply_count) %>&nbsp; <%=
-          ApplicationHelper::DIRECTION_LABELS["Q"][label_style] +
-          format(" %d", ledger_post.quote_count) %>&nbsp; <%=
-          points_html(ledger_post) %>
+      <%= # Reply icon and number of replies, whole thing is link to do a reply. 
+        link_to ApplicationHelper::DIRECTION_LABELS["R"][label_style] +
+          format(" %d", ledger_post.reply_count),
+          reply_ledger_post_path(ledger_post) %>&nbsp; <%=
+        # Quote icon and number of quotes, whole thing is a new quote link.
+        link_to ApplicationHelper::DIRECTION_LABELS["Q"][label_style] +
+          format(" %d", ledger_post.quote_count),
+          quote_ledger_post_path(ledger_post) %>&nbsp; <%=
+        # List the rating for this post, up / meh / down.
+        # TODO: Turn into links to submit an opinion on the post.
+        points_html(ledger_post) %>
     </div>
     <%= render "ledger_posts/ledger_post_plain",
       { ledger_post: ledger_post } %>

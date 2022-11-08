@@ -26,7 +26,7 @@
       <%= f.text_field :summary_of_changes, class: 'form-control' %>
     </div>
 
-    <div class="col-xs-12 col-md-6">
+    <div class="col-xs-12 col-sm-6 col-lg-4">
       <H2>Additional Groups</H2>
       <p>Add your post to these groups.  Note that they may need to approve it
         too (at some later time), depending on the group's rules and whether
@@ -58,7 +58,7 @@
       </ul>
     </div>
 
-    <div class="col-xs-12 col-md-6">
+    <div class="col-xs-12 col-sm-6 col-lg-4">
       <H2>Additional Reply-Tos</H2>
       <p>In case you think your post is a good reply to some other existing
         posts, you can add them here!</p>
@@ -82,6 +82,36 @@
                 # (not a hash) when converted back to params.
                 replyto_fields.text_field "", value: replyto_item %>
               <strong><%= replyto_name %></strong>
+            </li>
+          <% end %>
+        <% end %>
+      </ul>
+    </div>
+
+    <div class="col-xs-12 col-sm-6 col-lg-4">
+      <H2>Additional Quotes</H2>
+      <p>In case you want your post to quote some other one, you can add them
+        here!</p>
+      <ul>
+        <%= fields_for :new_quotes do |quote_fields| %>
+          <% @ledger_object.new_quotes.each_with_index do |quote_item,
+              quote_index| %>
+            <li>
+              <% quote_id = quote_item.to_i
+                a_post = LedgerPost.find_by(id: quote_id)
+                if a_post
+                  quote_name = a_post.to_s
+                  points_used += LinkBase::DEFAULT_SPEND_FOR_LINK
+                elsif quote_id > 0
+                  quote_name = "Unknown (#{quote_id})"
+                else
+                  quote_name = ""
+                end %>
+              <%= # Using an empty string for the object name so we get
+                # "new_quotes[]" as the name, which becomes an array of values
+                # (not a hash) when converted back to params.
+                quote_fields.text_field "", value: quote_item %>
+              <strong><%= quote_name %></strong>
             </li>
           <% end %>
         <% end %>

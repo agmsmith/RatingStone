@@ -38,6 +38,6 @@ module RatingStone
 
     # Add a few keywords for the "rails notes" command to search for.
     # NOTES: is the usual format, with TODO, OPTIMIZE, FIXME as default tags.
-    config.annotations.register_tags("OBSOLETE")
+    config.annotations.register_tags("FUTURE", "OBSOLETE", "RELATED")
   end
 end

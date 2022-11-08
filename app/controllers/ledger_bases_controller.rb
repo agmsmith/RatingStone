@@ -42,14 +42,16 @@ class LedgerBasesController < ApplicationController
   end
 
   def index
-    @ledger_objects = LedgerBase
+    @ledger_objects = ledger_class_for_controller
       .order(created_at: :desc)
       .paginate(page: params[:page])
   end
 
   def show
     # Note @ledger_object can be nil for missing records or no ID specified.
-    @ledger_object = LedgerBase.find_by(id: params[:id]) if params[:id]
+    if params[:id]
+      @ledger_object = ledger_class_for_controller.find_by(id: params[:id])
+    end
   end
 
   # Don't really need this method, can use update without an ID to create a
@@ -58,9 +60,6 @@ class LedgerBasesController < ApplicationController
   def create
     @ledger_object = nil
     update
-  end
-
-  def new
   end
 
   def edit
@@ -84,7 +83,7 @@ class LedgerBasesController < ApplicationController
       @ledger_object.assign_attributes(sanitised_params)
       side_load_params(@ledger_object)
       render("edit")
-    else # Change the object by making a new version of it, new ID too.
+    else # Change the object by making a new Version of it, new ID too.
       is_new = @ledger_object.id.nil?
       new_object = if is_new
         @ledger_object
@@ -122,12 +121,23 @@ class LedgerBasesController < ApplicationController
   def correct_user
     # Note that no ID specified or bad ID gives us a nil object.  We use the
     # nil object case for creating new objects in update().
-    @ledger_object = LedgerBase.find_by(id: params[:id]) if params[:id]
+    if params[:id]
+      @ledger_object = ledger_class_for_controller.find_by(id: params[:id])
+    end
     if @ledger_object && !@ledger_object.creator_owner?(current_ledger_user)
       flash[:error] = "You're not the owner of that ledger object, " \
         "so you can't modify or delete it."
       redirect_to(root_url)
     end
+  end
+
+  ##
+  # Returns the Ledger class that's appropriate for this controller to handle.
+  # Can be used for creating new objects of the appropriate class.
+  # FUTURE: Should preload subclasses here since this is often used just before
+  # a database find_by.
+  def ledger_class_for_controller
+    LedgerBase
   end
 
   ##
