@@ -5,9 +5,11 @@ class LedgerBasesController < ApplicationController
   before_action :logged_in_user
   before_action :correct_user, only: [:destroy, :undelete, :edit, :update]
 
-  # Don't really need this method, can use update without an ID to create a
-  # new object and display the editing form instead.  Stock HTML RESTful meets
-  # DRY!
+  ##
+  # Create a new object, form fields passed in as parameters, but no object
+  # record ID since it's new.  Don't really need this method, can use update
+  # without an ID to create a new object and display the editing form.
+  # Stock HTML RESTful meets DRY!
   def create
     @ledger_object = nil
     update
@@ -44,6 +46,14 @@ class LedgerBasesController < ApplicationController
     @ledger_objects = ledger_class_for_controller
       .order(created_at: :desc)
       .paginate(page: params[:page])
+  end
+
+  ##
+  # Display an empty form for filling in a new record.  Will fail the
+  # validation (no subject or body text) and thus display the empty form
+  # rather than saving an empty record.
+  def new
+    create
   end
 
   def show

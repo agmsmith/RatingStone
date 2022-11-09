@@ -83,7 +83,13 @@ class LedgerContentsController < LedgerBasesController
     render("edit")
   end
 
+  ##
+  # Note that :ledger_post (the container of the fields of the post being
+  # updated, and auxiliary arrays inside it) doesn't exist when throwing up
+  # the form for a totally new post.
   def sanitised_params # Sanitise the main inputs from the submitted form data.
+    return {} unless params.key?(:ledger_post) # New empty form requested.
+
     params.require(:ledger_post).permit(:content, :subject, :summary_of_changes)
   end
 
