@@ -5,6 +5,14 @@ class LedgerBasesController < ApplicationController
   before_action :logged_in_user
   before_action :correct_user, only: [:destroy, :undelete, :edit, :update]
 
+  # Don't really need this method, can use update without an ID to create a
+  # new object and display the editing form instead.  Stock HTML RESTful meets
+  # DRY!
+  def create
+    @ledger_object = nil
+    update
+  end
+
   def destroy # Also usually used by subclass controllers.
     unless @ledger_object
       flash[:danger] = "Can't find object ##{params[:id]} to delete."
@@ -23,6 +31,29 @@ class LedgerBasesController < ApplicationController
     redirect_back(fallback_location: root_url)
   end
 
+  def edit
+    # Pre-existing object to be edited should already be in @ledger_object.
+    unless @ledger_object
+      flash[:danger] = "Can't find object ##{params[:id]} to edit."
+      redirect_back(fallback_location: root_url)
+    end
+    side_load_params(@ledger_object)
+  end
+
+  def index
+    @ledger_objects = ledger_class_for_controller
+      .order(created_at: :desc)
+      .paginate(page: params[:page])
+  end
+
+  def show
+    # Note @ledger_object can be nil for missing records or wrong type record
+    # or no ID specified.
+    if params[:id]
+      @ledger_object = ledger_class_for_controller.find_by(id: params[:id])
+    end
+  end
+
   def undelete # Also usually used by subclass controllers.
     unless @ledger_object
       flash[:danger] = "Can't find object ##{params[:id]} to undelete."
@@ -39,36 +70,6 @@ class LedgerBasesController < ApplicationController
     feedback_text += " (#{vcount} versions included)" if vcount > 1
     flash[:success] = feedback_text + "."
     redirect_back(fallback_location: root_url)
-  end
-
-  def index
-    @ledger_objects = ledger_class_for_controller
-      .order(created_at: :desc)
-      .paginate(page: params[:page])
-  end
-
-  def show
-    # Note @ledger_object can be nil for missing records or no ID specified.
-    if params[:id]
-      @ledger_object = ledger_class_for_controller.find_by(id: params[:id])
-    end
-  end
-
-  # Don't really need this method, can use update without an ID to create a
-  # new object and display the editing form instead.  Stock HTML RESTful meets
-  # DRY!
-  def create
-    @ledger_object = nil
-    update
-  end
-
-  def edit
-    # Pre-existing object to be edited should already be in @ledger_object.
-    unless @ledger_object
-      flash[:danger] = "Can't find object ##{params[:id]} to edit."
-      redirect_back(fallback_location: root_url)
-    end
-    side_load_params(@ledger_object)
   end
 
   def update
