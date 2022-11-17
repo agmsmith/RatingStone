@@ -16,7 +16,8 @@
         link_to gravatar_for(ledger_post.creator.user, size: 50),
           ledger_post.creator.user %>
       <%= link_to ledger_post.creator.name, ledger_post.creator.user %><br>
-      <%= timestamp_html(ledger_post) %><br>
+      <%= render 'ledger_bases/timestamp_plain',
+        { ledger_object: ledger_post } %><br>
       <%= # Reply icon and number of replies, whole thing is link to do a reply. 
         link_to ApplicationHelper::DIRECTION_LABELS["R"][label_style] +
           format(" %d", ledger_post.reply_count),

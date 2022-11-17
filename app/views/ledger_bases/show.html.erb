@@ -42,15 +42,12 @@
         else
           "#{@ledger_object.current_ceremony}"
         end %><BR>
-        Current Down Points: <%= @ledger_object.current_down_points %><BR>
-        Current Meh Points: <%= @ledger_object.current_meh_points %><BR>
-        Current Up Points: <%= @ledger_object.current_up_points %><BR>
+        Current Points: <%= points_html(@ledger_object) %><BR>
       </span>
 
+      <%= render 'ledger_bases/timestamp_and_expiry',
+        { ledger_object: @ledger_object } %><BR>
       <span class="timestamp">
-        Created <%= time_ago_in_words(@ledger_object.created_at)
-        %> ago&nbsp;- <small><%= @ledger_object.created_at.getlocal
-        %></small>.<BR>
         Last updated <%= time_ago_in_words(@ledger_object.updated_at)
         %> ago&nbsp;- <small><%= @ledger_object.updated_at.getlocal
         %></small>.

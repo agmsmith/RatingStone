@@ -27,7 +27,7 @@ module ApplicationHelper
   ##
   # Return an HTML string formatted to show a single point value and its
   # direction ("U", "M", "D"), displayed in the style preferred by the current
-  # user.
+  # user.  Usually used for showing single point values in Links.
   def point_html(direction, points)
     label_style = current_user&.fancy_labels
     label_style = 0 if label_style.nil? || label_style < 0
@@ -38,7 +38,8 @@ module ApplicationHelper
 
   ##
   # Return an HTML string showing the rating points of a LedgerObject,
-  # displayed in the style preferred by the current user.
+  # displayed in the style preferred by the current user.  Not done in a View
+  # since it's also used for link text in the header.
   def points_html(lobject)
     lorig = lobject.original_version # Points are stored in the original.
     result = ""
@@ -68,31 +69,5 @@ module ApplicationHelper
     result = result.strip
     result = "~" if result.empty?
     result.html_safe
-  end
-
-  ##
-  # OBSOLETE: Just keeping around for code copying.
-  # Return an HTML string showing the creation time of a LedgerObject, and the
-  # estimated expiry time.  Has a link to the raw object too.
-  def timestamp_old_html(lobject)
-    ("<span class=\"timestamp\">#{points_html(lobject)} " \
-      "<a href=\"#{ledger_base_path(lobject)}\">##{lobject.id}</a> " \
-      "created #{time_ago_in_words(lobject.created_at)} ago&nbsp;- <small>" \
-      "#{lobject.created_at.getlocal}.  " +
-      (if lobject.expiry_time <= Time.now
-         "Expired."
-       else
-         "Expires in #{time_ago_in_words(lobject.expiry_time)}."
-       end) +
-      "</small></span>").html_safe
-  end
-
-  ##
-  # Return an HTML string showing the creation time of a LedgerObject, and the
-  # estimated expiry time.
-  def timestamp_html(lobject)
-    "<span class=\"timestamp\"><small>" \
-      "#{lobject.created_at.getlocal}." \
-      "</small></span>".html_safe
   end
 end
