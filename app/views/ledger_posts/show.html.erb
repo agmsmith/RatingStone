@@ -11,8 +11,10 @@
 <% else %>
   <%= render 'ledger_posts/ledger_post_plain',
     { ledger_post: @ledger_object } %>
-  <%= # @ledger_object # TODO: Finish writing this bleeble.
-   %>
+  <p><%= points_html(@ledger_object) %>&nbsp; <%=
+    render 'ledger_bases/timestamp_and_expiry',
+      { ledger_object: @ledger_object }
+    %></p>
   <div class="row">
     <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
       <%= button_to "Reply", reply_ledger_post_path(@ledger_object),
@@ -45,12 +47,17 @@
       <%= will_paginate @ledger_objects %>
       <ul class="list-ledger-objects">
         <% @ledger_objects.each do |an_object| %>
-          <li id="ledger-post-<%= an_object.id %>">
-            <%= render 'ledger_posts/ledger_post_plain',
-              { ledger_post: an_object } %><%
-            unless an_object.summary_of_changes.empty? %>
-              <BR>Summary: <%= an_object.summary_of_changes %>
-            <% end %>
+          <li id="ledger-post-<%= an_object.id %>"><%=
+            render 'ledger_posts/ledger_post_plain',
+              { ledger_post: an_object } -%>
+            <p><%=
+            render 'ledger_bases/timestamp_and_expiry',
+              { ledger_object: @ledger_object }
+            -%><%
+            unless an_object.summary_of_changes.empty? %>              <BR>
+              Summary: <%= an_object.summary_of_changes
+            %><% end
+            %></p>
           </li>
         <% end %>
       </ul>

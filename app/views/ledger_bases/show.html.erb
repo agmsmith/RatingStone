@@ -92,7 +92,7 @@
             <li><%= link_to x.to_s, ledger_base_path(x) %></li>
           <% end %>
           <% if @ledger_object.type == "LedgerPost" %>
-            <li>*** <%= link_to "All versions of this Post",
+            <li>*** <%= link_to "See all versions of this Post",
               ledger_post_path(@ledger_object) %> ***</li>
           <% end %>
           </ul>
