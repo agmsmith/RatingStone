@@ -2,20 +2,38 @@
   provide(:page_title, "Post #" + params[:id]) %>
 
 <h1>Post #<%= params[:id] %></h1>
-<% if @ledger_object.is_a?(LedgerPost) %>
-<%= render 'ledger_posts/ledger_post_plain',
+<% if !@ledger_object.is_a?(LedgerPost) %>
+  <p>Sorry, post "<%= params[:id] %>" does not exist.</p>
+<% elsif !@ledger_object.allowed_to_view?(current_ledger_user) %>
+  <div class="not-allowed-to-view">
+    <%= "#{@ledger_object.base_s} You don't have permission to view this object." %>
+  </div>
+<% else %>
+  <%= render 'ledger_posts/ledger_post_plain',
     { ledger_post: @ledger_object } %>
   <div class="row">
+    <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
+      <%= button_to "Reply", reply_ledger_post_path(@ledger_object),
+         method: :get, class: 'btn btn-default button-full-width' %><br>
+    </div>
+    <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
+    <%= button_to "Quote", quote_ledger_post_path(@ledger_object),
+        method: :get, class: 'btn btn-default button-full-width' %><br>
+    </div>
+    <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
+    <%= button_to "Details", ledger_base_path(@ledger_object),
+        method: :get, class: 'btn btn-default button-full-width' %><br>
+    </div>
     <% if @ledger_object.creator_owner?(current_ledger_user) %>
-      <div class="col-xs-12 col-sm-6">
+      <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
         <%= button_to "Edit", edit_ledger_post_path(@ledger_object),
           method: :get, class: 'btn btn-success button-full-width' %><br>
       </div>
+      <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
+        <%= render 'shared/ledger_delete_button',
+          { ledger_object: @ledger_object } %>
+      </div>
     <% end %>
-    <div class="col-xs-12 col-sm-6">
-      <%= render 'shared/ledger_delete_button',
-        { ledger_object: @ledger_object } %>
-    </div>
   </div>
   <% # List all versions of the post, including the summary of changes text.
     @ledger_objects = @ledger_object.all_versions.paginate(page: params[:page])
@@ -36,8 +54,5 @@
       </ul>
       <%= will_paginate @ledger_objects %>
   <% end %>
-<% else %>
-  <p>Sorry, post "<%= params[:id] %>" does not exist.</p>
 <% end %>
-</div>
 
