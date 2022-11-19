@@ -11,10 +11,86 @@
 <% else %>
   <%= render 'ledger_posts/ledger_post_plain',
     { ledger_post: @ledger_object } %>
-  <p><%= points_html(@ledger_object) %>&nbsp; <%=
+  <p><%= points_html(@ledger_object) %>&nbsp; Created by <%=
+    @ledger_object.creator.latest_version.name %>, <%=
     render 'ledger_bases/timestamp_and_expiry',
       { ledger_object: @ledger_object }
-    %></p>
+    %><%
+    # Show groups, replies, quotes, with links and approved flags.
+    my_replies = LinkReply.where(
+      prior_post_id: @ledger_object.original_version_id,
+      deleted: false).order(created_at: :asc)
+    my_replies_count = my_replies.count
+    quoted_by = LinkReply.where(
+      reply_post_id: @ledger_object.original_version_id,
+      deleted: false).order(created_at: :asc)
+    quoted_by_count = quoted_by.count
+    my_groups = LinkGroupContent.where(
+      content_id: @ledger_object.original_version_id,
+      deleted: false).order(created_at: :asc)
+    my_groups_count = my_groups.count
+    comma_needed = false # For separating group, reply, quotes sections.
+    if my_groups_count > 0 || my_replies_count > 0 || quoted_by_count > 0
+      %>    <br><%
+      if quoted_by_count > 0 %>
+        <%= "#{quoted_by_count} #{'quote'.pluralize(quoted_by_count)}:" %><%
+        quoted_by.each do |a_reply_link|
+          reply_post = a_reply_link&.prior_post&.latest_version %>
+          <%= if reply_post
+            link_to "##{reply_post.id} (#{reply_post.creator.latest_version.name})",
+              ledger_post_path(reply_post), title: reply_post.subject
+          else # Post is missing or really deleted.
+            "##{a_reply_link.prior_post_id}"
+          end %><% # Add "unapproved" after the quote number if not approved.
+          if !a_reply_link.approved_child || !a_reply_link.approved_parent
+            %>-<%= link_to "unapproved", link_base_path(a_reply_link),
+            class: "unapproved-link" %><%
+          end
+        end # quoted_by.each
+        comma_needed = true
+      end # if quoted_by_count
+      %><%
+      if my_replies_count > 0
+      %><% if comma_needed %>,<% end %>
+        <%= "#{my_replies_count} #{'reply'.pluralize(my_replies_count)}:" %><%
+        my_replies.each do |a_reply_link|
+          reply_post = a_reply_link&.reply_post&.latest_version %>
+          <%= if reply_post
+            link_to "##{reply_post.id} (#{reply_post.creator.latest_version.name})",
+              ledger_post_path(reply_post), title: "#{reply_post.subject}"
+            else
+              "##{a_reply_link.reply_post_id}"
+            end %><% # Add "unapproved" after the reply number if not approved.
+          if !a_reply_link.approved_child || !a_reply_link.approved_parent
+            %>-<%= link_to "unapproved", link_base_path(a_reply_link),
+            class: "unapproved-link" %><%
+          end
+        end # my_replies.each
+        comma_needed = true
+      end # if my_replies_count
+      %><%
+      if my_groups_count > 0
+      %><% if comma_needed %>,<% end %>
+        <%= "#{my_groups_count} #{'group'.pluralize(my_groups_count)}:" %><%
+        my_groups.each do |a_group_link|
+          my_group = a_group_link&.group&.latest_version %>
+          <%= if my_group
+            link_to "##{my_group.original_version_id} (#{my_group.name})",
+              ledger_group_path(my_group.original_version)
+          else # Record doesn't exist.
+            "##{a_group_link.group_id}"
+          end %><% # Add "unapproved" after the group number if not approved.
+          if !a_group_link.approved_child || !a_group_link.approved_parent
+              %>-<%= link_to "unapproved", link_base_path(a_group_link),
+              class: "unapproved-link" %><%
+          end
+        end # my_groups.each
+        comma_needed = true
+      end # if my_groups_count
+      %><%
+    end # if any replies or groups
+  %>
+  </p>
   <div class="row">
     <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
       <%= button_to "Reply", reply_ledger_post_path(@ledger_object),

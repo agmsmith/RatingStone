@@ -54,12 +54,15 @@ class LedgerContentsController < LedgerBasesController
   # with additional data specifying inherited groups and the link back to the
   # post being replied to.  Set it up and let the user edit it.
   def reply_or_quote(quoting)
-    # FUTURE: Force load subclasses of LedgerContent.
+    # FUTURE: Force load future subclasses of LedgerContent here.
     LedgerPost.name
     prior_post = LedgerContent.find(params[:id]) # Can be any version of post.
+    new_subject = prior_post.subject
+    prefix = "#{quoting ? 'Qt:' : 'Re:'} "
+    new_subject = prefix + new_subject unless new_subject.start_with?(prefix)
     @ledger_object = ledger_class_for_controller.new(
       creator_id: current_ledger_user.original_version_id,
-      subject: "#{quoting ? "Qt:" : "Re:"} " + prior_post.subject,
+      subject: new_subject,
       content: "Say something about " + prior_post.content,
       summary_of_changes: "#{quoting ? "Quote of" : "Reply to"} #{prior_post}.",
     )
