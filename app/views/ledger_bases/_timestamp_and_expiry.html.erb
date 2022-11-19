@@ -1,13 +1,13 @@
 <span class=timestamp><%=
   # Show the time stamp and expiry date for variable "ledger_object".
   time_ago_in_words(ledger_object.created_at)
-%> ago&nbsp;- <small><%=
+%> ago <small>(<%=
   ledger_object.created_at.getlocal
-%>.  <%=
+%>, <%=
   expiry = ledger_object.expiry_time
   if expiry <= Time.now
-    "Expired."
+    "expired"
   else
-    "Expires in #{time_ago_in_words(expiry)}."
+    "expires in #{time_ago_in_words(expiry)}"
   end
-%></small></span>
+%>)</small></span>
