@@ -119,12 +119,14 @@
     </div>
 
     <div class="col-xs-12">
-      <H2>Would use <%= "#{points_used} #{'point'.pluralize(points_used)}"
-        %>, leaving <%= points_remaining = points_available - points_used
-        "#{points_remaining} #{'point'.pluralize(points_remaining)}"
+      <H2>Would use <%=
+        "#{format("%.2f", points_used)} #{'point'.pluralize(points_used)}"
+        %>, leaving <%= remaining = points_available - points_used
+        "#{format("%.2f", remaining)} #{'point'.pluralize(remaining)}"
         %>.</H2>
-      <% if points_remaining >= 0.0 %>
-        <%= f.submit yield(:button_text), class: "btn btn-primary button-full-width" %>
+      <% if remaining >= 0.0 %>
+        <%= f.submit yield(:button_text),
+          class: "btn btn-primary button-full-width" %>
       <% else %>
         Out of Points, can't Save!
       <% end %>

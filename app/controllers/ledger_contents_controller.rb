@@ -58,7 +58,7 @@ class LedgerContentsController < LedgerBasesController
     LedgerPost.name
     prior_post = LedgerContent.find(params[:id]) # Can be any version of post.
     new_subject = prior_post.subject
-    prefix = "#{quoting ? 'Qt:' : 'Re:'} "
+    prefix = "#{quoting ? "Qt:" : "Re:"} "
     new_subject = prefix + new_subject unless new_subject.start_with?(prefix)
     @ledger_object = ledger_class_for_controller.new(
       creator_id: current_ledger_user.original_version_id,
