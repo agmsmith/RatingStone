@@ -1,11 +1,21 @@
 <% provide(:page_title, 'Edit Post')
   provide(:button_text, 'Save Changes')
   points_available = current_ledger_user.points_available
-  points_used = LedgerBase::DEFAULT_SPEND_FOR_OBJECT %>
+  points_used = LedgerBase::DEFAULT_SPEND_FOR_OBJECT
 
+  # Will need the label style this user prefers, for several things.
+  label_style = current_user&.fancy_labels
+  label_style = 0 if label_style.nil? || label_style < 0
+  label_style = 2 if label_style > 2
+  umd_selection_menu = [
+    [ApplicationHelper::DIRECTION_LABELS["U"][label_style], "U"],
+    [ApplicationHelper::DIRECTION_LABELS["M"][label_style], "M"],
+    [ApplicationHelper::DIRECTION_LABELS["D"][label_style], "D"],
+  ]
+%>
 <h1>Editing <%= @ledger_object.base_s %></h1>
 
-<%= form_with(model: @ledger_object, scope: :ledger_post,
+<%= form_with(model: @ledger_object, scope: :ledger_post_fields,
   # Use URL without ID for new records, with ID for editing existing record.
   url: @ledger_object.id.nil? ? ledger_posts_path : ledger_post_path,
   method: :patch, local: true, class: "form-group") do |f| %>
@@ -47,11 +57,14 @@
                 else
                   group_name = ""
                 end %>
-              <%= # Using an empty string for the object name so we get
-                # "new_groups[]" as the name, which becomes an array of values
-                # (not a hash) when converted back to params.
-                group_fields.text_field "", value: group_item %>
+              <%= # Using the index as part of the field name so we can have
+                # several related input fields in new_groups{}.
+                group_fields.text_field "#{group_index}_ID", value: group_item %>
               <strong><%= group_name %></strong>
+              <%= group_fields.select "#{group_index}_UMD",
+                umd_selection_menu, class: 'form-control' %>
+              <%= group_fields.text_field "#{group_index}_Points",
+                value: "0.0", class: 'form-control' %>
             </li>
           <% end %>
         <% end %>
