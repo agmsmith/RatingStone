@@ -100,20 +100,29 @@
           local: true, method: :get) do |f| %>
         <%= f.submit "Reply",
           class: "btn btn-default button-full-width" %>
-      <% end %>
+      <% end %><br>
     </div>
     <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
-    <%= button_to "Quote", quote_ledger_post_path(@ledger_object),
-        method: :get, class: 'btn btn-default button-full-width' %><br>
+      <%= form_with(url: quote_ledger_post_path(@ledger_object),
+        local: true, method: :get) do |f| %>
+        <%= f.submit "Quote",
+          class: "btn btn-default button-full-width" %>
+      <% end %><br>
     </div>
     <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
-    <%= button_to "Details", ledger_base_path(@ledger_object),
-        method: :get, class: 'btn btn-default button-full-width' %><br>
+      <%= form_with(url: ledger_base_path(@ledger_object),
+          local: true, method: :get) do |f| %>
+        <%= f.submit "Details",
+          class: "btn btn-default button-full-width" %>
+      <% end %><br>
     </div>
     <% if @ledger_object.creator_owner?(current_ledger_user) %>
       <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
-        <%= button_to "Edit", edit_ledger_post_path(@ledger_object),
-          method: :get, class: 'btn btn-success button-full-width' %><br>
+        <%= form_with(url: edit_ledger_post_path(@ledger_object),
+          local: true, method: :get) do |f| %>
+          <%= f.submit "Edit",
+            class: "btn btn-default button-full-width" %>
+        <% end %><br>
       </div>
       <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
         <%= render 'shared/ledger_delete_button',

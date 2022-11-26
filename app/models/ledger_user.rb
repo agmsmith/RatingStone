@@ -13,16 +13,7 @@ class LedgerUser < LedgerBase
   def user
     user_record = User.find_by(ledger_user_id: original_version_id)
     return user_record if user_record
-
-    # Need to make a new User record, an unusual procedure.  Set it up so
-    # a password reset to the user's email is needed for access.
-    logger.warn("Creating a User for #{self}, an unusual reversed procedure.")
-    pw = SecureRandom.hex
-    user_record = User.create!(ledger_user_id: original_version_id,
-      name: name, email: email, password: pw, password_confirmation: pw,
-      admin: false, activated: false)
-    user_record.activate
-    user_record
+    nil # No longer create a User, likely they were deleted.
   end
 
   ##

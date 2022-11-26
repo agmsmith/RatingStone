@@ -12,10 +12,14 @@
         label_style = 2 if label_style > 2
 
         # Note we are showing the creator of this particular version of the
-        # post, not the original or current creator.
-        link_to gravatar_for(ledger_post.creator.user, size: 50),
-          ledger_post.creator.user %>
-      <%= link_to ledger_post.creator.name, ledger_post.creator.user %><br>
+        # post, not the original or current creator.  Nil if User deleted.
+        creator_user = ledger_post.creator.user
+        if creator_user
+          (link_to gravatar_for(creator_user, size: 50), creator_user) + " " +
+          (link_to ledger_post.creator.latest_version.name, creator_user)
+        else # No User record (deleted?), just display the Ledger name.
+          ledger_post.creator.latest_version.name
+        end %><br>
       <%= render 'ledger_bases/timestamp_plain',
         { ledger_object: ledger_post } %><br>
       <%= # Reply icon and number of replies, whole thing is link to do a reply. 

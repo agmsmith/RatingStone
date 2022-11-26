@@ -17,13 +17,26 @@
   <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
     <% if ledger_group.role_test?(current_ledger_user, LinkRole::READER) %>
       <% if params[:action] != "show" %>
-        <%= button_to "Details", ledger_group_path(ledger_group),
-          method: :get, class: 'btn btn-default button-full-width' %><br>
+        <%= # Note that rather than button_to(), which doesn't work with HTML 3
+          # (it generates a HTML 5 <button> rather than a <input type="submit">),
+          # so use an explicit form and submit button.
+          form_with(url: ledger_group_path(ledger_group),
+            local: true, method: :get) do |f| %>
+            <%= f.submit "Details",
+              class: "btn btn-default button-full-width" %>
+          <% end %>
+        <br>
       <% end %>
       <% if ledger_group.role_test?(current_ledger_user,
         LinkRole::MEMBER_MODERATOR) # Nested test to avoid DB lookups %>
-        <%= button_to "Edit", edit_ledger_group_path(ledger_group),
-          method: :get, class: 'btn btn-success button-full-width' %><br>
+
+
+        <%= form_with(url: edit_ledger_group_path(ledger_group),
+          local: true, method: :get) do |f| %>
+          <%= f.submit "Edit",
+            class: "btn btn-success button-full-width" %>
+        <% end %>
+        <br>
       <% end %>
     <% end %>
     <%= render 'shared/ledger_delete_button',
