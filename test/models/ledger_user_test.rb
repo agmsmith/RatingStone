@@ -99,13 +99,13 @@ class LedgerUserTest < ActiveSupport::TestCase
     luser = LedgerUser.create!(name: "Bonus User",
       email: "SomeEMail@SomeDomain.com", creator_id: 0,
       rating_points_spent_creating: 0.0, rating_points_boost_self: 0.0)
-    luser.user # Create user record, so we can see allowance and spending.
+    luser.create_user # Create user, so we can see allowance and spending.
     lpost = ledger_posts(:lpost_one)
     # A couple of extra ceremonies, so we can test that relative ceremony
     # numbers are being used.
     LedgerAwardCeremony.start_ceremony("First ceremony, for testing...")
     LedgerUser.find(0).request_full_point_recalculation
-    LedgerUser.find(0).user # Create User for the root, so we can see allowance.
+    LedgerUser.find(0).create_user # Create User for the root, to see allowance.
     LedgerAwardCeremony.start_ceremony("Second ceremony, relative numbers.")
 
     lbonus_link = LinkBonusUnique.create!(creator_id: 0,
@@ -243,7 +243,7 @@ class LedgerUserTest < ActiveSupport::TestCase
 
   test "See if bonus points get received and recalculated properly" do
     luser = ledger_users(:reader_user)
-    user = luser.user # Create corresponding User, with weeks_allowance field.
+    user = luser.create_user # Create User, with weeks_allowance field.
     luser.update_current_points
     assert_in_delta(10.0, luser.current_meh_points, 0.0000001)
     assert_in_delta(0.0, luser.current_up_points, 0.0000001)

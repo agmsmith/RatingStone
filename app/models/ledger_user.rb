@@ -10,10 +10,31 @@ class LedgerUser < LedgerBase
     latest_version.name.truncate(25)
   end
 
+  ##
+  # Returns the User record for this LedgerUser, or nil if there is none
+  # (happens if the User gets deleted).  Previously we used to automatically
+  # create a User record, but now use create_user for that.
   def user
-    user_record = User.find_by(ledger_user_id: original_version_id)
-    return user_record if user_record
-    nil # No longer create a User, likely they were deleted.
+    User.find_by(ledger_user_id: original_version_id)
+  end
+
+  ##
+  # Create a User record for an existing LedgerUser.  Usually the User comes
+  # first, but for testing we sometimes make the LedgerUser first.
+  def create_user
+    user_record = user
+    return user_record if user_record # Already exists.
+
+    # Need to make a new User record, an unusual procedure.  Set it up with a
+    # random password so a password reset to the user's email is needed for
+    # actual access.
+    logger.warn("Creating a User for #{self}, an unusual reversed procedure.")
+    pw = SecureRandom.hex
+    user_record = User.create!(ledger_user_id: original_version_id,
+      name: name, email: email, password: pw, password_confirmation: pw,
+      admin: false, activated: false)
+    user_record.activate
+    user_record
   end
 
   ##
