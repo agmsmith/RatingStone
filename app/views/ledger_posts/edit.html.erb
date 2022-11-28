@@ -12,6 +12,8 @@
     [ApplicationHelper::DIRECTION_LABELS["M"][label_style], "M"],
     [ApplicationHelper::DIRECTION_LABELS["D"][label_style], "D"],
   ]
+
+  LedgerFullGroup.name # FUTURE: Force load of LedgerSubgroup subclasses.
 %>
 <h1>Editing <%= @ledger_object.base_s %></h1>
 
@@ -43,15 +45,14 @@
         you are a member of the group.</p>
       <ul>
         <%= fields_for :new_groups do |group_fields| %>
-          <% LedgerFullGroup.name # Force load of subclass so SQL includes it.
-            @ledger_object.new_groups.each_with_index do |group_item,
+          <% @ledger_object.new_groups.each_with_index do |group_item,
               group_index| %>
             <li>
-              <% group_id = group_item.to_i
+              <% group_id = group_item[:ID].to_i
                 a_group = LedgerSubgroup.find_by(id: group_id)
                 if a_group
                   group_name = a_group.to_s
-                  points_used += LinkBase::DEFAULT_SPEND_FOR_LINK
+                  points_used += group_item[:Points]
                 elsif group_id > 0
                   group_name = "Unknown (#{group_id})"
                 else
@@ -59,12 +60,14 @@
                 end %>
               <%= # Using the index as part of the field name so we can have
                 # several related input fields in new_groups{}.
-                group_fields.text_field "#{group_index}_ID", value: group_item %>
+                group_fields.text_field "#{group_index}_ID",
+                  value: group_item[:ID], class: 'form-control' %>
               <strong><%= group_name %></strong>
               <%= group_fields.select "#{group_index}_UMD",
-                umd_selection_menu, class: 'form-control' %>
+                umd_selection_menu, selected: group_item[:UMD],
+                class: 'form-control' %>
               <%= group_fields.text_field "#{group_index}_Points",
-                value: "0.0", class: 'form-control' %>
+                value: group_item[:Points], class: 'form-control' %>
             </li>
           <% end %>
         <% end %>
@@ -80,21 +83,26 @@
           <% @ledger_object.new_replytos.each_with_index do |replyto_item,
               replyto_index| %>
             <li>
-              <% replyto_id = replyto_item.to_i
+              <% replyto_id = replyto_item[:ID].to_i
                 a_post = LedgerPost.find_by(id: replyto_id)
                 if a_post
                   replyto_name = a_post.to_s
-                  points_used += LinkBase::DEFAULT_SPEND_FOR_LINK
+                  points_used += replyto_item[:Points]
                 elsif replyto_id > 0
                   replyto_name = "Unknown (#{replyto_id})"
                 else
                   replyto_name = ""
                 end %>
-              <%= # Using an empty string for the object name so we get
-                # "new_replytos[]" as the name, which becomes an array of values
-                # (not a hash) when converted back to params.
-                replyto_fields.text_field "", value: replyto_item %>
+              <%= # Using the index as part of the field name so we can have
+                # several related input fields in new_replytos{}.
+                replyto_fields.text_field "#{replyto_index}_ID",
+                  value: replyto_item[:ID], class: 'form-control' %>
               <strong><%= replyto_name %></strong>
+              <%= replyto_fields.select "#{replyto_index}_UMD",
+                umd_selection_menu, selected: replyto_item[:UMD],
+                class: 'form-control' %>
+              <%= replyto_fields.text_field "#{replyto_index}_Points",
+                value: replyto_item[:Points], class: 'form-control' %>
             </li>
           <% end %>
         <% end %>
@@ -110,21 +118,26 @@
           <% @ledger_object.new_quotes.each_with_index do |quote_item,
               quote_index| %>
             <li>
-              <% quote_id = quote_item.to_i
+              <% quote_id = quote_item[:ID].to_i
                 a_post = LedgerPost.find_by(id: quote_id)
                 if a_post
                   quote_name = a_post.to_s
-                  points_used += LinkBase::DEFAULT_SPEND_FOR_LINK
+                  points_used += quote_item[:Points]
                 elsif quote_id > 0
                   quote_name = "Unknown (#{quote_id})"
                 else
                   quote_name = ""
                 end %>
-              <%= # Using an empty string for the object name so we get
-                # "new_quotes[]" as the name, which becomes an array of values
-                # (not a hash) when converted back to params.
-                quote_fields.text_field "", value: quote_item %>
+              <%= # Using the index as part of the field name so we can have
+                # several related input fields in new_quotes{}.
+                quote_fields.text_field "#{quote_index}_ID",
+                  value: quote_item[:ID], class: 'form-control' %>
               <strong><%= quote_name %></strong>
+              <%= quote_fields.select "#{quote_index}_UMD",
+                umd_selection_menu, selected: quote_item[:UMD],
+                class: 'form-control' %>
+              <%= quote_fields.text_field "#{quote_index}_Points",
+                value: quote_item[:Points], class: 'form-control' %>
             </li>
           <% end %>
         <% end %>

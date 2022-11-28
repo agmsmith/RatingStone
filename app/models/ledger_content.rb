@@ -17,15 +17,16 @@ class LedgerContent < LedgerBase
   # a reply but backwards).  To keep track of these groups and posts before the
   # record is saved (while editing an unsaved preview with the data passed back
   # and forth as HTML form parameters), we have these instance variable
-  # Sets, containing strings with the ID numbers of the added objects.  Can
-  # also use them to add more replies and groups and quotes when editing an
-  # existing post.  The Set will keep them mostly unique.
+  # Arrays, containing tuples (hashes) with the ID numbers (:ID), direction
+  # letter code (:UMD) and points (:Points) requested for the added objects.
+  # Can also use them to add more replies and groups and quotes when editing
+  # an existing post.  Maximum of 10 tuples per array, single digit for index.
   attr_accessor :new_groups, :new_quotes, :new_replytos
 
   after_initialize do |new_post|
-    new_post.new_groups ||= Set.new
-    new_post.new_quotes ||= Set.new
-    new_post.new_replytos ||= Set.new
+    new_post.new_groups ||= []
+    new_post.new_quotes ||= []
+    new_post.new_replytos ||= []
   end
 
   ##
@@ -38,16 +39,16 @@ class LedgerContent < LedgerBase
   end
 
   ##
-  # How many replies did this post get?
-  def reply_count
-    LinkReply.where(prior_post: self, deleted: false, approved_parent: true,
+  # How many other posts are quoting this one?
+  def quote_count
+    LinkReply.where(reply_post: self, deleted: false, approved_parent: true,
       approved_child: true).count
   end
 
   ##
-  # How many other posts are quoting this one?
-  def quote_count
-    LinkReply.where(reply_post: self, deleted: false, approved_parent: true,
+  # How many replies did this post get?
+  def reply_count
+    LinkReply.where(prior_post: self, deleted: false, approved_parent: true,
       approved_child: true).count
   end
 end
