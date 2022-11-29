@@ -24,12 +24,16 @@ Rails.application.routes.draw do
     end
   end
 
-  # The usual actions for displaying/editing posts, plus reply and quote.
+  # The usual actions for displaying/editing posts, plus reply and quote.  Also
+  # can use ledger_bases API and ledger_contents API since LedgerPost is a
+  # subclass of LedgerContent which is a subclass of LedgerBase.
   resources :ledger_posts,
    only: [:new, :create, :index, :show, :edit, :update] do
     member do
-      get 'reply'
-      get 'quote'
+      get 'reply' # Make a new reply to a given post.
+      get 'replies' # List all replies to a given post.
+      get 'quote' # Make a new post quoting a given post.
+      get 'quotes' # List all posts quoting a given post.
     end
   end
   patch '/ledger_posts', to: 'ledger_posts#update' # For update without an ID.

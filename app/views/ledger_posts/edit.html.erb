@@ -56,18 +56,17 @@
                 elsif group_id > 0
                   group_name = "Unknown (#{group_id})"
                 else
-                  group_name = ""
+                  group_name = "New Group..."
                 end %>
+              <strong><%= group_name %></strong><br>
               <%= # Using the index as part of the field name so we can have
                 # several related input fields in new_groups{}.
                 group_fields.text_field "#{group_index}_ID",
-                  value: group_item[:ID], class: 'form-control' %>
-              <strong><%= group_name %></strong>
+                  value: group_item[:ID], size: 10 %>
               <%= group_fields.select "#{group_index}_UMD",
-                umd_selection_menu, selected: group_item[:UMD],
-                class: 'form-control' %>
+                umd_selection_menu, selected: group_item[:UMD] %>
               <%= group_fields.text_field "#{group_index}_Points",
-                value: group_item[:Points], class: 'form-control' %>
+                value: group_item[:Points], size: 6 %>
             </li>
           <% end %>
         <% end %>
@@ -91,18 +90,17 @@
                 elsif replyto_id > 0
                   replyto_name = "Unknown (#{replyto_id})"
                 else
-                  replyto_name = ""
+                  replyto_name = "New Reply..."
                 end %>
+              <strong><%= replyto_name %></strong><br>
               <%= # Using the index as part of the field name so we can have
                 # several related input fields in new_replytos{}.
                 replyto_fields.text_field "#{replyto_index}_ID",
-                  value: replyto_item[:ID], class: 'form-control' %>
-              <strong><%= replyto_name %></strong>
+                  value: replyto_item[:ID], size: 10 %>
               <%= replyto_fields.select "#{replyto_index}_UMD",
-                umd_selection_menu, selected: replyto_item[:UMD],
-                class: 'form-control' %>
+                umd_selection_menu, selected: replyto_item[:UMD] %>
               <%= replyto_fields.text_field "#{replyto_index}_Points",
-                value: replyto_item[:Points], class: 'form-control' %>
+                value: replyto_item[:Points], size: 6 %>
             </li>
           <% end %>
         <% end %>
@@ -126,18 +124,17 @@
                 elsif quote_id > 0
                   quote_name = "Unknown (#{quote_id})"
                 else
-                  quote_name = ""
+                  quote_name = "New Quote..."
                 end %>
+              <strong><%= quote_name %></strong><br>
               <%= # Using the index as part of the field name so we can have
                 # several related input fields in new_quotes{}.
                 quote_fields.text_field "#{quote_index}_ID",
-                  value: quote_item[:ID], class: 'form-control' %>
-              <strong><%= quote_name %></strong>
+                  value: quote_item[:ID], size: 10 %>
               <%= quote_fields.select "#{quote_index}_UMD",
-                umd_selection_menu, selected: quote_item[:UMD],
-                class: 'form-control' %>
+                umd_selection_menu, selected: quote_item[:UMD] %>
               <%= quote_fields.text_field "#{quote_index}_Points",
-                value: quote_item[:Points], class: 'form-control' %>
+                value: quote_item[:Points], size: 6 %>
             </li>
           <% end %>
         <% end %>

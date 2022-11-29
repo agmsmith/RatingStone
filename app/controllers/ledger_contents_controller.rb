@@ -10,12 +10,26 @@ class LedgerContentsController < LedgerBasesController
     super
   end
 
+  ##
+  # Make a new quote referencing the specified post.
   def quote
-    reply_or_quote(true)
+    quote_or_reply(true)
   end
 
+  ##
+  # List all quotes of a specified post.
+  def quotes
+  end
+
+  ##
+  # Make a new reply referencing the specified post.
   def reply
-    reply_or_quote(false)
+    quote_or_reply(false)
+  end
+
+  ##
+  # List all replies to a specified post.
+  def replies
   end
 
   # See parent class for generic show() method.
@@ -47,6 +61,21 @@ class LedgerContentsController < LedgerBasesController
   private
 
   ##
+  # Appends extra dummy spots to the side load attributes of a given object,
+  # for new groups, replies and quotes.  These show up in the form as extra
+  # fields that let the user fill in the dummy info (has zero points and
+  # zero ID so will get ignored unless changed) to add new groups, replies
+  # and quotes.
+  def append_dummy_side_load_attributes(new_object)
+    new_object.new_groups <<
+      { ID: "Group #?", UMD: "U", Points: "Points?" }
+    new_object.new_replytos <<
+      { ID: "Reply Post #?", UMD: "U", Points: "Points?" }
+    new_object.new_quotes <<
+      { ID: "Quoted Post #?", UMD: "U", Points: "Points?" }
+  end
+
+  ##
   # Returns the Ledger class that's appropriate for this controller to handle.
   # Can be used for creating new objects of the appropriate class.
   def ledger_class_for_controller
@@ -58,10 +87,10 @@ class LedgerContentsController < LedgerBasesController
   end
 
   ##
-  # Create a reply to a given content item.  It's sort of like a new post, but
-  # with additional data specifying inherited groups and the link back to the
-  # post being replied to.  Set it up and let the user edit it.
-  def reply_or_quote(quoting)
+  # Start editing a reply or quote to a given content item.  It's sort of like
+  # a new post, but with additional data specifying inherited groups and the
+  # link back to the post being replied to.  Set it up and let the user edit it.
+  def quote_or_reply(quoting)
     # FUTURE: Force load future subclasses of LedgerContent here.
     LedgerPost.name
     prior_post = LedgerContent.find(params[:id]) # Can be any version of post.
@@ -90,6 +119,7 @@ class LedgerContentsController < LedgerBasesController
       @ledger_object.new_groups << { ID: a_link.group_id, UMD: "U",
         Points: LinkBase::DEFAULT_SPEND_FOR_LINK, }
     end
+    append_dummy_side_load_attributes(@ledger_object)
     render("edit")
   end
 
@@ -154,20 +184,13 @@ class LedgerContentsController < LedgerBasesController
     if params && params[:new_groups]
       new_object.new_groups = form_to_tuples(params[:new_groups])
     end
-    new_object.new_groups <<
-      { ID: "Add a Group number here...", UMD: "U", Points: 0.0 }
-
     if params && params[:new_replytos]
       new_object.new_replytos = form_to_tuples(params[:new_replytos])
     end
-    new_object.new_replytos <<
-      { ID: "Add a reply Post number here...", UMD: "U", Points: 0.0 }
-
     if params && params[:new_quotes]
       new_object.new_quotes = form_to_tuples(params[:new_quotes])
     end
-    new_object.new_quotes <<
-      { ID: "Add a quoted Post number here...", UMD: "U", Points: 0.0 }
+    append_dummy_side_load_attributes(new_object)
   end
 
   # For information that isn't exactly part of this @ledger_object, side save
