@@ -11,7 +11,10 @@
 <% else %>
   <%= render 'ledger_posts/ledger_post_plain',
     { ledger_post: @ledger_object } %>
-  <p><%= points_html(@ledger_object) %>&nbsp; Created by <%=
+  <p><%=
+    # Update points since they're being shown.  Affects expiry time too.
+    @ledger_object.update_current_points
+    points_html(@ledger_object) %>&nbsp; Created by <%=
     @ledger_object.creator.latest_version.name %>, <%=
     render 'ledger_bases/timestamp_and_expiry',
       { ledger_object: @ledger_object }
