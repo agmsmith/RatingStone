@@ -1,10 +1,11 @@
-<%= form_with(model: @ledger_post, local: true) do |f| %>
+<%= form_with(model: @ledger_post, scope: :ledger_post_fields, local: true) do |f| %>
   <%= render 'shared/error_messages', object: f.object %>
   <div class="field">
     <%= f.text_field :subject, placeholder: "Subject..." %>
   </div>
   <div class="field">
-    <%= f.text_area :content, placeholder: "Compose new ledger_post..." %>
+    <%= f.text_area :content, placeholder: "Compose new post...",
+      rows: 3  %>
   </div>
   <%= f.submit "Post", class: "btn btn-primary" %>
   <%= f.submit "Preview", name: "preview", class: "btn btn-primary" %>

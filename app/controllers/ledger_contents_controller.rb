@@ -29,15 +29,16 @@ class LedgerContentsController < LedgerBasesController
         summary_of_changes: "New #{ledger_class_for_controller.name}.",
         rating_direction_self: "U",
       )
-      unless params.key?(:ledger_post_fields) # First time, no form fields yet.
-        # Make a default group link for the new object back to its creator.
-        home_link = LinkHomeGroup.find_by(parent_id:
-          current_ledger_user.original_version_id)
-        home_group = home_link.child if home_link
-        if home_group
-          @ledger_object.new_groups << { ID: home_group.original_version_id,
-            UMD: "U", Points: LinkBase::DEFAULT_SPEND_FOR_LINK, }
-        end
+    end
+    unless params.key?(:ledger_post_fields) && # First time, no group field yet.
+        params[:ledger_post_fields].key?(:new_groups)
+      # Make a default group link for the new object back to its creator.
+      home_link = LinkHomeGroup.find_by(parent_id:
+        current_ledger_user.original_version_id)
+      home_group = home_link.child if home_link
+      if home_group
+        @ledger_object.new_groups << { ID: home_group.original_version_id,
+          UMD: "U", Points: LinkBase::DEFAULT_SPEND_FOR_LINK, }
       end
     end
     super
@@ -107,7 +108,7 @@ class LedgerContentsController < LedgerBasesController
   # Convert form parameters into an array of tuples.  Input is a hash of form
   # parameters, keys being (index digit + "_" + purpose code (ID, UMD, Points)),
   # value being the user's input.  Output is an array of tuples (a Hash with
-  # ID, UMD, Points), rejecting ones with ID <= 0 or no Points, and only
+  # ID, UMD, Points), rejecting ones with ID <= 0, and only
   # keeping the first one where there are duplicate IDs.
   def form_to_tuples(form_params)
     array_id = [] # Store the input data in separate arrays.
@@ -136,8 +137,7 @@ class LedgerContentsController < LedgerBasesController
     tuple_array = []
     array_id.each_with_index do |id, index|
       next if id <= 0 || known_ids.include?(id)
-      next unless array_umd[index] && array_points[index] &&
-        array_points[index] > 0.0
+      next unless array_umd[index] && array_points[index]
 
       tuple_array <<
         { ID: id, UMD: array_umd[index], Points: array_points[index] }
@@ -186,15 +186,16 @@ class LedgerContentsController < LedgerBasesController
 
     new_object.new_groups.each do |group_item|
       group_id = group_item[:ID].to_i # So ID filler text becomes zero.
-      next if group_id <= 0
+      points = group_item[:Points].to_f
+      next if group_id <= 0 || points <= 0.0
 
       a_group = LedgerSubgroup.find_by(id: group_id)
       if a_group
         link_group = LinkGroupContent.new(group_id: a_group.original_version_id,
           content_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id,
-          rating_points_spent: group_item[:Points],
-          rating_points_boost_parent: group_item[:Points] *
+          rating_points_spent: points,
+          rating_points_boost_parent: points *
             (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE),
           rating_direction_parent: group_item[:UMD])
         unless link_group.save
@@ -215,15 +216,16 @@ class LedgerContentsController < LedgerBasesController
 
     new_object.new_replytos.each do |reply_item|
       reply_id = reply_item[:ID].to_i
-      next if reply_id <= 0
+      points = reply_item[:Points].to_f
+      next if reply_id <= 0 || points <= 0.0
 
       prior_post = LedgerContent.find_by(id: reply_id)
       if prior_post
         link_post = LinkReply.new(prior_post_id: prior_post.original_version_id,
           reply_post_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id,
-          rating_points_spent: reply_item[:Points],
-          rating_points_boost_parent: reply_item[:Points] *
+          rating_points_spent: points,
+          rating_points_boost_parent: points *
             (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE),
           rating_direction_parent: reply_item[:UMD])
         unless link_post.save
@@ -247,15 +249,16 @@ class LedgerContentsController < LedgerBasesController
 
     new_object.new_quotes.each do |quote_item|
       quote_id = quote_item[:ID].to_i
-      next if quote_id <= 0
+      points = quote_item[:Points].to_f
+      next if quote_id <= 0 || points <= 0
 
       prior_post = LedgerContent.find_by(id: quote_id)
       if prior_post
         link_post = LinkReply.new(reply_post_id: prior_post.original_version_id,
           prior_post_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id,
-          rating_points_spent: quote_item[:Points],
-          rating_points_boost_child: quote_item[:Points] *
+          rating_points_spent: points,
+          rating_points_boost_child: points *
             (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE),
           rating_direction_child: quote_item[:UMD])
         unless link_post.save

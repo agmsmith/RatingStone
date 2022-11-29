@@ -38,15 +38,12 @@
         RatingDirectionParent: <%= @link_object.rating_direction_parent %><BR>
         RatingDirectionChild: <%= @link_object.rating_direction_child %><BR>
         OriginalCeremony: <%= @link_object.original_ceremony %><BR>
-      </span>
-
-      <span class="timestamp">
-        Created <%= time_ago_in_words(@link_object.created_at)
-        %> ago&nbsp;- <small><%= @link_object.created_at.getlocal
-        %></small>.<BR>
-        Last updated <%= time_ago_in_words(@link_object.updated_at)
-        %> ago&nbsp;- <small><%= @link_object.updated_at.getlocal
-        %></small>.
+        Created: <span class="timestamp"> <%=
+          time_ago_in_words(@link_object.created_at) %> ago&nbsp;- <small><%=
+          @link_object.created_at.getlocal %></small></span><BR>
+        Last updated: <span class="timestamp"><%=
+          time_ago_in_words(@link_object.updated_at) %> ago&nbsp;- <small><%=
+          @link_object.updated_at.getlocal %></small></span>
       </span>
     </div>
     <div class="col-xs-3 col-sm-2 col-lg-1">
