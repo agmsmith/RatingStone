@@ -1,0 +1,13 @@
+<% provide(:page_title,
+  "Quotes of ##{@ledger_object.id} #{@ledger_object.subject}") %>
+<h1>Quotes of <%= link_to "##{@ledger_object.id} #{@ledger_object.subject}",
+  @ledger_object %></h1>
+
+<%= will_paginate @ledger_objects %>
+<ul class="list-ledger-objects">
+<% @ledger_objects.each do |an_object| %>
+<%= render an_object %>
+<% end %>
+</ul>
+<%= will_paginate @ledger_objects %>
+

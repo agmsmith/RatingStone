@@ -8,6 +8,11 @@ class LedgerContent < LedgerBase
   alias_attribute :subject, :string1
   alias_attribute :summary_of_changes, :string2
 
+  has_many :link_replies, class_name: :LinkReply, foreign_key: :parent_id
+  has_many :replies, through: :link_replies, source: :child
+  has_many :link_quotes, class_name: :LinkReply, foreign_key: :child_id
+  has_many :quotes, through: :link_quotes, source: :parent
+
   # Have to repeat these validations for subclasses.  Ugh!
   validates :subject, presence: true, length: { maximum: 255 }
   validates :summary_of_changes, length: { maximum: 255 }

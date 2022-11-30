@@ -40,7 +40,7 @@ class UsersController < ApplicationController
 
   def show
     @user = User.find(params[:id])
-    redirect_to(root_url) unless @user.activated
+    return redirect_to(root_url) unless @user.activated
     @lposts = LedgerPost.where(creator_id: @user.ledger_user_id,
       deleted: false).order(:created_at).paginate(page: params[:page])
   end

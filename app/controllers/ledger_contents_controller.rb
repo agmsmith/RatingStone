@@ -19,6 +19,19 @@ class LedgerContentsController < LedgerBasesController
   ##
   # List all quotes of a specified post.
   def quotes
+    # FUTURE: Force load future subclasses of LedgerContent here.
+    LedgerPost.name
+    if params[:id]
+      @ledger_object = ledger_class_for_controller.find_by(id: params[:id])
+    end
+    unless @ledger_object
+      flash[:danger] = "Can't find object ##{params[:id]} to show quotes."
+      return redirect_back(fallback_location: root_url)
+    end
+    @ledger_objects = @ledger_object.quotes
+      .where(link_bases: { deleted: false })
+      .order(created_at: :asc)
+      .paginate(page: params[:page])
   end
 
   ##
@@ -30,6 +43,19 @@ class LedgerContentsController < LedgerBasesController
   ##
   # List all replies to a specified post.
   def replies
+    # FUTURE: Force load future subclasses of LedgerContent here.
+    LedgerPost.name
+    if params[:id]
+      @ledger_object = ledger_class_for_controller.find_by(id: params[:id])
+    end
+    unless @ledger_object
+      flash[:danger] = "Can't find object ##{params[:id]} to show replies."
+      return redirect_back(fallback_location: root_url)
+    end
+    @ledger_objects = @ledger_object.replies
+      .where(link_bases: { deleted: false })
+      .order(created_at: :asc)
+      .paginate(page: params[:page])
   end
 
   # See parent class for generic show() method.
@@ -93,7 +119,12 @@ class LedgerContentsController < LedgerBasesController
   def quote_or_reply(quoting)
     # FUTURE: Force load future subclasses of LedgerContent here.
     LedgerPost.name
-    prior_post = LedgerContent.find(params[:id]) # Can be any version of post.
+    prior_post = LedgerContent.find_by(id: params[:id]) # Can be any version of post.
+    unless prior_post
+      flash[:danger] = "Can't find object ##{params[:id]} to show " \
+        "#{quoting ? "quotes" : "replies"}."
+      return redirect_back(fallback_location: root_url)
+    end
     new_subject = prior_post.subject
     prefix = "#{quoting ? "Qt:" : "Re:"} "
     new_subject = prefix + new_subject unless new_subject.start_with?(prefix)

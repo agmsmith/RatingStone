@@ -37,7 +37,7 @@ class LedgerBasesController < ApplicationController
     # Pre-existing object to be edited should already be in @ledger_object.
     unless @ledger_object
       flash[:danger] = "Can't find object ##{params[:id]} to edit."
-      redirect_back(fallback_location: root_url)
+      return redirect_back(fallback_location: root_url)
     end
     side_load_params(@ledger_object)
   end
