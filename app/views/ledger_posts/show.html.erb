@@ -106,16 +106,16 @@
       <% end %><br>
     </div>
     <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
-      <%= form_with(url: replies_ledger_post_path(@ledger_object),
-          local: true, method: :get) do |f| %>
-        <%= f.submit "List Replies",
+      <%= form_with(url: quote_ledger_post_path(@ledger_object),
+        local: true, method: :get) do |f| %>
+        <%= f.submit "Quote",
           class: "btn btn-default button-full-width" %>
       <% end %><br>
     </div>
     <div class="col-xs-12 col-sm-3 col-md-3 col-lg-2">
-      <%= form_with(url: quote_ledger_post_path(@ledger_object),
-        local: true, method: :get) do |f| %>
-        <%= f.submit "Quote",
+      <%= form_with(url: replies_ledger_post_path(@ledger_object),
+          local: true, method: :get) do |f| %>
+        <%= f.submit "List Replies",
           class: "btn btn-default button-full-width" %>
       <% end %><br>
     </div>
