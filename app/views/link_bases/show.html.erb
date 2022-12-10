@@ -1,7 +1,7 @@
 <% provide(:page_title,
-  "Link Object ##{@link_object.is_a?(LinkBase) ?
-    @link_object.id : "Unknown"}") %>
-<% if @link_object.nil? %>
+  "Link Object #{@link_object.is_a?(LinkBase) ?
+    @link_object.base_s : "Unknown"}") %>
+<% if !@link_object.is_a?(LinkBase) %>
   <div class="row">
     <div class="col-xs-12 error-show">
       Link Object "<%= params[:id] %>" does not exist.
@@ -28,7 +28,7 @@
         Child: <%= link_to @link_object.child.to_s,
           ledger_base_path(@link_object.child_id) %><BR>
         Number1: <%= @link_object.number1 %><BR>
-        String1: <%= @link_object.string1 %><BR>
+        String1: "<%= @link_object.string1 %>"<BR>
         Deleted: <%= @link_object.deleted %><BR>
         ApprovedParent: <%= @link_object.approved_parent %><BR>
         ApprovedChild: <%= @link_object.approved_child %><BR>
@@ -53,16 +53,34 @@
           local: true, action: :undelete, method: :post) do |f| %>
           <%= f.submit "Undelete #{@link_object.base_s}", class: "btn btn-info" %>
           <%= f.text_area :reason, placeholder: "Reason why...",
-            class: "delete-reason" %>
+            class: "reason-why" %>
         <% end %>
       <% else %>
         <%= form_with(url: link_base_path(@link_object),
           local: true, action: :delete, method: :delete) do |f| %>
           <%= f.submit "Delete #{@link_object.base_s}", class: "btn btn-danger" %>
           <%= f.text_area :reason, placeholder: "Reason why...",
-            class: "delete-reason" %>
+            class: "reason-why" %>
         <% end %>
       <% end %>
+
+      <%= form_with(url: approve_link_base_path(@link_object),
+        local: true, action: :approve, method: :post) do |f| %>
+        <%= f.submit "Approve #{@link_object.base_s}", class: "btn btn-info" %>
+        <%= f.text_area :reason, placeholder: "Reason why...",
+          class: "reason-why" %>
+      <% end %>
+      <%= form_with(url: unapprove_link_base_path(@link_object),
+        local: true, action: :unapprove, method: :post) do |f| %>
+        <%= f.submit "Unapprove #{@link_object.base_s}", class: "btn btn-info" %>
+        <%= f.text_area :reason, placeholder: "Reason why...",
+          class: "reason-why" %>
+      <% end %>
+
+
+
+
+
     <% end %>
     </div>
   </div>

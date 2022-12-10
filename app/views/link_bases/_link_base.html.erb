@@ -23,11 +23,12 @@
       ledger_base_path(link_object.child_id) %> <%=
       point_html(link_object.rating_direction_child,
       link_object.rating_points_boost_child) %><BR>
-    <small><%= link_object.created_at.getlocal %> (ceremony #<%=
-      link_object.original_ceremony %>), Spent: <%=
-      format("%.2f", link_object.rating_points_spent) %><%=
-      link_object.string1.empty? ? "" :
-      ", Note: \"" + link_object.string1.truncate(40) + "\"" %>.</small>
+    <small>Created: <%= link_object.created_at.getlocal %> (ceremony #<%=
+      link_object.original_ceremony %>), total spent: <%=
+      format("%.2f", link_object.rating_points_spent) %><%
+      unless link_object.string1.empty? %><br>Note: <%=
+        link_object.string1.truncate(255) %><%
+      end %></small>
   </div>
 <% end %>
 </li>
