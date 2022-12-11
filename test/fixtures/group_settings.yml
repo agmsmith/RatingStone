@@ -15,5 +15,5 @@ group_all_settings:
   wildcard_role_reader: ""
   wildcard_role_member: ""
   wildcard_role_message_moderator: ""
-  wildcard_role_meta_moderator: ""
+  wildcard_role_meta_opinionator: ""
   wildcard_role_member_moderator: ""

@@ -14,8 +14,8 @@ class CreateGroupSettings < ActiveRecord::Migration[7.0]
       t.string :wildcard_role_banned, default: "", comment: "Wildcard expression to identify people who are banned, in addition to explicit LinkRole records.  So we can ban friends of banned people, etc."
       t.string :wildcard_role_reader, default: "", comment: "Relationship expression specifying additional people who are allowed to read the group."
       t.string :wildcard_role_member, default: "", comment: "Relationship expression specifying additional people who are considered members of the group, even if they didn't apply."
+      t.string :wildcard_role_meta_opinionator, default: "", comment: "Relationship expression specifying additional people who are allowed to rate opinions about messages in this group."
       t.string :wildcard_role_message_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate (approve/delete) messages."
-      t.string :wildcard_role_meta_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to anonymously rate opinions about messages in this group."
       t.string :wildcard_role_member_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate membership requests."
     end
   end

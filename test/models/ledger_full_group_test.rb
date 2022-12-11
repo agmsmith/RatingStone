@@ -33,8 +33,8 @@ class LedgerFullGroupTest < ActiveSupport::TestCase
     assert_equal(@group.get_role(luser), LinkRole::CREATOR)
     luser = ledger_users(:group_owner_user)
     assert_equal(@group.get_role(luser), LinkRole::OWNER)
-    luser = ledger_users(:meta_moderator_user)
-    assert_equal(@group.get_role(luser), LinkRole::META_MODERATOR)
+    luser = ledger_users(:meta_opinionator_user)
+    assert_equal(@group.get_role(luser), LinkRole::META_OPINIONATOR)
     luser = ledger_users(:message_moderator_user)
     assert_equal(@group.get_role(luser), LinkRole::MESSAGE_MODERATOR)
     luser = ledger_users(:message_moderator2_user) # Both Banned and moderator.

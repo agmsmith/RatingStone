@@ -18,13 +18,13 @@ class LinkRoleTest < ActiveSupport::TestCase
     assert(krole.valid?)
     krole.save!
     assert(krole.description.include?(
-      "is a message moderator (a nonstandard 52) in ",
+      "is a maker of opinions about opinions (a nonstandard 52) in ",
     ))
 
     krole = LinkRole.new(group: ledger_full_groups(:group_all),
       user: ledger_users(:member_user), creator: ledger_users(:member_user),
       priority: 50)
     krole.save!
-    assert(krole.description.include?("is a message moderator in "))
+    assert(krole.description.include?("is a maker of opinions about opinions in "))
   end
 end

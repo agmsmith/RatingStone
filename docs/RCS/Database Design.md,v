@@ -1,9 +1,14 @@
-head	1.86;
+head	1.87;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.87
+date	2022.12.11.20.14.54;	author agmsmith;	state Exp;
+branches;
+next	1.86;
 
 1.86
 date	2022.09.13.19.51.39;	author agmsmith;	state Exp;
@@ -441,15 +446,14 @@ desc
 @
 
 
-1.86
+1.87
 log
-@Decide that deleted flag in LedgerBase objects applies to all
-versions of that object at once.
+@Change meta_moderator to meta_opinionator for the Role.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.85 2022/09/04 21:32:26 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.86 2022/09/13 19:51:39 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -599,7 +603,7 @@ still use groups since it's worthwhile to reach a more relevant audience.
 
 ## Relationships
 
-We want to identify people based on relationships.  The obvious one used by
+We may want to identify people based on relationships.  The obvious one used by
 many social media is Friend.  Another is Follower.  We can also do Parent,
 Child, Spouse and that should about cover it for family relationships
 (grandparents are Parent of Parent of person, siblings share a parent, etc).
@@ -690,12 +694,12 @@ that specifies the highest role they have in that group.
    group, so even a non-member could submit a post.
 4. **Opinionator**.  Can make opinions about things, and associate them with
    the group.
-5. **Message Moderator**.  Can approve, unapprove (makes it pending approval
+5. **Meta Opinionator**.  Can make comments on opinions about messages in the
+   group.  There might be bonus points for accurate opinions and bans for
+   creators of bad ones.
+6. **Message Moderator**.  Can approve, unapprove (makes it pending approval
    again) and disconnect posts and opinions from the group.  Can see deleted
    messages and opinions.
-6. **Meta Moderator**.  Can make anonymous comments on opinions about messages
-   in the group.  There might be bonus points for accurate opinions and bans
-   for creators of bad ones.
 7. **Member Moderator**.  Approves and rejects membership requests.
 8. **Owner**.  Owners can be added to a group (and other objects) by a
    LinkOwner record.  They have all permissions (including approving or
@@ -1716,8 +1720,8 @@ details like this:
       t.string :wildcard_role_banned, default: "", comment: "Wildcard expression to identify people who are banned, in addition to explicit LinkRole records.  So we can ban friends of banned people, etc."
       t.string :wildcard_role_reader, default: "", comment: "Relationship expression specifying additional people who are allowed to read the group."
       t.string :wildcard_role_member, default: "", comment: "Relationship expression specifying additional people who are considered members of the group, even if they didn't apply."
+      t.string :wildcard_role_meta_opinionator, default: "", comment: "Relationship expression specifying additional people who are allowed to rate opinions about messages in this group."
       t.string :wildcard_role_message_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate (approve/delete) messages."
-      t.string :wildcard_role_meta_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to anonymously rate opinions about messages in this group."
       t.string :wildcard_role_member_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to moderate membership requests."
     end
   end
@@ -1799,9 +1803,13 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/CottagePC/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.85 2022/09/04 21:32:26 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.86 2022/09/13 19:51:39 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.86  2022/09/13 19:51:39  agmsmith
+Decide that deleted flag in LedgerBase objects applies to all
+versions of that object at once.
+
 Revision 1.85  2022/09/04 21:32:26  agmsmith
 Don't charge creation to creator for LedgerUser objects, since they
 are their own creators and that would leave them with no points
@@ -2076,6 +2084,35 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.86
+log
+@Decide that deleted flag in LedgerBase objects applies to all
+versions of that object at once.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.85 2022/09/04 21:32:26 agmsmith Exp agmsmith $</SMALL>
+d153 1
+a153 1
+We want to identify people based on relationships.  The obvious one used by
+d244 4
+a247 1
+5. **Message Moderator**.  Can approve, unapprove (makes it pending approval
+a249 3
+6. **Meta Moderator**.  Can make anonymous comments on opinions about messages
+   in the group.  There might be bonus points for accurate opinions and bans
+   for creators of bad ones.
+d1270 1
+a1271 1
+      t.string :wildcard_role_meta_moderator, default: "", comment: "Relationship expression specifying additional people who are allowed to anonymously rate opinions about messages in this group."
+d1353 1
+a1353 1
+$Header: /home/agmsmith/CottagePC/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.85 2022/09/04 21:32:26 agmsmith Exp agmsmith $
+d1356 4
 @
 
 

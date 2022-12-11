@@ -19,8 +19,8 @@ class LinkRole < LinkBase
   READER = 20
   MEMBER = 30
   OPINIONATOR = 40
-  MESSAGE_MODERATOR = 50
-  META_MODERATOR = 60
+  META_OPINIONATOR = 50
+  MESSAGE_MODERATOR = 60
   MEMBER_MODERATOR = 70
   OWNER = 80
   CREATOR = 90
@@ -31,8 +31,8 @@ class LinkRole < LinkBase
     READER => "reader",
     MEMBER => "member",
     OPINIONATOR => "opinion maker",
+    META_OPINIONATOR => "maker of opinions about opinions",
     MESSAGE_MODERATOR => "message moderator",
-    META_MODERATOR => "meta moderator",
     MEMBER_MODERATOR => "member moderator",
     OWNER => "owner",
     CREATOR => "creator",

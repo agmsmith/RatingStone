@@ -60,13 +60,13 @@ role_message_moderator2_banned:
   approved_parent: true
   approved_child: true
 
-role_meta_moderator:
+role_meta_opinionator:
   type: 'LinkRole'
-  creator: meta_moderator_user
-  number1: <%= LinkRole::META_MODERATOR %>
+  creator: meta_opinionator_user
+  number1: <%= LinkRole::META_OPINIONATOR %>
   parent: group_all
-  child: meta_moderator_user
-  string1: 'Meta moderator user is a meta moderator.'
+  child: meta_opinionator_user
+  string1: 'Meta opinionator user is allowed to make opinions about opinions.'
   approved_parent: true
   approved_child: true
 

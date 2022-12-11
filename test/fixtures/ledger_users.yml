@@ -73,11 +73,11 @@ member_moderator_user:
   original_ceremony: 0
   current_ceremony: 0
 
-meta_moderator_user:
+meta_opinionator_user:
   type: 'LedgerUser'
-  creator_id: <%= ActiveRecord::FixtureSet.identify(:meta_moderator_user) %>
-  string1: 'Moderator of opinions in a group'
-  string2: 'metamoderator@example.com'
+  creator_id: <%= ActiveRecord::FixtureSet.identify(:meta_opinionator_user) %>
+  string1: 'Makes opinions about opinions in a group'
+  string2: 'metaopinionator@example.com'
   current_meh_points: 10
   original_ceremony: 0
   current_ceremony: 0
