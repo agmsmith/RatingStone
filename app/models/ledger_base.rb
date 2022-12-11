@@ -387,7 +387,8 @@ class LedgerBase < ApplicationRecord
       end
 
       # Update weekly spend for UI information display.  Ignore when self is
-      # not a LedgerUser or no User record has been created.
+      # not a LedgerUser (could be a LedgerFullGroup) or no User record has
+      # been created.
       if is_a?(LedgerUser)
         user = User.find_by(ledger_user_id: id)
         user&.with_lock do

@@ -1,9 +1,19 @@
-head	1.87;
+head	1.89;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.89
+date	2022.12.11.22.50.27;	author agmsmith;	state Exp;
+branches;
+next	1.88;
+
+1.88
+date	2022.12.11.22.44.43;	author agmsmith;	state Exp;
+branches;
+next	1.87;
 
 1.87
 date	2022.12.11.20.14.54;	author agmsmith;	state Exp;
@@ -446,14 +456,14 @@ desc
 @
 
 
-1.87
+1.89
 log
-@Change meta_moderator to meta_opinionator for the Role.
+@Fix indentation of headings, remove birthday objects.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.86 2022/09/13 19:51:39 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.88 2022/12/11 22:44:43 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -950,7 +960,8 @@ new_marking_state flag is false, it undeletes.
 You usually need to be the creator or owner of the link to change the deleted
 state.  I was thinking that people who can approve the link ends could also
 delete it, but that then means that someone who has been banned from a group
-could delete their banning link.  May need to revisit this.
+could delete their banning link.  May need to revisit this, with exceptions
+depending on the link subclass.
 
 
 #### *LedgerApprove* < LedgerChangeMarking
@@ -1012,40 +1023,36 @@ award it rating points, but it never regenerates points (only Users do that).
 Attach content to it (like pictures or a post) to describe it better, using
 LinkHomeContent.  Links to a classification group can rate it.  For example, a
 book reviews group would have a link to the book to award it points.  Can be in
-multiple groups, such as "My Books" and "World's Best Books".
+multiple groups, such as "My Books" and "World's Best Books".  Probably not in
+the first prototype, just posts is fine.
 
 * Name of thing.  Write-once.
 
 
-### *LedgerContent* < LedgerBase
+### *LedgerPost* < LedgerBase
 
-An abstract base class for things which can be displayed to the user.  There
-can also be replies to this thing, it can be put in a discussion group, added
-to a category list to identify what the topic of the content is, have rating
-points awarded to it, and so on.  It is also usually visible to users and even
-external web sites, unless permissions (determined by the groups it is in) make
-it private.
+A post made by a user.  This is the object the user interacts with the most.
+Contains a subject and some formatted text.  They can also attach pictures and
+other media files with LinkMedia records (they'll be displayed in a grid after
+the text, in order by link creation date).
+
+There can also be replies to this thing, it can be put in a discussion group,
+added to a category list to identify what the topic of the content is, have
+rating points awarded to it, and so on.  It is also usually visible to users
+and even external web sites, unless permissions (determined by the groups it
+is in) make it private.
 
 * subject string A short bit of text identifying the content, in plain UTF-8.
   For a post this will be the subject line.  For a picture, this will be a
   description of it (also used as the HTML alternative text for the picture).
   Write-once.
-
-
-#### *LedgerPost* < LedgerContent
-
-A post made by a user.  Contains some formatted text.  They can also attach
-pictures and other media files with LinkMedia records.  They'll be displayed in
-a grid after the text, in order by link creation date.  This is the object the
-user interacts with the most.
-
 * content text The text written by the user for the post, in markdown UTF-8
   format (we're using the kramdown dialect).  Length limited only by the number
   of points the user wants to spend (it's an unlimited Text not a String
   field).  Write-once.
 
 
-#### *LedgerMedia* < LedgerContent
+### *LedgerMedia* < LedgerBase
 
 A file uploaded by the user.  Usually some sort of media, like a picture or
 video clip.  Can be attached to multiple posts to make them more interesting,
@@ -1150,7 +1157,7 @@ some or singletons for others (like e-mail activation).  There's a category for
 +1 weekly entitlement point for a good year of posting, another one for -1
 weekly point of annual inactivity, or no bonus for just doing a minor amount of
 posting during the year.  Those bonus links are made during the award ceremony
-on the anniversary of a user's account activation.
+on the annual anniversary of a user's account activation.
 
 As mentioned elsewhere, the weekly allowance bonus points are added to the
 user's meh score each week (theoretically just after the ceremony is done).
@@ -1160,23 +1167,6 @@ the future if users are particularly obnoxious, we can also limit the spending
 of meh points to ones above the down points, but then we'd need another
 mechanism to make sure they can still spend their allowance points in all
 situations.
-
-
-### *LedgerBirthday* < LedgerMedia
-
-Identifies the birthday of a user.  Mostly an excuse to reuse the generic
-timestamp field that LedgerAwardCeremony made necessary.
-
-* birthday_at Date and time stamp of when the user was born, or first became
-  independently operational.
-
-
-### *LedgerDeathday* < LedgerMedia
-
-Identifies the date of a user's death.
-
-* deathday_at Date and time stamp of when the user died, or is otherwise no
-  longer operational.  May make spouses show up as widows.
 
 
 ## *LinkBase* Classes
@@ -1237,9 +1227,9 @@ B, object A is a list header and B is in the list, etc).
   and a base fee to avoid high speed trading problems).  Points after the fees
   will be given to the child and parent objects, the split decided by the user.
   Needed so that a reply to a post will boost the rating of both the post and
-  the reply (so they both have longer lifetimes).  Negative at the time when
-  creating a link (but not in the database) means use default spending amount
-  and default allocation for the various boosts.  Write-once.
+  the reply (so they both have longer lifetimes).  Negative specified at the
+  time when creating a link (but not in the database) means use default
+  spending amount and default allocation for the various boosts.  Write-once.
 * rating_points_boost_parent float The number of points to boost the rating of
   the parent, equals spent minus fees and minus child boost.  Should not be
   negative.  Over time they are considered to fade (the value in the database
@@ -1268,15 +1258,7 @@ B, object A is a list header and B is in the list, etc).
 
 The parent is a LedgerUser who is to be treated almost the same as the creator
 of the object specified as the child of the link.  They can do everything the
-creator can do, except change the creator.  This record is also used to link
-the object to the creator if the creator doesn't spend points on the object via
-some other LinkBase record (such as a LinkReply or LinkGroupContent).  That's
-because the implied LinkCreator (the creator_id field in the LedgerBase record)
-has zero reputation points assigned to it.  If we just created the object, at
-the next awards ceremony it would have zero points and be garbage collected.
-Also by using a LinkOwner, rather than having an implied LinkCreator with a
-fixed 1.0 fee, we can charge a larger and variable fee for more resource
-consuming objects, such as big media files.
+creator can do, except change the creator.
 
 Only the creator or an existing owner can approve new owners of an object.
 
@@ -1286,11 +1268,12 @@ could be a way of letting multiple people control a person or company account.
 
 ### *LinkReply* < LinkBase
 
-The child is a reply to the parent.  Usually both objects are LedgerPost, or at
-least LedgerContent.  Besides the usual creator, the users who are allowed to
-approve either end of the link are also allowed to delete the link.  So if
-someone attaches their post as a reply to your post, you can break that
-connection.
+The child is a reply to the parent.  Usually both objects are LedgerPost.
+Besides the usual creator, the users who are allowed to approve either end of
+the link are also allowed to delete the link.  So if someone attaches their
+post as a reply to your post, you can break that connection.  Quotes are also
+done with LinkReply, but child and parent are reversed (you can tell by the
+backwards creation dates).
 
 
 ### *LinkMedia* < LinkBase
@@ -1302,7 +1285,7 @@ the text of the post (grid order determined by the order of datestamps of these
 link records).  The user can click on individual ones to play them.
 
 
-### *LinkHomeContent* < LinkBase
+### *LinkHomePost* < LinkBase
 
 Parent is a Ledger(Full/Sub)group or LedgerThing and child is usually a
 LedgerPost.  That post will be used as the home post (home page, status page,
@@ -1314,8 +1297,7 @@ LinkHomeContent to unpin them.
 ### *LinkHomeGroup* < LinkBase
 
 Parent is a LedgerUser and child is a LedgerFullGroup.  That group will be used
-as the home page for the user, combined with some user related information
-(like a list of all their posts, time of last logon, etc).  Normally the group
+as the home group for the user's personal posts.  Normally the group
 will be created when the user is created, with the user listed as the group's
 creator.  That way they'll be able to control who can see their personal posts.
 If someone wants to follow that user, they will simply subscribe to the group
@@ -1344,15 +1326,15 @@ them deny permission.
 
 ### *LinkGroupContent* < LinkBase
 
-Links a child LedgerContent (usually a LedgerPost or LedgerMedia) to a parent
-LedgerFullGroup or LedgerSubgroup.  Means that the child is considered part of
-the group's displayable content and will use the group's permissions to decide
-who can see the child.  Quite often the links will be pending until each end is
-approved by a moderator or higher role (usually moderator at the group end,
-owner/creator at the post end).  Note that all replies to a post that are in
-the same group also need a LinkGroupContent record, since group inclusion can
-change from post to post as the users wish (user interface defaults to using
-the same groups as the original post when replying).
+Links a child LedgerPost to a parent LedgerFullGroup or LedgerSubgroup.  Means
+that the child is considered part of the group's collection of posts and will
+use the group's permissions to decide who can see the child.  Quite often the
+links will be pending until each end is approved by a moderator or higher role
+(usually moderator at the group end, owner/creator at the post end).  Note that
+all replies to a post that are in the same group also need a LinkGroupContent
+record, since group inclusion can change from post to post as the users wish
+(user interface defaults to using the same groups as the original post when
+replying).
 
 Unlike most Links where only the owner or creator of the linked to thing can
 change the approval, group message moderators can change the approval of the
@@ -1383,7 +1365,8 @@ wish.
 
 This is the abstract base class to show the parent and child are LedgerUser
 objects in some sort of relationship, such as parent, child, spouse, friend,
-enemy, employer, follower.
+enemy, employer, follower.  Might be used in the future, but not in the initial
+minimal prototype system.
 
 Only the creator and people who need to give approval can delete it.
 
@@ -1483,78 +1466,51 @@ They receive those points either way.
 
 ### *LinkOpinion* < LinkBase
 
-Parent LedgerUser (usually the creator too) has an opinion about the child
-object (usually a LedgerContent or a LedgerUser or LedgerThing).  Can be
-positive or negative or meh, decided by the points awarded to the child.
-Usually no points awarded to the parent, unless a third party is essentially
-paying someone to have an opinion.  Automatically approved for the child end,
-parent end auto approved if it is the creator, and can only be deleted or
-unapproved by the creator or parent end.
+The link creator has an opinion about the child object (usually a LedgerPost or
+a LedgerUser or LedgerThing).  Can be positive or negative or meh, decided by
+the points awarded to the child.  Parent is usually the creator of the child,
+in case the creator wants to award them some spendable points too.
+Automatically approved for the child end and parent end, and can only be
+deleted or unapproved by the creator.
 
 For example, if you like a post, you can make a LinkOpinion referencing the
-post (as the child object) and give it some of your rating points.  The parent
-field would identify you as the person with the opinion.
+post (as the child object) and rate it upwards with your points.  The parent
+field would identify the post's author, and give them some additional points
+if you wish to essentially rate them too.  The default for a quick "like" is
+to just use half the points on the child, half on the parent.  A fancier user
+interface would let you specify parent points separately, with possibly a
+separate direction.
 
-#### Taking it Meta ####
+* reason_why A string Up to 255 bytes of plain text describing the reason for
+  the opinion.  Empty for snap judgements.
 
-You can have an opinion about someone else's opinion.  If you don't like the
-rating someone made on a post, you can make a LinkOpinion that has an AuxLink
-record referencing their rating (which is itself another LinkOpinion) and
-perhaps give some opposite points to the post (specified in the child field) to
-counter the bad rating.  Or you could specify the person with the bad opinion
-as the child and rate them directly.  Since the child field can't be NULL, give
-the user the choice of the child of the original opinion (the post), the
-creator of the opinion, the parent of the opinion (usually the opinion's
-creator too) or the creator of the original opinion child (the post's creator).
-It doesn't affect the original opinion's operation, which doesn't have a
-reputation rating of its own.
+
+#### *LinkMetaOpinion* < LinkOpinion
+
+You can have an opinion about someone else's opinion or other link objects.
+If you disagree with the rating someone made on a post, you can make a
+LinkMetaOpinion that has the person or group responsible for the meta opinion
+as the child and the author of the original opinion as the parent, and the
+LinkOpinion record ID in the number1 field.  The creator is the user making the
+meta-opinion (usually a moderator for the group if child is a group) and paying
+for it.  It doesn't affect the original opinion's operation, which doesn't have
+a reputation rating of its own.
 
 Your meta opinion doesn't have to always be about some other opinion.  If you
 like the way someone connected a bit of useful information (an existing old
 post answering a frequently asked question) as a reply to a new post, you can
-reward them for making that link with a LinkOpinion's AuxLink referencing the
-LinkReply record and with the creator of the LinkReply as the rewarded child.
+reward them for making that link with a LinkMetaOpinion's referencing
+the LinkReply record and with the creator of the LinkReply as the parent.  I
+suppose you could have an opinion about a LinkMetaOpinion too.
 
-You can have an opinion about multiple other links, perhaps saying that they
-are all spam.  But probably should limit it to one.
-
-* comment string Up to 255 bytes of kramdown formatted text describing the
-  opinion.
-* meta_link boolean True if the opinion is actually about another opinion or
-  other LinkBase connection, specified by an AuxLink record.  The child (the
-  object which gets rating points) will usually be one or the other end of the
-  mentioned link or its creator.  False means don't bother searching for an
-  AuxLink record; it shouldn't exist.  Mostly this field exists to avoid
-  searching for AuxLink records every time an opinion is shown.
-* secret boolean True if it should be hidden from most users, sort of like
-  secret ballots.
-
-
-#### *LinkMetaMod* < LinkOpinion
-
-This is an opinion about someone else's opinions, used for meta-moderation.
-The main difference is that it is anonymous (the parent is hidden to most
-people).  Usually members of a group will on occasion (much more often if they
-have the meta-moderator role in the group) be shown a random opinion about a
-message in the group (usually a recent one, but not always).  They can decide
-how many points to award and in which direction to the person making the
-opinion.  Additionally they will receive a bit of a positive reward too, and
-for convenience the LinkMetaMod will be initially approved on the parent end
-rather than needing the creator to be the parent for pre-approval.  The group
-will pay for the points and be listed as the creator of the LinkMetaMod record.
-
-For meta-meta-moderation, we'll just use an annual performance review for the
-more significant meta-moderators (since they get paid in points, they could do
-this as a kind of job, and moderators would also get points from the
-meta-moderator operation, and the group could get points by having a weekly
-membership fee).
+* about_link_id  integer Has the ID of the Link record being talked about.
 
 
 ### *LinkBonus* < LinkBase
 
 This kind of link adds or removes weekly bonus points to/from a child
 LedgerUser record.  The parent object explains the bonus, usually in the form
-of LedgerContent of some sort that can be displayed to the user if they want to
+of LedgerPost of some sort that can be displayed to the user if they want to
 know why they got that bonus, or perhaps a Category object (have a tree of
 bonuses).  Normal users can't create this kind of link other than indirectly
 through their actions.
@@ -1803,9 +1759,18 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.86 2022/09/13 19:51:39 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.88 2022/12/11 22:44:43 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.88  2022/12/11 22:44:43  agmsmith
+Clarified LinkOpinion and LinkMetaOpinion, LinkMetaMod redundant.
+LedgerContent removed, was unneeded conplexification.
+LinkOwner not needed now that all LedgerBase objects have creation fees internally.
+Added Quotes functionality to LinkReply.
+
+Revision 1.87  2022/12/11 20:14:54  agmsmith
+Change meta_moderator to meta_opinionator for the Role.
+
 Revision 1.86  2022/09/13 19:51:39  agmsmith
 Decide that deleted flag in LedgerBase objects applies to all
 versions of that object at once.
@@ -2084,6 +2049,209 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.88
+log
+@Clarified LinkOpinion and LinkMetaOpinion, LinkMetaMod redundant.
+LedgerContent removed, was unneeded conplexification.
+LinkOwner not needed now that all LedgerBase objects have creation fees internally.
+Added Quotes functionality to LinkReply.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.87 2022/12/11 20:14:54 agmsmith Exp agmsmith $</SMALL>
+d563 2
+a564 1
+multiple groups, such as "My Books" and "World's Best Books".
+d569 1
+a569 1
+#### *LedgerPost* < LedgerBase
+d592 1
+a592 1
+#### *LedgerMedia* < LedgerBase
+a708 17
+### *LedgerBirthday* < LedgerMedia
+
+Identifies the birthday of a user.  Mostly an excuse to reuse the generic
+timestamp field that LedgerAwardCeremony made necessary.
+
+* birthday_at Date and time stamp of when the user was born, or first became
+  independently operational.
+
+
+### *LedgerDeathday* < LedgerMedia
+
+Identifies the date of a user's death.
+
+* deathday_at Date and time stamp of when the user died, or is otherwise no
+  longer operational.  May make spouses show up as widows.
+
+
+d1299 1
+a1299 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.87 2022/12/11 20:14:54 agmsmith Exp agmsmith $
+d1302 6
+@
+
+
+1.87
+log
+@Change meta_moderator to meta_opinionator for the Role.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.86 2022/09/13 19:51:39 agmsmith Exp agmsmith $</SMALL>
+d500 2
+a501 1
+could delete their banning link.  May need to revisit this.
+d568 1
+a568 1
+### *LedgerContent* < LedgerBase
+d570 10
+a579 6
+An abstract base class for things which can be displayed to the user.  There
+can also be replies to this thing, it can be put in a discussion group, added
+to a category list to identify what the topic of the content is, have rating
+points awarded to it, and so on.  It is also usually visible to users and even
+external web sites, unless permissions (determined by the groups it is in) make
+it private.
+a584 9
+
+
+#### *LedgerPost* < LedgerContent
+
+A post made by a user.  Contains some formatted text.  They can also attach
+pictures and other media files with LinkMedia records.  They'll be displayed in
+a grid after the text, in order by link creation date.  This is the object the
+user interacts with the most.
+
+d591 1
+a591 1
+#### *LedgerMedia* < LedgerContent
+d696 1
+a696 1
+on the anniversary of a user's account activation.
+d783 3
+a785 3
+  the reply (so they both have longer lifetimes).  Negative at the time when
+  creating a link (but not in the database) means use default spending amount
+  and default allocation for the various boosts.  Write-once.
+d814 1
+a814 9
+creator can do, except change the creator.  This record is also used to link
+the object to the creator if the creator doesn't spend points on the object via
+some other LinkBase record (such as a LinkReply or LinkGroupContent).  That's
+because the implied LinkCreator (the creator_id field in the LedgerBase record)
+has zero reputation points assigned to it.  If we just created the object, at
+the next awards ceremony it would have zero points and be garbage collected.
+Also by using a LinkOwner, rather than having an implied LinkCreator with a
+fixed 1.0 fee, we can charge a larger and variable fee for more resource
+consuming objects, such as big media files.
+d824 6
+a829 5
+The child is a reply to the parent.  Usually both objects are LedgerPost, or at
+least LedgerContent.  Besides the usual creator, the users who are allowed to
+approve either end of the link are also allowed to delete the link.  So if
+someone attaches their post as a reply to your post, you can break that
+connection.
+d841 1
+a841 1
+### *LinkHomeContent* < LinkBase
+d853 1
+a853 2
+as the home page for the user, combined with some user related information
+(like a list of all their posts, time of last logon, etc).  Normally the group
+d882 9
+a890 9
+Links a child LedgerContent (usually a LedgerPost or LedgerMedia) to a parent
+LedgerFullGroup or LedgerSubgroup.  Means that the child is considered part of
+the group's displayable content and will use the group's permissions to decide
+who can see the child.  Quite often the links will be pending until each end is
+approved by a moderator or higher role (usually moderator at the group end,
+owner/creator at the post end).  Note that all replies to a post that are in
+the same group also need a LinkGroupContent record, since group inclusion can
+change from post to post as the users wish (user interface defaults to using
+the same groups as the original post when replying).
+d921 2
+a922 1
+enemy, employer, follower.
+d1022 6
+a1027 7
+Parent LedgerUser (usually the creator too) has an opinion about the child
+object (usually a LedgerContent or a LedgerUser or LedgerThing).  Can be
+positive or negative or meh, decided by the points awarded to the child.
+Usually no points awarded to the parent, unless a third party is essentially
+paying someone to have an opinion.  Automatically approved for the child end,
+parent end auto approved if it is the creator, and can only be deleted or
+unapproved by the creator or parent end.
+d1030 21
+a1050 16
+post (as the child object) and give it some of your rating points.  The parent
+field would identify you as the person with the opinion.
+
+#### Taking it Meta ####
+
+You can have an opinion about someone else's opinion.  If you don't like the
+rating someone made on a post, you can make a LinkOpinion that has an AuxLink
+record referencing their rating (which is itself another LinkOpinion) and
+perhaps give some opposite points to the post (specified in the child field) to
+counter the bad rating.  Or you could specify the person with the bad opinion
+as the child and rate them directly.  Since the child field can't be NULL, give
+the user the choice of the child of the original opinion (the post), the
+creator of the opinion, the parent of the opinion (usually the opinion's
+creator too) or the creator of the original opinion child (the post's creator).
+It doesn't affect the original opinion's operation, which doesn't have a
+reputation rating of its own.
+d1055 3
+a1057 5
+reward them for making that link with a LinkOpinion's AuxLink referencing the
+LinkReply record and with the creator of the LinkReply as the rewarded child.
+
+You can have an opinion about multiple other links, perhaps saying that they
+are all spam.  But probably should limit it to one.
+d1059 1
+a1059 30
+* comment string Up to 255 bytes of kramdown formatted text describing the
+  opinion.
+* meta_link boolean True if the opinion is actually about another opinion or
+  other LinkBase connection, specified by an AuxLink record.  The child (the
+  object which gets rating points) will usually be one or the other end of the
+  mentioned link or its creator.  False means don't bother searching for an
+  AuxLink record; it shouldn't exist.  Mostly this field exists to avoid
+  searching for AuxLink records every time an opinion is shown.
+* secret boolean True if it should be hidden from most users, sort of like
+  secret ballots.
+
+
+#### *LinkMetaMod* < LinkOpinion
+
+This is an opinion about someone else's opinions, used for meta-moderation.
+The main difference is that it is anonymous (the parent is hidden to most
+people).  Usually members of a group will on occasion (much more often if they
+have the meta-moderator role in the group) be shown a random opinion about a
+message in the group (usually a recent one, but not always).  They can decide
+how many points to award and in which direction to the person making the
+opinion.  Additionally they will receive a bit of a positive reward too, and
+for convenience the LinkMetaMod will be initially approved on the parent end
+rather than needing the creator to be the parent for pre-approval.  The group
+will pay for the points and be listed as the creator of the LinkMetaMod record.
+
+For meta-meta-moderation, we'll just use an annual performance review for the
+more significant meta-moderators (since they get paid in points, they could do
+this as a kind of job, and moderators would also get points from the
+meta-moderator operation, and the group could get points by having a weekly
+membership fee).
+d1066 1
+a1066 1
+of LedgerContent of some sort that can be displayed to the user if they want to
+d1315 1
+a1315 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.86 2022/09/13 19:51:39 agmsmith Exp agmsmith $
+d1318 3
 @
 
 
