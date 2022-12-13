@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 class LinkBasesController < ApplicationController
-  before_action :logged_in_user, only: [:new, :create, :index, :show]
+  before_action :logged_in_user, only: [:create, :index, :show]
   before_action :correct_user, only:
-    [:approve, :destroy, :unapprove, :undelete, :edit, :update]
+    [:approve, :unapprove, :destroy, :undelete]
 
   def approve
     stock_do_marking(LedgerApprove, true, "approve", "approved")
@@ -16,15 +16,9 @@ class LinkBasesController < ApplicationController
     stock_do_marking(LedgerDelete, true, "delete", "deleted")
   end
 
-  def edit
-  end
-
   def index
     @link_objects = LinkBase.where(deleted: false).order(created_at: :desc)
       .paginate(page: params[:page])
-  end
-
-  def new
   end
 
   def show
@@ -37,9 +31,6 @@ class LinkBasesController < ApplicationController
 
   def undelete
     stock_do_marking(LedgerDelete, false, "undelete", "undeleted")
-  end
-
-  def update
   end
 
   private

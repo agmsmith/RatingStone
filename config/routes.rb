@@ -48,5 +48,16 @@ Rails.application.routes.draw do
       post 'unapprove'
     end
   end
+
+  # For LinkOpinion and LinkMetaOpinion (when field :number1 is defined), so
+  # you can create a new opinion record and edit it before submitting.
+  # Subclass of LinkBase, so it inherits actions from :link_bases.
+  resources :link_opinions, only: [:index, :show, :new, :create, :destroy] do
+    member do
+      post 'undelete'
+      post 'approve'
+      post 'unapprove'
+    end
+  end
 end
 

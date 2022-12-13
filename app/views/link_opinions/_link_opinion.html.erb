@@ -1,0 +1,37 @@
+<li id="link-object-<%= link_object.id %>" class="row">
+<% if link_object.creator_owner?(current_ledger_user) ||
+  link_object.parent.creator_owner?(current_ledger_user) ||
+  link_object.child.creator_owner?(current_ledger_user) %>
+  <div class="col-xs-12 <%=
+    link_object.deleted ? "deleted" : "content" %>">
+    <%= link_to "#{link_object.base_s}",
+      link_opinion_path(link_object) %>
+    <% if !link_object.approved_parent
+        %><span class="unapproved-link"><% end %>Parent:<%
+      if !link_object.approved_parent
+        %></span><% end %> <%= link_to link_object.parent.base_s,
+        ledger_base_path(link_object.parent_id) %> <%=
+        point_html(link_object.rating_direction_parent,
+          link_object.rating_points_boost_parent) %>,
+    <% if !link_object.approved_child
+        %><span class="unapproved-link"><% end %>Child:<%
+      if !link_object.approved_child
+        %></span><% end %> <%= link_to link_object.child.base_s,
+      ledger_base_path(link_object.child_id) %> <%=
+      point_html(link_object.rating_direction_child,
+      link_object.rating_points_boost_child) %><BR>
+    <small>Created: <%= link_object.created_at.getlocal %> (ceremony #<%=
+      link_object.original_ceremony %>), total spent: <%=
+      format("%.2f", link_object.rating_points_spent) %><%
+      unless link_object.string1.empty? %><br>Note: <%=
+        link_object.string1.truncate(255) %><%
+      end %></small>
+  </div>
+<% else %>
+  <div class="col-xs-12 not-allowed-to-view">
+    <%= "#{link_object.base_s} You don't have " \
+      "permission to view or modify this link." %>
+  </div>
+<% end %>
+</li>
+
