@@ -107,7 +107,7 @@
   <% end %>
 
   <% auxiliary_links = AuxLink.where(child_id: @link_object.id)
-      .order(created_at: :asc)
+      .order(id: :asc)
     unless auxiliary_links.empty? %>
     <div class="row">
       <div class="col-xs-12">
