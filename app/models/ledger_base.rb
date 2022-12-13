@@ -232,8 +232,8 @@ class LedgerBase < ApplicationRecord
 
     return role_test?(luser, LinkRole::READER) if is_a?(LedgerSubgroup)
 
-    # Test the user's status in groups for things (content) attached to groups.
-    if is_a?(LedgerContent)
+    # Test the user's status in groups for things (posts) attached to groups.
+    if is_a?(LedgerPost)
       LinkGroupContent.where(child_id: original_version_id, deleted: false,
         approved_parent: true, approved_child: true).each do |a_link|
         return true if a_link.group.role_test?(luser, LinkRole::READER)

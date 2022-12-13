@@ -70,18 +70,19 @@ class LedgerUser < LedgerBase
   end
 
   ##
-  # Return the home group for the user, or nil if none.  It's the special group
-  # created for them to post about themselves.  Identified by the most recent
-  # LinkHomeGroup record.
+  # Return the home group (a LedgerFullGroup) for the user, or nil if none.
+  # It's the special group created for them to post about themselves.
+  # Identified by the most recent active LinkHomeGroup record.
   def home_group
-    latest_home = LinkHomeGroup.where(parent_id: original_version_id,
+    latest_home_link = LinkHomeGroup.where(parent_id: original_version_id,
       deleted: false, approved_parent: true, approved_child: true)
       .order(created_at: :desc).first
-    return nil if latest_home.nil?
+    return nil if latest_home_link.nil?
 
-    home_page = latest_home.child.latest_version
-    raise RatingStoneErrors, "Home page latest version from #{latest_home} " \
-      "is not a LedgerFullGroup." unless home_page.is_a?(LedgerFullGroup)
+    home_page = latest_home_link.child.latest_version
+    raise RatingStoneErrors,
+      "Home page latest version from #{latest_home_link} " \
+        "is not a LedgerFullGroup." unless home_page.is_a?(LedgerFullGroup)
     home_page
   end
 

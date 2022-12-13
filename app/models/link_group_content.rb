@@ -59,7 +59,7 @@ class LinkGroupContent < LinkBase
   def validate_parent_and_child_types
     errors.add(:nongroup, "Parent isn't a group for #{self}") \
       unless parent.is_a?(LedgerSubgroup)
-    errors.add(:noncontent, "Child isn't a content object for #{self}") \
-      unless child.is_a?(LedgerContent)
+    errors.add(:noncontent, "Child isn't a post for #{self}") \
+      unless child.is_a?(LedgerPost)
   end
 end

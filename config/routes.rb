@@ -25,8 +25,7 @@ Rails.application.routes.draw do
   end
 
   # The usual actions for displaying/editing posts, plus reply and quote.  Also
-  # can use ledger_bases API and ledger_contents API since LedgerPost is a
-  # subclass of LedgerContent which is a subclass of LedgerBase.
+  # can use ledger_bases API since LedgerPost is a subclass of LedgerBase.
   resources :ledger_posts,
    only: [:new, :create, :index, :show, :edit, :update] do
     member do

@@ -123,7 +123,7 @@
   <% auxiliary_ledgers = AuxLedger.where(
       parent_id: @ledger_object.original_version_id)
       .or(AuxLedger.where(child_id: @ledger_object.original_version_id))
-      .order(created_at: :asc)
+      .order(id: :asc)
     unless auxiliary_ledgers.empty? %>
     <div class="row">
       <div class="col-xs-12">
@@ -144,7 +144,7 @@
 
   <% auxiliary_links = AuxLink.where(
       parent_id: @ledger_object.original_version_id)
-      .order(created_at: :asc)
+      .order(id: :asc)
     unless auxiliary_links.empty? %>
     <div class="row">
       <div class="col-xs-12">
