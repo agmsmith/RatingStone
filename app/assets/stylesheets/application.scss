@@ -119,6 +119,12 @@ input {
   width: 100%;
 }
 
+/* For making forms that word wrap and stay in a line, particularly when
+   using a submit input field as a button for HTML3 compatibility. */
+.button-inline {
+  display: inline;
+}
+
 /* Reason text area for (un)delete, approvals etc, make it 100% so it shrinks. */
 .reason-why {
   width: 100%;

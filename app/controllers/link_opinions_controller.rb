@@ -12,6 +12,4 @@ class LinkOpinionsController < LinkBasesController
   def show
     @link_object = LinkBase.find_by(id: params[:id]) # Can be nil.
   end
-
-  private
 end

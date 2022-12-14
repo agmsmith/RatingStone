@@ -12,7 +12,13 @@
         label_style = 2 if label_style > 2
 
         # Update points since they're being shown.  Affects expiry time too.
-        ledger_post.update_current_points
+        points_object = ledger_post.update_current_points
+
+        highest_points = points_object.current_up_points
+        highest_points = points_object.current_meh_points if
+          points_object.current_meh_points > highest_points
+        highest_points = points_object.current_down_points if
+          points_object.current_down_points > highest_points
 
         # Note we are showing the creator of this particular version of the
         # post, not the original or current creator.  Nil if User deleted.
@@ -35,10 +41,53 @@
         link_to ApplicationHelper::DIRECTION_LABELS["Q"][label_style],
           quote_ledger_post_path(ledger_post) %> <%=
           link_to format("%d", ledger_post.quote_count),
-          quotes_ledger_post_path(ledger_post) %>&nbsp; <%=
-        # List the rating for this post, up / meh / down.
-        # TODO: Turn into links to submit an opinion on the post.
-        points_html(ledger_post) %>
+          quotes_ledger_post_path(ledger_post) %><br>
+      <%= # List the rating for this post, up / meh / down.  Also clicking on a
+        # particular direction will do a Like/Meh/Dislike on the post and its
+        # author, for a default number of points.  There's a separate option
+        # in the details view for creating a more nuanced LinkOpinion.
+        # Buttons change colour to show the direction with the highest
+        # number of points.  Default is washed out btn-info, highlights are
+        # green=Up=btn-success, purple=Meh=btn-primary, red=Down=btn-danger.
+        form_with(url: link_opinions_path, local: true, method: :post,
+          class: "button-inline") do |f| %>
+          <%= f.hidden_field :opinion_about_object_id, value: ledger_post.id %>
+          <%= f.hidden_field :author_id,
+            value: ledger_post.creator.original_version_id %>
+          <%= f.hidden_field :reason_why,
+            value: "Up button pressed for #{ledger_post}." %>
+          <%= f.submit ApplicationHelper::DIRECTION_LABELS["U"][label_style] +
+            format("%.2f", points_object.current_up_points), name: "U",
+            class: "btn btn-" +
+              ((points_object.current_up_points < highest_points) ? "info" :
+              "success") %>
+        <% end %>
+        <%= form_with(url: link_opinions_path, local: true, method: :post,
+          class: "button-inline") do |f| %>
+          <%= f.hidden_field :opinion_about_object_id, value: ledger_post.id %>
+          <%= f.hidden_field :author_id,
+            value: ledger_post.creator.original_version_id %>
+          <%= f.hidden_field :reason_why,
+            value: "Meh button pressed for #{ledger_post}." %>
+          <%= f.submit ApplicationHelper::DIRECTION_LABELS["M"][label_style] +
+            format("%.2f", points_object.current_meh_points), name: "M",
+            class: "btn btn-" +
+              ((points_object.current_meh_points < highest_points) ? "info" :
+              "primary") %>
+        <% end %>
+        <%= form_with(url: link_opinions_path, local: true, method: :post,
+          class: "button-inline") do |f| %>
+          <%= f.hidden_field :opinion_about_object_id, value: ledger_post.id %>
+          <%= f.hidden_field :author_id,
+            value: ledger_post.creator.original_version_id %>
+          <%= f.hidden_field :reason_why,
+            value: "Down button pressed for #{ledger_post}." %>
+          <%= f.submit ApplicationHelper::DIRECTION_LABELS["D"][label_style] +
+            format("%.2f", points_object.current_down_points), name: "D",
+            class: "btn btn-" +
+              ((points_object.current_down_points < highest_points) ? "info" :
+              "danger") %>
+        <% end %>
     </div>
     <%= render "ledger_posts/ledger_post_plain",
       { ledger_post: ledger_post } %>

@@ -42,16 +42,16 @@ class LedgerPost < LedgerBase
   end
 
   ##
-  # How many other posts are quoting this one?
+  # How many other posts are quoting this one?  Well, actually the original one.
   def quote_count
-    LinkReply.where(reply_post: self, deleted: false, approved_parent: true,
-      approved_child: true).count
+    LinkReply.where(reply_post_id: original_version_id, deleted: false,
+      approved_parent: true, approved_child: true).count
   end
 
   ##
   # How many replies did this post get?
   def reply_count
-    LinkReply.where(prior_post: self, deleted: false, approved_parent: true,
-      approved_child: true).count
+    LinkReply.where(prior_post_id: original_version_id, deleted: false,
+      approved_parent: true, approved_child: true).count
   end
 end
