@@ -19,8 +19,6 @@
 # required.
 
 class LedgerBase < ApplicationRecord
-  validate :validate_ledger_original_creator_used,
-    :validate_ledger_type_same_between_versions
   before_create :base_before_create
   after_create :base_after_create
 
@@ -45,6 +43,11 @@ class LedgerBase < ApplicationRecord
   has_many :aux_ledger_ancestors, through: :aux_ledger_ups, source: :parent
   has_many :aux_link_downs, class_name: :AuxLink, foreign_key: :parent_id
   has_many :aux_link_descendants, through: :aux_link_downs, source: :child
+
+  validate :validate_ledger_original_creator_used,
+    :validate_ledger_type_same_between_versions
+  validates :rating_points_boost_self,
+    numericality: { greater_than_or_equal_to: 0.0 }
 
   DEFAULT_SPEND_FOR_OBJECT = 0.5
   # If you don't specify the amount to spend for creating an object, this is

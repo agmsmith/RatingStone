@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 class LinkBase < ApplicationRecord
-  validate :validate_link_original_versions_referenced
   before_create :do_automatic_approvals, :distribute_rating_points
 
   belongs_to :parent, class_name: :LedgerBase, optional: false
@@ -10,6 +9,12 @@ class LinkBase < ApplicationRecord
 
   has_many :aux_link_ups, class_name: :AuxLink, foreign_key: :child_id
   has_many :aux_link_ancestors, through: :aux_link_ups, source: :parent
+
+  validate :validate_link_original_versions_referenced
+  validates :rating_points_boost_child,
+    numericality: { greater_than_or_equal_to: 0.0 }
+  validates :rating_points_boost_parent,
+    numericality: { greater_than_or_equal_to: 0.0 }
 
   DEFAULT_SPEND_FOR_LINK = 0.25
   # If you don't specify the amount to spend for creating a link, this is the
