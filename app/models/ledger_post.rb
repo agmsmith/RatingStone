@@ -5,6 +5,8 @@ class LedgerPost < LedgerBase
   alias_attribute :summary_of_changes, :string2
   alias_attribute :content, :text1
 
+  # Watch out for replies which use multiple versions, this works only for
+  # original version ID numbers.  Use quotes_good, replies_good instead.
   has_many :link_replies, class_name: :LinkReply, foreign_key: :parent_id
   has_many :replies, through: :link_replies, source: :child
   has_many :link_quotes, class_name: :LinkReply, foreign_key: :child_id
@@ -49,9 +51,29 @@ class LedgerPost < LedgerBase
   end
 
   ##
+  # Return a relation with the original versions of quotes of this post, only
+  # for quotes which are still valid (not deleted, both link ends approved).
+  def quotes_good
+    LedgerBase.where(id:
+      original_version.link_quotes.where(deleted: false, approved_parent: true,
+      approved_child: true).select(:prior_post_id),
+      deleted: false).order(:created_at)
+  end
+
+  ##
   # How many replies did this post get?
   def reply_count
     LinkReply.where(prior_post_id: original_version_id, deleted: false,
       approved_parent: true, approved_child: true).count
+  end
+
+  ##
+  # Return a relation with the original versions of replies of this post, only
+  # for replies which are still valid (not deleted, both link ends approved).
+  def replies_good
+    LedgerBase.where(id:
+      original_version.link_replies.where(deleted: false, approved_parent: true,
+      approved_child: true).select(:reply_post_id),
+      deleted: false).order(:created_at)
   end
 end

@@ -19,7 +19,8 @@
     render 'ledger_bases/timestamp_and_expiry',
       { ledger_object: @ledger_object }
     %><%
-    # Show groups, replies, quotes, with links and approved flags.
+    # Show groups, replies, quotes (even unapproved ones), with links and
+    # approved flags.
     my_replies = LinkReply.where(
       prior_post_id: @ledger_object.original_version_id,
       deleted: false).order(created_at: :asc)

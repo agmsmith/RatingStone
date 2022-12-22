@@ -26,9 +26,7 @@ class LedgerPostsController < LedgerBasesController
       flash[:danger] = "Can't find object ##{params[:id]} to show quotes."
       return redirect_back(fallback_location: root_url)
     end
-    @ledger_objects = @ledger_object.quotes
-      .where(link_bases: { deleted: false })
-      .order(created_at: :asc)
+    @ledger_objects = @ledger_object.quotes_good
       .paginate(page: params[:page])
   end
 
@@ -48,9 +46,7 @@ class LedgerPostsController < LedgerBasesController
       flash[:danger] = "Can't find object ##{params[:id]} to show replies."
       return redirect_back(fallback_location: root_url)
     end
-    @ledger_objects = @ledger_object.replies
-      .where(link_bases: { deleted: false })
-      .order(created_at: :asc)
+    @ledger_objects = @ledger_object.replies_good
       .paginate(page: params[:page])
   end
 

@@ -44,6 +44,12 @@ class LedgerBase < ApplicationRecord
   has_many :aux_link_downs, class_name: :AuxLink, foreign_key: :parent_id
   has_many :aux_link_descendants, through: :aux_link_downs, source: :child
 
+
+  has_many :link_opinion_targets, class_name: :LinkOpinion, foreign_key: :child_id
+  has_many :link_opinion_authors, class_name: :LinkOpinion, foreign_key: :parent_id
+  has_many :opinion_targets, through: :link_opinion_targets, source: :child
+  has_many :opinion_authors, through: :link_opinion_authors, source: :parent
+
   validate :validate_ledger_original_creator_used,
     :validate_ledger_type_same_between_versions
   validates :rating_points_boost_self,

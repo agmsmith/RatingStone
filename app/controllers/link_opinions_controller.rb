@@ -18,6 +18,9 @@ class LinkOpinionsController < LinkBasesController
       LinkOpinion.new(sanitised_params)
     end
     @link_object.creator_id = current_ledger_user.original_version_id
+    @link_object.author_id = @link_object.author.original_version_id
+    @link_object.opinion_about_object_id =
+       @link_object.opinion_about_object_id.original_version_id
 
     # If the user didn't specify the points to spend, allocate a default amount,
     # with 3/4 to the object and 1/4 to the author.
