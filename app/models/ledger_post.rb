@@ -54,9 +54,9 @@ class LedgerPost < LedgerBase
   # Return a relation with the original versions of quotes of this post, only
   # for quotes which are still valid (not deleted, both link ends approved).
   def quotes_good
-    LedgerBase.where(id:
-      original_version.link_quotes.where(deleted: false, approved_parent: true,
-      approved_child: true).select(:prior_post_id),
+    LedgerBase.where(id: original_version.link_quotes
+      .where(deleted: false, approved_parent: true, approved_child: true)
+      .select(:prior_post_id),
       deleted: false).order(:created_at)
   end
 
@@ -71,9 +71,9 @@ class LedgerPost < LedgerBase
   # Return a relation with the original versions of replies of this post, only
   # for replies which are still valid (not deleted, both link ends approved).
   def replies_good
-    LedgerBase.where(id:
-      original_version.link_replies.where(deleted: false, approved_parent: true,
-      approved_child: true).select(:reply_post_id),
+    LedgerBase.where(id: original_version.link_replies
+      .where(deleted: false, approved_parent: true, approved_child: true)
+      .select(:reply_post_id),
       deleted: false).order(:created_at)
   end
 end
