@@ -50,7 +50,7 @@ class LinkBaseTest < ActiveSupport::TestCase
     assert_not(link_group_content.valid?)
     assert_equal("Child isn't the original version: ##{lpost2.id} " \
       "[#{lpost.id}-#{lpost2.id}] LedgerPost " \
-      "(First Fixture Subject, by: #0 Fixture created R...)",
+      "(First Fixture Subject, by #0)",
       link_group_content.errors[:unoriginal_child].first)
 
     # Should be able to change the creator of the object in a later version,
