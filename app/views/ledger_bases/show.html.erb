@@ -153,8 +153,7 @@
           Related Auxiliary Link Objects:
           <ul class="list-ledger-objects">
           <% auxiliary_links.each do |x| %>
-            <li>#<%= x.id %> <%= link_to x.parent.to_s,
-              ledger_base_path(x.parent) %>, <%= link_to x.child.to_s,
+            <li>#<%= x.id %> <%= link_to x.child.to_s,
               link_base_path(x.child) %></li>
           <% end %>
           </ul>

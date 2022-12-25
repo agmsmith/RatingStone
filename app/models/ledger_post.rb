@@ -40,7 +40,7 @@ class LedgerPost < LedgerBase
   # for none.
   def context_s
     "#{subject.truncate(40).tr("\n", " ")}, " \
-      "by: ##{creator_id} #{creator.latest_version.name.truncate(20)}"
+      "by ##{creator_id}}"
   end
 
   ##
