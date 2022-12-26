@@ -1,19 +1,16 @@
 <li id="ledger-object-<%= ledger_object.id %>" class="row">
 <% if !ledger_object.allowed_to_view?(current_ledger_user) %>
   <div class="col-xs-12 not-allowed-to-view">
-    <%= "#{ledger_object.base_s} You don't have permission to view this object." %>
+    <%= link_to ledger_object.base_s, ledger_base_path(ledger_object)
+    %> You don't have permission to view this object.
   </div>
 <% else %>
   <div class="col-xs-12 col-sm-8 col-md-9 col-lg-10 <%=
     ledger_object.deleted? ? "deleted" : "content" %>">
-    <%= ledger_object.type %>: <%= ledger_object.context_s %><BR>
-    <%= points_html(ledger_object) %><BR>
-    <%= render 'ledger_bases/timestamp_plain',
-      { ledger_object: ledger_object } %>
-  </div>
-  <div class="col-xs-12 col-sm-4 col-md-3 col-lg-2">
-    <%= render 'shared/ledger_delete_button',
-      { ledger_object: ledger_object } %>
+    <%= link_to ledger_object.base_s, ledger_base_path(ledger_object)
+    %> <%= ledger_object.context_s %><BR>
+    <%= points_html(ledger_object) %> <%=
+      render 'ledger_bases/timestamp_plain', { ledger_object: ledger_object } %>
   </div>
 <% end %>
 </li>
