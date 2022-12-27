@@ -25,19 +25,26 @@ class LedgerUserTest < ActiveSupport::TestCase
       password_confirmation: "SomePassword",
     )
     user.activate
-    luser = user.ledger_user
+    luser = user.create_or_get_ledger_user
     assert_equal(luser.id, user.ledger_user_id, "LedgerUser should be in User")
     assert_equal(luser.id, luser.creator_id, "Users should be created by self")
     assert(luser.creator_owner?(luser), "Users need to own self.")
     personal_group = luser.home_group
     assert_equal(personal_group.name, luser.name)
 
-    # Should always get latest version of the LedgerUser record from a User.
-    luser2 = luser.append_version
-    luser2.date1 = Time.now
-    luser2.text1 = "Normally this string of text isn't used for Users?"
-    luser2.save!
-    assert_equal(luser2.id, user.ledger_user.id)
+    # Should always get original version of the LedgerUser record from a User.
+    user.name = "Another Name Here"
+    user.save!
+    user.update_ledger_user_email_name
+    user.reload
+    luser.reload
+    luser2 = user.ledger_user # Direct from rails lookup in the User record.
+    assert_equal(luser.id, luser2.id)
+    assert_equal(luser.id, user.create_or_get_ledger_user.id)
+    luser3 = luser.latest_version
+    assert_equal(luser.id, luser3.original_version_id)
+    assert_not_equal(luser.name, user.name)
+    assert_equal(luser3.name, user.name)
   end
 
   test "Weekly bonus points should accumulate with fading" do
@@ -49,7 +56,7 @@ class LedgerUserTest < ActiveSupport::TestCase
       activated: true,
       activated_at: Time.zone.now,
     )
-    luser = user.ledger_user
+    luser = user.create_or_get_ledger_user
     luser.request_full_point_recalculation.update_current_points
     regular_points = luser.current_meh_points
     LedgerAwardCeremony.start_ceremony

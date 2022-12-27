@@ -11,14 +11,6 @@ class LedgerUser < LedgerBase
   end
 
   ##
-  # Returns the User record for this LedgerUser, or nil if there is none
-  # (happens if the User gets deleted).  Previously we used to automatically
-  # create a User record, but now use create_user for that.
-  def user
-    User.find_by(ledger_user_id: original_version_id)
-  end
-
-  ##
   # Create a User record for an existing LedgerUser.  Usually the User comes
   # first, but for testing we sometimes make the LedgerUser first.
   def create_user
@@ -30,11 +22,34 @@ class LedgerUser < LedgerBase
     # actual access.
     logger.warn("Creating a User for #{self}, an unusual reversed procedure.")
     pw = SecureRandom.hex
-    user_record = User.create!(ledger_user_id: original_version_id,
+    User.create!(ledger_user_id: original_version_id,
       name: name, email: email, password: pw, password_confirmation: pw,
       admin: false, activated: false)
-    user_record.activate
-    user_record
+  end
+
+  ##
+  # Returns a collection of all the LedgerPosts the user should see in their
+  # feed.  Currently it's just their own posts.
+  def feed
+    LedgerPost.where(creator_id: original_version_id,
+      is_latest_version: true).order(created_at: :desc)
+  end
+
+  ##
+  # Return the home group (a LedgerFullGroup) for the user, or nil if none.
+  # It's the special group created for them to post about themselves.
+  # Identified by the most recent active LinkHomeGroup record.
+  def home_group
+    latest_home_link = LinkHomeGroup.where(parent_id: original_version_id,
+      deleted: false, approved_parent: true, approved_child: true)
+      .order(created_at: :desc).first
+    return nil if latest_home_link.nil?
+
+    home_page = latest_home_link.child.latest_version
+    raise RatingStoneErrors,
+      "Home page latest version from #{latest_home_link} " \
+        "is not a LedgerFullGroup." unless home_page.is_a?(LedgerFullGroup)
+    home_page
   end
 
   ##
@@ -62,28 +77,11 @@ class LedgerUser < LedgerBase
   end
 
   ##
-  # Returns a collection of all the LedgerPosts the user should see in their
-  # feed.  Currently it's just their own posts.
-  def feed
-    LedgerPost.where(creator_id: original_version_id,
-      is_latest_version: true).order(created_at: :desc)
-  end
-
-  ##
-  # Return the home group (a LedgerFullGroup) for the user, or nil if none.
-  # It's the special group created for them to post about themselves.
-  # Identified by the most recent active LinkHomeGroup record.
-  def home_group
-    latest_home_link = LinkHomeGroup.where(parent_id: original_version_id,
-      deleted: false, approved_parent: true, approved_child: true)
-      .order(created_at: :desc).first
-    return nil if latest_home_link.nil?
-
-    home_page = latest_home_link.child.latest_version
-    raise RatingStoneErrors,
-      "Home page latest version from #{latest_home_link} " \
-        "is not a LedgerFullGroup." unless home_page.is_a?(LedgerFullGroup)
-    home_page
+  # Returns the User record for this LedgerUser, or nil if there is none
+  # (happens if the User gets deleted).  Previously we used to automatically
+  # create a User record, but now use create_user for that.
+  def user
+    User.find_by(ledger_user_id: original_version_id)
   end
 
   private

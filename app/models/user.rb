@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class User < ApplicationRecord
+  belongs_to :ledger_user, class_name: :LedgerBase, optional: true
+
   before_save :downcase_email
   before_create :create_activation_digest
 
@@ -64,9 +66,9 @@ class User < ApplicationRecord
     # Add a bonus to the corresponding LedgerUser for e-mail verification done.
     bonus_post = LedgerPost.where(subject: "Bonus for Activation")
       .order(created_at: :asc).first # Get oldest post with that subject.
-    return unless bonus_post # Odd, no post for describing the activation bonus.
+    return unless bonus_post # No post describing bonus, early seeding?
 
-    luser = ledger_user # Creates LedgerUser if needed.
+    luser = create_or_get_ledger_user
     LinkBonusUnique.create!(creator_id: 0, bonus_user: luser,
       bonus_explanation: bonus_post, bonus_points: 10,
       expiry_ceremony: LedgerAwardCeremony.last_ceremony + 52,
@@ -98,10 +100,13 @@ class User < ApplicationRecord
     reset_sent_at < 2.hours.ago
   end
 
-  # Returns the latest version LedgerUser record corresponding to this user,
-  # if none then creates one and sets up a new user.
-  def ledger_user
-    lu = LedgerUser.find_by(id: ledger_user_id) if ledger_user_id
+  # Returns the original version LedgerUser record corresponding to this user,
+  # if none then creates one and sets up a new user.  If you know the
+  # LedgerUser already exists, then ledger_user() would work and give you the
+  # original version more quickly.  Note that the name corresponding to this
+  # User record is stored in the latest version of the LedgerUser.
+  def create_or_get_ledger_user
+    lu = ledger_user
     if lu.nil?
       # Create a new LedgerUser but spend zero points on it, since later on the
       # user becomes their own creator, and would end up spending their own
@@ -114,7 +119,7 @@ class User < ApplicationRecord
       save!
       lu.set_up_new_user # Home group etc.
     else
-      lu = lu.latest_version
+      lu = lu.original_version
     end
     lu
   end
@@ -123,7 +128,7 @@ class User < ApplicationRecord
   # an exception if there aren't enough points available to create the new
   # version of the LedgerUser record.
   def update_ledger_user_email_name
-    luser = ledger_user # Gets latest version of the data.
+    luser = create_or_get_ledger_user.latest_version
     return if (luser.name == name) && (luser.email == email)
 
     new_luser = luser.append_version

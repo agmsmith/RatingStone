@@ -118,7 +118,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_06_01_182053) do
     t.datetime "activated_at"
     t.string "reset_digest"
     t.datetime "reset_sent_at"
-    t.bigint "ledger_user_id"
+    t.integer "ledger_user_id"
     t.float "weeks_allowance", default: 0.0
     t.float "weeks_spending", default: 0.0
     t.integer "fancy_labels", default: 0
@@ -137,4 +137,5 @@ ActiveRecord::Schema[7.0].define(version: 2022_06_01_182053) do
   add_foreign_key "link_bases", "ledger_bases", column: "child_id"
   add_foreign_key "link_bases", "ledger_bases", column: "creator_id"
   add_foreign_key "link_bases", "ledger_bases", column: "parent_id"
+  add_foreign_key "users", "ledger_bases", column: "ledger_user_id"
 end

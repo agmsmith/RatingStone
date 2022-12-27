@@ -45,7 +45,7 @@ class LinkBase < ApplicationRecord
       "#{format("%.2f", rating_points_boost_child)}: " \
       "#{child.to_s.truncate(75)}, " \
       "ceremony: #{original_ceremony} (#{
-        LedgerAwardCeremony::last_ceremony - original_ceremony} ago), " \
+        LedgerAwardCeremony.last_ceremony - original_ceremony} ago), " \
       "num1: #{number1}, " \
       "notes: \"#{string1.truncate(50)}\"." \
       .truncate(255)

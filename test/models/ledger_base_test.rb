@@ -277,7 +277,7 @@ class LedgerBaseTest < ActiveSupport::TestCase
       ledger_users(:member_user),
       ledger_users(:reader_user),
       ledger_users(:root_ledger_user_fixture),
-      users(:malory).ledger_user,
+      users(:malory).create_or_get_ledger_user,
     ]
     user_outs = [
       ledger_users(:message_moderator2_user),
