@@ -35,6 +35,27 @@ class LedgerPost < LedgerBase
   end
 
   ##
+  # Class method to find all active descendants of a given bunch of LedgerPosts,
+  # given arguments to "where" to select the initial LedgerPosts.
+  class << self
+    def tree_of_replies(*args)
+      find_by_sql(<<~LONGSQLQUERY)
+        WITH RECURSIVE descent AS (
+          #{where(*args).to_sql}
+        UNION
+          SELECT ledger_bases.*
+          FROM descent, ledger_bases, link_bases link
+          WHERE link.parent_id = descent.id AND link.type = "LinkReply" AND
+            link.approved_parent = 1 AND link.approved_child = 1 AND
+            link.deleted = 0 AND
+            ledger_bases.id = link.child_id AND ledger_bases.deleted = 0
+        )
+        SELECT * FROM descent
+      LONGSQLQUERY
+    end
+  end
+
+  ##
   # Return some user readable context for the object.  Things like the name of
   # the user if this is a user object.  Used in error messages.  Empty string
   # for none.

@@ -24,11 +24,14 @@ Rails.application.routes.draw do
     end
   end
 
-  # The usual actions for displaying/editing posts, plus reply and quote.  Also
-  # can use ledger_bases API since LedgerPost is a subclass of LedgerBase.
+  # The usual actions for displaying/editing posts, plus reply and quote and
+  # some tree displays.  Also can use ledger_bases API since LedgerPost is a
+  # subclass of LedgerBase.
   resources :ledger_posts,
    only: [:new, :create, :index, :show, :edit, :update] do
     member do
+      get 'ancestors' # Show a tree of all quotes and up of a given post.
+      get 'descendants' # Show a tree of all replies to a given post.
       get 'reply' # Make a new reply to a given post.
       get 'replies' # List all replies to a given post.
       get 'quote' # Make a new post quoting a given post.
@@ -49,9 +52,10 @@ Rails.application.routes.draw do
     end
   end
 
-  # For LinkOpinion and LinkMetaOpinion (when field :number1 is defined), so
-  # you can create a new opinion record and edit it before submitting.
-  # Subclass of LinkBase, so it inherits actions from :link_bases.
+  # For LinkOpinion and LinkMetaOpinion (when field :number1 is defined as the
+  # ID of the link record being opinionated about), so you can create a new
+  # opinion record and edit it before submitting.
+  # Subclass of LinkBase, so it can also do actions in :link_bases.
   resources :link_opinions, only: [:index, :show, :new, :create, :destroy] do
     member do
       post 'undelete'

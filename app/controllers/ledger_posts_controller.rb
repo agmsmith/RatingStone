@@ -3,6 +3,20 @@
 class LedgerPostsController < LedgerBasesController
   # See parent classes for generic create, edit, index and other methods.
 
+  ##
+  # Show a tree of all quotes of a specified post.
+  def ancestors
+    @ledger_objects = LedgerPost.tree_of_quotes(id: params[:id])
+      .paginate(page: params[:page])
+  end
+
+  ##
+  # Show a tree of all replies to a specified post.
+  def descendants
+    @ledger_objects = LedgerPost.tree_of_replies(id: params[:id])
+      .paginate(page: params[:page])
+  end
+
   def edit
     if @ledger_object
       @ledger_object.summary_of_changes = "Edited version of #{@ledger_object}."

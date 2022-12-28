@@ -15,7 +15,8 @@
     # Update points since they're being shown.  Affects expiry time too.
     @ledger_object.update_current_points
     points_html(@ledger_object) %>&nbsp; Created by <%=
-    @ledger_object.creator.latest_version.name %>, <%=
+    latestCreator = @ledger_object.creator.latest_version # Want latest name.
+    link_to latestCreator.name, latestCreator.user %>, <%=
     render 'ledger_bases/timestamp_and_expiry',
       { ledger_object: @ledger_object }
     %><%

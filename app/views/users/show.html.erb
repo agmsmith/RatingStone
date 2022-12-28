@@ -4,6 +4,11 @@
   <section class="user_info">
     <%= gravatar_for @user %>
     <h1><%= @user.name %></h1>
+    <% luser = @user.ledger_user # Don't need create_or_get_ledger_user here.
+    if luser %>
+    <p><%= link_to points_html(luser), ledger_base_path(luser) %><br>
+    <%= render 'ledger_bases/timestamp_plain', { ledger_object: luser } %></p>
+    <% end %>
   </section>
 </aside>
 <% if @lposts.any?
