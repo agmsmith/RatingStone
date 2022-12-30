@@ -36,21 +36,56 @@ class LedgerPost < LedgerBase
 
   ##
   # Class method to find all active descendants of a given bunch of LedgerPosts,
-  # given arguments to "where" to select the initial LedgerPosts.
+  # given arguments to "where" to select the initial LedgerPosts.  Returns a
+  # relation which you can query (useful for pagination).
+  #
+  # Notes on using recursive SQL and tree traversal in Rails:
+  #
+  # From https://hashrocket.com/blog/posts/recursive-sql-in-activerecord
+  # they suggest hooking into where("#{table_name}.id IN <insert Recursive SQL
+  # here, returning a list of ID numbers>")  They also have the good idea of
+  # making a function to generate the recursive SQL.
+  #
+  # https://www.itcodar.com/sql/rails-raw-sql-example.html uses the #from()
+  # method to insert the SQL into an ActiveRecord::Relation.  You just have
+  # to return something that looks like the usual record structure you're using.
+  #
+  # Some examples of making SQL recursive code in https://stackoverflow.com/questions/11664233/how-to-make-a-recursive-function-in-rails-that-will-return-all-children-of-a-par
+  #
+  # The best examples for recursive SQL, including cycle detection, traversal
+  # ordering is from the PostgreSQL manual itself:
+  # https://www.postgresql.org/docs/14/queries-with.html#QUERIES-WITH-RECURSIVE
   class << self
     def tree_of_replies(*args)
-      find_by_sql(<<~LONGSQLQUERY)
-        WITH RECURSIVE descent AS (
-          #{where(*args).to_sql}
+      # Generate SQL to select the starting point of the search, starts out like
+      # SELECT "ledger_bases".* FROM "ledger_bases" WHERE
+      # "ledger_bases"."type" = 'LedgerPost' AND "ledger_bases"."id" = 93
+      # We want to insert an initial path in there, before the FROM and
+      # rework it to use only ID numbers and path during iteration.
+      # SELECT "ledger_bases"."id" AS "post_id",
+      # ARRAY["ledger_bases"."id"] AS path FROM "ledger_bases"
+      # WHERE "ledger_bases"."type" = 'LedgerPost' AND "ledger_bases"."id" = 93
+      starting_select_sql = where(*args).to_sql
+        .sub(/\.\*/, '."id" AS "post_id", (ARRAY["ledger_bases"."id"]) AS "path"')
+
+      # FIXME: No ARRAY in Sqlite3, concatenate strings of numbers?
+      select('*').from("(#{<<~LONGSQLQUERY}) AS ledger_base")
+        WITH RECURSIVE descent(post_id, path) AS (
+          #{starting_select_sql}
         UNION
-          SELECT ledger_bases.*
+          SELECT "ledger_bases"."id" AS "post_id",
+            ("descent"."path" || "ledger_bases"."id") AS "path"
           FROM descent, ledger_bases, link_bases link
-          WHERE link.parent_id = descent.id AND link.type = "LinkReply" AND
+          WHERE link.parent_id = descent.post_id AND link.type = 'LinkReply' AND
+            (NOT link.child_id = ANY(path)) AND
             link.approved_parent = 1 AND link.approved_child = 1 AND
             link.deleted = 0 AND
             ledger_bases.id = link.child_id AND ledger_bases.deleted = 0
         )
-        SELECT * FROM descent
+        SELECT "ledger_bases".*, descent.path
+          FROM descent, ledger_bases
+          WHERE ledger_bases.id = descent.post_id
+          ORDER BY path
       LONGSQLQUERY
     end
   end
