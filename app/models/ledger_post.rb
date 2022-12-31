@@ -37,7 +37,9 @@ class LedgerPost < LedgerBase
   ##
   # Class method to find all active descendants of a given bunch of LedgerPosts,
   # given arguments to "where" to select the initial LedgerPosts.  Returns a
-  # relation which you can query (useful for pagination).
+  # relation which you can query (useful for pagination).  The relation also
+  # outputs a path attribute which is a string consisting of id numbers, each
+  # 10 digits in brackets (0000000123), separated by commas.
   #
   # Notes on using recursive SQL and tree traversal in Rails:
   #
@@ -48,7 +50,9 @@ class LedgerPost < LedgerBase
   #
   # https://www.itcodar.com/sql/rails-raw-sql-example.html uses the #from()
   # method to insert the SQL into an ActiveRecord::Relation.  You just have
-  # to return something that looks like the usual record structure you're using.
+  # to return something that looks like the usual record structure you're using,
+  # and conveniently any extra fields (like the path) become attributes in the
+  # ActiveRecord objects.
   #
   # Some examples of making SQL recursive code in https://stackoverflow.com/questions/11664233/how-to-make-a-recursive-function-in-rails-that-will-return-all-children-of-a-par
   #
@@ -63,26 +67,40 @@ class LedgerPost < LedgerBase
       # We want to insert an initial path in there, before the FROM and
       # rework it to use only ID numbers and path during iteration.
       # SELECT "ledger_bases"."id" AS "post_id",
-      # ARRAY["ledger_bases"."id"] AS path FROM "ledger_bases"
+      # path-for-starting-id AS path FROM "ledger_bases"
       # WHERE "ledger_bases"."type" = 'LedgerPost' AND "ledger_bases"."id" = 93
       starting_select_sql = where(*args).to_sql
-        .sub(/\.\*/, '."id" AS "post_id", (ARRAY["ledger_bases"."id"]) AS "path"')
+        .sub(/\.\*/, ".id AS post_id, '(' || " \
+        "substr('0000000000' || ledger_bases.id, -10, 10) || ')' AS path")
 
-      # FIXME: No ARRAY in Sqlite3, concatenate strings of numbers?
-      select('*').from("(#{<<~LONGSQLQUERY}) AS ledger_base")
+      # Now do the recursive search.  The path is the history of LedgerPost
+      # ID numbers to get to the given node, and is sorted later to give
+      # breadth first ordering of posts.  For Sqlite3 compatibility, we're
+      # using a string for the path.  PostgreSQL could use an ARRAY datatype.
+      # Anyway, each number is padded up to 10 digits so that sort order isn't
+      # mangled by the number of digits.  Brackets are around the numbers to
+      # make a string search for a particular number easier.  Each iteration
+      # we find LedgerPosts that are replies to the previously found LedgerPosts
+      # and add them to the result, storing just their ID numbers and their
+      # path.  Skip ones where their ID is already in the path (they are part
+      # of a cycle in the graph and we've already gotten to them).
+
+      select('*').from("(#{<<~LONGSQLQUERY}) AS ledger_bases")
         WITH RECURSIVE descent(post_id, path) AS (
           #{starting_select_sql}
-        UNION
-          SELECT "ledger_bases"."id" AS "post_id",
-            ("descent"."path" || "ledger_bases"."id") AS "path"
+        UNION ALL
+          SELECT ledger_bases.id AS post_id,
+            (descent.path || ',(' ||
+            substr('0000000000' || ledger_bases.id, -10, 10) || ')') AS "path"
           FROM descent, ledger_bases, link_bases link
           WHERE link.parent_id = descent.post_id AND link.type = 'LinkReply' AND
-            (NOT link.child_id = ANY(path)) AND
+            (NOT path LIKE '%(' ||
+            substr('0000000000' || link.child_id, -10, 10) || ')%') AND
             link.approved_parent = 1 AND link.approved_child = 1 AND
             link.deleted = 0 AND
             ledger_bases.id = link.child_id AND ledger_bases.deleted = 0
         )
-        SELECT "ledger_bases".*, descent.path
+        SELECT ledger_bases.*, descent.path
           FROM descent, ledger_bases
           WHERE ledger_bases.id = descent.post_id
           ORDER BY path

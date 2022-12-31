@@ -3,9 +3,16 @@
   <div class="col-xs-12 not-allowed-to-view">
     <%= "#{ledger_post.base_s} You don't have permission to view this object." %>
   </div>
-<% else %>
+<% else
+  if ledger_post.respond_to? :path
+    indent = ledger_post.path.count(",")
+  else
+    indent = 0
+  end
+  indent = 15 * indent
+  %>
   <div class="col-xs-12">
-    <div class="post-gravatar-box">
+    <div class="post-gravatar-box" style="margin-left: <%= indent %>px;">
       <%= # Will need the label style this user prefers, for several things.
         label_style = current_user&.fancy_labels
         label_style = 0 if label_style.nil? || label_style < 0
