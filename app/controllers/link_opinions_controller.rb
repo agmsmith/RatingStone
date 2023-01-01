@@ -30,7 +30,7 @@ class LinkOpinionsController < LinkBasesController
       amount = LinkBase::DEFAULT_SPEND_FOR_LINK *
         (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE) / 4.0
       @link_object.boost_author = amount
-      @link_object.boost_object = 3.0 * amount
+      @link_object.boost_object = amount * 3.0
     end
     @link_object.rating_points_spent =
       (@link_object.boost_author + @link_object.boost_object) /

@@ -102,11 +102,7 @@ class LedgerUser < LedgerBase
     LinkBonus.where(approved_parent: true, approved_child: true,
       deleted: false, bonus_user_id: original_version_id)
       .order(bonus_points: :asc).each do |a_bonus|
-      start_ceremony = if old_ceremony < a_bonus.original_ceremony
-        a_bonus.original_ceremony
-      else
-        old_ceremony
-      end
+      start_ceremony = [old_ceremony, a_bonus.original_ceremony].max
       expiry_ceremony = a_bonus.expiry_ceremony
 
       generations_fade = if last_ceremony <= expiry_ceremony

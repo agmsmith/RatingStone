@@ -78,27 +78,27 @@ class LedgerUserTest < ActiveSupport::TestCase
     assert(lbonus_link.approved_parent && lbonus_link.approved_child &&
       !lbonus_link.deleted, "Bonus link should be fully approved.")
     luser.update_current_points
-    assert_in_delta(1.0 + regular_points * 0.97,
+    assert_in_delta(regular_points * 0.97 + 1.0,
       luser.current_meh_points, 0.0000001)
 
     # Check that the weekly bonus appears in the next ceremony and both
     # accumulates and fades in the ones after that.
     LedgerAwardCeremony.start_ceremony
     luser.update_current_points
-    assert_in_delta(10.0 + (1.0 + regular_points * 0.97) * 0.97,
+    assert_in_delta((regular_points * 0.97 + 1.0) * 0.97 + 10.0,
       luser.current_meh_points, 0.0000001)
     LedgerAwardCeremony.start_ceremony
     luser.update_current_points
-    assert_in_delta(10.0 + 10.0 * 0.97 +
-      (1.0 + regular_points * 0.97) * 0.97 * 0.97,
+    assert_in_delta(10.0 * 0.97 + 10.0 +
+      (regular_points * 0.97 + 1.0) * 0.97 * 0.97,
       luser.current_meh_points, 0.0000001)
     # See if a full recalculation gives the same number.
     luser.current_meh_points = -2
     luser.current_ceremony = -1
     luser.save!
     luser.update_current_points
-    assert_in_delta(10.0 + 10.0 * 0.97 +
-      (1.0 + regular_points * 0.97) * 0.97 * 0.97,
+    assert_in_delta(10.0 * 0.97 + 10.0 +
+      (regular_points * 0.97 + 1.0) * 0.97 * 0.97,
       luser.current_meh_points, 0.0000001)
   end
 

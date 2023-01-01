@@ -117,7 +117,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     assert_in_delta(default_object_boost, lpost1.current_meh_points, 0.0000001,
       "Not approved so unchanged")
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001, "Approved points")
-    assert_in_delta(10 * LedgerAwardCeremony::FADE - # Initial 10 points, faded.
+    assert_in_delta(LedgerAwardCeremony::FADE * 10 - # Initial 10 points, faded.
       LedgerBase::DEFAULT_SPEND_FOR_OBJECT - # Created lpost2.
       1.0, # Created reply_1_2 by spending 1.0 points.
       user_reader.current_meh_points, 0.0000001, "User should have spent this")
