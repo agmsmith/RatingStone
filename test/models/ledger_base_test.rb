@@ -16,8 +16,8 @@ class LedgerBaseTest < ActiveSupport::TestCase
       original_lbase.original_ceremony, "Current ceremony number after saving")
   end
 
-  test "creator always required" do
-    assert_raise(ActiveRecord::NotNullViolation, "Can't have a NULL creator") do
+  test "creator should exist or be NULL" do
+    assert_nothing_raised do
       lbase = LedgerBase.new(creator_id: nil, string1: "String Two")
       lbase.save!
     end

@@ -111,7 +111,15 @@ class LedgerAwardCeremony < LedgerBase
         # Do the ceremony processing.  Currently the actual fading work is done
         # incrementally on request (see #update_current_points).  May later do
         # garbage collection here of obsolete forgotten links and objects.
-        sleep(2) unless Rails.env.test?
+
+        # After 1st ceremony, the dummy initial points for the root can be
+        # replaced by actual values awarded to it.  Force a full recalc.
+        if (ceremony.ceremony_number == 1)
+          lroot = LedgerBase.find(0)
+          lroot.request_full_point_recalculation
+        end
+
+        sleep(2) unless Rails.env.test? # Simulate processing time for now.
         ceremony.completed_at = Time.zone.now
         ceremony.save!
 

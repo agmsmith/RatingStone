@@ -54,7 +54,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_06_01_182053) do
     t.boolean "expired_soon", default: false
     t.boolean "has_owners", default: false
     t.boolean "is_latest_version", default: true
-    t.integer "creator_id", null: false
+    t.integer "creator_id"
     t.float "rating_points_spent_creating", default: -1.0
     t.float "rating_points_boost_self", default: 0.0
     t.string "rating_direction_self", default: "M"

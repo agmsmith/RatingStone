@@ -8,10 +8,19 @@
 #   movies = Movie.create([{ name: 'Star Wars' }, { name: 'Lord of the Rings' }])
 #   Character.create(name: 'Luke', movie: movies.first)
 
-# If needed, create the root LedgerBase object, which is its own creator.
+# If needed, create the root LedgerBase object, which is its own creator and
+# always has ID number zero.
 unless LedgerBase.any?
-  ActiveRecord::Base.connection.execute("INSERT into ledger_bases (id, type, number1, string1, string2, text1, creator_id, original_id, rating_points_spent_creating, rating_points_boost_self, current_meh_points, original_ceremony, current_ceremony, date1, created_at, updated_at) VALUES (0, 'LedgerUser', 0, 'Root LedgerBase Object', 'agmsmith@ncf.ca', 'The special root object/user which we need to manually create with a creator id of itself.  Then initial system objects can be created with it as their creator.  AGMS20200206', 0, 0, 0.0, 0.0, 1000.0, 0, 0, '0001-01-01 00:00:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);")
+  ActiveRecord::Base.connection.execute("INSERT into ledger_bases (id, type, number1, string1, string2, text1, rating_points_spent_creating, rating_points_boost_self, current_meh_points, original_ceremony, current_ceremony, date1, created_at, updated_at) VALUES (0, 'LedgerUser', 0, 'Root LedgerBase Object', 'agmsmith@ncf.ca', 'The special root object/user which we need to manually create with a creator id of itself.  Then initial system objects can be created with it as their creator.  AGMS20200206', 0.0, 0.0, 1000.0, 0, 0, '0001-01-01 00:00:00', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);")
+
+  # Have to set reference fields to point to self after the record is created,
+  # else fails with a foreign key error in PostgreSQ:.  Which is why the fields
+  # are allowed to be NULL, though some like creator should never be NULL.
   root_luser = LedgerBase.find(0)
+  root_luser.original_id = 0
+  root_luser.creator_id = 0
+  root_luser.save!
+
   root_user = User.create!(
     id: 0,
     ledger_user_id: 0,
@@ -89,14 +98,15 @@ if !Rails.env.test?
   # Check that we got the right ID numbers for the magic users, and now create
   # associated new user records, which would have interfered with sequentially
   # creating LedgerUser records.
-  (1..10).each do |i|
+  (0..10).each do |i|
     magic_luser = LedgerUser.find(i)
     magic_user = magic_luser.create_user
-    magic_luser.set_up_new_user # Makes home group etc.  Safe to call again.
     if magic_user.id != i
       raise "Bug: Wrong record ID #{magic_user.id} for User for #{magic_luser}."
     end
-    name = if i < 10
+    name = if i == 0
+      "Root LedgerBase Object"
+    elsif i < 10
       "System Operator #{i}"
     elsif i == 10
       "Anonymous Internet Browser"
@@ -106,6 +116,7 @@ if !Rails.env.test?
     if magic_user.name != name
       raise "Bug: Wrong name for user record created from #{magic_luser}."
     end
+    magic_luser.set_up_new_user # Makes home group etc.  Safe to call again.
   end
 end
 
@@ -206,10 +217,11 @@ if Rails.env.development?
     creator_id: 0)
   LinkGroupContent.create!(parent: group_records[3], child: post, creator_id: 0,
     approved_parent: true, approved_child: true)
-
-  # Make all links approved, not the usual case.
-  unapproved_count = LinkBase.where(approved_parent: false).
-    or(LinkBase.where(approved_child: false)).count
-  puts "#{LedgerBase.count} Ledger Objects created, #{LinkBase.count} links, " \
-    "including #{unapproved_count} unapproved links."
 end
+
+# Some seeding statistics.
+unapproved_count = LinkBase.where(approved_parent: false).
+  or(LinkBase.where(approved_child: false)).count
+puts "After seeding, #{LedgerBase.count} Ledger Objects exist, " \
+  "#{LinkBase.count} links, including #{unapproved_count} unapproved links."
+
