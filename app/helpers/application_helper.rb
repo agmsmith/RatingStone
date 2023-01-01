@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "digest" # For MD5 hash algorithm.
+
 module ApplicationHelper
   include Rails.application.routes.url_helpers # For ledger_base_path()
 
@@ -22,6 +24,26 @@ module ApplicationHelper
     else
       page_title + " | " + base_title
     end
+  end
+
+  ##
+  # Returns an RGB HTML colour code (a # followed by 6 hex characters) for the
+  # given input number or string.  Uses an MD5 hash of the input to generate
+  # the colour bytes.  Restricts the bytes to a limited range, so you get nicer
+  # colours.
+  def colour_hash_html(input)
+    hash = Digest::MD5.hexdigest(input.to_s).chars
+    red = hash[0..1]
+    red[0] = half_hex_char(red[0])
+    green = hash[2..3]
+    green[0] = half_hex_char(green[0])
+    blue = hash[4..5]
+    blue[0] = half_hex_char(blue[0])
+    "#" + red.join + green.join + blue.join
+  end
+
+  def half_hex_char(character)
+    character.tr("0123456789abcdef", "66778899aabbccdd")
   end
 
   ##

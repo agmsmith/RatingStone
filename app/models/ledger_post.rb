@@ -71,7 +71,7 @@ class LedgerPost < LedgerBase
       # WHERE "ledger_bases"."type" = 'LedgerPost' AND "ledger_bases"."id" = 93
       starting_select_sql = where(*args).to_sql
         .sub(/\.\*/, ".id AS post_id, '(' || " \
-        "substr('0000000000' || ledger_bases.id, -10, 10) || ')' AS path")
+          "substr('0000000000' || ledger_bases.id, -10, 10) || ')' AS path")
 
       # Now do the recursive search.  The path is the history of LedgerPost
       # ID numbers to get to the given node, and is sorted later to give
@@ -85,7 +85,7 @@ class LedgerPost < LedgerBase
       # path.  Skip ones where their ID is already in the path (they are part
       # of a cycle in the graph and we've already gotten to them).
 
-      select('*').from("(#{<<~LONGSQLQUERY}) AS ledger_bases")
+      select("*").from("(#{<<~LONGSQLQUERY}) AS ledger_bases")
         WITH RECURSIVE descent(post_id, path) AS (
           #{starting_select_sql}
         UNION ALL
