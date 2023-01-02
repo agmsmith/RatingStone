@@ -56,10 +56,15 @@ class LinkBasesController < ApplicationController
       flash[:danger] = "Can't find link ##{params[:id]} to #{verb_present}."
       return redirect_back(fallback_location: root_url)
     end
-    result = operation_class.mark_records([@link_object], new_flag_state,
-      current_ledger_user, "Web site manual Link Object #{verb_present} " \
+    result = operation_class.mark_records(
+      [@link_object],
+      new_flag_state,
+      current_ledger_user,
+      "Web site manual Link Object #{verb_present} " \
         "by user logged in from address " \
-        "#{request.env["REMOTE_ADDR"]}.", params[:reason]) # Reason can be nil.
+        "#{request.env["REMOTE_ADDR"]}.",
+      params[:reason],
+    ) # Reason can be nil.
     feedback_text = if result.nil?
       "No changes needed or you don't have permission to #{verb_present} " \
         "Link Object " + @link_object.to_s.truncate(80, separator: " ") + "."

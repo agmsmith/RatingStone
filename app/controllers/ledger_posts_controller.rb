@@ -81,8 +81,11 @@ class LedgerPostsController < LedgerBasesController
       # Make a home group link for the new object back to its creator's group.
       home_group = current_ledger_user.home_group
       if home_group
-        @ledger_object.new_groups << { ID: home_group.original_version_id,
-          UMD: "U", Points: LinkBase::DEFAULT_SPEND_FOR_LINK, }
+        @ledger_object.new_groups << {
+          ID: home_group.original_version_id,
+          UMD: "U",
+          Points: LinkBase::DEFAULT_SPEND_FOR_LINK,
+        }
       end
     end
     super
@@ -137,18 +140,29 @@ class LedgerPostsController < LedgerBasesController
 
     # Add reply/quote links.  Just start by replying to the original message.
     if quoting
-      @ledger_object.new_quotes << { ID: prior_post.original_version_id,
-        UMD: "U", Points: LinkBase::DEFAULT_SPEND_FOR_LINK, }
+      @ledger_object.new_quotes << {
+        ID: prior_post.original_version_id,
+        UMD: "U",
+        Points: LinkBase::DEFAULT_SPEND_FOR_LINK,
+      }
     else
-      @ledger_object.new_replytos << { ID: prior_post.original_version_id,
-        UMD: "U", Points: LinkBase::DEFAULT_SPEND_FOR_LINK, }
+      @ledger_object.new_replytos << {
+        ID: prior_post.original_version_id,
+        UMD: "U",
+        Points: LinkBase::DEFAULT_SPEND_FOR_LINK,
+      }
     end
 
     # Add group links.  Same groups as the original post.
-    LinkGroupContent.where(content_id: prior_post.original_version_id,
-      deleted: false).each do |a_link|
-      @ledger_object.new_groups << { ID: a_link.group_id, UMD: "U",
-        Points: LinkBase::DEFAULT_SPEND_FOR_LINK, }
+    LinkGroupContent.where(
+      content_id: prior_post.original_version_id,
+      deleted: false,
+    ).each do |a_link|
+      @ledger_object.new_groups << {
+        ID: a_link.group_id,
+        UMD: "U",
+        Points: LinkBase::DEFAULT_SPEND_FOR_LINK,
+      }
     end
     append_dummy_side_load_attributes(@ledger_object)
     render("edit")
@@ -244,16 +258,20 @@ class LedgerPostsController < LedgerBasesController
 
       a_group = LedgerSubgroup.find_by(id: group_id)
       if a_group
-        link_group = LinkGroupContent.new(group_id: a_group.original_version_id,
+        link_group = LinkGroupContent.new(
+          group_id: a_group.original_version_id,
           content_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id,
           rating_points_spent: points,
           rating_points_boost_parent: points *
-            (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE),
-          rating_direction_parent: group_item[:UMD])
+                      (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE),
+          rating_direction_parent: group_item[:UMD],
+        )
         unless link_group.save
-          new_object.errors.add(:base,
-            "Failed to make link to Group #{group_id}.")
+          new_object.errors.add(
+            :base,
+            "Failed to make link to Group #{group_id}.",
+          )
           link_group.errors.each do |error_key, error_value|
             new_object.errors.add(error_key, error_value)
           end
@@ -274,25 +292,31 @@ class LedgerPostsController < LedgerBasesController
 
       prior_post = LedgerPost.find_by(id: reply_id)
       if prior_post
-        link_post = LinkReply.new(prior_post_id: prior_post.original_version_id,
+        link_post = LinkReply.new(
+          prior_post_id: prior_post.original_version_id,
           reply_post_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id,
           rating_points_spent: points,
           rating_points_boost_parent: points *
-            (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE),
-          rating_direction_parent: reply_item[:UMD])
+                      (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE),
+          rating_direction_parent: reply_item[:UMD],
+        )
         unless link_post.save
-          new_object.errors.add(:base,
+          new_object.errors.add(
+            :base,
             "Failed to make link back to original #{prior_post} for " \
-              "reply #{new_object}.")
+              "reply #{new_object}.",
+          )
           link_post.errors.each do |error_key, error_value|
             new_object.errors.add(error_key, error_value)
           end
           return false
         end
       else
-        new_object.errors.add(:base,
-          "Original post #{reply_item} does not exist or is wrong type.")
+        new_object.errors.add(
+          :base,
+          "Original post #{reply_item} does not exist or is wrong type.",
+        )
         return false
       end
     end
@@ -307,25 +331,31 @@ class LedgerPostsController < LedgerBasesController
 
       prior_post = LedgerPost.find_by(id: quote_id)
       if prior_post
-        link_post = LinkReply.new(reply_post_id: prior_post.original_version_id,
+        link_post = LinkReply.new(
+          reply_post_id: prior_post.original_version_id,
           prior_post_id: new_object.original_version_id,
           creator_id: current_ledger_user.original_version_id,
           rating_points_spent: points,
           rating_points_boost_child: points *
-            (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE),
-          rating_direction_child: quote_item[:UMD])
+                      (1.0 - LinkBase::LINK_TRANSACTION_FEE_RATE),
+          rating_direction_child: quote_item[:UMD],
+        )
         unless link_post.save
-          new_object.errors.add(:base,
+          new_object.errors.add(
+            :base,
             "Failed to make link back to original #{new_object} for " \
-              "reply #{prior_post}.")
+              "reply #{prior_post}.",
+          )
           link_post.errors.each do |error_key, error_value|
             new_object.errors.add(error_key, error_value)
           end
           return false
         end
       else
-        new_object.errors.add(:base,
-          "Original post #{quote_item} does not exist or is wrong type.")
+        new_object.errors.add(
+          :base,
+          "Original post #{quote_item} does not exist or is wrong type.",
+        )
         return false
       end
     end

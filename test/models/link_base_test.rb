@@ -12,8 +12,11 @@ class LinkBaseTest < ActiveSupport::TestCase
     luser_outsider = ledger_users(:outsider_user)
 
     # See if creator of parent is approved.
-    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost,
-      creator: luser_group_creator)
+    link_group_content = LinkGroupContent.new(
+      parent: lgroup,
+      child: lpost,
+      creator: luser_group_creator,
+    )
     assert_not(link_group_content.approved_parent)
     assert_not(link_group_content.approved_child)
     link_group_content.save!
@@ -21,8 +24,11 @@ class LinkBaseTest < ActiveSupport::TestCase
     assert_not(link_group_content.approved_child)
 
     # See if owner of parent is approved.
-    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost,
-      creator: luser_group_owner)
+    link_group_content = LinkGroupContent.new(
+      parent: lgroup,
+      child: lpost,
+      creator: luser_group_owner,
+    )
     assert_not(link_group_content.approved_parent)
     assert_not(link_group_content.approved_child)
     link_group_content.save!
@@ -30,8 +36,11 @@ class LinkBaseTest < ActiveSupport::TestCase
     assert_not(link_group_content.approved_child)
 
     # See if unrelated to parent is not approved, and child owner is.
-    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost,
-      creator: luser_post_creator)
+    link_group_content = LinkGroupContent.new(
+      parent: lgroup,
+      child: lpost,
+      creator: luser_post_creator,
+    )
     assert_not(link_group_content.approved_parent)
     assert_not(link_group_content.approved_child)
     link_group_content.save!
@@ -43,15 +52,20 @@ class LinkBaseTest < ActiveSupport::TestCase
     lpost2.content = "This is an edited post."
     lpost2.save!
     lpost.reload # Has been amended.
-    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost2,
-      creator: luser_post_creator)
+    link_group_content = LinkGroupContent.new(
+      parent: lgroup,
+      child: lpost2,
+      creator: luser_post_creator,
+    )
     assert_not(link_group_content.approved_parent)
     assert_not(link_group_content.approved_child)
     assert_not(link_group_content.valid?)
-    assert_equal("Child isn't the original version: ##{lpost2.id} " \
-      "[#{lpost.id}-#{lpost2.id}] LedgerPost " \
-      "(First Fixture Subject, by #0)",
-      link_group_content.errors[:unoriginal_child].first)
+    assert_equal(
+      "Child isn't the original version: ##{lpost2.id} " \
+        "[#{lpost.id}-#{lpost2.id}] LedgerPost " \
+        "(First Fixture Subject, by #0)",
+      link_group_content.errors[:unoriginal_child].first,
+    )
 
     # Should be able to change the creator of the object in a later version,
     # and have tests use that new creator.
@@ -61,16 +75,22 @@ class LinkBaseTest < ActiveSupport::TestCase
     lpost3.save!
     lpost.reload # Has been amended.
 
-    link_group_content = LinkGroupContent.new(parent: lgroup,
-      child: lpost3.original_version, creator: luser_outsider)
+    link_group_content = LinkGroupContent.new(
+      parent: lgroup,
+      child: lpost3.original_version,
+      creator: luser_outsider,
+    )
     assert_not(link_group_content.approved_parent)
     assert_not(link_group_content.approved_child)
     link_group_content.save!
     assert_not(link_group_content.approved_parent)
     assert(link_group_content.approved_child)
 
-    link_group_content = LinkGroupContent.new(parent: lgroup, child: lpost,
-      creator: luser_post_creator)
+    link_group_content = LinkGroupContent.new(
+      parent: lgroup,
+      child: lpost,
+      creator: luser_post_creator,
+    )
     assert_not(link_group_content.approved_parent)
     assert_not(link_group_content.approved_child)
     link_group_content.save!

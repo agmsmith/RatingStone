@@ -22,17 +22,25 @@ class LedgerUser < LedgerBase
     # actual access.
     logger.warn("Creating a User for #{self}, an unusual reversed procedure.")
     pw = SecureRandom.hex
-    User.create!(ledger_user_id: original_version_id,
-      name: name, email: email, password: pw, password_confirmation: pw,
-      admin: false, activated: false)
+    User.create!(
+      ledger_user_id: original_version_id,
+      name: name,
+      email: email,
+      password: pw,
+      password_confirmation: pw,
+      admin: false,
+      activated: false,
+    )
   end
 
   ##
   # Returns a collection of all the LedgerPosts the user should see in their
   # feed.  Currently it's just their own posts.
   def feed
-    LedgerPost.where(creator_id: original_version_id,
-      is_latest_version: true).order(created_at: :desc)
+    LedgerPost.where(
+      creator_id: original_version_id,
+      is_latest_version: true,
+    ).order(created_at: :desc)
   end
 
   ##
@@ -40,8 +48,12 @@ class LedgerUser < LedgerBase
   # It's the special group created for them to post about themselves.
   # Identified by the most recent active LinkHomeGroup record.
   def home_group
-    latest_home_link = LinkHomeGroup.where(parent_id: original_version_id,
-      deleted: false, approved_parent: true, approved_child: true)
+    latest_home_link = LinkHomeGroup.where(
+      parent_id: original_version_id,
+      deleted: false,
+      approved_parent: true,
+      approved_child: true,
+    )
       .order(created_at: :desc).first
     return nil if latest_home_link.nil?
 
@@ -59,20 +71,28 @@ class LedgerUser < LedgerBase
     # Make a home group for the new user.
     if home_group.nil?
       latest_name = latest_version.name
-      lfgroup = LedgerFullGroup.create!(creator_id: original_version_id,
-        name: latest_name, description: "Personal Posts by #{latest_name}",
-        rating_points_spent_creating: 0.0, rating_points_boost_self: 0.0)
+      lfgroup = LedgerFullGroup.create!(
+        creator_id: original_version_id,
+        name: latest_name,
+        description: "Personal Posts by #{latest_name}",
+        rating_points_spent_creating: 0.0,
+        rating_points_boost_self: 0.0,
+      )
       # Root gives points to user by creating this link, avoiding the problem
       # of the LedgerUser creator change to be the user rather than Root,
       # which would mess up the accounting badly.
-      LinkHomeGroup.create!(creator_id: 0,
-        parent_id: original_version_id, child: lfgroup,
-        approved_parent: true, approved_child: true,
+      LinkHomeGroup.create!(
+        creator_id: 0,
+        parent_id: original_version_id,
+        child: lfgroup,
+        approved_parent: true,
+        approved_child: true,
         string1: "Special initial link between #{latest_name.truncate(80)} " \
           "and their home page, paid for by the system.",
         rating_points_spent: DEFAULT_SPEND_FOR_OBJECT * 2,
         rating_points_boost_parent: DEFAULT_SPEND_FOR_OBJECT,
-        rating_points_boost_child: DEFAULT_SPEND_FOR_OBJECT)
+        rating_points_boost_child: DEFAULT_SPEND_FOR_OBJECT,
+      )
     end
   end
 
@@ -99,8 +119,12 @@ class LedgerUser < LedgerBase
     LinkBonusUnique.class
     # Iterate through the bonuses from negative to positive, so that we can cut
     # off excess positive bonuses which exceed the weekly total maximum.
-    LinkBonus.where(approved_parent: true, approved_child: true,
-      deleted: false, bonus_user_id: original_version_id)
+    LinkBonus.where(
+      approved_parent: true,
+      approved_child: true,
+      deleted: false,
+      bonus_user_id: original_version_id,
+    )
       .order(bonus_points: :asc).each do |a_bonus|
       start_ceremony = [old_ceremony, a_bonus.original_ceremony].max
       expiry_ceremony = a_bonus.expiry_ceremony
@@ -141,8 +165,10 @@ class LedgerUser < LedgerBase
     weekly_allowance = 0.0 if weekly_allowance < 0.0
     user = User.find_by(ledger_user_id: original_version_id)
     user&.with_lock do
-      user.update_columns(weeks_allowance: weekly_allowance,
-        weeks_spending: 0.0)
+      user.update_columns(
+        weeks_allowance: weekly_allowance,
+        weeks_spending: 0.0,
+      )
     end
   end
 

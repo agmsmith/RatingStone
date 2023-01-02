@@ -224,9 +224,13 @@ class LedgerBase < ApplicationRecord
     # versions for data but we want the canonical base version for references.
     # Can save time by skipping the owner search if we know there are no owners.
     my_original = original_version
-    return LinkOwner.exists?(parent_id: luser_original_id,
-      child_id: my_original.id, deleted: false, approved_parent: true,
-      approved_child: true) if my_original.has_owners
+    return LinkOwner.exists?(
+      parent_id: luser_original_id,
+      child_id: my_original.id,
+      deleted: false,
+      approved_parent: true,
+      approved_child: true,
+    ) if my_original.has_owners
     false
   end
 
@@ -242,8 +246,12 @@ class LedgerBase < ApplicationRecord
 
     # Test the user's status in groups for things (posts) attached to groups.
     if is_a?(LedgerPost)
-      LinkGroupContent.where(child_id: original_version_id, deleted: false,
-        approved_parent: true, approved_child: true).each do |a_link|
+      LinkGroupContent.where(
+        child_id: original_version_id,
+        deleted: false,
+        approved_parent: true,
+        approved_child: true,
+      ).each do |a_link|
         return true if a_link.group.role_test?(luser, LinkRole::READER)
       end
     end

@@ -9,8 +9,11 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
     @user = users(:michael)
     log_in_as(@user)
     40.times do |i|
-      LedgerPost.create!(creator: @user.ledger_user, subject: "Post #{i}",
-        content: "This is a test post ##{i} by Michael.")
+      LedgerPost.create!(
+        creator: @user.ledger_user,
+        subject: "Post #{i}",
+        content: "This is a test post ##{i} by Michael.",
+      )
     end
   end
 

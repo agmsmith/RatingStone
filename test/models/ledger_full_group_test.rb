@@ -13,11 +13,15 @@ class LedgerFullGroupTest < ActiveSupport::TestCase
     assert_not @group.creator_owner?(luser)
     LinkRole::ROLE_NAMES.each do |role_priority, role_name|
       if role_priority == LinkRole::BANNED
-        assert(@group.role_test?(luser, role_priority),
-          "Testing role #{role_name}, should have it.")
+        assert(
+          @group.role_test?(luser, role_priority),
+          "Testing role #{role_name}, should have it.",
+        )
       else
-        assert_not(@group.role_test?(luser, role_priority),
-          "Testing role #{role_name}, should not have it.")
+        assert_not(
+          @group.role_test?(luser, role_priority),
+          "Testing role #{role_name}, should not have it.",
+        )
       end
     end
   end

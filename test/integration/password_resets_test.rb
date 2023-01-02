@@ -45,25 +45,34 @@ class PasswordResetsTest < ActionDispatch::IntegrationTest
     assert_select "input[name=email][type=hidden][value=?]", user.email
     # Invalid password & confirmation
     patch password_reset_path(user.reset_token),
-      params: { email: user.email, user: {
-        password: "foobaz",
-        password_confirmation: "barquux",
-      }, }
+      params: {
+        email: user.email,
+        user: {
+          password: "foobaz",
+          password_confirmation: "barquux",
+        },
+      }
     assert_select "div#error_explanation"
     # Empty password
     patch password_reset_path(user.reset_token),
-      params: { email: user.email, user: {
-        password: "",
-        password_confirmation: "",
-      }, }
+      params: {
+        email: user.email,
+        user: {
+          password: "",
+          password_confirmation: "",
+        },
+      }
     assert_select "div#error_explanation"
     assert_not_nil user.reload.reset_digest
     # Valid password & confirmation
     patch password_reset_path(user.reset_token),
-      params: { email: user.email, user: {
-        password: "foobaz",
-        password_confirmation: "foobaz",
-      }, }
+      params: {
+        email: user.email,
+        user: {
+          password: "foobaz",
+          password_confirmation: "foobaz",
+        },
+      }
     assert tested_user_logged_in?
     assert_not flash.empty?
     assert_redirected_to user
@@ -82,10 +91,13 @@ class PasswordResetsTest < ActionDispatch::IntegrationTest
     @user = assigns(:user)
     @user.update_attribute(:reset_sent_at, 3.hours.ago)
     patch password_reset_path(@user.reset_token),
-      params: { email: @user.email, user: {
-        password: "foobar",
-        password_confirmation: "foobar",
-      }, }
+      params: {
+        email: @user.email,
+        user: {
+          password: "foobar",
+          password_confirmation: "foobar",
+        },
+      }
     assert_response :redirect
     follow_redirect!
     assert_match(/reset has expired/i, response.body)

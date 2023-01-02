@@ -10,7 +10,9 @@ class User < ApplicationRecord
 
   validates :name, presence: true, length: { maximum: 50 }
   VALID_EMAIL_REGEX = /\A[\w+\-.]+@[a-z\d\-]+(\.[a-z\d\-]+)*\.[a-z]+\z/i
-  validates :email, presence: true, length: { maximum: 255 },
+  validates :email,
+    presence: true,
+    length: { maximum: 255 },
     format: { with: VALID_EMAIL_REGEX },
     uniqueness: { case_sensitive: false }
   validates :password, presence: true, length: { minimum: 6 }, allow_nil: true
@@ -69,13 +71,19 @@ class User < ApplicationRecord
     return unless bonus_post # No post describing bonus, early seeding?
 
     luser = create_or_get_ledger_user
-    LinkBonusUnique.create!(creator_id: 0, bonus_user: luser,
-      bonus_explanation: bonus_post, bonus_points: 10,
+    LinkBonusUnique.create!(
+      creator_id: 0,
+      bonus_user: luser,
+      bonus_explanation: bonus_post,
+      bonus_points: 10,
       expiry_ceremony: LedgerAwardCeremony.last_ceremony + 52,
       rating_points_spent: 3.0,
-      rating_points_boost_parent: 1.0, rating_points_boost_child: 2.0,
-      approved_parent: true, approved_child: true,
-      reason: "Bonus for activating #{luser} via e-mail verification.")
+      rating_points_boost_parent: 1.0,
+      rating_points_boost_child: 2.0,
+      approved_parent: true,
+      approved_child: true,
+      reason: "Bonus for activating #{luser} via e-mail verification.",
+    )
   end
 
   # Sends activation email.
@@ -86,8 +94,10 @@ class User < ApplicationRecord
   # Sets the password reset attributes.
   def create_reset_digest
     self.reset_token = User.new_token
-    update_columns(reset_digest: User.digest(reset_token),
-      reset_sent_at: Time.zone.now)
+    update_columns(
+      reset_digest: User.digest(reset_token),
+      reset_sent_at: Time.zone.now,
+    )
   end
 
   # Sends password reset email.
@@ -112,9 +122,13 @@ class User < ApplicationRecord
       # user becomes their own creator, and would end up spending their own
       # points on themself, which would make their recalculated points not
       # equal their current points.  Root would also have wrong spending.
-      lu = LedgerUser.create!(creator_id: 0, name: name, email: email,
+      lu = LedgerUser.create!(
+        creator_id: 0,
+        name: name,
+        email: email,
         rating_points_spent_creating: 0.0,
-        rating_points_boost_self: 0.0)
+        rating_points_boost_self: 0.0,
+      )
       self.ledger_user_id = lu.id
       save!
       lu.set_up_new_user # Home group etc.

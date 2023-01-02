@@ -11,12 +11,14 @@ class UsersEditTest < ActionDispatch::IntegrationTest
     log_in_as(@user)
     get edit_user_path(@user)
     assert_template "users/edit"
-    patch user_path(@user), params: { user: {
-      name: "",
-      email: "foo@invalid",
-      password: "foo",
-      password_confirmation: "bar",
-    } }
+    patch user_path(@user), params: {
+      user: {
+        name: "",
+        email: "foo@invalid",
+        password: "foo",
+        password_confirmation: "bar",
+      },
+    }
     assert_template "users/edit"
     assert_select "div.alert", "The form contains 4 errors."
     assert_select "div#error_explanation" do
@@ -30,12 +32,14 @@ class UsersEditTest < ActionDispatch::IntegrationTest
     assert_template "users/edit"
     name = "Foo Bar"
     email = "foo@bar.com"
-    patch user_path(@user), params: { user: {
-      name: name,
-      email: email,
-      password: "",
-      password_confirmation: "",
-    } }
+    patch user_path(@user), params: {
+      user: {
+        name: name,
+        email: email,
+        password: "",
+        password_confirmation: "",
+      },
+    }
     assert_not flash.empty?
     assert_redirected_to @user
     @user.reload
@@ -53,12 +57,14 @@ class UsersEditTest < ActionDispatch::IntegrationTest
     email_old = @user.email
     email_new = "foo@bar.com"
     assert_raise(RatingStoneErrors) do
-      patch user_path(@user), params: { user: {
-        name: name_new,
-        email: email_new,
-        password: "",
-        password_confirmation: "",
-      } }
+      patch user_path(@user), params: {
+        user: {
+          name: name_new,
+          email: email_new,
+          password: "",
+          password_confirmation: "",
+        },
+      }
     end
     @user.reload
     assert_equal name_old, @user.name
@@ -77,12 +83,14 @@ class UsersEditTest < ActionDispatch::IntegrationTest
     assert session[:forwarding_url].nil?
     name = "Foo Bar"
     email = "foo@bar.com"
-    patch user_path(@user), params: { user: {
-      name: name,
-      email: email,
-      password: "",
-      password_confirmation: "",
-    } }
+    patch user_path(@user), params: {
+      user: {
+        name: name,
+        email: email,
+        password: "",
+        password_confirmation: "",
+      },
+    }
     assert_not flash.empty?
     assert session[:forwarding_url].nil?
     assert_redirected_to @user

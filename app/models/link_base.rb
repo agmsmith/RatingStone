@@ -100,8 +100,10 @@ class LinkBase < ApplicationRecord
   def initial_approval_state
     # The default is to approve the end of the link where the creator of the
     # link is the owner or creator of the object at that end of the link.
-    [permission_to_change_parent_approval(creator),
-     permission_to_change_child_approval(creator),]
+    [
+      permission_to_change_parent_approval(creator),
+      permission_to_change_child_approval(creator),
+    ]
   end
 
   ##
@@ -265,16 +267,22 @@ class LinkBase < ApplicationRecord
   # the original ID is what we use to find all versions of an object.  This
   # is mostly a sanity check and may be removed if it's never triggered.
   def validate_link_original_versions_referenced
-    errors.add(:unoriginal_parent,
-      "Parent isn't the original version: #{parent}") \
+    errors.add(
+      :unoriginal_parent,
+      "Parent isn't the original version: #{parent}",
+    ) \
       if parent && parent.original_version_id != parent_id
 
-    errors.add(:unoriginal_child,
-      "Child isn't the original version: #{child}") \
+    errors.add(
+      :unoriginal_child,
+      "Child isn't the original version: #{child}",
+    ) \
       if child && child.original_version_id != child_id
 
-    errors.add(:unoriginal_creator,
-      "Creator isn't the original version: #{creator}") \
+    errors.add(
+      :unoriginal_creator,
+      "Creator isn't the original version: #{creator}",
+    ) \
         if creator && creator.original_version_id != creator_id
   end
 

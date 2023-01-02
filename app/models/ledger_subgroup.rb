@@ -23,8 +23,12 @@ class LedgerSubgroup < LedgerBase
   # Look into define_method if this becomes a performance bottleneck.
   def method_missing(method_name, *args, &block)
     if REDIRECTED_METHODS.include?(method_name)
-      group_links = LinkGroupRoleDelegation.where(child_id: original_version_id,
-        deleted: false, approved_parent: true, approved_child: true)
+      group_links = LinkGroupRoleDelegation.where(
+        child_id: original_version_id,
+        deleted: false,
+        approved_parent: true,
+        approved_child: true,
+      )
       group_links.each do |a_link|
         delegate_to = a_link.parent.latest_version
         return true if delegate_to.send(method_name, *args, &block)

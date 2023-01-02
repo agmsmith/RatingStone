@@ -49,7 +49,12 @@ class LinkBonusUnique < LinkBonus
   # that is similar to this one.  Note that self.id can be nil for newly
   # created but unsaved records, and that works correctly.
   def duplicate_linkbonus_exists?
-    LinkBonus.where(parent: parent, child: child, deleted: false,
-      approved_parent: true, approved_child: true).where.not(id: id).exists?
+    LinkBonus.where(
+      parent: parent,
+      child: child,
+      deleted: false,
+      approved_parent: true,
+      approved_child: true,
+    ).where.not(id: id).exists?
   end
 end

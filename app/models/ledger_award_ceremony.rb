@@ -102,9 +102,13 @@ class LedgerAwardCeremony < LedgerBase
       # Wrap this in a transaction so the ceremony gets cancelled if something
       # goes wrong, also leave @highest_ceremony valid in that case.
       transaction do
-        ceremony = new(creator_id: 0, ceremony_number: last_ceremony + 1,
-          rating_points_spent_creating: 10.0, rating_points_boost_self: 10.0,
-          comment: comment_string)
+        ceremony = new(
+          creator_id: 0,
+          ceremony_number: last_ceremony + 1,
+          rating_points_spent_creating: 10.0,
+          rating_points_boost_self: 10.0,
+          comment: comment_string,
+        )
         ceremony.save!
         @highest_ceremony = nil # Current ceremony number changed, force updates.
 
@@ -114,7 +118,7 @@ class LedgerAwardCeremony < LedgerBase
 
         # After 1st ceremony, the dummy initial points for the root can be
         # replaced by actual values awarded to it.  Force a full recalc.
-        if (ceremony.ceremony_number == 1)
+        if ceremony.ceremony_number == 1
           lroot = LedgerBase.find(0)
           lroot.request_full_point_recalculation
         end

@@ -120,34 +120,46 @@ class LedgerPost < LedgerBase
   ##
   # How many other posts are quoting this one?  Well, actually the original one.
   def quote_count
-    LinkReply.where(reply_post_id: original_version_id, deleted: false,
-      approved_parent: true, approved_child: true).count
+    LinkReply.where(
+      reply_post_id: original_version_id,
+      deleted: false,
+      approved_parent: true,
+      approved_child: true,
+    ).count
   end
 
   ##
   # Return a relation with the original versions of quotes of this post, only
   # for quotes which are still valid (not deleted, both link ends approved).
   def quotes_good
-    LedgerBase.where(id: original_version.link_quotes
-      .where(deleted: false, approved_parent: true, approved_child: true)
-      .select(:prior_post_id),
-      deleted: false).order(:created_at)
+    LedgerBase.where(
+      id: original_version.link_quotes
+            .where(deleted: false, approved_parent: true, approved_child: true)
+            .select(:prior_post_id),
+      deleted: false,
+    ).order(:created_at)
   end
 
   ##
   # How many replies did this post get?
   def reply_count
-    LinkReply.where(prior_post_id: original_version_id, deleted: false,
-      approved_parent: true, approved_child: true).count
+    LinkReply.where(
+      prior_post_id: original_version_id,
+      deleted: false,
+      approved_parent: true,
+      approved_child: true,
+    ).count
   end
 
   ##
   # Return a relation with the original versions of replies of this post, only
   # for replies which are still valid (not deleted, both link ends approved).
   def replies_good
-    LedgerBase.where(id: original_version.link_replies
-      .where(deleted: false, approved_parent: true, approved_child: true)
-      .select(:reply_post_id),
-      deleted: false).order(:created_at)
+    LedgerBase.where(
+      id: original_version.link_replies
+            .where(deleted: false, approved_parent: true, approved_child: true)
+            .select(:reply_post_id),
+      deleted: false,
+    ).order(:created_at)
   end
 end
