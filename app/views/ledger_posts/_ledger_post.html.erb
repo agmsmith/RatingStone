@@ -6,9 +6,15 @@
 <% else %>
   <div class="col-xs-12">
     <% if ledger_post.respond_to? :path
+      # This is a post in a display of ancestors or descendants.  Show the user
+      # the latest version of the post contents and subject, while using
+      # ledger_post (should be the original version) for points and permissions
+      # and path operations.
       path_ids = ledger_post.path.delete("()").split(",")
+      display_post = ledger_post.latest_version
     else
       path_ids = []
+      display_post = ledger_post
     end
     path_ids.each do |path_id| %>
       <div style="margin: 5px; border: none; height: 6em; width: 5px; float: left; background-color: <%=
@@ -31,15 +37,15 @@
 
         # Note we are showing the creator of this particular version of the
         # post, not the original or current creator.  Nil if User deleted.
-        creator_user = ledger_post.creator.user
+        creator_user = display_post.creator.user
         if creator_user
           (link_to gravatar_for(creator_user, size: 50), creator_user) + " " +
-          (link_to ledger_post.creator.latest_version.name, creator_user)
+          (link_to display_post.creator.latest_version.name, creator_user)
         else # No User record (deleted?), just display the Ledger name.
-          ledger_post.creator.latest_version.name
+          display_post.creator.latest_version.name
         end %><br>
       <%= render 'ledger_bases/timestamp_plain',
-        { ledger_object: ledger_post } %><br>
+        { ledger_object: display_post } %><br>
       <%= # Reply icon and number of replies; icon is link to do a reply,
         # count is a link to show a tree of all replies. 
         link_to ApplicationHelper::DIRECTION_LABELS["R"][label_style],
@@ -99,7 +105,7 @@
         <% end %>
     </div>
     <%= render "ledger_posts/ledger_post_plain",
-      { ledger_post: ledger_post } %>
+      { ledger_post: display_post } %>
   </div>
 <% end %>
 </li>

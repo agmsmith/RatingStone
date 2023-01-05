@@ -71,7 +71,8 @@ class LedgerPost < LedgerBase
       # WHERE "ledger_bases"."type" = 'LedgerPost' AND "ledger_bases"."id" = 93
       starting_select_sql = where(*args).to_sql
         .sub(/\.\*/, ".id AS post_id, '(' || " \
-          "substr('0000000000' || ledger_bases.id, -10, 10) || ')' AS path")
+          "substr('0000000000' || ledger_bases.id, -10, 10) " \
+          "|| ')' AS path")
 
       # Now do the recursive search.  The path is the history of LedgerPost
       # ID numbers to get to the given node, and is sorted later to give
@@ -90,15 +91,15 @@ class LedgerPost < LedgerBase
           #{starting_select_sql}
         UNION ALL
           SELECT ledger_bases.id AS post_id,
-            (descent.path || ',(' ||
-            substr('0000000000' || ledger_bases.id, -10, 10) || ')') AS "path"
+            (descent.path || ',(' || substr('0000000000' ||
+            ledger_bases.id, -10, 10) || ')') AS "path"
           FROM descent, ledger_bases, link_bases link
           WHERE link.parent_id = descent.post_id AND link.type = 'LinkReply' AND
-            (NOT path LIKE '%(' ||
-            substr('0000000000' || link.child_id, -10, 10) || ')%') AND
-            link.approved_parent = 1 AND link.approved_child = 1 AND
-            link.deleted = 0 AND
-            ledger_bases.id = link.child_id AND ledger_bases.deleted = 0
+            (NOT path LIKE '%(' || substr('0000000000' ||
+            link.child_id, -10, 10) || ')%') AND
+            link.approved_parent = TRUE AND link.approved_child = TRUE AND
+            link.deleted = FALSE AND
+            ledger_bases.id = link.child_id AND ledger_bases.deleted = FALSE
         )
         SELECT ledger_bases.*, descent.path
           FROM descent, ledger_bases
