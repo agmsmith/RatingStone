@@ -8,8 +8,8 @@ class LedgerPostsController < LedgerBasesController
   def ancestors
     @ledger_post = LedgerPost.find(params[:id])
     @ledger_objects = LedgerPost.tree_of_quotes(
-      id: @ledger_post.original_version_id)
-      .paginate(page: params[:page])
+      id: @ledger_post.original_version_id,
+    ).paginate(page: params[:page])
   end
 
   ##
@@ -17,8 +17,8 @@ class LedgerPostsController < LedgerBasesController
   def descendants
     @ledger_post = LedgerPost.find(params[:id])
     @ledger_objects = LedgerPost.tree_of_replies(
-      id: @ledger_post.original_version_id)
-      .paginate(page: params[:page])
+      id: @ledger_post.original_version_id,
+    ).paginate(page: params[:page])
   end
 
   def edit
