@@ -69,9 +69,12 @@ class LedgerPost < LedgerBase
       # SELECT "ledger_bases"."id" AS "post_id",
       # path-for-starting-id AS path FROM "ledger_bases"
       # WHERE "ledger_bases"."type" = 'LedgerPost' AND "ledger_bases"."id" = 93
+      # Note funky SUBSTRING and LENGTH and || concatenation is code that works
+      # in both Sqlite3 and PostgreSQL; adds leading zeroes to ID number.
       starting_select_sql = where(*args).to_sql
         .sub(/\.\*/, ".id AS post_id, '(' || " \
-          "substr('0000000000' || CAST(ledger_bases.id AS VARCHAR), -10, 10) " \
+          "SUBSTRING('0000000000' || ledger_bases.id, " \
+          "LENGTH('x' || ledger_bases.id))" \
           "|| ')' AS path")
 
       # Now do the recursive search.  The path is the history of LedgerPost
@@ -91,12 +94,12 @@ class LedgerPost < LedgerBase
           #{starting_select_sql}
         UNION ALL
           SELECT ledger_bases.id AS post_id,
-            (descent.path || ',(' || substr('0000000000' ||
-            CAST(ledger_bases.id AS VARCHAR), -10, 10) || ')') AS "path"
+            (descent.path || ',(' || SUBSTRING('0000000000' || ledger_bases.id,
+            LENGTH('x' || ledger_bases.id)) || ')') AS "path"
           FROM descent, ledger_bases, link_bases link
           WHERE link.parent_id = descent.post_id AND link.type = 'LinkReply' AND
-            (NOT path LIKE '%(' || substr('0000000000' ||
-            CAST(link.child_id AS VARCHAR), -10, 10) || ')%') AND
+            (NOT path LIKE '%(' || SUBSTRING('0000000000' ||
+            link.child_id, LENGTH('x' || link.child_id)) || ')%') AND
             link.approved_parent = TRUE AND link.approved_child = TRUE AND
             link.deleted = FALSE AND
             ledger_bases.id = link.child_id AND ledger_bases.deleted = FALSE
