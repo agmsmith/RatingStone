@@ -4,10 +4,10 @@
   @ledger_object %></h1>
 
 <%= will_paginate @ledger_objects %>
-<ul class="list-ledger-objects">
+
 <% @ledger_objects.each do |an_object| %>
 <%= render an_object %>
 <% end %>
-</ul>
+
 <%= will_paginate @ledger_objects %>
 

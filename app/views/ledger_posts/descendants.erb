@@ -3,7 +3,7 @@
 <h1>Descendants</h1>
 
 <%= will_paginate @ledger_objects %>
-<ul class="list-ledger-objects">
+
 <% hidden_count = 0
   @ledger_objects.each do |an_object|
     if an_object.is_a?(LedgerPost) && !an_object.deleted?
@@ -12,11 +12,11 @@
       hidden_count += 1
     end
   end %>
-</ul>
 <% if hidden_count != 0 %>
 <p><%= "#{hidden_count} #{'post'.pluralize(hidden_count)} " \
     "#{(hidden_count == 1) ? 'was' : 'were'}"
   %> hidden (deleted, or not a post).</p>
 <% end %>
+
 <%= will_paginate @ledger_objects %>
 

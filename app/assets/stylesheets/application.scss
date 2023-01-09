@@ -54,6 +54,11 @@ section {
   text-decoration: line-through;
 }
 
+/* For showing an error message about not having permission to view something. */
+.not-allowed-to-view {
+  color: $gray-light;
+}
+
 /* General text of some sort, like a description of a Group. */
 .description-box {
   border: 2px double #ddd;
@@ -340,12 +345,6 @@ aside {
     overflow: auto;
     padding: 10px 0;
     border-bottom: 1px solid $gray-lighter;
-    .deleted {
-      color: red;
-    }
-    .not-allowed-to-view {
-      color: $gray-light;
-    }
     .content {
       color: black;
       .group-name {

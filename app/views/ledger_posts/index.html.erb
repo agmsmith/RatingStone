@@ -3,7 +3,7 @@
 <h1>All Ledger Posts</h1>
 
 <%= will_paginate @ledger_objects %>
-<ul class="list-ledger-objects">
+
 <% hidden_count = 0
   @ledger_objects.each do |an_object|
     if an_object.is_a?(LedgerPost) && an_object.latest_version? &&
@@ -13,11 +13,11 @@
       hidden_count += 1
     end
   end %>
-</ul>
 <% if hidden_count != 0 %>
 <p><%= "#{hidden_count} #{'post'.pluralize(hidden_count)} " \
     "#{(hidden_count == 1) ? 'was' : 'were'}"
   %> hidden (earlier version or deleted).</p>
 <% end %>
+
 <%= will_paginate @ledger_objects %>
 
