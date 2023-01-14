@@ -98,11 +98,11 @@ class LedgerPost < LedgerBase
             LENGTH('x' || ledger_bases.id)) || ')') AS "path"
           FROM descent, ledger_bases, link_bases link
           WHERE link.parent_id = descent.post_id AND link.type = 'LinkReply' AND
-            (NOT path LIKE '%(' || SUBSTRING('0000000000' ||
-            link.child_id, LENGTH('x' || link.child_id)) || ')%') AND
             link.approved_parent = TRUE AND link.approved_child = TRUE AND
             link.deleted = FALSE AND
-            ledger_bases.id = link.child_id AND ledger_bases.deleted = FALSE
+            ledger_bases.id = link.child_id AND ledger_bases.deleted = FALSE AND
+            (NOT path LIKE '%(' || SUBSTRING('0000000000' ||
+            link.child_id, LENGTH('x' || link.child_id)) || ')%')
         )
         SELECT ledger_bases.*, descent.path
           FROM descent, ledger_bases

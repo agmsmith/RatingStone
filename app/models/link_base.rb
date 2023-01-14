@@ -36,6 +36,7 @@ class LinkBase < ApplicationRecord
   # Usually used in error messages, which the user may see.  Max 255 characters.
   def to_s
     "#{base_s} " \
+      "#{deleted ? "deleted " : ""}" \
       "parent #{approved_parent.to_s[0].upcase} " \
       "#{ApplicationHelper::DIRECTION_LABELS[rating_direction_parent][0]} " \
       "#{format("%.2f", rating_points_boost_parent)}: " \

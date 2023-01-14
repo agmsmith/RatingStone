@@ -75,6 +75,7 @@ class LedgerBase < ApplicationRecord
   def to_s
     base_string = base_s
     extra_info = context_s
+    base_string << " deleted" if deleted
     base_string << " (#{extra_info})" unless extra_info.empty?
     base_string.truncate(255)
   end
