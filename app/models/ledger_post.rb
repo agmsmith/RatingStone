@@ -60,7 +60,7 @@ class LedgerPost < LedgerBase
   # ordering is from the PostgreSQL manual itself:
   # https://www.postgresql.org/docs/14/queries-with.html#QUERIES-WITH-RECURSIVE
   class << self
-    def tree_of_replies(*args)
+    def tree_of_quotes(*args)
       # Generate SQL to select the starting point of the search, starts out like
       # SELECT "ledger_bases".* FROM "ledger_bases" WHERE
       # "ledger_bases"."type" = 'LedgerPost' AND "ledger_bases"."id" = 93
@@ -84,10 +84,43 @@ class LedgerPost < LedgerBase
       # Anyway, each number is padded up to 10 digits so that sort order isn't
       # mangled by the number of digits.  Brackets are around the numbers to
       # make a string search for a particular number easier.  Each iteration
-      # we find LedgerPosts that are replies to the previously found LedgerPosts
+      # we find LedgerPosts that are quotes of the previously found LedgerPosts
       # and add them to the result, storing just their ID numbers and their
       # path.  Skip ones where their ID is already in the path (they are part
       # of a cycle in the graph and we've already gotten to them).
+
+      select("*").from("(#{<<~LONGSQLQUERY}) AS ledger_bases")
+        WITH RECURSIVE ascent(post_id, path) AS (
+          #{starting_select_sql}
+        UNION ALL
+          SELECT ledger_bases.id AS post_id,
+            (ascent.path || ',(' || SUBSTRING('0000000000' || ledger_bases.id,
+            LENGTH('x' || ledger_bases.id)) || ')') AS "path"
+          FROM ascent, ledger_bases, link_bases link
+          WHERE link.child_id = ascent.post_id AND link.type = 'LinkReply' AND
+            link.approved_parent = TRUE AND link.approved_child = TRUE AND
+            link.deleted = FALSE AND
+            ledger_bases.id = link.parent_id AND ledger_bases.deleted = FALSE AND
+            (NOT path LIKE '%(' || SUBSTRING('0000000000' ||
+            link.parent_id, LENGTH('x' || link.parent_id)) || ')%')
+        )
+        SELECT ledger_bases.*, ascent.path
+          FROM ascent, ledger_bases
+          WHERE ledger_bases.id = ascent.post_id
+          ORDER BY path DESC
+      LONGSQLQUERY
+    end
+  end
+
+  ##
+  # Find all the replies to a post, see tree_of_quotes for more docs.
+  class << self
+    def tree_of_replies(*args)
+      starting_select_sql = where(*args).to_sql
+        .sub(/\.\*/, ".id AS post_id, '(' || " \
+          "SUBSTRING('0000000000' || ledger_bases.id, " \
+          "LENGTH('x' || ledger_bases.id))" \
+          "|| ')' AS path")
 
       select("*").from("(#{<<~LONGSQLQUERY}) AS ledger_bases")
         WITH RECURSIVE descent(post_id, path) AS (
