@@ -1,23 +1,23 @@
-<% if !ledger_post.allowed_to_view?(current_ledger_user) %>
-  <p class="not-allowed-to-view"><%=
-    "#{ledger_post.base_s} You don't have permission to view this." %></p>
-<% else %>
-  <div style="display: flex;" id="ledger-post-<%= ledger_post.id %>">
-    <% if ledger_post.respond_to? :path
-      # This is a post in a display of ancestors or descendants.  Show the user
-      # the latest version of the post contents and subject, while using
-      # ledger_post (should be the original version) for points and permissions
-      # and path operations.
-      path_ids = ledger_post.path.delete("()").split(",")
-      display_post = ledger_post.latest_version
-    else
-      path_ids = []
-      display_post = ledger_post
-    end
-    path_ids.each do |path_id| %>
-    <div style="width: 5px; margin-right: 2px; flex: none; background-color: <%=
-      colour_hash_html(path_id) %>;">&nbsp;</div>
-    <% end %>
+<div style="display: flex;" id="ledger-post-<%= ledger_post.id %>">
+  <% if ledger_post.respond_to? :path
+    # This is a post in a display of ancestors or descendants.  Show the user
+    # the latest version of the post contents and subject, while using
+    # ledger_post (should be the original version) for points and permissions
+    # and path operations.
+    path_ids = ledger_post.path.delete("()").split(",")
+    display_post = ledger_post.latest_version
+  else
+    path_ids = []
+    display_post = ledger_post
+  end
+  path_ids.each do |path_id| %>
+  <div style="width: 5px; margin-right: 2px; flex: none; background-color: <%=
+    colour_hash_html(path_id) %>;">&nbsp;</div>
+  <% end %>
+  <% if !display_post.allowed_to_view?(current_ledger_user) %>
+    <p class="not-allowed-to-view"><%=
+      "#{display_post.base_s} You don't have permission to view this." %></p>
+  <% else %>
     <div style="padding: 2px; width: 100%;">
       <div class="post-gravatar-box">
         <%= # Will need the label style this user prefers, for several things.
@@ -26,7 +26,7 @@
           label_style = 2 if label_style > 2
 
           # Update points since they're being shown.  Affects expiry time too.
-          points_object = ledger_post.update_current_points
+          points_object = display_post.update_current_points
 
           highest_points = points_object.current_up_points
           highest_points = points_object.current_meh_points if
@@ -39,7 +39,8 @@
           creator_user = display_post.creator.user
           if creator_user
             (link_to gravatar_for(creator_user, size: 50), creator_user) + " " +
-            (link_to display_post.creator.latest_version.name, creator_user)
+            (link_to display_post.creator.latest_version.name, creator_user,
+            title: "See home page for user ##{creator_user.id}.")
           else # No User record (deleted?), just display the Ledger name.
             display_post.creator.latest_version.name
           end %><br>
@@ -48,14 +49,18 @@
         <%= # Reply icon and number of replies; icon is link to do a reply,
           # count is a link to show a tree of all replies. 
           link_to ApplicationHelper::DIRECTION_LABELS["R"][label_style],
-            reply_ledger_post_path(ledger_post) %> <%=
-            link_to format("%d", ledger_post.reply_count),
-            descendants_ledger_post_path(ledger_post) %>&nbsp; <%=
+            reply_ledger_post_path(display_post),
+            title: "Write a reply." %> <%=
+            link_to format("%d", display_post.reply_count),
+            descendants_ledger_post_path(display_post),
+            title: "See replies to this post." %>&nbsp; <%=
           # Quote icon and number of quotes, bpth are links to things.
           link_to ApplicationHelper::DIRECTION_LABELS["Q"][label_style],
-            quote_ledger_post_path(ledger_post) %> <%=
-            link_to format("%d", ledger_post.quote_count),
-            ancestors_ledger_post_path(ledger_post) %><br>
+            quote_ledger_post_path(display_post),
+            title: "Write a quote." %> <%=
+            link_to format("%d", display_post.quote_count),
+            ancestors_ledger_post_path(display_post),
+            title: "See quotes of this post." %><br>
         <%= # List the rating for this post, up / meh / down.  Also clicking on a
           # particular direction will do a Like/Meh/Dislike on the post and its
           # author, for a default number of points.  There's a separate option
@@ -65,47 +70,53 @@
           # green=Up=btn-success, purple=Meh=btn-primary, red=Down=btn-danger.
           form_with(url: link_opinions_path, local: true, method: :post,
             class: "button-inline") do |f| %>
-            <%= f.hidden_field :opinion_about_object_id, value: ledger_post.id %>
+            <%= f.hidden_field :opinion_about_object_id,
+              value: display_post.id %>
             <%= f.hidden_field :author_id,
-              value: ledger_post.creator.original_version_id %>
+              value: display_post.creator.original_version_id %>
             <%= f.hidden_field :reason_why,
-              value: "Up button pressed for #{ledger_post}." %>
+              value: "Up button pressed for #{display_post}." %>
             <%= f.submit ApplicationHelper::DIRECTION_LABELS["U"][label_style] +
               format("%.2f", points_object.current_up_points), name: "U",
               class: "btn btn-" +
                 ((points_object.current_up_points < highest_points) ? "info" :
-                "success") %>
-          <% end %>
-          <%= form_with(url: link_opinions_path, local: true, method: :post,
-            class: "button-inline") do |f| %>
-            <%= f.hidden_field :opinion_about_object_id, value: ledger_post.id %>
-            <%= f.hidden_field :author_id,
-              value: ledger_post.creator.original_version_id %>
-            <%= f.hidden_field :reason_why,
-              value: "Meh button pressed for #{ledger_post}." %>
-            <%= f.submit ApplicationHelper::DIRECTION_LABELS["M"][label_style] +
-              format("%.2f", points_object.current_meh_points), name: "M",
-              class: "btn btn-" +
-                ((points_object.current_meh_points < highest_points) ? "info" :
-                "primary") %>
-          <% end %>
-          <%= form_with(url: link_opinions_path, local: true, method: :post,
-            class: "button-inline") do |f| %>
-            <%= f.hidden_field :opinion_about_object_id, value: ledger_post.id %>
-            <%= f.hidden_field :author_id,
-              value: ledger_post.creator.original_version_id %>
-            <%= f.hidden_field :reason_why,
-              value: "Down button pressed for #{ledger_post}." %>
-            <%= f.submit ApplicationHelper::DIRECTION_LABELS["D"][label_style] +
-              format("%.2f", points_object.current_down_points), name: "D",
-              class: "btn btn-" +
-                ((points_object.current_down_points < highest_points) ? "info" :
-                "danger") %>
-          <% end %>
+                "success"),
+              title: "Add an Up rating of this post." %>
+        <% end %>
+        <%= form_with(url: link_opinions_path, local: true, method: :post,
+          class: "button-inline") do |f| %>
+          <%= f.hidden_field :opinion_about_object_id,
+            value: display_post.id %>
+          <%= f.hidden_field :author_id,
+            value: display_post.creator.original_version_id %>
+          <%= f.hidden_field :reason_why,
+            value: "Meh button pressed for #{display_post}." %>
+          <%= f.submit ApplicationHelper::DIRECTION_LABELS["M"][label_style] +
+            format("%.2f", points_object.current_meh_points), name: "M",
+            class: "btn btn-" +
+              ((points_object.current_meh_points < highest_points) ? "info" :
+              "primary"),
+              title: "Add a Meh rating of this post." %>
+        <% end %>
+        <%= form_with(url: link_opinions_path, local: true, method: :post,
+          class: "button-inline") do |f| %>
+          <%= f.hidden_field :opinion_about_object_id,
+            value: display_post.id %>
+          <%= f.hidden_field :author_id,
+            value: display_post.creator.original_version_id %>
+          <%= f.hidden_field :reason_why,
+            value: "Down button pressed for #{display_post}." %>
+          <%= f.submit ApplicationHelper::DIRECTION_LABELS["D"][label_style] +
+            format("%.2f", points_object.current_down_points), name: "D",
+            class: "btn btn-" +
+              ((points_object.current_down_points < highest_points) ? "info" :
+              "danger"),
+              title: "Add a Down rating of this post." %>
+        <% end %>
       </div>
       <%= render "ledger_posts/ledger_post_plain",
         { ledger_post: display_post } %>
     </div>
-  </div>
-<% end %>
+  <% end %>
+</div>
 

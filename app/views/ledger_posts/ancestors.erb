@@ -1,6 +1,7 @@
-<% provide(:page_title, 'Ancestors of Posts') %>
+<% provide(:page_title,
+  "Ancestors of ##{@ledger_post.id} #{@ledger_post.subject}") %>
 
-<h1>Ancestors</h1>
+<h1>Ancestors of #<%= @ledger_post.id %> <I><%= @ledger_post.subject %></I></h1>
 
 <%= will_paginate @ledger_objects %>
 

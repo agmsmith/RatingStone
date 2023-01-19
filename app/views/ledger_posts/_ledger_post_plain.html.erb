@@ -19,7 +19,8 @@
       ledger_post.deleted? ? "deleted " : "" %>post-subject">
       <%= link_to(
         ledger_post.subject.empty? ? "<No Subject>" : ledger_post.subject,
-        ledger_post_path(ledger_post)) %>
+        ledger_post_path(ledger_post),
+        title: "See details of post ##{ledger_post.id}.") %>
     </div>
     <div class="post-text-content">
       <%= Kramdown::Document.new(ledger_post.content).to_html.html_safe -%>
