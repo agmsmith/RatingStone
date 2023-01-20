@@ -63,9 +63,16 @@ class LedgerBasesController < ApplicationController
 
   def show
     # Note @ledger_object can be nil for missing records or wrong type record
-    # or no ID specified.
-    if params[:id]
-      @ledger_object = ledger_class_for_controller.find_by(id: params[:id])
+    # or no ID specified.  But we won't let it render in those cases.
+    @ledger_object = if params[:id]
+      ledger_class_for_controller.find_by(id: params[:id])
+    else
+      nil
+    end
+    unless @ledger_object
+      flash[:danger] = "Can't find object ##{params[:id]} to show, " \
+        "or it isn't a #{ledger_class_for_controller.name}."
+      return redirect_back(fallback_location: root_url)
     end
   end
 

@@ -6,18 +6,18 @@ class LedgerPostsController < LedgerBasesController
   ##
   # Show a tree of all quotes of a specified post.
   def ancestors
-    @ledger_post = LedgerPost.find(params[:id])
+    @ledger_object = LedgerPost.find(params[:id])
     @ledger_objects = LedgerPost.tree_of_quotes(
-      id: @ledger_post.original_version_id,
+      id: @ledger_object.original_version_id,
     ).paginate(page: params[:page])
   end
 
   ##
   # Show a tree of all replies to a specified post.
   def descendants
-    @ledger_post = LedgerPost.find(params[:id])
+    @ledger_object = LedgerPost.find(params[:id])
     @ledger_objects = LedgerPost.tree_of_replies(
-      id: @ledger_post.original_version_id,
+      id: @ledger_object.original_version_id,
     ).paginate(page: params[:page])
   end
 

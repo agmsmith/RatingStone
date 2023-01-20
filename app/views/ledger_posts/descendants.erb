@@ -1,7 +1,9 @@
 <% provide(:page_title,
-  "Descendants of ##{@ledger_post.id} #{@ledger_post.subject}") %>
+  "Descendants of ##{@ledger_object.id} #{@ledger_object.subject}") %>
 
-<h1>Descendants of #<%= @ledger_post.id %> <I><%= @ledger_post.subject %></I></h1>
+<h1>Descendants of <%=
+  link_to "##{@ledger_object.id } #{@ledger_object.subject}",
+  @ledger_object %></h1>
 
 <%= will_paginate @ledger_objects %>
 

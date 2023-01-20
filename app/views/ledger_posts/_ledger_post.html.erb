@@ -53,14 +53,14 @@
             title: "Write a reply." %> <%=
             link_to format("%d", display_post.reply_count),
             descendants_ledger_post_path(display_post),
-            title: "See replies to this post." %>&nbsp; <%=
+            title: "See tree of replies to this post." %>&nbsp; <%=
           # Quote icon and number of quotes, bpth are links to things.
           link_to ApplicationHelper::DIRECTION_LABELS["Q"][label_style],
             quote_ledger_post_path(display_post),
             title: "Write a quote." %> <%=
             link_to format("%d", display_post.quote_count),
             ancestors_ledger_post_path(display_post),
-            title: "See quotes of this post." %><br>
+            title: "See tree of quotes of this post." %><br>
         <%= # List the rating for this post, up / meh / down.  Also clicking on a
           # particular direction will do a Like/Meh/Dislike on the post and its
           # author, for a default number of points.  There's a separate option
