@@ -146,6 +146,65 @@ class LedgerPost < LedgerBase
   end
 
   ##
+  # Find all posts connected to a given post.  All the quotes and replies to
+  # a post and more; the whole tree up and down and sideways too.  If there are
+  # multiple paths through the tree, it will use them all.  Which makes it not
+  # too useful.
+  class << self
+    def tree_of_connected(*args)
+      starting_select_sql = where(*args).to_sql
+        .sub(/\.\*/, ".id AS post_id, '(' || " \
+          "SUBSTRING('0000000000' || ledger_bases.id, " \
+          "LENGTH('x' || ledger_bases.id))" \
+          "|| ')' AS path")
+
+      select("*").from("(#{<<~LONGSQLQUERY}) AS ledger_bases")
+        WITH RECURSIVE descent(post_id, path) AS (
+          #{starting_select_sql}
+        UNION ALL
+          SELECT ledger_bases.id AS post_id,
+            (descent.path || ',(' || SUBSTRING('0000000000' || ledger_bases.id,
+            LENGTH('x' || ledger_bases.id)) || ')') AS "path"
+          FROM descent, ledger_bases, link_bases link
+          WHERE
+          (
+            (
+              link.parent_id = descent.post_id AND link.type = 'LinkReply' AND
+              link.approved_parent = TRUE AND link.approved_child = TRUE AND
+              link.deleted = FALSE AND
+              ledger_bases.id = link.child_id AND ledger_bases.deleted = FALSE
+            )
+            OR
+            (
+              link.child_id = descent.post_id AND link.type = 'LinkReply' AND
+              link.approved_parent = TRUE AND link.approved_child = TRUE AND
+              link.deleted = FALSE AND
+              ledger_bases.id = link.parent_id AND ledger_bases.deleted = FALSE
+            )
+          )
+          AND
+          (
+            NOT path LIKE '%(' || SUBSTRING('0000000000' ||
+            ledger_bases.id, LENGTH('x' || ledger_bases.id)) || ')%'
+          )
+        )
+        SELECT ledger_bases.*, descent.path
+          FROM descent, ledger_bases
+          WHERE ledger_bases.id = descent.post_id
+          ORDER BY path
+      LONGSQLQUERY
+    end
+  end
+
+  ##
+  # Find all the quotes and replies to a post.
+  class << self
+    def tree_of_quotes_and_replies(*args)
+      tree_of_quotes(*args).or(tree_of_replies(*args))
+    end
+  end
+
+  ##
   # Return some user readable context for the object.  Things like the name of
   # the user if this is a user object.  Used in error messages.  Empty string
   # for none.
