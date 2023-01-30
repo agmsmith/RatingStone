@@ -32,10 +32,11 @@ Rails.application.routes.draw do
     member do
       get 'ancestors' # Show a tree of all quotes and up of a given post.
       get 'descendants' # Show a tree of all replies to a given post.
-      get 'reply' # Make a new reply to a given post.
-      get 'replies' # List all replies to a given post.
+      get 'descentors' # Show a tree of all quotes and replies to a given post.
       get 'quote' # Make a new post quoting a given post.
       get 'quotes' # List all posts quoting a given post.
+      get 'reply' # Make a new reply to a given post.
+      get 'replies' # List all replies to a given post.
     end
   end
   patch '/ledger_posts', to: 'ledger_posts#update' # For update without an ID.

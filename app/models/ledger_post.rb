@@ -146,12 +146,14 @@ class LedgerPost < LedgerBase
   end
 
   ##
-  # Find all posts connected to a given post.  All the quotes and replies to
-  # a post and more; the whole tree up and down and sideways too.  If there are
-  # multiple paths through the tree, it will use them all.  Which makes it not
-  # too useful.
+  # Find all the quotes and replies to a post.  Can't just stick together
+  # the Relations from tree_of_replies and tree_of_quotes because the outputs
+  # aren't compatible for some reason.  So duplicate code and UNION it.
+  # Some tips on Unioning multiple expressions are at:
+  # https://stackoverflow.com/questions/34046580/multiple-recursive-union-all-selects-in-a-cte-sql-query
+  # TODO: Sort the results, perhaps by prepending a letter and by reversing the order of adding items to the string of the path.
   class << self
-    def tree_of_connected(*args)
+    def tree_of_quotes_and_replies(*args)
       starting_select_sql = where(*args).to_sql
         .sub(/\.\*/, ".id AS post_id, '(' || " \
           "SUBSTRING('0000000000' || ledger_bases.id, " \
@@ -159,48 +161,45 @@ class LedgerPost < LedgerBase
           "|| ')' AS path")
 
       select("*").from("(#{<<~LONGSQLQUERY}) AS ledger_bases")
-        WITH RECURSIVE descent(post_id, path) AS (
+        WITH RECURSIVE starting_conditions AS (
           #{starting_select_sql}
+        ),
+        ascent(post_id, path) AS (
+          SELECT * FROM starting_conditions
+        UNION ALL
+          SELECT ledger_bases.id AS post_id,
+            (ascent.path || ',(' || SUBSTRING('0000000000' || ledger_bases.id,
+            LENGTH('x' || ledger_bases.id)) || ')') AS "path"
+          FROM ascent, ledger_bases, link_bases link
+          WHERE link.child_id = ascent.post_id AND link.type = 'LinkReply' AND
+            link.approved_parent = TRUE AND link.approved_child = TRUE AND
+            link.deleted = FALSE AND
+            ledger_bases.id = link.parent_id AND ledger_bases.deleted = FALSE AND
+            (NOT path LIKE '%(' || SUBSTRING('0000000000' ||
+            link.parent_id, LENGTH('x' || link.parent_id)) || ')%')
+        ),
+        descent(post_id, path) AS (
+          SELECT * FROM starting_conditions
         UNION ALL
           SELECT ledger_bases.id AS post_id,
             (descent.path || ',(' || SUBSTRING('0000000000' || ledger_bases.id,
             LENGTH('x' || ledger_bases.id)) || ')') AS "path"
           FROM descent, ledger_bases, link_bases link
-          WHERE
-          (
-            (
-              link.parent_id = descent.post_id AND link.type = 'LinkReply' AND
-              link.approved_parent = TRUE AND link.approved_child = TRUE AND
-              link.deleted = FALSE AND
-              ledger_bases.id = link.child_id AND ledger_bases.deleted = FALSE
-            )
-            OR
-            (
-              link.child_id = descent.post_id AND link.type = 'LinkReply' AND
-              link.approved_parent = TRUE AND link.approved_child = TRUE AND
-              link.deleted = FALSE AND
-              ledger_bases.id = link.parent_id AND ledger_bases.deleted = FALSE
-            )
-          )
-          AND
-          (
-            NOT path LIKE '%(' || SUBSTRING('0000000000' ||
-            ledger_bases.id, LENGTH('x' || ledger_bases.id)) || ')%'
-          )
+          WHERE link.parent_id = descent.post_id AND link.type = 'LinkReply' AND
+            link.approved_parent = TRUE AND link.approved_child = TRUE AND
+            link.deleted = FALSE AND
+            ledger_bases.id = link.child_id AND ledger_bases.deleted = FALSE AND
+            (NOT path LIKE '%(' || SUBSTRING('0000000000' ||
+            link.child_id, LENGTH('x' || link.child_id)) || ')%')
         )
-        SELECT ledger_bases.*, descent.path
+        SELECT ledger_bases.*, ascent.path AS path
+          FROM ascent, ledger_bases
+          WHERE ledger_bases.id = ascent.post_id
+        UNION ALL
+        SELECT ledger_bases.*, descent.path AS path
           FROM descent, ledger_bases
           WHERE ledger_bases.id = descent.post_id
-          ORDER BY path
       LONGSQLQUERY
-    end
-  end
-
-  ##
-  # Find all the quotes and replies to a post.
-  class << self
-    def tree_of_quotes_and_replies(*args)
-      tree_of_quotes(*args).or(tree_of_replies(*args))
     end
   end
 

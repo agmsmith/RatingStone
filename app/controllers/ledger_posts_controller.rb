@@ -21,6 +21,15 @@ class LedgerPostsController < LedgerBasesController
     ).paginate(page: params[:page])
   end
 
+  ##
+  # Show a tree of all quotes and replies to a specified post.
+  def descentors
+    @ledger_object = LedgerPost.find(params[:id])
+    @ledger_objects = LedgerPost.tree_of_quotes_and_replies(
+      id: @ledger_object.original_version_id,
+    ).paginate(page: params[:page])
+  end
+
   def edit
     if @ledger_object
       @ledger_object.summary_of_changes = "Edited version of #{@ledger_object}."
