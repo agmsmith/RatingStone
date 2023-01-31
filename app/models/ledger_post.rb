@@ -151,7 +151,8 @@ class LedgerPost < LedgerBase
   # aren't compatible for some reason.  So duplicate code and UNION it.
   # Some tips on Unioning multiple expressions are at:
   # https://stackoverflow.com/questions/34046580/multiple-recursive-union-all-selects-in-a-cte-sql-query
-  # TODO: Sort the results, perhaps by prepending a letter and by reversing the order of adding items to the string of the path.
+  # TODO: Sort the results, perhaps by prepending a letter and by reversing the
+  # order of adding items to the string of the path.
   class << self
     def tree_of_quotes_and_replies(*args)
       starting_select_sql = where(*args).to_sql
