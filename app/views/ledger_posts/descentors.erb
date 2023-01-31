@@ -8,9 +8,13 @@
 <%= will_paginate @ledger_objects %>
 
 <% hidden_count = 0
+  last_shown_id = nil
   @ledger_objects.each do |an_object|
-    if an_object.is_a?(LedgerPost) && !an_object.deleted?
-      %><%= render an_object
+    if an_object.is_a?(LedgerPost) && !an_object.deleted? &&
+        an_object.id != last_shown_id
+      %><%=
+       last_shown_id = an_object.id
+       render an_object
     %><% else
       hidden_count += 1
     end
@@ -18,7 +22,7 @@
 <% if hidden_count != 0 %>
 <p><%= "#{hidden_count} #{'post'.pluralize(hidden_count)} " \
     "#{(hidden_count == 1) ? 'was' : 'were'}"
-  %> hidden (deleted, or not a post).</p>
+  %> hidden (duplicate paths, deleted, or not a post).</p>
 <% end %>
 
 <%= will_paginate @ledger_objects %>
