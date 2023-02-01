@@ -4,10 +4,7 @@
     # the latest version of the post contents and subject, while using
     # ledger_post (should be the original version) for points and permissions
     # and path operations.
-    path_ids = ledger_post.path.delete("AD()").split(",")
-    if ledger_post.path[0] == 'A'
-      path_ids = path_ids.reverse
-    end
+    path_ids = ledger_post.path.delete("()").split(",")
     display_post = ledger_post.latest_version
   else
     path_ids = []
@@ -117,9 +114,6 @@
               title: "Add a Down rating of this post." %>
         <% end %>
       </div>
-      <% if ledger_post.respond_to? :path %>
-        <P><%= ledger_post.path %><BR><%= path_ids %></P>
-      <% end %>
       <%= render "ledger_posts/ledger_post_plain",
         { ledger_post: display_post } %>
     </div>

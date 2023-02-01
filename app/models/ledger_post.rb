@@ -148,27 +148,24 @@ class LedgerPost < LedgerBase
   ##
   # Find all the quotes and replies to a post.  Can't just stick together
   # the Relations from tree_of_replies and tree_of_quotes because the outputs
-  # aren't compatible for some reason.  So duplicate code, reverse the path
-  # order for ascent, prepend an A for ascent and D for descent (so we can sort
-  # by path and the ancestors then come before descendants), and UNION it.
+  # aren't compatible for some reason.  So duplicate code and UNION it, and
+  # keep ascent and descent paths separate so we can sort them in different
+  # orders so that they read nicely chronologically.
   class << self
     def tree_of_quotes_and_replies(*args)
-      starting_select_sql = where(*args).to_sql
-        .sub(/\.\*/, ".id AS post_id, '(' || " \
-          "SUBSTRING('0000000000' || ledger_bases.id, " \
-          "LENGTH('x' || ledger_bases.id))" \
-          "|| ')' AS path")
-
       select("*").from("(#{<<~LONGSQLQUERY}) AS ledger_bases")
-        WITH RECURSIVE starting_conditions AS (
-          #{starting_select_sql}
+        WITH RECURSIVE starting_state(post_id, path) AS (
+          #{where(*args).to_sql.sub(/\.\*/,
+            ".id AS post_id, '(' || " \
+            "SUBSTRING('0000000000' || ledger_bases.id, " \
+            "LENGTH('x' || ledger_bases.id)) || ')' AS path")}
         ),
         ascent(post_id, path) AS (
-          SELECT * FROM starting_conditions
+          SELECT * FROM starting_state
         UNION ALL
           SELECT ledger_bases.id AS post_id,
-            ('(' || SUBSTRING('0000000000' || ledger_bases.id,
-            LENGTH('x' || ledger_bases.id)) || '),' || ascent.path) AS "path"
+            (ascent.path || ',(' || SUBSTRING('0000000000' || ledger_bases.id,
+            LENGTH('x' || ledger_bases.id)) || ')') AS path
           FROM ascent, ledger_bases, link_bases link
           WHERE link.child_id = ascent.post_id AND link.type = 'LinkReply' AND
             link.approved_parent = TRUE AND link.approved_child = TRUE AND
@@ -178,11 +175,11 @@ class LedgerPost < LedgerBase
             link.parent_id, LENGTH('x' || link.parent_id)) || ')%')
         ),
         descent(post_id, path) AS (
-          SELECT * FROM starting_conditions
+          SELECT * FROM starting_state
         UNION ALL
           SELECT ledger_bases.id AS post_id,
             (descent.path || ',(' || SUBSTRING('0000000000' || ledger_bases.id,
-            LENGTH('x' || ledger_bases.id)) || ')') AS "path"
+            LENGTH('x' || ledger_bases.id)) || ')') AS path
           FROM descent, ledger_bases, link_bases link
           WHERE link.parent_id = descent.post_id AND link.type = 'LinkReply' AND
             link.approved_parent = TRUE AND link.approved_child = TRUE AND
@@ -191,14 +188,16 @@ class LedgerPost < LedgerBase
             (NOT path LIKE '%(' || SUBSTRING('0000000000' ||
             link.child_id, LENGTH('x' || link.child_id)) || ')%')
         )
-          SELECT ledger_bases.*, ('A' || ascent.path) AS path
-            FROM ascent, ledger_bases
-            WHERE ledger_bases.id = ascent.post_id
+        SELECT ledger_bases.*,
+          ascent.path AS path_a, '' AS path_d, ascent.path AS path
+          FROM ascent, ledger_bases
+          WHERE ledger_bases.id = ascent.post_id
         UNION ALL
-          SELECT ledger_bases.*, ('D' || descent.path) AS path
-            FROM descent, ledger_bases
-            WHERE ledger_bases.id = descent.post_id
-        ORDER BY path
+        SELECT ledger_bases.*,
+          '' AS path_a, descent.path AS path_d, descent.path AS path
+          FROM descent, ledger_bases
+          WHERE ledger_bases.id = descent.post_id
+        ORDER BY path_a DESC, path_d ASC
       LONGSQLQUERY
     end
   end
