@@ -10,12 +10,14 @@
 <% hidden_count = 0
   last_shown_id = nil
   @ledger_objects.each do |an_object|
-    if an_object.is_a?(LedgerPost) && !an_object.deleted? &&
-        an_object.id != last_shown_id
-      %><%=
-       last_shown_id = an_object.id
-       render an_object
-    %><% else
+    if an_object.is_a?(LedgerPost) && !an_object.deleted?
+      if an_object.id != last_shown_id
+        %><%=
+        last_shown_id = an_object.id
+        render an_object
+      %><%
+      end
+    else
       hidden_count += 1
     end
   end %>

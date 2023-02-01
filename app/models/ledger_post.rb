@@ -155,10 +155,12 @@ class LedgerPost < LedgerBase
     def tree_of_quotes_and_replies(*args)
       select("*").from("(#{<<~LONGSQLQUERY}) AS ledger_bases")
         WITH RECURSIVE starting_state(post_id, path) AS (
-          #{where(*args).to_sql.sub(/\.\*/,
+          #{where(*args).to_sql.sub(
+            /\.\*/,
             ".id AS post_id, '(' || " \
-            "SUBSTRING('0000000000' || ledger_bases.id, " \
-            "LENGTH('x' || ledger_bases.id)) || ')' AS path")}
+              "SUBSTRING('0000000000' || ledger_bases.id, " \
+              "LENGTH('x' || ledger_bases.id)) || ')' AS path",
+          )}
         ),
         ascent(post_id, path) AS (
           SELECT * FROM starting_state

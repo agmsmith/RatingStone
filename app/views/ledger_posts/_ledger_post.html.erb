@@ -12,7 +12,7 @@
   end
   path_ids.each do |path_id| %>
   <div style="width: 5px; margin-right: 2px; flex: none; background-color: <%=
-    colour_hash_html(path_id) %>;">&nbsp;</div>
+    colour_hash_html(path_id) %>;" title="Post #<%= path_id.to_i %>">&nbsp;</div>
   <% end %>
   <% if !display_post.allowed_to_view?(current_ledger_user) %>
     <p class="not-allowed-to-view"><%=
