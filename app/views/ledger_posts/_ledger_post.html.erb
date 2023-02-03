@@ -5,6 +5,14 @@
     # ledger_post (should be the original version) for points and permissions
     # and path operations.
     path_ids = ledger_post.path.delete("()").split(",")
+    # Want to have at most 19 vertical bars / path markers, else post will
+    # run off the side of the page.  Using chunky cuts, multiples of 10, so
+    # that a run of adjacent posts have vertical bars that usually match up
+    # with adjacent posts.
+    cut_index = path_ids.size / 10 * 10 - 10
+    if cut_index > 0
+      path_ids = path_ids.slice(cut_index, 20)
+    end
     display_post = ledger_post.latest_version
   else
     path_ids = []

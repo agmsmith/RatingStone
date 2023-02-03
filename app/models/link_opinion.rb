@@ -13,4 +13,11 @@ class LinkOpinion < LinkBase
   alias_attribute :direction_object, :rating_direction_child
 
   validates :reason_why, length: { maximum: 255 }
+
+  ##
+  # Opinions are always pre-approved in both directions.  So the target can't
+  # reject down votes.
+  def initial_approval_state
+    [true, true]
+  end
 end
