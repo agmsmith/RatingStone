@@ -44,6 +44,10 @@ Rails.application.routes.draw do
   # The usual actions for displaying/editing groups.
   resources :ledger_groups, only: [:new, :create, :index, :show, :edit, :update]
 
+  # This just redirects to the Users page for the user.  Mostly so we can
+  # automatically render an object by its class.
+  resources :ledger_users, only: [:show]
+
   # Low level interface for debugging generic link objects.
   resources :link_bases, only: [:index, :show, :destroy] do
     member do
