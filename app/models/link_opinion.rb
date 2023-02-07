@@ -20,4 +20,16 @@ class LinkOpinion < LinkBase
   def initial_approval_state
     [true, true]
   end
+
+  ##
+  # Everybody involved can view an opinion.
+  def allowed_to_view?(luser)
+    return true if super
+
+    luser_id = luser.original_id
+    return true if author.creator_id == luser_id
+    return true if opinion_about_object.creator_id == luser_id
+
+    false
+  end
 end
