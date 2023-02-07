@@ -2,128 +2,43 @@
   "#{@link_object.is_a?(LinkOpinion) ?
     @link_object.base_s : "Unknown Opinion"}") %>
 <% if !@link_object.is_a?(LinkOpinion) %>
-  <div class="row">
-    <div class="col-xs-12 error-show">
-      Opinion "<%= params[:id] %>" does not exist.
-    </div>
-  </div>
+  <p>Opinion "<%= params[:id] %>" does not exist.</p>
 <% elsif !@link_object.allowed_to_view?(current_ledger_user) %>
-  <div class="row">
-    <div class="col-xs-12 error-show">
-      You do not have permission to view Opinion #<%= @link_object.id %>.
-    </div>
-  </div>
+  <p>You do not have permission to view Opinion #<%= @link_object.id %>.</p>
 <% else %>
-  <div class="row">
-    <h3>Opinion <%= @link_object.base_s %></H3>
-    <div class="col-xs-9 col-sm-10 col-lg-11">
-      <!-- Content of the object, creator first -->
-      <span class="user">Created by <%=
-        link_to "##{@link_object.creator.original_version_id} " \
-          "#{@link_object.creator.latest_version.name}",
-          @link_object.creator.user %><BR></span>
-      <span class="object-content">
-        Parent: <%= link_to @link_object.parent.to_s,
-          ledger_base_path(@link_object.parent_id) %><BR>
-        Child: <%= link_to @link_object.child.to_s,
-          ledger_base_path(@link_object.child_id) %><BR>
-        Number1: <%= @link_object.number1 %><BR>
-        String1: "<%= @link_object.string1 %>"<BR>
-        Deleted: <%= @link_object.deleted %><BR>
-        ApprovedParent: <%= @link_object.approved_parent %><BR>
-        ApprovedChild: <%= @link_object.approved_child %><BR>
-        RatingPointsSpent: <%= @link_object.rating_points_spent %><BR>
-        RatingPointsBoostParent: <%= @link_object.rating_points_boost_parent %><BR>
-        RatingPointsBoostChild: <%= @link_object.rating_points_boost_child %><BR>
-        RatingDirectionParent: <%= @link_object.rating_direction_parent %><BR>
-        RatingDirectionChild: <%= @link_object.rating_direction_child %><BR>
-        OriginalCeremony: <%= @link_object.original_ceremony %><BR>
-        Created: <span class="timestamp"> <%=
-          time_ago_in_words(@link_object.created_at) %> ago&nbsp;- <small><%=
-          @link_object.created_at.getlocal %></small></span><BR>
-        Last updated: <span class="timestamp"><%=
-          time_ago_in_words(@link_object.updated_at) %> ago&nbsp;- <small><%=
-          @link_object.updated_at.getlocal %></small></span>
-      </span>
-    </div>
-    <div class="col-xs-3 col-sm-2 col-lg-1">
-    <% if @link_object.creator_owner?(current_ledger_user) %>
-      <% if @link_object.deleted %>
-        <%= form_with(url: undelete_link_base_path(@link_object),
-          local: true, action: :undelete, method: :post) do |f| %>
-          <%= f.submit "Undelete #{@link_object.base_s}", class: "btn btn-info" %>
-          <%= f.text_area :reason, placeholder: "Reason why...",
-            class: "reason-why" %>
-        <% end %>
-      <% else %>
-        <%= form_with(url: link_base_path(@link_object),
-          local: true, action: :delete, method: :delete) do |f| %>
-          <%= f.submit "Delete #{@link_object.base_s}", class: "btn btn-danger" %>
-          <%= f.text_area :reason, placeholder: "Reason why...",
-            class: "reason-why" %>
-        <% end %>
-      <% end %>
+  <h3>Opinion <%= link_to @link_object.base_s,
+    link_base_path(@link_object) %></H3>
 
-      <%= form_with(url: approve_link_base_path(@link_object),
-        local: true, action: :approve, method: :post) do |f| %>
-        <%= f.submit "Approve #{@link_object.base_s}", class: "btn btn-info" %>
-        <%= f.text_area :reason, placeholder: "Reason why...",
-          class: "reason-why" %>
-      <% end %>
-      <%= form_with(url: unapprove_link_base_path(@link_object),
-        local: true, action: :unapprove, method: :post) do |f| %>
-        <%= f.submit "Unapprove #{@link_object.base_s}", class: "btn btn-info" %>
-        <%= f.text_area :reason, placeholder: "Reason why...",
-          class: "reason-why" %>
-      <% end %>
+  <p class="center"><%= link_to @link_object.creator.latest_version.name,
+    @link_object.creator.user
+  %> opined</p>
+  <p class="center">"<%= @link_object.reason_why %>"</p>
+  <p class="center"><small><%= time_ago_in_words(@link_object.created_at)
+    %> ago for these objects:</small></p>
 
-
-
-
-
+  <ol>
+    <li><%= point_html(@link_object.direction_author,
+      @link_object.boost_author) %>:<BR>
+      <%= link_to @link_object.author.to_s, @link_object.author %>
+    </li>
+    <li><%= point_html(@link_object.direction_object,
+      @link_object.boost_object) %>:<BR>
+      <%= link_to @link_object.opinion_about_object.to_s,
+        @link_object.opinion_about_object %>
+    </li>
+    <% if @link_object.is_a?(LinkMetaOpinion) %>
+    <li>Meta Opinion about:<BR>
+      <%=
+        meta_link = LinkOpinion.find_by(id:
+          @link_object.opinion_about_link_id)
+        if meta_link
+          link_to "#{meta_link.base_s} \"#{meta_link.reason_why}\"", meta_link
+        else
+          "Link ##{@link_object.opinion_about_link_id} isn't an Opinion link."
+        end
+      %>
+    </li>
     <% end %>
-    </div>
-  </div>
-
-  <% delete_list = @link_object.deleted_by
-    unless delete_list.empty? %>
-    <div class="row">
-      <div class="col-xs-12">
-        <HR>
-        <span class="history-block">
-          Delete and undelete history:
-          <ul class="list-ledger-objects">
-          <% delete_list.each do |x| %>
-            <li><%= (x.type == "LedgerUndelete") ? "Undeleted" : "Deleted" %> by
-            <%= x.creator.name %> (#<%= x.creator_id %>) on
-            <%= x.created_at.getlocal %><BR>
-            <small>Reason: <%= x.reason %></small><BR>
-            <small>Context: <%= x.context %></small></li>
-          <% end %>
-          </ul>
-        </span>
-      </div>
-    </div>
-  <% end %>
-
-  <% auxiliary_links = AuxLink.where(child_id: @link_object.id)
-      .order(id: :asc)
-    unless auxiliary_links.empty? %>
-    <div class="row">
-      <div class="col-xs-12">
-        <HR>
-        <span class="history-block">
-          Related Auxiliary Link Objects:
-          <ul class="list-ledger-objects">
-          <% auxiliary_links.each do |x| %>
-            <li>#<%= x.id %> <%= link_to x.parent.to_s,
-              ledger_base_path(x.parent) %>, <%= link_to x.child.to_s,
-              link_base_path(x.child) %></li>
-          <% end %>
-          </ul>
-        </span>
-      </div>
-    </div>
-  <% end %>
+  </ol>
 <% end %>
 

@@ -7,7 +7,7 @@
       Link Object "<%= params[:id] %>" does not exist.
     </div>
   </div>
-<% elsif !@link_object.creator_owner?(current_ledger_user) %>
+<% elsif !@link_object.allowed_to_view?(current_ledger_user) %>
   <div class="row">
     <div class="col-xs-12 error-show">
       You do not have permission to view Link Object #<%= @link_object.id %>.
