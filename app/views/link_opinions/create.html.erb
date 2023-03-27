@@ -1,2 +1,67 @@
-<h1>LinkOpinion#create</h1>
-<p>Find me in app/views/link_opinions/create.html.erb</p>
+<% provide(:page_title, 'Create Opinion')
+  provide(:button_text, 'Save Changes')
+  points_available = current_ledger_user.points_available
+  points_used = LedgerBase::DEFAULT_SPEND_FOR_OBJECT
+
+  # Will need the label style this user prefers, for several things.
+  label_style = current_user&.fancy_labels
+  label_style = 0 if label_style.nil? || label_style < 0
+  label_style = 2 if label_style > 2
+  umd_selection_menu = [
+    [ApplicationHelper::DIRECTION_LABELS["U"][label_style], "U"],
+    [ApplicationHelper::DIRECTION_LABELS["M"][label_style], "M"],
+    [ApplicationHelper::DIRECTION_LABELS["D"][label_style], "D"],
+  ]
+%>
+<h1>Creating a new Opinion</h1>
+
+<%= form_with(model: @link_object, url: link_opinions_path, method: :post,
+  local: true, class: "form-group") do |f| %>
+  <div class="row">
+    <div class="col-xs-12">
+      <%= render 'shared/error_messages', object: f.object %>
+      <% if @link_object.is_a?(LinkMetaOpinion) %>
+        <%= f.label :opinion_about_link_id %>
+        <%= f.text_field :opinion_about_link_id, class: 'form-control' %>
+        <%= link = LinkBase.find_by(id: params[:opinion_about_link_id])
+          if link
+            link.base_s
+          else
+            "Non-existent link."
+          end
+        %>
+      <% end %>
+      <%= f.label :opinion_about_object_id %>
+      <%= f.text_field :opinion_about_object_id, class: 'form-control' %>
+      <%= f.label :author_id %>
+      <%= f.text_field :author_id, class: 'form-control' %>
+      <%= f.label :boost_author %>
+      <%= f.text_field :boost_author, class: 'form-control' %>
+      <%= f.label :boost_object %>
+      <%= f.text_field :boost_object, class: 'form-control' %>
+      <%= f.label :direction_author %>
+      <%= f.text_field :direction_author, class: 'form-control' %>
+      <%= f.label :direction_object %>
+      <%= f.text_field :direction_object, class: 'form-control' %>
+      <%= f.label :reason_why %>
+      <%= f.text_field :reason_why, class: 'form-control' %>
+      <%= f.submit "Update Preview", name: "preview",
+        class: "btn btn-primary float-right" %>
+    </div>
+
+    <div class="col-xs-12">
+      <H2>Would use <%=
+        "#{format("%.2f", points_used)} #{'point'.pluralize(points_used)}"
+        %>, leaving <%= remaining = points_available - points_used
+        "#{format("%.2f", remaining)} #{'point'.pluralize(remaining)}"
+        %>.</H2>
+      <% if remaining >= 0.0 %>
+        <%= f.submit yield(:button_text),
+          class: "btn btn-primary button-full-width" %>
+      <% else %>
+        Out of Points, can't Save!
+      <% end %>
+    </div>
+  </div>
+<% end %>
+

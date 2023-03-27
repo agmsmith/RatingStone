@@ -8,19 +8,43 @@ class LinkOpinionsController < LinkBasesController
     direction = "D" if params.key?(:D)
 
     @link_object = if params.key?(:opinion_about_link_id)
-      unless LinkBase.find_by(id: params[:opinion_about_link_id])
-        flash[:danger] = "When making an Opinion about a link, didn't find " \
-          "a Link with ID ##{params[:opinion_about_link_id]}."
-        return redirect_back(fallback_location: root_url)
-      end
-      LinkMetaOpinion.new(sanitised_params)
+      LinkMetaOpinion.new(
+        creator_id: current_ledger_user.original_version_id,
+        opinion_about_object_id: params[:opinion_about_object_id].to_i,
+        opinion_about_link_id: params[:opinion_about_link_id].to_i,
+      )
     else
-      LinkOpinion.new(sanitised_params)
+      LinkOpinion.new(
+        creator_id: current_ledger_user.original_version_id,
+        opinion_about_object_id: params[:opinion_about_object_id].to_i,
+      )
+    end
+    if params[:author_id]
+      @link_object.author_id = params[:author_id].to_i
+    end
+    if params[:boost_author]
+      @link_object.boost_author = params[:boost_author].to_f
+    end
+    if params[:boost_object]
+      @link_object.boost_object = params[:boost_object].to_f
+    end
+    if params[:direction_author]
+      @link_object.direction_author = params[:direction_author]
+    end
+    if params[:direction_object]
+      @link_object.direction_object = params[:direction_object]
+    end
+    @link_object.reason_why = if params[:reason_why]
+      params[:reason_why]
+    else
+      @link_object.reason_why = "User logged in from address " \
+        "#{request.env["REMOTE_ADDR"]}."
     end
 
     # Make sure the original version is the one being referenced.
-    @link_object.creator_id = current_ledger_user.original_version_id
-    @link_object.author_id = @link_object.author.original_version_id
+    if @link_object.author_id
+      @link_object.author_id = @link_object.author.original_version_id
+    end
     @link_object.opinion_about_object_id =
       @link_object.opinion_about_object.original_version_id
 
@@ -39,13 +63,25 @@ class LinkOpinionsController < LinkBasesController
     @link_object.direction_author = direction unless params.key?(:direction_author)
     @link_object.direction_object = direction unless params.key?(:direction_object)
 
+    if @link_object.is_a?(LinkMetaOpinion)
+      unless LinkBase.find_by(id: params[:opinion_about_link_id])
+        flash[:danger] = "When making an Opinion about a link, didn't find " \
+          "a Link with ID ##{params[:opinion_about_link_id]}."
+        return render("create")
+      end
+    end
+
+    if params[:preview]
+      return render("create")
+    end
+
     unless @link_object.save
       error_message = "Failed to save your opinion."
       @link_object.errors.full_messages.each do |msg|
         error_message = error_message + " " + msg
       end
       flash[:danger] = error_message
-      return redirect_back(fallback_location: root_url)
+      return render("create")
     end
     flash[:success] = "New #{@link_object.base_s} created."
     redirect_to(@link_object)
@@ -55,6 +91,10 @@ class LinkOpinionsController < LinkBasesController
     LinkMetaOpinion.name # FUTURE: Force load of subclasses of LinkOpinion here.
     @link_objects = LinkOpinion.where(deleted: false).order(created_at: :desc)
       .paginate(page: params[:page])
+  end
+
+  def new
+    return create
   end
 
   def show
