@@ -94,27 +94,10 @@ class LinkOpinionsController < LinkBasesController
   end
 
   def new
-    return create
+    create
   end
 
   def show
     @link_object = LinkBase.find_by(id: params[:id]) # Can be nil.
-  end
-
-  private
-
-  def sanitised_params # Sanitise the main inputs from the submitted form data.
-    params.require(:opinion_about_object_id)
-    params.require(:author_id)
-    params.permit(
-      :opinion_about_object_id,
-      :author_id,
-      :boost_author,
-      :boost_object,
-      :direction_author,
-      :direction_object,
-      :reason_why,
-      :opinion_about_link_id,
-    )
   end
 end

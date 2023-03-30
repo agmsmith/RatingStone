@@ -15,36 +15,70 @@
 %>
 <h1>Creating a new Opinion</h1>
 
-<%= form_with(model: @link_object, url: link_opinions_path, method: :post,
-  local: true, class: "form-group") do |f| %>
+<%= form_with(url: link_opinions_path, method: :post, local: true,
+  class: "form-group") do |f| %>
   <div class="row">
     <div class="col-xs-12">
-      <%= render 'shared/error_messages', object: f.object %>
+      <%= render 'shared/error_messages', object: @link_object %>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-lg-4">
+      <H2>Opinion about this thing...</H2>
       <% if @link_object.is_a?(LinkMetaOpinion) %>
         <%= f.label :opinion_about_link_id %>
-        <%= f.text_field :opinion_about_link_id, class: 'form-control' %>
-        <%= link = LinkBase.find_by(id: params[:opinion_about_link_id])
-          if link
-            link.base_s
+        <%= f.text_field :opinion_about_link_id,
+          value: @link_object.opinion_about_link_id, class: 'form-control' %>
+        <%= opine_link = if @link_object.opinion_about_link_id &. > 0
+            LinkBase.find_by(id: @link_object.opinion_about_link_id)
+          end
+          if opine_link
+            opine_link.to_s
           else
             "Non-existent link."
           end
         %>
-      <% end %>
+      <% end # LinkMetaOpinion.
+      %>
       <%= f.label :opinion_about_object_id %>
-      <%= f.text_field :opinion_about_object_id, class: 'form-control' %>
+      <%= f.text_field :opinion_about_object_id,
+        value: @link_object.opinion_about_object_id, size: 10 %>
+      <%= opine_object = if @link_object.opinion_about_object_id &. > 0
+          LedgerBase.find_by(id: @link_object.opinion_about_object_id)
+        end
+        if opine_object
+          opine_object.to_s
+        else
+          "Non-existent object."
+        end
+      %>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-lg-4">
+      <H2>Opinion about related author...</H2>
       <%= f.label :author_id %>
-      <%= f.text_field :author_id, class: 'form-control' %>
-      <%= f.label :boost_author %>
-      <%= f.text_field :boost_author, class: 'form-control' %>
+      <%= f.text_field :author_id,
+        value: @link_object.author_id, size: 10 %>
+      <%= author_object = if @link_object.author_id &. > 0 
+          LedgerBase.find_by(id: @link_object.author_id)
+        end
+        if author_object
+          author_object.to_s
+        else
+          "Non-existent author."
+        end
+      %>
+      <%= f.label :direction_author %>
+      <%= f.select :direction_author, umd_selection_menu,
+        selected: @link_object.direction_author %>
+      <%= f.text_field :boost_author, value: @link_object.boost_author,
+        size: 6 %>
+    </div>
+    <div class="col-xs-12 col-sm-6 col-lg-4">
       <%= f.label :boost_object %>
       <%= f.text_field :boost_object, class: 'form-control' %>
-      <%= f.label :direction_author %>
-      <%= f.text_field :direction_author, class: 'form-control' %>
       <%= f.label :direction_object %>
       <%= f.text_field :direction_object, class: 'form-control' %>
       <%= f.label :reason_why %>
       <%= f.text_field :reason_why, class: 'form-control' %>
+
       <%= f.submit "Update Preview", name: "preview",
         class: "btn btn-primary float-right" %>
     </div>
