@@ -7,6 +7,19 @@ class LinkMetaOpinion < LinkOpinion
     numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   ##
+  # Just append the link reference to the stock description string.
+  def to_s
+    description = super.sub(/\)?$/, ", metalink ") # Remove optional trailing ")".
+    link = LinkBase.find_by(id: opinion_about_link_id)
+    description += if link
+      link.base_s
+    else
+      "##{opinion_about_link_id}"
+    end
+    description + ")"
+  end
+
+  ##
   # Everybody involved can view an opinion.
   def allowed_to_view?(luser)
     return true if super

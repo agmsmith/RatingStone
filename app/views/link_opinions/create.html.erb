@@ -1,7 +1,5 @@
 <% provide(:page_title, 'Create Opinion')
   provide(:button_text, 'Save Changes')
-  points_available = current_ledger_user.points_available
-  points_used = LedgerBase::DEFAULT_SPEND_FOR_OBJECT
 
   # Will need the label style this user prefers, for several things.
   label_style = current_user&.fancy_labels
@@ -13,7 +11,7 @@
     [ApplicationHelper::DIRECTION_LABELS["D"][label_style], "D"],
   ]
 %>
-<h1>Creating a new Opinion</h1>
+<h1>What is your Opinion about...</h1>
 
 <%= form_with(url: link_opinions_path, method: :post, local: true,
   class: "form-group") do |f| %>
@@ -21,27 +19,10 @@
     <div class="col-xs-12">
       <%= render 'shared/error_messages', object: @link_object %>
     </div>
+
     <div class="col-xs-12 col-sm-6 col-lg-4">
-      <H2>Opinion about this thing...</H2>
-      <% if @link_object.is_a?(LinkMetaOpinion) %>
-        <%= f.label :opinion_about_link_id %>
-        <%= f.text_field :opinion_about_link_id,
-          value: @link_object.opinion_about_link_id, class: 'form-control' %>
-        <%= opine_link = if @link_object.opinion_about_link_id &. > 0
-            LinkBase.find_by(id: @link_object.opinion_about_link_id)
-          end
-          if opine_link
-            opine_link.to_s
-          else
-            "Non-existent link."
-          end
-        %>
-      <% end # LinkMetaOpinion.
-      %>
-      <%= f.label :opinion_about_object_id %>
-      <%= f.text_field :opinion_about_object_id,
-        value: @link_object.opinion_about_object_id, size: 10 %>
-      <%= opine_object = if @link_object.opinion_about_object_id &. > 0
+      <H2>About a Thing...</H2>
+      <strong><%= opine_object = if @link_object.opinion_about_object_id &. > 0
           LedgerBase.find_by(id: @link_object.opinion_about_object_id)
         end
         if opine_object
@@ -49,52 +30,79 @@
         else
           "Non-existent object."
         end
-      %>
+      %></strong><br>
+      <%= f.text_field :opinion_about_object_id,
+        value: @link_object.opinion_about_object_id, size: 10 %>
+      <%= f.select :direction_object, umd_selection_menu,
+        selected: @link_object.direction_object %>
+      <%= f.text_field :boost_object, value: @link_object.boost_object, size: 6  %>
     </div>
+
     <div class="col-xs-12 col-sm-6 col-lg-4">
-      <H2>Opinion about related author...</H2>
-      <%= f.label :author_id %>
-      <%= f.text_field :author_id,
-        value: @link_object.author_id, size: 10 %>
-      <%= author_object = if @link_object.author_id &. > 0 
+      <H2>Author or Related thing...</H2>
+      <strong><%= opine_object = if @link_object.author_id &. > 0
           LedgerBase.find_by(id: @link_object.author_id)
         end
-        if author_object
-          author_object.to_s
+        if opine_object
+          opine_object.to_s
         else
-          "Non-existent author."
+          "Non-existent object."
         end
-      %>
-      <%= f.label :direction_author %>
+      %></strong><br>
+      <%= f.text_field :author_id,
+        value: @link_object.author_id, size: 10 %>
       <%= f.select :direction_author, umd_selection_menu,
         selected: @link_object.direction_author %>
-      <%= f.text_field :boost_author, value: @link_object.boost_author,
-        size: 6 %>
+      <%= f.text_field :boost_author, value: @link_object.boost_author, size: 6  %>
     </div>
-    <div class="col-xs-12 col-sm-6 col-lg-4">
-      <%= f.label :boost_object %>
-      <%= f.text_field :boost_object, class: 'form-control' %>
-      <%= f.label :direction_object %>
-      <%= f.text_field :direction_object, class: 'form-control' %>
-      <%= f.label :reason_why %>
-      <%= f.text_field :reason_why, class: 'form-control' %>
 
-      <%= f.submit "Update Preview", name: "preview",
-        class: "btn btn-primary float-right" %>
+    <div class="col-xs-12 col-sm-6 col-lg-4">
+      <H2>About a Link...</H2>
+      <strong><%=
+        if @link_object.is_a?(LinkMetaOpinion)
+          opine_object = LinkBase.find_by(id: @link_object.opinion_about_link_id)
+          if opine_object
+            opine_object.to_s
+          else
+            "Not an existing link."
+          end
+        else
+          "No opinion about a link specified."
+        end
+      %></strong><br>
+      <%= f.text_field :opinion_about_link_id,
+        value: @link_object.is_a?(LinkMetaOpinion) ?
+          @link_object.opinion_about_link_id : 0,
+        size: 10 %>
     </div>
 
     <div class="col-xs-12">
-      <H2>Would use <%=
-        "#{format("%.2f", points_used)} #{'point'.pluralize(points_used)}"
-        %>, leaving <%= remaining = points_available - points_used
-        "#{format("%.2f", remaining)} #{'point'.pluralize(remaining)}"
-        %>.</H2>
+      <%= f.label :reason_why %>
+      <%= f.text_field :reason_why, value: @link_object.reason_why,
+        class: 'form-control' %>
+    </div>
+
+    <H2 class="col-xs-12">Would use <%=
+      points_available = current_ledger_user.points_available
+      points_used = @link_object.rating_points_spent
+      "#{format("%.2f", points_used)} #{'point'.pluralize(points_used)}"
+      %>, leaving <%= remaining = points_available - points_used
+      "#{format("%.2f", remaining)} #{'point'.pluralize(remaining)}"
+      %>.</H2>
+
+    <div class="col-xs-12 col-sm-4">
       <% if remaining >= 0.0 %>
         <%= f.submit yield(:button_text),
           class: "btn btn-primary button-full-width" %>
       <% else %>
         Out of Points, can't Save!
       <% end %>
+    </div>
+    <div class="col-xs-4">
+    </div>
+    <div class="col-xs-12 col-sm-4">
+      <%= f.submit "Update Preview", name: "preview",
+        class: "btn btn-primary button-full-width" %>
     </div>
   </div>
 <% end %>

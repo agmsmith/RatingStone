@@ -35,20 +35,17 @@ class LinkBase < ApplicationRecord
   # text so the user can guess which object it is (like the content of a post).
   # Usually used in error messages, which the user may see.  Max 255 characters.
   def to_s
-    "#{base_s} " \
+    "#{base_s} (" \
       "#{deleted ? "deleted " : ""}" \
       "parent #{approved_parent.to_s[0].upcase} " \
       "#{ApplicationHelper::DIRECTION_LABELS[rating_direction_parent][0]} " \
       "#{format("%.2f", rating_points_boost_parent)}: " \
-      "#{parent.to_s.truncate(75)}, " \
+      "#{parent.base_s.truncate(75)}, " \
       "child #{approved_child.to_s[0].upcase} " \
       "#{ApplicationHelper::DIRECTION_LABELS[rating_direction_child][0]} " \
       "#{format("%.2f", rating_points_boost_child)}: " \
-      "#{child.to_s.truncate(75)}, " \
-      "ceremony: #{original_ceremony} (#{
-        LedgerAwardCeremony.last_ceremony - original_ceremony} ago), " \
-      "num1: #{number1}, " \
-      "notes: \"#{string1.truncate(50)}\"." \
+      "#{child.base_s.truncate(75)}, " \
+      "by ##{creator_id})" \
       .truncate(255)
   end
 

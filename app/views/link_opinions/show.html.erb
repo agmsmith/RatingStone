@@ -29,12 +29,12 @@
     <% if @link_object.is_a?(LinkMetaOpinion) %>
     <li>Meta Opinion about:<BR>
       <%=
-        meta_link = LinkOpinion.find_by(id:
+        meta_link = LinkBase.find_by(id:
           @link_object.opinion_about_link_id)
         if meta_link
-          link_to "#{meta_link.base_s} \"#{meta_link.reason_why}\"", meta_link
+          link_to "#{meta_link.to_s}", link_base_path(meta_link)
         else
-          "Link ##{@link_object.opinion_about_link_id} isn't an Opinion link."
+          "Link ##{@link_object.opinion_about_link_id} isn't a link."
         end
       %>
     </li>
