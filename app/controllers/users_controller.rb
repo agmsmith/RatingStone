@@ -69,6 +69,7 @@ class UsersController < ApplicationController
       :password,
       :password_confirmation,
       :fancy_labels,
+      :preview_opinion,
     )
   end
 

@@ -9,12 +9,15 @@
   <h3>Opinion <%= link_to @link_object.base_s,
     link_base_path(@link_object) %></H3>
 
-  <p class="center"><%= link_to @link_object.creator.latest_version.name,
-    @link_object.creator.user
-  %> opined</p>
-  <p class="center">"<%= @link_object.reason_why %>"</p>
-  <p class="center"><small><%= time_ago_in_words(@link_object.created_at)
-    %> ago for these objects:</small></p>
+  <div class="<%= # Subject and content, in red via class "deleted" if deleted.
+    @link_object.deleted? ? "deleted " : "" %>">
+    <p class="center"><%= link_to @link_object.creator.latest_version.name,
+      @link_object.creator.user
+    %> opined</p>
+    <p class="center">"<%= @link_object.reason_why %>"</p>
+    <p class="center"><small><%= time_ago_in_words(@link_object.created_at)
+      %> ago for these objects:</small></p>
+  </div>
 
   <ol>
     <li><%= point_html(@link_object.direction_author,

@@ -39,7 +39,7 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-lg-4">
-      <H2>Author or Related thing...</H2>
+      <H2>Author or other Thing...</H2>
       <strong><%= opine_object = if @link_object.author_id &. > 0
           LedgerBase.find_by(id: @link_object.author_id)
         end
@@ -67,7 +67,7 @@
             "Not an existing link."
           end
         else
-          "No opinion about a link specified."
+          "No opinion specified about a link."
         end
       %></strong><br>
       <%= f.text_field :opinion_about_link_id,

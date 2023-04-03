@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2022_06_01_182053) do
+ActiveRecord::Schema[7.0].define(version: 2023_04_01_204929) do
   create_table "aux_ledgers", force: :cascade do |t|
     t.integer "parent_id", null: false
     t.integer "child_id", null: false
@@ -122,6 +122,7 @@ ActiveRecord::Schema[7.0].define(version: 2022_06_01_182053) do
     t.float "weeks_allowance", default: 0.0
     t.float "weeks_spending", default: 0.0
     t.integer "fancy_labels", default: 0
+    t.boolean "preview_opinion", default: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["ledger_user_id"], name: "index_users_on_ledger_user_id", unique: true
   end

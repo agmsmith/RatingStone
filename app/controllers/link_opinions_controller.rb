@@ -4,11 +4,18 @@ class LinkOpinionsController < LinkBasesController
   def create
     # First generally convert the params[] into a link record in @link_object.
 
+    # For the one click opinion, we get a param of U or M or D.  For custom
+    # opinions, they specify directions for each kind of thing separately.
     direction = "M" # Default direction if not specified for object and author.
-    direction = "U" if params.key?(:U)
-    direction = "M" if params.key?(:M)
-    direction = "D" if params.key?(:D)
+    one_click_opinion = false
+    "UMD".chars.each do |letter|
+      if params.key?(letter)
+        direction = letter
+        one_click_opinion = true
+      end
+    end
 
+    # Create the in-memory new link record of the appropriate type.
     id = params[:opinion_about_link_id].to_i # Maps nil to zero.
     @link_object = if id > 0
       LinkMetaOpinion.new(
@@ -132,7 +139,9 @@ class LinkOpinionsController < LinkBasesController
       @link_object.valid?
     end
 
-    if params[:preview] || !@link_object.errors.empty?
+    if !@link_object.errors.empty? ||
+        params[:preview] ||
+        (one_click_opinion && current_user.preview_opinion)
       return render("create")
     end
 
