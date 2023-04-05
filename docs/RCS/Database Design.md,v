@@ -1,9 +1,14 @@
-head	1.89;
+head	1.90;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.90
+date	2023.04.05.21.59.43;	author agmsmith;	state Exp;
+branches;
+next	1.89;
 
 1.89
 date	2022.12.11.22.50.27;	author agmsmith;	state Exp;
@@ -456,14 +461,14 @@ desc
 @
 
 
-1.89
+1.90
 log
-@Fix indentation of headings, remove birthday objects.
+@Add recent new User record fields.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.88 2022/12/11 22:44:43 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.89 2022/12/11 22:50:27 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -1005,6 +1010,13 @@ user information:
 * weeks_spending float Number of points the user has spent so far this week,
   reset to zero at the next ceremony.  May exceed their allowance if they spend
   up points too (if they have more up than down).
+* fancy_labels boolean 0 for ASCII words to label things like Up/Meh/Down,
+  Reply, Quote when displaying them to this user.  1 for short ASCII like
+  ^~v for up/meh/down.  2 for UTF font icons.  Changeable in the user's profile
+  settings.
+* preview_opinion boolean TRUE to show an opinion editing form after doing a
+  one click up/meh/down so that the user can customise the rating points and
+  specify a reason.  FALSE to just create the opinion using various defaults.
 
 
 #### *LedgerCompany* < LedgerUser
@@ -1759,9 +1771,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.88 2022/12/11 22:44:43 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.89 2022/12/11 22:50:27 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.89  2022/12/11 22:50:27  agmsmith
+Fix indentation of headings, remove birthday objects.
+
 Revision 1.88  2022/12/11 22:44:43  agmsmith
 Clarified LinkOpinion and LinkMetaOpinion, LinkMetaMod redundant.
 LedgerContent removed, was unneeded conplexification.
@@ -2049,6 +2064,22 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.89
+log
+@Fix indentation of headings, remove birthday objects.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.88 2022/12/11 22:44:43 agmsmith Exp agmsmith $</SMALL>
+d545 7
+d1306 1
+a1306 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.88 2022/12/11 22:44:43 agmsmith Exp agmsmith $
+d1309 3
 @
 
 

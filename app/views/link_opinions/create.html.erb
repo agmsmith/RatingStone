@@ -57,7 +57,7 @@
     </div>
 
     <div class="col-xs-12 col-sm-6 col-lg-4">
-      <H2>About a Link...</H2>
+      <H2>Meta-opinion...</H2>
       <strong><%=
         if @link_object.is_a?(LinkMetaOpinion)
           opine_object = LinkBase.find_by(id: @link_object.opinion_about_link_id)
@@ -67,7 +67,7 @@
             "Not an existing link."
           end
         else
-          "No opinion specified about a link."
+          "No opinion specified about another opinion or link."
         end
       %></strong><br>
       <%= f.text_field :opinion_about_link_id,
@@ -91,18 +91,19 @@
       %>.</H2>
 
     <div class="col-xs-12 col-sm-4">
+      <%= f.submit "Update Preview", name: "preview",
+        class: "btn btn-primary button-full-width" %>
+    </div>
+    <div class="col-xs-4">
+      &nbsp;
+    </div>
+    <div class="col-xs-12 col-sm-4">
       <% if remaining >= 0.0 %>
         <%= f.submit yield(:button_text),
           class: "btn btn-primary button-full-width" %>
       <% else %>
         Out of Points, can't Save!
       <% end %>
-    </div>
-    <div class="col-xs-4">
-    </div>
-    <div class="col-xs-12 col-sm-4">
-      <%= f.submit "Update Preview", name: "preview",
-        class: "btn btn-primary button-full-width" %>
     </div>
   </div>
 <% end %>
