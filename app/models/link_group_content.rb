@@ -37,7 +37,7 @@ class LinkGroupContent < LinkBase
     return approvals if approvals[APPROVE_PARENT]
 
     # Check if the creator is a member of the parent group with enough
-    # priviledge and points spent to add posts to the group.
+    # privilege and points spent to add posts to the group.
     errors = []
     if parent.can_post?(creator, rating_points_boost_parent, errors)
       approvals[APPROVE_PARENT] = true

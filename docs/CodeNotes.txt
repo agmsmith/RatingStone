@@ -1,0 +1,73 @@
+Here are some of the common methods all objects can do, for things like
+permission to view, which can often be overridden by subclasses.  Most of these
+you need to know about when you write a new class.  AGMS20230418
+
+
+base_s()
+Return a basic user readable identification of an object (ID and class), works
+for LedgerBase and LinkBase objects.  ID can be nil for unsaved new records or
+a range for LedgerBase objects with multiple versions.  Usually not overridden
+by subclasses.
+
+
+to_s()
+Return a user readable description of the LedgerBase or LinkBase object.
+Besides some unique identification so we can find it in the database, have some
+readable text so the user can guess which object it is (like the subject of a
+post), but not too much to reveal things the user doesn't have permission to
+see.  Usually used in error messages, which the user may see.  Format is record
+ID[s], class name, (optional context text in brackets, does deleted flag
+automatically).  Max 255 characters.  Usually not overridden, see context_s().
+
+
+context_s()
+Return some user readable context for a LedgerBase object, will be inserted in
+to_s().  Things like the name of the user if this is a user object.  But not
+too much information in case someone without permission sees it.  Used in error
+messages and debugging.  Empty string for none.  Can be overridden.
+
+
+deleted?()
+Returns true if the LedgerBase or LinkBase object is deleted.  Somewhat more
+complex for LedgerBase objects which have multiple versions, all sharing the
+same deletion state.  Not overridden.
+
+
+creator_owner?(luser)
+See if the given user is allowed to delete and otherwise modify this LedgerBase
+or LinkBase record (not that links have owners).  Has to be the current (not
+necessarily the first) creator or one of the owners of the object.  Returns
+true if they have permission.  Subclasses can override to check for extra
+things like having reader access in the group a post is in.
+
+
+allowed_to_view?(luser)
+Returns true if the given user is allowed to view a LedgerBase or LinkBase
+object.  User needs to be creator/owner, or a group reader if it is a group, or
+a group reader of a group that the post object is in.  If the object is in
+multiple groups, the user just has to be a group reader in one of them.
+Subclasses can override to add specialised permission checks.
+
+
+permission_to_change_parent_approval(luser)
+permission_to_change_child_approval(luser)
+Return true if the given user is allowed to make changes to the approval of a
+particular end of this LinkBase object.  Used during initialisation and
+whenever the approval state is being changed.  Subclasses (like links from
+groups to posts) will override this to add permission to more users.  Better to
+override these than hack up initial_approval_state().
+
+
+initial_approval_state()
+Returns the initial approval state, used for creating new records, or finding
+out what the initial approvals were retrospectively (needed for replaying
+history).  Though ownership may change over time, so maybe we should have a
+time stamp as an input argument.  Returns an array, first element
+[APPROVE_PARENT] is the boolean for the parent (true if parent was initially
+approved), second [APPROVE_CHILD] for the child.  Subclasses should override
+this if they want non-default initial approvals and just specifying
+permission_to_change_*_approval() isn't good enough.  For example, links to
+groups have a fancier method that checks if the user is a member of the group
+who is allowed to approve links.  Or Opinions are always pre-approved so you
+can't easily hide from a bad opinion.
+

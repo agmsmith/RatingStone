@@ -38,6 +38,26 @@ class LinkRole < LinkBase
     CREATOR => "creator",
   }
 
+  ##
+  # Besides the creator of the link, the user being given a role, and the
+  # message moderator role in the linked to group can also delete this link
+  # (rather than having it hang around waiting for moderation).
+  def creator_owner?(luser)
+    return true if super
+
+    return true if permission_to_change_child_approval(luser)
+
+    permission_to_change_parent_approval(luser) # More expensive method last.
+  end
+
+  ##
+  # Return true if the given user is allowed to make changes to the approval of
+  # the parent end (a group) of this link about assigning a role.  Note that
+  # role_test includes creator_owner functionality so we skip that test.
+  def permission_to_change_parent_approval(luser)
+    parent.role_test?(luser, LinkRole::MEMBER_MODERATOR)
+  end
+
   private
 
   ##

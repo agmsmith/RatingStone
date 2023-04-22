@@ -48,25 +48,20 @@ Rails.application.routes.draw do
   # automatically render an object by its class.
   resources :ledger_users, only: [:show]
 
-  # Low level interface for debugging generic link objects.
+  # Interface for working with generic link objects.
   resources :link_bases, only: [:index, :show, :destroy] do
     member do
       post 'undelete'
       post 'approve'
       post 'unapprove'
+      get 'pending' # Show a list of links waiting for approval.
     end
   end
 
-  # For LinkOpinion and LinkMetaOpinion (when field :number1 is defined as the
-  # ID of the link record being opinionated about), so you can create a new
-  # opinion record and edit it before submitting.
-  # Subclass of LinkBase, so it can also do actions in :link_bases.
-  resources :link_opinions, only: [:index, :show, :new, :create, :destroy] do
-    member do
-      post 'undelete'
-      post 'approve'
-      post 'unapprove'
-    end
-  end
+  # For LinkOpinion and LinkMetaOpinion (meta when field :number1 is defined as
+  # the ID of the link record being opinionated about), so you can create a new
+  # opinion record and edit it before submitting (but not edit it after
+  # creation).  Subclass of LinkBase, so it can also do actions in :link_bases.
+  resources :link_opinions, only: [:index, :show, :new, :create]
 end
 

@@ -243,7 +243,9 @@ class LedgerBase < ApplicationRecord
   def allowed_to_view?(luser)
     return true if creator_owner?(luser)
 
-    return role_test?(luser, LinkRole::READER) if is_a?(LedgerSubgroup)
+    if is_a?(LedgerSubgroup)
+      return role_test?(luser, LinkRole::READER)
+    end
 
     # Test the user's status in groups for things (posts) attached to groups.
     if is_a?(LedgerPost)
@@ -256,6 +258,7 @@ class LedgerBase < ApplicationRecord
         return true if a_link.group.role_test?(luser, LinkRole::READER)
       end
     end
+
     false
   end
 

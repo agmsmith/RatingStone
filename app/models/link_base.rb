@@ -103,9 +103,11 @@ class LinkBase < ApplicationRecord
   # should have a time stamp as an input argument.  Returns an array, first
   # element [APPROVE_PARENT] is the boolean for the parent (true if parent was
   # initially approved), second [APPROVE_CHILD] for the child.  Subclasses
-  # should override this if they want non-default initial approvals.  For
+  # should override this if they want non-default initial approvals and just
+  # specifying permission_to_change_*_approval() isn't good enough.  For
   # example, links to groups have a fancier method that checks if the user is
-  # a member of the group who is allowed to approve links.
+  # a member of the group who is allowed to approve links.  Or Opinions are
+  # always pre-approved so you can't easily hide from a bad opinion.
   def initial_approval_state
     # The default is to approve the end of the link where the creator of the
     # link is the owner or creator of the object at that end of the link.

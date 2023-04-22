@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 class LinkBasesController < ApplicationController
-  before_action :logged_in_user, only: [:create, :index, :show]
+  before_action :logged_in_user, only: [:create, :index, :pending, :show]
   before_action :correct_user, only:
     [:approve, :unapprove, :destroy, :undelete]
 
@@ -19,6 +19,17 @@ class LinkBasesController < ApplicationController
   def index
     @link_objects = LinkBase.where(deleted: false).order(created_at: :desc)
       .paginate(page: params[:page])
+  end
+
+  ##
+  # List all links waiting for approval by the current user.  Not paginated so
+  # they can select all of them at once.
+  def pending
+    bleeble
+    # TODO: Need to figure this out.  @link_objects = LinkBase.where(deleted: false).order(created_at: :desc)
+#parent has to be unapproved and created by the user, child the same.
+#Also for all groups the user is in and has message moderator permission, and delegated groups related to thost groups, look for LinkGroupContent that link to one of those groups.
+#Also for all groups where the user is a member moderator, and delegated groups from those, look for LinkRole that link to the group.
   end
 
   def show
