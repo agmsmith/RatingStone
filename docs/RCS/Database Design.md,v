@@ -1,9 +1,14 @@
-head	1.90;
+head	1.91;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.91
+date	2023.04.24.01.04.48;	author agmsmith;	state Exp;
+branches;
+next	1.90;
 
 1.90
 date	2023.04.05.21.59.43;	author agmsmith;	state Exp;
@@ -461,14 +466,14 @@ desc
 @
 
 
-1.90
+1.91
 log
-@Add recent new User record fields.
+@WIP - Adding a section on object permissions, next up do LedgerBase, LedgerPost, more Links.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.89 2022/12/11 22:50:27 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.90 2023/04/05 21:59:43 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -1584,6 +1589,53 @@ deleted).
 * No time stamps or other fields, see the parent_id for the date etc.
 
 
+## Object Permissions
+
+There are several permissions used for objects and links to control who can
+do what, the last three are for links only:
+
+1. The user who is the creator/owner (can be multiple people for LedgerBase
+   records) can delete, undelete and for LedgerBase records create a new
+   version of the record.
+2. The people who are allowed to view the record.
+3. There are separate permissions for changing the approval flag for the
+   parent in a link and
+4. the approval for a child in a link (the link doesn't work unless both
+   approve it).
+5. There's also the initial approval state of a link.  It is usually the same
+   as the current parent and child approvals relative to the creator of the
+   link.
+
+
+### LinkBase Permissions
+
+This is the default for classes inheriting from LinkBase.
+
+1. creator_owner - Only creator of the link is allowed to delete it.
+2. allowed_to_view - Only creator of the link, the child's creator or the
+   parent's creator can view the link record.
+3. permission_to_change_parent_approval - Only creator of the parent can
+   approve it.
+4. permission_to_change_child_approval - Only creator of the child can approve
+   it.
+5. initial_approval_state - Uses values from permission_to_change_*_approval
+   with the link creator as the test user.
+
+
+### LinkReply Permissions
+
+1. creator_owner - Creator of the link, and also creator/owner of the child or
+   parent is allowed to delete the link.
+2. allowed_to_view - Inherited default.  No need for most people to examine the
+   reply connection.
+3. permission_to_change_parent_approval - Inherited default.
+4. permission_to_change_child_approval - Inherited default.
+5. initial_approval_state - Starts off fully approved.  Otherwise it is just
+   too much of a pain for the original post's author to approve all the
+   replies.  Though maybe we can flag a post as requiring approvals to combat
+   spam, perhaps allowing only group members to reply, later.
+
+
 ## Generating the Database
 
 Here are the rails command lines and edits needed to generate the database:
@@ -1771,9 +1823,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.89 2022/12/11 22:50:27 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.90 2023/04/05 21:59:43 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.90  2023/04/05 21:59:43  agmsmith
+Add recent new User record fields.
+
 Revision 1.89  2022/12/11 22:50:27  agmsmith
 Fix indentation of headings, remove birthday objects.
 
@@ -2064,6 +2119,22 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.90
+log
+@Add recent new User record fields.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.89 2022/12/11 22:50:27 agmsmith Exp agmsmith $</SMALL>
+d1119 47
+d1353 1
+a1353 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.89 2022/12/11 22:50:27 agmsmith Exp agmsmith $
+d1356 3
 @
 
 

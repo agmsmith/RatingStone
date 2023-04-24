@@ -72,11 +72,13 @@ class LinkBase < ApplicationRecord
 
   ##
   # Returns true if the given user is allowed to view the link.  Needs to be
-  # creator/owner, or somehow related to the parent and child objects.
+  # creator/owner, or creator of the parent or child objects.
   # Subclasses can override this, for example opinions are viewable by
   # everybody.
   def allowed_to_view?(luser)
     return true if creator_owner?(luser)
+    return true if parent.creator_owner?(luser)
+    return true if child.creator_owner?(luser)
 
     false
   end
