@@ -52,6 +52,10 @@ group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
 
+  # For Visual Studio Code, needs Ruby language parser.
+  # Remember to run "bundler config set without production" in the .ruby-lsp subdirectory.
+  gem "ruby-lsp", require: false
+
   gem 'rubocop', require: false
   gem 'rubocop-shopify', require: false
 end
