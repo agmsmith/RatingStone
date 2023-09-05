@@ -53,8 +53,14 @@ group :development do
   gem "web-console"
 
   # For Visual Studio Code, needs Ruby language parser.
-  # Remember to run "bundler config set --local without 'production'" in the .ruby-lsp subdirectory.
+  # Remember to run "bundler config set --local without 'production'" in the
+  # .ruby-lsp subdirectory.  Though now it seems to see these Gems in the main
+  # project and doesn't create a separate .ruby-lsp directory.
   gem "ruby-lsp", require: false
+
+  # Additional LSP extension that shows database fields when hovering the mouse
+  # over an ActiveRecord object, but they only appear when the rails server is
+  # running.
   gem "ruby-lsp-rails", require: false
 
   gem 'rubocop', require: false
