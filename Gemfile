@@ -53,8 +53,9 @@ group :development do
   gem "web-console"
 
   # For Visual Studio Code, needs Ruby language parser.
-  # Remember to run "bundler config set without production" in the .ruby-lsp subdirectory.
+  # Remember to run "bundler config set --local without 'production'" in the .ruby-lsp subdirectory.
   gem "ruby-lsp", require: false
+  gem "ruby-lsp-rails", require: false
 
   gem 'rubocop', require: false
   gem 'rubocop-shopify', require: false
