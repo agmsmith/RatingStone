@@ -2,8 +2,8 @@
 
 <h1>All Activated Users</h1>
 
-<%= will_paginate @users %>
+<%== pagy_nav @pagy %>
 <ul class="users">
   <%= render @users %>
 </ul>
-<%= will_paginate @users %>
+<%== pagy_nav @pagy %>

@@ -18,6 +18,12 @@
     },
     {
       "type": "ruby_lsp",
+      "name": "Debug Rails Test",
+      "request": "launch",
+      "program": "${workspaceRoot}/bin/rails test"
+    },
+    {
+      "type": "ruby_lsp",
       "name": "Debug Attach",
       "request": "attach"
     }

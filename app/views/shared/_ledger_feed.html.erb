@@ -1,11 +1,9 @@
 <% if @ledger_feed_items&.any? %>
-  <%= will_paginate @ledger_feed_items,
-    params: { controller: :static_pages, action: :home } %>
+  <%== pagy_nav(@pagy) %>
   <ol class="list-ledger-objects">
-<% @ledger_feed_items.each do |an_object| %>
-<%= render 'ledger_posts/ledger_post_plain', { ledger_post: an_object } %>
-<% end %>
+  <% @ledger_feed_items.each do |an_object| %>
+    <%= render 'ledger_posts/ledger_post_plain', { ledger_post: an_object } %>
+  <% end %>
   </ol>
-  <%= will_paginate @ledger_feed_items,
-    params: { controller: :static_pages, action: :home } %>
+  <%== pagy_nav(@pagy) %>
 <% end %>

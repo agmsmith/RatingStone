@@ -2,7 +2,7 @@
 
 class LedgerGroupsController < LedgerBasesController
   def index
-    @ledger_objects = LedgerSubgroup.all.paginate(page: params[:page])
+    @pagy, @ledger_objects = pagy(LedgerSubgroup.all)
   end
 
   def show

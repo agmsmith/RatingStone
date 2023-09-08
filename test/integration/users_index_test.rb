@@ -3,6 +3,8 @@
 require "test_helper"
 
 class UsersIndexTest < ActionDispatch::IntegrationTest
+  include Pagy::Backend
+
   def setup
     @user = users(:michael)
   end
@@ -11,8 +13,9 @@ class UsersIndexTest < ActionDispatch::IntegrationTest
     log_in_as(@user)
     get users_path
     assert_template "users/index"
-    assert_select "div.pagination", count: 2
-    User.paginate(page: 1).each do |user|
+    assert_select "nav.pagination", count: 2
+    _pagy, page_of_users = pagy(User.all, page: 1)
+    page_of_users.each do |user|
       assert_select "a[href=?]", user_path(user), text: user.name
     end
   end

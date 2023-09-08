@@ -2,11 +2,10 @@
 
 <h1>All Opinion Links</h1>
 
-<%= will_paginate @link_objects %>
+<%== pagy_nav(@pagy) %>
 <ul class="list-ledger-objects">
 <% @link_objects.each do |an_object| %>
 <%= render 'link_opinions/link_opinion', { link_object: an_object } %>
 <% end %>
 </ul>
-<%= will_paginate @link_objects %>
-
+<%== pagy_nav(@pagy) %>

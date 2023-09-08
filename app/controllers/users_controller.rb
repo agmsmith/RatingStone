@@ -31,7 +31,7 @@ class UsersController < ApplicationController
   end
 
   def index
-    @users = User.where(activated: true).paginate(page: params[:page])
+    @pagy, @users = pagy(User.where(activated: true))
   end
 
   def new
@@ -42,10 +42,10 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
     return redirect_to(root_url) unless @user.activated
 
-    @lposts = LedgerPost.where(
+    @pagy, @lposts = pagy(LedgerPost.where(
       creator_id: @user.ledger_user_id,
       deleted: false,
-    ).order(:created_at).paginate(page: params[:page])
+    ).order(:created_at))
   end
 
   def update

@@ -48,9 +48,7 @@ class LedgerBasesController < ApplicationController
   end
 
   def index
-    @ledger_objects = ledger_class_for_controller
-      .order(created_at: :desc)
-      .paginate(page: params[:page])
+    @pagy, @ledger_objects = pagy(ledger_class_for_controller.order(created_at: :desc))
   end
 
   ##

@@ -2,6 +2,7 @@
 
 class ApplicationController < ActionController::Base
   include SessionsHelper
+  include Pagy::Backend
 
   after_action :fix_nosniff
 

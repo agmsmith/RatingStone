@@ -25,8 +25,7 @@ gem 'bcrypt'
 gem 'faker'
 
 # For paginating long lists of things.
-gem 'will_paginate'
-gem 'bootstrap-will_paginate'
+gem 'pagy'
 
 # For fancy text input language and formatting.
 gem 'kramdown'

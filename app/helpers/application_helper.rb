@@ -4,6 +4,7 @@ require "digest" # For MD5 hash algorithm.
 
 module ApplicationHelper
   include Rails.application.routes.url_helpers # For ledger_base_path()
+  include Pagy::Frontend
 
   ##
   # Various variations (user preference) on some standard labels for things.

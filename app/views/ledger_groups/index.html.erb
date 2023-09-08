@@ -2,10 +2,10 @@
 
 <h1>All Ledger Groups</h1>
 
-<%= will_paginate @ledger_objects %>
+<%== pagy_nav(@pagy) %>
 <ul class="list-ledger-objects">
 <% @ledger_objects.each do |an_object| %>
 <%= render 'ledger_groups/ledger_group', { ledger_group: an_object } %>
 <% end %>
 </ul>
-<%= will_paginate @ledger_objects %>
+<%== pagy_nav(@pagy) %>

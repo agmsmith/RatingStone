@@ -7,27 +7,27 @@ class LedgerPostsController < LedgerBasesController
   # Show a tree of all quotes of a specified post.
   def ancestors
     @ledger_object = LedgerPost.find(params[:id])
-    @ledger_objects = LedgerPost.tree_of_quotes(
+    @pagy, @ledger_objects = pagy(LedgerPost.tree_of_quotes(
       id: @ledger_object.original_version_id,
-    ).paginate(page: params[:page])
+    ))
   end
 
   ##
   # Show a tree of all replies to a specified post.
   def descendants
     @ledger_object = LedgerPost.find(params[:id])
-    @ledger_objects = LedgerPost.tree_of_replies(
+    @pagy, @ledger_objects = pagy(LedgerPost.tree_of_replies(
       id: @ledger_object.original_version_id,
-    ).paginate(page: params[:page])
+    ))
   end
 
   ##
   # Show a tree of all quotes and replies to a specified post.
   def descentors
     @ledger_object = LedgerPost.find(params[:id])
-    @ledger_objects = LedgerPost.tree_of_quotes_and_replies(
+    @pagy, @ledger_objects = pagy(LedgerPost.tree_of_quotes_and_replies(
       id: @ledger_object.original_version_id,
-    ).paginate(page: params[:page])
+    ))
   end
 
   def edit
@@ -53,8 +53,7 @@ class LedgerPostsController < LedgerBasesController
       flash[:danger] = "Can't find object ##{params[:id]} to show quotes."
       return redirect_back(fallback_location: root_url)
     end
-    @ledger_objects = @ledger_object.quotes_good
-      .paginate(page: params[:page])
+    @pagy, @ledger_objects = pagy(@ledger_object.quotes_good)
   end
 
   ##
@@ -73,8 +72,7 @@ class LedgerPostsController < LedgerBasesController
       flash[:danger] = "Can't find object ##{params[:id]} to show replies."
       return redirect_back(fallback_location: root_url)
     end
-    @ledger_objects = @ledger_object.replies_good
-      .paginate(page: params[:page])
+    @pagy, @ledger_objects = pagy(@ledger_object.replies_good)
   end
 
   # See parent class for generic show() method.

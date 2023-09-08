@@ -5,7 +5,7 @@
   link_to "##{@ledger_object.id } #{@ledger_object.subject}",
   @ledger_object %></h1>
 
-<%= will_paginate @ledger_objects %>
+<%== pagy_nav(@pagy) %>
 
 <% hidden_count = 0
   last_shown_id = nil
@@ -27,5 +27,5 @@
   %> hidden (duplicate paths, deleted, or not a post).</p>
 <% end %>
 
-<%= will_paginate @ledger_objects %>
+<%== pagy_nav(@pagy) %>
 

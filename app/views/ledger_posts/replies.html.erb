@@ -3,11 +3,11 @@
 <h1>List of Approved Replies to <%= link_to "##{@ledger_object.id} #{@ledger_object.subject}",
   @ledger_object %></h1>
 
-<%= will_paginate @ledger_objects %>
+<%== pagy_nav(@pagy) %>
 
 <% @ledger_objects.each do |an_object| %>
 <%= render an_object %>
 <% end %>
 
-<%= will_paginate @ledger_objects %>
+<%== pagy_nav(@pagy) %>
 

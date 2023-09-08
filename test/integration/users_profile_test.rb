@@ -4,6 +4,7 @@ require "test_helper"
 
 class UsersProfileTest < ActionDispatch::IntegrationTest
   include ApplicationHelper
+  include Pagy::Backend
 
   def setup
     @user = users(:michael)
@@ -23,10 +24,17 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
     assert_select "title", full_title(@user.name)
     assert_select "h1", text: @user.name
     assert_select "img.gravatar"
-    lposts = LedgerPost.where(creator_id: @user.ledger_user_id)
+    _pagy, lposts = pagy(
+      LedgerPost.where(
+        creator_id: @user.ledger_user_id,
+        deleted: false,
+      ),
+      page: 1,
+    )
     assert_match "#{lposts.count} Ledger Posts by #{@user.name}", response.body
-    assert_select "div.pagination", count: 2
-    lposts.paginate(page: 1).each do |lpost|
+    assert_select "nav.pagination", count: 2
+    _pagy, page_of_posts = pagy(lposts, page: 1)
+    page_of_posts.each do |lpost|
       assert_match lpost.content, response.body
     end
   end

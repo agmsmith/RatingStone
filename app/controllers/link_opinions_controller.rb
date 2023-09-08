@@ -159,8 +159,7 @@ class LinkOpinionsController < LinkBasesController
 
   def index
     LinkMetaOpinion.name # FUTURE: Force load of subclasses of LinkOpinion here.
-    @link_objects = LinkOpinion.where(deleted: false).order(created_at: :desc)
-      .paginate(page: params[:page])
+    @pagy, @link_objects = pagy(LinkOpinion.where(deleted: false).order(created_at: :desc))
   end
 
   def new
