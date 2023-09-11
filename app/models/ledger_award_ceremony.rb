@@ -14,14 +14,20 @@ class LedgerAwardCeremony < LedgerBase
   FADE = 0.97
   FADE_LOG = Math.log(FADE)
   # How much to fade ratings points by in an awards ceremony.  The 0.97 factor
-  # Cuts things down to about 1% of their original size after 3 years of weekly
-  # fading.
+  # reduces rating points down to about 1% of their original amount after
+  # 3 years (150 ceremonies) of weekly fading.
 
-  FADED_TO_NOTHING = 0.01
+  FADED_TO_NOTHING = FADE ** 150
   # When you have this many points or less, a LinkBase is considered to be
   # faded away enough to be expired and worth garbage collecting.  LedgerBase
   # objects are also considered expired when they have no links to them and
-  # the largest of their current points is this big.
+  # the largest of their current points is this big.  Updated in
+  # LedgerBase::update_current_points().
+
+  FADED_TO_ALMOST_NOTHING = FADED_TO_NOTHING / (FADE ** 8)
+  # A couple of months (8 ceremonies) before the object fades away, it has
+  # this many points or less.  Useful for showing warning messages about
+  # things close to expiry.
 
   MAXIMUM_BONUS_PER_CEREMONY = 100.0
   # You can get up to this many bonus points per week.  Any extra bonuses are

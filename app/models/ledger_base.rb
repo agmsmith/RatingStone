@@ -8,7 +8,7 @@
 # the original version of that object.  Same for record ID numbers, return the
 # ID of the original record, not the latest version.  Only methods that
 # explicitly deal with versions should return non-original objects.  The
-# general idea is to use the original version as the cannonical version of an
+# general idea is to use the original version as the canonical version of an
 # object, and only access the latest version when displaying data to the user
 # or doing a search.
 #
@@ -429,7 +429,8 @@ class LedgerBase < ApplicationRecord
   # Most of the time the points are up to date and this method does nothing
   # quickly.  If the current points are too old, it fades them to catch up with
   # the current time (time is based on award ceremony sequence numbers) and
-  # adds in weekly bonus points (mostly for LedgerUsers).
+  # adds in weekly bonus points (mostly for LedgerUsers).  Also updates the
+  # expiry flags based on the new points.
   #
   # If a full recalculation is requested it does a lot more, adding in received
   # points first, then subtracting spent points.  That order is needed since
@@ -586,6 +587,15 @@ class LedgerBase < ApplicationRecord
           end
         end
       end # full recalculation
+
+      # Update the expiry flags.  If there are less than 1% of a point
+      # remaining, it's okay to delete this object (done elsewhere in a
+      # garbage collection run, probably part of the awards ceremony).
+      # There's also a two month early warning flag to let users know about
+      # soon to disappear objects.
+      remaining = current_down_points + current_meh_points + current_up_points
+      self.expired_now = (remaining <= LedgerAwardCeremony::FADED_TO_NOTHING)
+      self.expired_soon = (remaining <= LedgerAwardCeremony::FADED_TO_ALMOST_NOTHING)
 
       # Check for negative points, a sign of missing (expired) records if small,
       # a bug or fraud if large.  Operator should look into it; maybe forcing
