@@ -1,9 +1,14 @@
-head	1.92;
+head	1.93;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.93
+date	2023.09.12.00.48.36;	author agmsmith;	state Exp;
+branches;
+next	1.92;
 
 1.92
 date	2023.09.11.23.38.08;	author agmsmith;	state Exp;
@@ -471,14 +476,14 @@ desc
 @
 
 
-1.92
+1.93
 log
-@Reviewing the docs, WIP, up to creator_id.
+@Proofread up to Auxiliary Classes, fixing wording and clarifying things.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.91 2023/04/24 01:04:48 agmsmith Exp agmsmith $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.92 2023/09/11 23:38:08 agmsmith Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -494,7 +499,7 @@ as replying to a post) to deter unthinking spamming and other abuses.  Anyway,
 we need a database to keep track of the users, posts, rating points, groups of
 users and so on.
 
-## Basic Idea of Objects and Links
+## Basic Idea of Write Once Objects and Links
 
 Because I'm thinking of on implementing the reputation system as a BlockChain
 ledger application, or as a federated collection of systems exchanging records,
@@ -640,9 +645,10 @@ still use groups since it's worthwhile to reach a more relevant audience.
 ## Relationships
 
 We may want to identify people based on relationships.  Or maybe not -
-relationships are currently unimplemented, probably until we need followers
-to do the "feed" to select posts to show.  The obvious relationship used by
-many social media is Friend.  Another is Follower.  We can also do Parent,
+relationships are currently unimplemented, and for "feed" purposes we can
+"follow" a user by simply becoming a member of their personal group.
+The obvious relationship used by many social media is Friend.
+Another is Follower.  We can also do Parent,
 Child, Spouse and that should about cover it for family relationships
 (grandparents are Parent of Parent of person, siblings share a parent, etc).
 We might want to add variations of friendship like boyfriend/girlfriend, work
@@ -1035,7 +1041,7 @@ user information:
 * weeks_spending float Number of points the user has spent so far this week,
   reset to zero at the next ceremony.  May exceed their allowance if they spend
   up points too (if they have more up than down).
-* fancy_labels boolean 0 for ASCII words to label things like Up/Meh/Down,
+* fancy_labels int 0 for ASCII words to label things like Up/Meh/Down,
   Reply, Quote when displaying them to this user.  1 for short ASCII like
   ^~v for up/meh/down.  2 for UTF font icons.  Changeable in the user's profile
   settings.
@@ -1058,7 +1064,7 @@ of Companies.  I prefer the latter method.
 Represents a real world thing like a book.  Users can comment about it and
 award it rating points, but it never regenerates points (only Users do that).
 Attach content to it (like pictures or a post) to describe it better, using
-LinkHomeContent.  Links to a classification group can rate it.  For example, a
+LinkHomePost.  Links to a classification group can rate it.  For example, a
 book reviews group would have a link to the book to award it points.  Can be in
 multiple groups, such as "My Books" and "World's Best Books".  Probably not in
 the first prototype, just posts is fine.
@@ -1119,7 +1125,7 @@ both in a subgroup for North America and a subgroup for Year 2020.  You could
 even make subgroups for each family member and classify the photos by who is in
 them.
 
-There's an optional home post (see LinkHomeContent) that describes the group in
+There's an optional home post (see LinkHomePost) that describes the group in
 more detail.  The home post usually will have a list of recent additions in the
 group displayed after it.
 
@@ -1142,7 +1148,8 @@ membership lists by a LinkGroupRoleDelegation record for each subgroup.
 
 Currently, extra settings (post moderation options, etc) are stored in a
 related GroupSettings database table, though we may need to use ledger objects
-if a history of changes needs to be preserved.
+if a history of changes needs to be preserved, or JSON in the group record
+if we want to keep it all in one place.
 
 
 ### *LedgerAwardCeremony* < LedgerBase
@@ -1229,8 +1236,8 @@ B, object A is a list header and B is in the list, etc).
   the original version's id number.  Write-once.
 * float1 Generic floating point number, usage defined by subclasses, default
   0.0.  Write-once.
-* number1 Generic number for counting things, or referencing other database
-  tables, usage defined by subclasses, default -1.  Write-once.
+* number1 Generic bigint number for counting things, or referencing other
+  database tables, usage defined by subclasses, default -1.  Write-once.
 * string1 Generic string (up to 255 bytes), defined by subclasses.  Write-once.
 * deleted boolean True if there is a LedgerDelete record that deletes
   this record, otherwise false (this record is alive).  Any rating points
@@ -1324,11 +1331,11 @@ link records).  The user can click on individual ones to play them.
 
 ### *LinkHomePost* < LinkBase
 
-Parent is a Ledger(Full/Sub)group or LedgerThing and child is usually a
+Parent is a Ledger(Full/Sub)group or LedgerThing and child is a
 LedgerPost.  That post will be used as the home post (home page, status page,
 profile page, description, etc) for the parent.  If there are several, we show
 them all, kind of like a list of announcements or pinned posts.  Delete the
-LinkHomeContent to unpin them.
+LinkHomePost to unpin them.
 
 
 ### *LinkHomeGroup* < LinkBase
@@ -1395,7 +1402,7 @@ the parent LedgerFullGroup or LedgerSubgroup.  Used for making a directed graph
 structure of groups in order to classify things (like photos or posts attached
 to individual group objects) or otherwise break them down into more managable
 smaller chunks.  Multiple parents are allowed and you can make cycles if you
-wish.
+wish (though that will reduce database query performance).
 
 
 ### *LinkRelationship* < LinkBase
@@ -1480,7 +1487,8 @@ that to happen often.
 
 ##### *LinkSpouse* < LinkSymmetricRelationship
 
-Parent is a spouse of child.  Bidirectional.  Both ends need to be approved.
+Parent record (a LedgerUser) is a spouse of the child record (also a
+LedgerUser).  Bidirectional.  Both ends need to be approved.
 
 
 ##### *LinkParentChild* < LinkAsymmetricRelationship
@@ -1540,7 +1548,7 @@ reward them for making that link with a LinkMetaOpinion's referencing
 the LinkReply record and with the creator of the LinkReply as the parent.  I
 suppose you could have an opinion about a LinkMetaOpinion too.
 
-* about_link_id  integer Has the ID of the Link record being talked about.
+* about_link_id  bigint Has the ID of the Link record being talked about.
 
 
 ### *LinkBonus* < LinkBase
@@ -1552,18 +1560,22 @@ know why they got that bonus, or perhaps a Category object (have a tree of
 bonuses).  Normal users can't create this kind of link other than indirectly
 through their actions.
 
-The links fade away as usual and the bonus expires as well, so your bonus for
-being a good poster at one point in time will last for typically 1 year and
-then 3 years after creation it gets garbage collected (assuming the
-creator gave the link 1 point).  Similarly you'll have to reenter
-an e-mail address once the bonus for having a tested e-mail has expired.  Some
-bonuses like the e-mail one will be limited to only one existing at a time.
+The links fade away as usual and the bonus can have a time limit as well.  Your
+bonus for being a good poster in the previous year can be set to last for a
+year and then stop contribuing when it hits its expiry ceremony number.
+Though if the expiry date is too far in the future, it will also fade away as
+usual and eventually get garbage collected.  Similarly you'll have to reenter
+an e-mail address once the bonus for having a tested e-mail has expired.
+Some bonuses like the e-mail bonus will be limited to only one existing at
+a time.
 
 The total of all bonus points at the award ceremony is pegged between 0 and
-100 and becomes their week's allowance.  The user also gets to spend that many
-points even if their net reputation is negative, to avoid totally silencing
-them.  The weekly allowance and week's spending is stored in the User record,
-outside the ledger system, mostly for informational and user interface purposes.
+100 (in case they have too many negative bonuses, or have unfairly many
+positive bonuses) and becomes their week's allowance.  The user also gets to
+spend that many points even if their net reputation is negative, to avoid
+totally silencing them.  The weekly allowance and week's spending is stored in
+the User record, outside the ledger system, mostly for informational and user
+interface purposes.
 
 * bonus_points float Number of bonus points per week, added or subtracted from
   the user's Meh points at each awards ceremony after original_ceremony.  So
@@ -1843,9 +1855,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.91 2023/04/24 01:04:48 agmsmith Exp agmsmith $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.92 2023/09/11 23:38:08 agmsmith Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.92  2023/09/11 23:38:08  agmsmith
+Reviewing the docs, WIP, up to creator_id.
+
 Revision 1.91  2023/04/24 01:04:48  agmsmith
 WIP - Adding a section on object permissions, next up do LedgerBase, LedgerPost, more Links.
 
@@ -2142,6 +2157,74 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.92
+log
+@Reviewing the docs, WIP, up to creator_id.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.91 2023/04/24 01:04:48 agmsmith Exp agmsmith $</SMALL>
+d19 1
+a19 1
+## Basic Idea of Objects and Links
+d165 4
+a168 3
+relationships are currently unimplemented, probably until we need followers
+to do the "feed" to select posts to show.  The obvious relationship used by
+many social media is Friend.  Another is Follower.  We can also do Parent,
+d561 1
+a561 1
+* fancy_labels boolean 0 for ASCII words to label things like Up/Meh/Down,
+d584 1
+a584 1
+LinkHomeContent.  Links to a classification group can rate it.  For example, a
+d645 1
+a645 1
+There's an optional home post (see LinkHomeContent) that describes the group in
+d668 2
+a669 1
+if a history of changes needs to be preserved.
+d756 2
+a757 2
+* number1 Generic number for counting things, or referencing other database
+  tables, usage defined by subclasses, default -1.  Write-once.
+d851 1
+a851 1
+Parent is a Ledger(Full/Sub)group or LedgerThing and child is usually a
+d855 1
+a855 1
+LinkHomeContent to unpin them.
+d922 1
+a922 1
+wish.
+d1007 2
+a1008 1
+Parent is a spouse of child.  Bidirectional.  Both ends need to be approved.
+d1068 1
+a1068 1
+* about_link_id  integer Has the ID of the Link record being talked about.
+d1080 8
+a1087 6
+The links fade away as usual and the bonus expires as well, so your bonus for
+being a good poster at one point in time will last for typically 1 year and
+then 3 years after creation it gets garbage collected (assuming the
+creator gave the link 1 point).  Similarly you'll have to reenter
+an e-mail address once the bonus for having a tested e-mail has expired.  Some
+bonuses like the e-mail one will be limited to only one existing at a time.
+d1090 6
+a1095 4
+100 and becomes their week's allowance.  The user also gets to spend that many
+points even if their net reputation is negative, to avoid totally silencing
+them.  The weekly allowance and week's spending is stored in the User record,
+outside the ledger system, mostly for informational and user interface purposes.
+d1375 1
+a1375 1
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.91 2023/04/24 01:04:48 agmsmith Exp agmsmith $
+d1378 3
 @
 
 
