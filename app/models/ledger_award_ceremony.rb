@@ -17,7 +17,7 @@ class LedgerAwardCeremony < LedgerBase
   # reduces rating points down to about 1% of their original amount after
   # 3 years (150 ceremonies) of weekly fading.
 
-  FADED_TO_NOTHING = FADE ** 150
+  FADED_TO_NOTHING = 0.01
   # When you have this many points or less, a LinkBase is considered to be
   # faded away enough to be expired and worth garbage collecting.  LedgerBase
   # objects are also considered expired when they have no links to them and
