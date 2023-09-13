@@ -18,4 +18,12 @@ class LinkReply < LinkBase
 
     permission_to_change_child_approval(luser)
   end
+
+
+  # To avoid having replies needing approval from the original poster before
+  # they are visible to everyone else, pre-approve both parent and child ends.
+  # Later we may revisit this and only auto-approve for group members etc.
+  def initial_approval_state
+    [true, true]
+  end
 end

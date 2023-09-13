@@ -1,9 +1,14 @@
-head	1.94;
+head	1.95;
 access;
 symbols;
 locks; strict;
 comment	@# @;
 
+
+1.95
+date	2023.09.13.00.47.03;	author agmsmith;	state Exp;
+branches;
+next	1.94;
 
 1.94
 date	2023.09.12.15.39.00;	author agmscoder;	state Exp;
@@ -481,14 +486,14 @@ desc
 @
 
 
-1.94
+1.95
 log
-@Updated to use current database field declarations.
+@Clarifying edit, view permissions for objects and links.
 @
 text
 @# The Rating Stone Reputation System Database
 
-<SMALL>$Id: Database\040Design.md,v 1.93 2023/09/12 00:48:36 agmsmith Exp agmscoder $</SMALL>
+<SMALL>$Id: Database\040Design.md,v 1.94 2023/09/12 15:39:00 agmscoder Exp agmsmith $</SMALL>
 
 0. Table of Contents
 {:toc}
@@ -1633,8 +1638,10 @@ do what, the last three are for links only:
 
 1. The user who is the creator/owner (can be multiple people for LedgerBase
    records) can delete, undelete and for LedgerBase records create a new
-   version of the record.
-2. The people who are allowed to view the record.
+   version of the record.  Implemented in object or link method
+   creator_owner?(luser).
+2. The people who are allowed to view the record.  Implemented in
+   object or link method allowed_to_view?(luser).
 3. There are separate permissions for changing the approval flag for the
    parent in a link and
 4. the approval for a child in a link (the link doesn't work unless both
@@ -1648,29 +1655,29 @@ do what, the last three are for links only:
 
 This is the default for classes inheriting from LinkBase.
 
-1. creator_owner - Only creator of the link is allowed to delete it.
-2. allowed_to_view - Only creator of the link, the child's creator or the
+1. creator_owner?(luser) - Only creator of the link is allowed to delete it.
+2. allowed_to_view?(luser) - Only creator of the link, the child's creator or the
    parent's creator can view the link record.
-3. permission_to_change_parent_approval - Only creator of the parent can
+3. permission_to_change_parent_approval(luser) - Only creator of the parent
+   can approve it.
+4. permission_to_change_child_approval(luser) - Only creator of the child can
    approve it.
-4. permission_to_change_child_approval - Only creator of the child can approve
-   it.
-5. initial_approval_state - Uses values from permission_to_change_*_approval
-   with the link creator as the test user.
+5. initial_approval_state() - Default implementation uses values from
+   permission_to_change_*_approval with the link creator as the test user.
 
 
 ### LinkReply Permissions
 
-1. creator_owner - Creator of the link, and also creator/owner of the child or
-   parent is allowed to delete the link.
-2. allowed_to_view - Inherited default.  No need for most people to examine the
-   reply connection.
+1. creator_owner?(luser) - Creator of the link, and also creator/owner of the
+   child or parent is allowed to delete the link.
+2. allowed_to_view?(luser) - Inherited default.  No need for most people to
+   examine the reply connection.
 3. permission_to_change_parent_approval - Inherited default.
 4. permission_to_change_child_approval - Inherited default.
 5. initial_approval_state - Starts off fully approved.  Otherwise it is just
    too much of a pain for the original post's author to approve all the
    replies.  Though maybe we can flag a post as requiring approvals to combat
-   spam, perhaps allowing only group members to reply, later.
+   spam, perhaps allowing only group members to reply with pre-approval, later.
 
 
 ## Generating the Database
@@ -1868,9 +1875,12 @@ What are their points?
 ## Change Log
 
 <PRE>
-$Header: /home/agmscoder/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.93 2023/09/12 00:48:36 agmsmith Exp agmscoder $
+$Header: /home/agmsmith/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.94 2023/09/12 15:39:00 agmscoder Exp agmsmith $
 
 $Log: Database\040Design.md,v $
+Revision 1.94  2023/09/12 15:39:00  agmscoder
+Updated to use current database field declarations.
+
 Revision 1.93  2023/09/12 00:48:36  agmsmith
 Proofread up to Auxiliary Classes, fixing wording and clarifying things.
 
@@ -2173,6 +2183,47 @@ Fixed up formatting of RCS log and version number.
 Revision 1.1  2020/01/29 22:43:07  agmsmith
 Initial revision
 </PRE>
+@
+
+
+1.94
+log
+@Updated to use current database field declarations.
+@
+text
+@d3 1
+a3 1
+<SMALL>$Id: Database\040Design.md,v 1.93 2023/09/12 00:48:36 agmsmith Exp agmscoder $</SMALL>
+d1148 4
+a1151 2
+   version of the record.
+2. The people who are allowed to view the record.
+d1165 2
+a1166 2
+1. creator_owner - Only creator of the link is allowed to delete it.
+2. allowed_to_view - Only creator of the link, the child's creator or the
+d1168 3
+a1170 1
+3. permission_to_change_parent_approval - Only creator of the parent can
+d1172 2
+a1173 4
+4. permission_to_change_child_approval - Only creator of the child can approve
+   it.
+5. initial_approval_state - Uses values from permission_to_change_*_approval
+   with the link creator as the test user.
+d1178 4
+a1181 4
+1. creator_owner - Creator of the link, and also creator/owner of the child or
+   parent is allowed to delete the link.
+2. allowed_to_view - Inherited default.  No need for most people to examine the
+   reply connection.
+d1187 1
+a1187 1
+   spam, perhaps allowing only group members to reply, later.
+d1385 1
+a1385 1
+$Header: /home/agmscoder/Programming/RatingStone/docs/RCS/Database\040Design.md,v 1.93 2023/09/12 00:48:36 agmsmith Exp agmscoder $
+d1388 3
 @
 
 
