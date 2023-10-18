@@ -48,6 +48,7 @@ Rails.application.configure do
   config.action_mailer.delivery_method = :test
 
   # Print deprecation notices to the stderr.
+  config.active_support.report_deprecations = true
   config.active_support.deprecation = :stderr
 
   # Raise exceptions for disallowed deprecations.

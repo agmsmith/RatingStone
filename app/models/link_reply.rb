@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "link_base.rb"
+
 class LinkReply < LinkBase
   alias_attribute :prior_post, :parent
   alias_attribute :prior_post_id, :parent_id

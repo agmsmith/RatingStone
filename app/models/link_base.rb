@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "application_record.rb"
+
 class LinkBase < ApplicationRecord
   before_create :do_automatic_approvals, :distribute_rating_points
 

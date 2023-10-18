@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "ledger_base.rb"
+
 class LedgerPost < LedgerBase
   alias_attribute :subject, :string1
   alias_attribute :summary_of_changes, :string2

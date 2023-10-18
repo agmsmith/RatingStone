@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "link_base.rb"
+
 class LinkGroupRoleDelegation < LinkBase
   alias_attribute :delegate_to, :parent
   alias_attribute :delegate_to_id, :parent_id

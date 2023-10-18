@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "ledger_base.rb"
+
 class LedgerSubgroup < LedgerBase
   alias_attribute :name, :string1
   alias_attribute :description, :text1

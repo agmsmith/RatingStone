@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "link_base.rb"
+
 class LinkOwner < LinkBase
   alias_attribute :owner, :parent
   alias_attribute :owner_id, :parent_id

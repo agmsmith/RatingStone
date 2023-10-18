@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "application_record.rb"
+
 class User < ApplicationRecord
   belongs_to :ledger_user, class_name: :LedgerBase, optional: true
 

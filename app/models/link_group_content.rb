@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "link_base.rb"
+
 class LinkGroupContent < LinkBase
   alias_attribute :group, :parent
   alias_attribute :group_id, :parent_id

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "link_opinion.rb"
+
 class LinkMetaOpinion < LinkOpinion
   alias_attribute :opinion_about_link_id, :number1
 

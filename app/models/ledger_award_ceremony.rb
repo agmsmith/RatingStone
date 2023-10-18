@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "ledger_base.rb"
+
 # TODO: Method for finding a ceremony number when given a date.
 
 class LedgerAwardCeremony < LedgerBase

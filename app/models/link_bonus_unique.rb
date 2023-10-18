@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "link_bonus.rb"
+
 ###
 # Like a LinkBonus, but you can only have one existing (undeleted) at a time.
 # Used for bonus points like e-mail activation, where you don't want them to

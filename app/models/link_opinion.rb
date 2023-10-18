@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "link_base.rb"
+
 class LinkOpinion < LinkBase
   alias_attribute :author, :parent
   alias_attribute :author_id, :parent_id

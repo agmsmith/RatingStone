@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "ledger_base.rb"
+
 class LedgerChangeMarking < LedgerBase
   alias_attribute :reason, :string1
   alias_attribute :context, :string2

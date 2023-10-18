@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "ledger_base.rb"
+
 ##
 # A class for representing objects in the real world.  Like a book.  Actual
 # type of thing is set by the classification groups it is in.

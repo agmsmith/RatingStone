@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "link_base.rb"
+
 class LinkBonus < LinkBase
   alias_attribute :bonus_points, :float1
   alias_attribute :bonus_explanation, :parent

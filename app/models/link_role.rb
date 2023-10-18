@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "link_base.rb"
+
 class LinkRole < LinkBase
   alias_attribute :priority, :number1
   alias_attribute :description, :string1
