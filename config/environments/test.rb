@@ -15,10 +15,7 @@ Rails.application.configure do
   # this is usually not necessary, and can slow down your test suite. However, it's
   # recommended that you enable it in continuous integration systems to ensure eager
   # loading is working properly before deploying your code.
-  # config.eager_load = ENV["CI"].present?
-  # AGMS20231026 that causes alias_attribute depreciation warnings for
-  # subclasses of ActiveRecord objects that get loaded before their parent.
-  config.eager_load = true
+  config.eager_load = ENV["CI"].present?
 
   # Configure public file server for tests with Cache-Control for performance.
   config.public_file_server.enabled = true
