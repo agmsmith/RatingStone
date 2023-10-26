@@ -9,7 +9,9 @@ Rails.application.configure do
   config.enable_reloading = true
 
   # Do not eager load code on boot.
-  config.eager_load = false
+  # AGMS20231026 that causes alias_attribute depreciation warnings for
+  # subclasses of ActiveRecord objects that get loaded before their parent.
+  config.eager_load = true
 
   # Show full error reports.
   config.consider_all_requests_local = true
