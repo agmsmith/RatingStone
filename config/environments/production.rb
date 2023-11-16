@@ -3,6 +3,10 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   # Settings specified here will take precedence over those in config/application.rb.
 
+  # Ensures that a master key has been made available in ENV["RAILS_MASTER_KEY"], config/master.key, or an environment
+  # key such as config/credentials/production.key. This key is used to decrypt credentials (and other encrypted files).
+  config.require_master_key = true
+
   # Code is not reloaded between requests.
   config.enable_reloading = false
 
@@ -12,22 +16,28 @@ Rails.application.configure do
   # Rake tasks automatically ignore this option for performance.
   config.eager_load = true
 
-  # Full error reports are disabled and caching is turned on.
-  config.consider_all_requests_local       = false
-  config.action_controller.perform_caching = true
+  # Full error reports are disabled.
+  config.consider_all_requests_local = false
 
-  # Ensures that a master key has been made available in ENV["RAILS_MASTER_KEY"], config/master.key, or an environment
-  # key such as config/credentials/production.key. This key is used to decrypt credentials (and other encrypted files).
-  config.require_master_key = true
+  # Enable server timing
+  config.server_timing = true
+
+  # Enable caching.  Not!  Because everything is dynamically generated, and if it mis-caches...
+  config.action_controller.enable_fragment_cache_logging = true
+  config.cache_store = :null_store
+  config.public_file_server.headers = {
+    "Cache-Control" => "public, max-age=#{2.days.to_i}"
+  }
+  config.action_controller.perform_caching = false
 
   # Enable static file serving from the `/public` folder (turn off if using NGINX/Apache for it).
   config.public_file_server.enabled = false
 
-  # Compress CSS using a preprocessor.
-  # config.assets.css_compressor = :sass
-
   # Do not fallback to assets pipeline if a precompiled asset is missed.
   config.assets.compile = false
+
+  # Suppress logger output for asset requests.  Not!
+  config.assets.quiet = false
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"
@@ -45,7 +55,7 @@ Rails.application.configure do
   config.force_ssl = false
 
   # Log to STDOUT by default
-  config.logger = ActiveSupport::Logger.new(STDOUT)
+  config.logger = ActiveSupport::Logger.new(STDERR)
     .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
     .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
 
@@ -57,12 +67,17 @@ Rails.application.configure do
   # want to log everything, set the level to "debug".
   config.log_level = ENV.fetch("RAILS_LOG_LEVEL", "debug")
 
-  # Use a different cache store in production.
-  # config.cache_store = :mem_cache_store
-
   # Use a real queuing backend for Active Job (and separate queues per environment).
   # config.active_job.queue_adapter     = :resque
   # config.active_job.queue_name_prefix = "rating_stone_production"
+
+  # Store uploaded files on the local file system (see config/storage.yml
+  # for options).
+  # config.active_storage.service = :local
+
+  # Fix for database busy with multithreaded ActiveStorage purges and SQLite3
+  # database; run the job immediately, don't actually queue it for later.
+  # config.active_job.queue_adapter = :inline
 
   config.action_mailer.perform_caching = false
 
@@ -90,11 +105,21 @@ Rails.application.configure do
   # the I18n.default_locale when a translation cannot be found).
   config.i18n.fallbacks = true
 
-  # Don't log any deprecations.
-  config.active_support.report_deprecations = false
+  # Print deprecation notices to the Rails logger and standard error.
+  config.active_support.report_deprecations = true
+  config.active_support.deprecation = [:log, :stderr]
 
-  # Do not dump schema after migrations.
-  config.active_record.dump_schema_after_migration = false
+  # Raise error when a before_action's only/except options reference missing actions
+  config.action_controller.raise_on_missing_callback_actions = true
+
+  # Do not dump schema after migrations.  Not!
+  config.active_record.dump_schema_after_migration = true
+
+  # Highlight code that triggered database queries in logs.
+  config.active_record.verbose_query_logs = true
+
+  # Highlight code that enqueued background job in logs.
+  config.active_job.verbose_enqueue_logs = true
 
   # Enable DNS rebinding protection and other `Host` header attacks.
   # config.hosts = [
