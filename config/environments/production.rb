@@ -54,10 +54,11 @@ Rails.application.configure do
   # Actually, we don't want that - allow HTTPS but don't require it, so older browsers work.
   config.force_ssl = false
 
-  # Log to STDOUT by default
-  config.logger = ActiveSupport::Logger.new(STDERR)
-    .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
-    .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
+  # Log to STDOUT by default, STDERR is better (shows up in web server),
+  # and even better is nothing (shows up in logs/production.log file).
+  #config.logger = ActiveSupport::Logger.new(STDOUT)
+  #  .tap  { |logger| logger.formatter = ::Logger::Formatter.new }
+  #  .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
 
   # Prepend all log lines with the following tags.
   config.log_tags = [ :request_id ]
