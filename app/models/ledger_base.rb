@@ -425,7 +425,9 @@ class LedgerBase < ApplicationRecord
 
   ##
   # Make sure the current_(down|meh|up)_points rating points are up to date.
-  # Call this before modifying current points, or even just reading them.
+  # Call this before modifying current points, or even just getting their value.
+  # Though note that this doesn't do a reload from the database, so you have to
+  # decide if you need to do that too before calling this function.
   # Returns the object where the points are stored (usually original version).
   #
   # Most of the time the points are up to date and this method does nothing

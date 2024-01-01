@@ -118,24 +118,28 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       content: "The first reply to the *Post*.",
     )
     reply_1_2 = LinkReply.create!(
-      creator: user_reader,
-      prior_post: lpost1,
-      reply_post: lpost2,
-      string1: "Link post 2 as a reply to 1.",
+      creator: user_reader, # Link made by user_reader, also reply post owner.
+      prior_post: lpost1, # Created by user_outsider.
+      reply_post: lpost2, # Created by user_reader.
+      string1: "Link post 2 as a reply to 1.  Only user_reader should be able to change things.",
       rating_points_spent: 1.0,
       rating_points_boost_parent: 0.2,
       rating_direction_parent: "M",
       rating_points_boost_child: 0.7,
       rating_direction_child: "U",
+      approved_parent: true, # Pre-approve both directions, avoiding worries
+      approved_child: true, # about changing initial approval policy for replies.
     )
     assert_equal(1, reply_1_2.original_ceremony)
+    assert(reply_1_2.approved_parent, "Parent post should be pre-approved.")
+    assert(reply_1_2.approved_child, "Child post should be pre-approved.")
     default_object_boost = LedgerBase::DEFAULT_SPEND_FOR_OBJECT *
       (1.0 - LedgerBase::OBJECT_TRANSACTION_FEE_RATE)
     assert_in_delta(
-      default_object_boost,
+      default_object_boost + 0.2, # 0.2 from approved parent end of reply link.
       lpost1.current_meh_points,
       0.0000001,
-      "Not approved so unchanged",
+      "Pre-approved reply should boost parent post by 0.2",
     )
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001, "Approved points")
     assert_in_delta(
@@ -144,59 +148,61 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
             1.0, # Created reply_1_2 by spending 1.0 points.
       user_reader.current_meh_points,
       0.0000001,
-      "User should have spent this",
+      "User should have spent this much.",
     )
 
     # Incremental update in the same ceremony week should do nothing.
-    lpost1.update_current_points
-    lpost2.update_current_points
-    assert_in_delta(default_object_boost, lpost1.current_meh_points, 0.0000001)
+    lpost1.reload.update_current_points
+    lpost2.reload.update_current_points
+    assert_in_delta(default_object_boost + 0.2, lpost1.current_meh_points, 0.0000001)
     assert_in_delta(0.7, lpost2.current_up_points, 0.0000001)
 
-    # Try to approve the parent end of the link, should do nothing since we're
-    # using the owner of the child end.
+    # Try to unapprove the reply link, ownership means parent still approved
+    # and child unapproved in the reply link.  Should only affect the
+    # points on the child post (lpost2), not the parent post (lpost1).
     marker = LedgerApprove.mark_records(
       [reply_1_2],
-      true,
+      false,
       user_reader,
       "Testing incremental point recalculation.",
-      "Turning on approval for wrong user, so reply approved.",
+      "Turning off approval for one user, so child post points change.",
     )
-    assert_nil(marker, "Marking should do nothing, since changing nothing.")
+    assert_not_nil(marker, "Marking should have done something.")
     assert_in_delta(
-      default_object_boost,
+      default_object_boost + 0.2,
+      lpost1.reload.current_meh_points,
+      0.0000001,
+      "Removing approval by reply link creator doesn't affect parent count.",
+    )
+    assert_in_delta(0.0, lpost2.reload.current_up_points,
+      0.0000001, "Removing approval by reply link creator affects child post.")
+
+    # Try to unapprove again, should return a failure and no points change.
+    marker = LedgerApprove.mark_records(
+      [reply_1_2],
+      false,
+      user_reader,
+      "Testing incremental point recalculation.",
+      "Turning off approval for one user a second time, should fail.",
+    )
+    assert_nil(marker, "Marking a second time should do nothing.")
+    assert_in_delta(
+      default_object_boost + 0.2,
       lpost1.reload.current_meh_points,
       0.0000001,
     )
-    assert_in_delta(0.7, lpost2.reload.current_up_points, 0.0000001)
+    assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
 
-    # Really approve the parent end of the link.
-    marker = LedgerApprove.mark_records(
-      [reply_1_2],
-      true,
-      user_outsider,
-      "Testing incremental point recalculation.",
-      "Turning on approval of original post, does it turn on the points?",
-    )
-    assert(marker, "Marking should do something this time.")
-    lpost1.reload
-    lpost2.reload
-    assert_in_delta(
-      default_object_boost +
-            0.2, # 0.2 from the approved LinkReply parent end.
-      lpost1.current_meh_points,
-      0.0000001,
-    )
-    assert_in_delta(0.7, lpost2.current_up_points, 0.0000001)
-    assert_in_delta(default_object_boost, lpost2.current_meh_points, 0.0000001)
-
-    # Delete the reply link, points should be affected.
+    # Delete the reply link, points should be affected on the parent post.
+    # Note that this is the other user, not the one which created the reply
+    # link, but they are allowed to delete it since they are involved in the
+    # reply and can delete replies they don't like.
     LedgerDelete.mark_records(
       [reply_1_2],
       true,
       user_outsider,
       "Testing incremental point recalculation.",
-      "Deleting the LinkReply, does it turn off the points?",
+      "Deleting the LinkReply by non-owner, does it change the points?",
     )
     assert_in_delta(
       default_object_boost,
@@ -205,19 +211,21 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     )
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
 
-    # Turn off the approval of the child end of the link, while deleted.
-    LedgerApprove.mark_records(
+    # Turn on the approval of the child end of the link, while deleted.  Should
+    # end up with both child and parent approval.
+    marker = LedgerApprove.mark_records(
       [reply_1_2],
-      false,
+      true,
       user_reader,
       "Testing incremental point recalculation.",
-      "Unapproving the child end of the link while deleted.",
+      "Approving the child end of the link while deleted.",
     )
-    assert_in_delta(
-      default_object_boost,
-      lpost1.reload.current_meh_points,
-      0.0000001,
-    )
+    assert_not_nil(marker, "Marking changes should happen even if target is deleted.")
+    reply_1_2.reload
+    assert(reply_1_2.approved_parent, "Parent post should be approved in the reply link.")
+    assert(reply_1_2.approved_child, "Child post should be approved in the reply link.")
+    # But since reply link is deleted, doesn't affect actual points.
+    assert_in_delta(default_object_boost, lpost1.reload.current_meh_points, 0.0000001)
     assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
 
     # Undelete the reply link, points should be affected.
@@ -229,14 +237,13 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       "Undeleting the LinkReply, does it turn on the points?",
     )
     assert_in_delta(
-      default_object_boost +
-            0.2, # 0.2 from the approved LinkReply parent end.
+      default_object_boost + 0.2,
       lpost1.reload.current_meh_points,
       0.0000001,
     )
-    assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
+    assert_in_delta(0.7, lpost2.reload.current_up_points, 0.0000001)
 
-    # Do a Ceremony, then reapprove the child end of the link.
+    # Do a Ceremony.
     LedgerAwardCeremony.start_ceremony
     lpost1.reload.update_current_points
     lpost2.reload.update_current_points
@@ -245,16 +252,22 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       lpost1.reload.current_meh_points,
       0.0000001,
     )
-    assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
+    assert_in_delta(0.7 * 0.97, lpost2.reload.current_up_points, 0.0000001)
+
+    # Change the approval.  Other user disapproves their original post.
+    # Should now be parent disapproved, child approved.
     LedgerApprove.mark_records(
       [reply_1_2],
-      true,
-      user_reader,
+      false,
+      user_outsider,
       "Testing incremental point recalculation.",
-      "Re-approving the child end of the link while undeleted.",
+      "Other user un-approving the reply link.",
     )
+    reply_1_2.reload
+    assert_not(reply_1_2.approved_parent, "Parent post should not be approved.")
+    assert(reply_1_2.approved_child, "Child post should be approved in the reply link.")
     assert_in_delta(
-      (default_object_boost + 0.2) * 0.97,
+      (default_object_boost) * 0.97,
       lpost1.reload.current_meh_points,
       0.0000001,
     )
@@ -266,7 +279,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost1.update_current_points
     lpost2.update_current_points
     assert_in_delta(
-      (default_object_boost + 0.2) * 0.97,
+      (default_object_boost) * 0.97,
       lpost1.reload.current_meh_points,
       0.0000001,
     )
@@ -279,7 +292,7 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
     lpost1.update_current_points
     lpost2.update_current_points
     assert_in_delta(
-      (default_object_boost + 0.2) * 0.97 * 0.97,
+      (default_object_boost) * 0.97 * 0.97,
       lpost1.reload.current_meh_points,
       0.0000001,
     )
@@ -289,13 +302,13 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       0.0000001,
     )
 
-    # Unapprove the child end again, and update the ceremony too.
+    # Approve the parent end again, and update the ceremony too.
     LedgerApprove.mark_records(
       [reply_1_2],
-      false,
-      user_reader,
+      true,
+      user_outsider,
       "Testing incremental point recalculation.",
-      "Unapproving the child end of the link while not deleted.",
+      "Approving the parent end of the link again.",
     )
     LedgerAwardCeremony.start_ceremony
     lpost1.update_attribute(:current_ceremony, -3)
@@ -307,34 +320,33 @@ class LedgerAwardCeremonyTest < ActiveSupport::TestCase
       lpost1.reload.current_meh_points,
       0.0000001,
     )
-    assert_in_delta(0.0, lpost2.reload.current_up_points, 0.0000001)
+    assert_in_delta(0.7 * 0.97 * 0.97 * 0.97, lpost2.reload.current_up_points, 0.0000001)
 
     # Check that the points spent and gained by user_reader are correct.
     # History:
     # Starts with 10 meh points, from YML fixture test data, will disappear later.
     # Ceremony #1, +0 points (bonus starts after ceremony #1), 10 fades to 9.7
     # Create lpost2, 0.5 points.
-    # Create reply link, 1.0 points, 0.2 boost parent.
-    # Failed LedgerApprove, 0 points.
+    # Create reply link, 1.0 points.
     # Create LedgerApprove/false, 0.5 points.
-    # Ceremony #2, +10 points.
+    # Create LedgerApprove/false, 0.0 points (fails and does nothing).
     # Create LedgerApprove/true, 0.5 points.
+    # Ceremony #2, +10 points.
     # Ceremony #3, +10 points.
-    # Create LedgerApprove/false, 0.5 points.
     # Ceremony #4, +10 points.
     user_reader.update_current_points
     expected_points = ((((10 * 0.97) -
-      0.5 - 1.0 - 0.5) * 0.97 + 10.0 -
-      0.5) * 0.97 + 10.0 -
-      0.5) * 0.97 + 10
+      0.5 - 1.0 - 0.5 - 0.0 - 0.5) * 0.97 +
+      10.0) * 0.97 +
+      10.0) * 0.97 + 10
     assert_in_delta(expected_points, user_reader.current_meh_points, 0.0000001)
 
     user_reader.request_full_point_recalculation
     user_reader.update_current_points
     expected_points = ((((0 * 0.97) - # It is actually zero points initially.
-      0.5 - 1.0 - 0.5) * 0.97 + 10.0 -
-      0.5) * 0.97 + 10.0 -
-      0.5) * 0.97 + 10
+       0.5 - 1.0 - 0.5 - 0.0 - 0.5) * 0.97 +
+      10.0) * 0.97 +
+      10.0) * 0.97 + 10
     assert_in_delta(expected_points, user_reader.current_meh_points, 0.0000001)
   end
 
