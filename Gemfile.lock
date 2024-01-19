@@ -83,7 +83,7 @@ GEM
       execjs (~> 2)
     base64 (0.2.0)
     bcrypt (3.1.20)
-    bigdecimal (3.1.5)
+    bigdecimal (3.1.6)
     bindex (0.8.1)
     bootstrap-sass (3.4.1)
       autoprefixer-rails (>= 5.2.1)
@@ -117,7 +117,7 @@ GEM
       activesupport (>= 6.1)
     i18n (1.14.1)
       concurrent-ruby (~> 1.0)
-    io-console (0.7.1)
+    io-console (0.7.2)
     irb (1.11.1)
       rdoc
       reline (>= 0.4.2)
@@ -140,7 +140,7 @@ GEM
     marcel (1.0.2)
     matrix (0.4.2)
     mini_mime (1.1.5)
-    minitest (5.21.1)
+    minitest (5.21.2)
     minitest-reporters (1.6.1)
       ansi
       builder
@@ -160,7 +160,7 @@ GEM
     nokogiri (1.16.0-x86_64-linux)
       racc (~> 1.4)
     numbers_in_words (1.0.1)
-    pagy (6.4.1)
+    pagy (6.4.3)
     parallel (1.24.0)
     parser (3.3.0.4)
       ast (~> 2.4.1)
@@ -241,7 +241,7 @@ GEM
       language_server-protocol (~> 3.17.0)
       prism (>= 0.19.0, < 0.20)
       sorbet-runtime (>= 0.5.10782)
-    ruby-lsp-rails (0.2.8)
+    ruby-lsp-rails (0.2.9)
       actionpack (>= 6.0)
       activerecord (>= 6.0)
       railties (>= 6.0)
@@ -262,7 +262,7 @@ GEM
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
-    sorbet-runtime (0.5.11200)
+    sorbet-runtime (0.5.11212)
     sprockets (4.2.1)
       concurrent-ruby (~> 1.0)
       rack (>= 2.2.4, < 4)
@@ -327,4 +327,4 @@ RUBY VERSION
    ruby 3.3.0p0
 
 BUNDLED WITH
-   2.5.4
+   2.5.5
