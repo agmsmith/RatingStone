@@ -2,10 +2,10 @@
 
 <h1>All Link Objects</h1>
 
-<%== pagy_nav(@pagy) %>
+<%== pagy_bootstrap_nav(@pagy) %>
 <ul class="list-ledger-objects">
 <% @link_objects.each do |an_object| %>
 <%= render 'link_bases/link_base', { link_object: an_object } %>
 <% end %>
 </ul>
-<%== pagy_nav(@pagy) %>
+<%== pagy_bootstrap_nav(@pagy) %>

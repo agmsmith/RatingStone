@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Pagy initializer file (6.0.4)
+# Pagy initializer file (8.0.1)
 # Customize only what you really need and notice that the core Pagy works also without any of the following lines.
 # Should you just cherry pick part of this file, please maintain the require-order of the extras
 
@@ -10,26 +10,24 @@
 # All the Pagy::DEFAULT are set for all the Pagy instances but can be overridden per instance by just passing them to
 # Pagy.new|Pagy::Countless.new|Pagy::Calendar::*.new or any of the #pagy* controller methods
 
-
 # Instance variables
 # See https://ddnexus.github.io/pagy/docs/api/pagy#instance-variables
-# Pagy::DEFAULT[:page]   = 1                                  # default
-# Pagy::DEFAULT[:items]  = 20                                 # default
-Pagy::DEFAULT[:items]  = 25
-# Pagy::DEFAULT[:outset] = 0                                  # default
-
+# Pagy::DEFAULT[:page]   = 1                            # default
+# Pagy::DEFAULT[:items]  = 20                           # default
+# Pagy::DEFAULT[:outset] = 0                            # default
 
 # Other Variables
 # See https://ddnexus.github.io/pagy/docs/api/pagy#other-variables
-# Pagy::DEFAULT[:size]       = [1,4,4,1]                       # default
-# Pagy::DEFAULT[:page_param] = :page                           # default
-# The :params can be also set as a lambda e.g ->(params){ params.exclude('useless').merge!('custom' => 'useful') }
-# Pagy::DEFAULT[:params]     = {}                              # default
-# Pagy::DEFAULT[:fragment]   = '#fragment'                     # example
-# Pagy::DEFAULT[:link_extra] = 'data-remote="true"'            # example
-# Pagy::DEFAULT[:i18n_key]   = 'pagy.item_name'                # default
-# Pagy::DEFAULT[:cycle]      = true                            # example
-# Pagy::DEFAULT[:request_path] = "/foo"                        # example
+# Pagy::DEFAULT[:size]         = [1,4,4,1]              # default in pagy < 7.0
+# Pagy::DEFAULT[:page_param]   = :page                  # default
+# Pagy::DEFAULT[:fragment]     = '#fragment'            # example
+# Pagy::DEFAULT[:link_extra]   = 'data-remote="true"'   # example
+# Pagy::DEFAULT[:cycle]        = true                   # example
+# Pagy::DEFAULT[:request_path] = '/foo'                 # example
+# Pagy::DEFAULT[:count_args]   = []                     # example for non AR ORMs
+# Pagy::DEFAULT[:params]       = {}                     # default
+# NOTICE: The :params can be also set as a lambda e.g:
+# ->(params){ params.exclude('useless').merge!('custom' => 'useful') }
 
 
 # Extras
@@ -128,7 +126,7 @@ Pagy::DEFAULT[:items]  = 25
 
 # Bootstrap extra: Add nav, nav_js and combo_nav_js helpers and templates for Bootstrap pagination
 # See https://ddnexus.github.io/pagy/docs/extras/bootstrap
-# require 'pagy/extras/bootstrap'
+require 'pagy/extras/bootstrap'
 
 # Bulma extra: Add nav, nav_js and combo_nav_js helpers and templates for Bulma pagination
 # See https://ddnexus.github.io/pagy/docs/extras/bulma
@@ -142,11 +140,10 @@ Pagy::DEFAULT[:items]  = 25
 # See https://ddnexus.github.io/pagy/docs/extras/materialize
 # require 'pagy/extras/materialize'
 
-# Navs extra: Add nav_js and combo_nav_js javascript helpers
-# Notice: the other frontend extras add their own framework-styled versions,
-# so require this extra only if you need the unstyled version
-# See https://ddnexus.github.io/pagy/docs/extras/navs
-# require 'pagy/extras/navs'
+# Pagy extra: Add the pagy styled versions of the javascript-powered navs
+# and a few other components to the Pagy::Frontend module.
+# See https://ddnexus.github.io/pagy/docs/extras/pagy
+# require 'pagy/extras/pagy'
 
 # Semantic extra: Add nav, nav_js and combo_nav_js helpers for Semantic UI pagination
 # See https://ddnexus.github.io/pagy/docs/extras/semantic
@@ -157,7 +154,7 @@ Pagy::DEFAULT[:items]  = 25
 # require 'pagy/extras/uikit'
 
 # Multi size var used by the *_nav_js helpers
-# See https://ddnexus.github.io/pagy/docs/extras/navs#steps
+# See https://ddnexus.github.io/pagy/docs/extras/pagy#steps
 # Pagy::DEFAULT[:steps] = { 0 => [2,3,3,2], 540 => [3,5,5,3], 720 => [5,7,7,5] }   # example
 
 
@@ -183,10 +180,6 @@ Pagy::DEFAULT[:items]  = 25
 # require 'pagy/extras/overflow'
 # Pagy::DEFAULT[:overflow] = :empty_page    # default  (other options: :last_page and :exception)
 
-# Support extra: Extra support for features like: incremental, infinite, auto-scroll pagination
-# See https://ddnexus.github.io/pagy/docs/extras/support
-# require 'pagy/extras/support'
-
 # Trim extra: Remove the page=1 param from links
 # See https://ddnexus.github.io/pagy/docs/extras/trim
 # require 'pagy/extras/trim'
@@ -197,6 +190,12 @@ Pagy::DEFAULT[:items]  = 25
 # See https://ddnexus.github.io/pagy/docs/extras/standalone
 # require 'pagy/extras/standalone'
 # Pagy::DEFAULT[:url] = 'http://www.example.com/subdir'  # optional default
+
+# Jsonapi extra: Implements JSON:API specifications
+# See https://ddnexus.github.io/pagy/docs/extras/jsonapi
+# require 'pagy/extras/jsonapi'   # must be required after the other extras
+# set to false only if you want to make :jsonapi an opt-in variable
+# Pagy::DEFAULT[:jsonapi] = false  # default true
 
 
 # Rails
@@ -242,9 +241,6 @@ Pagy::DEFAULT[:items]  = 25
 # than the default pagy internal i18n (see above)
 # See https://ddnexus.github.io/pagy/docs/extras/i18n
 # require 'pagy/extras/i18n'
-
-# Default i18n key
-# Pagy::DEFAULT[:i18n_key] = 'pagy.item_name'   # default
 
 
 # When you are done setting your own default freeze it, so it will not get changed accidentally

@@ -2,7 +2,7 @@
 
 <h1>All Ledger Posts</h1>
 
-<%== pagy_nav(@pagy) %>
+<%== pagy_bootstrap_nav(@pagy) %>
 
 <% hidden_count = 0
   @ledger_objects.each do |an_object|
@@ -19,5 +19,5 @@
   %> hidden (earlier version or deleted).</p>
 <% end %>
 
-<%== pagy_nav(@pagy) %>
+<%== pagy_bootstrap_nav(@pagy) %>
 

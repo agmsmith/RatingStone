@@ -1,9 +1,9 @@
 <% if @ledger_feed_items&.any? %>
-  <%== pagy_nav(@pagy) %>
+  <%== pagy_bootstrap_nav(@pagy) %>
   <ol class="list-ledger-objects">
   <% @ledger_feed_items.each do |an_object| %>
     <%= render 'ledger_posts/ledger_post_plain', { ledger_post: an_object } %>
   <% end %>
   </ol>
-  <%== pagy_nav(@pagy) %>
+  <%== pagy_bootstrap_nav(@pagy) %>
 <% end %>

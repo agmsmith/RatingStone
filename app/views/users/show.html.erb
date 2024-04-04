@@ -16,11 +16,11 @@
   <h3><%=
     "#{post_count} Ledger #{'Post'.pluralize(post_count)} by #{@user.name}"
   %></h3>
-  <%== pagy_nav @pagy %>
+  <%== pagy_bootstrap_nav @pagy %>
   <br clear="all">
   <ol class="list-ledger-objects">
     <%= render @lposts %>
   </ol>
-  <%== pagy_nav @pagy %>
+  <%== pagy_bootstrap_nav @pagy %>
 <% end %>
 

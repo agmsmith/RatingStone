@@ -32,7 +32,7 @@ class UsersProfileTest < ActionDispatch::IntegrationTest
       page: 1,
     )
     assert_match "#{lposts.count} Ledger Posts by #{@user.name}", response.body
-    assert_select "nav.pagination", count: 2
+    assert_select "nav.pagy-bootstrap ul.pagination", count: 2
     _pagy, page_of_posts = pagy(lposts, page: 1)
     page_of_posts.each do |lpost|
       assert_match lpost.content, response.body
