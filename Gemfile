@@ -40,8 +40,10 @@ group :development, :test do
   # Use the Puma web server [https://github.com/puma/puma]
   gem "puma"
 
-  # Use sqlite3 as the database for Active Record
-  gem "sqlite3"
+  # Use sqlite3 as the database for Active Record.  Note version 1 since
+  # ActiveRecord doesn't yet work with version 2 of the database adapter gem.
+  # TODO: Update to version 2 of sqlite3 gem when ActiveRecord supports it.
+  gem "sqlite3", "~> 1"
 
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri mingw x64_mingw ]
