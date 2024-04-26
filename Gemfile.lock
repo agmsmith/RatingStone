@@ -159,13 +159,13 @@ GEM
     nokogiri (1.16.4-x86_64-linux)
       racc (~> 1.4)
     numbers_in_words (1.0.1)
-    pagy (8.2.2)
+    pagy (8.3.0)
     parallel (1.24.0)
-    parser (3.3.0.5)
+    parser (3.3.1.0)
       ast (~> 2.4.1)
       racc
     pg (1.5.6)
-    prism (0.24.0)
+    prism (0.27.0)
     psych (5.1.2)
       stringio
     public_suffix (5.0.5)
@@ -218,7 +218,7 @@ GEM
     rdoc (6.6.3.1)
       psych (>= 4.0.0)
     regexp_parser (2.9.0)
-    reline (0.5.2)
+    reline (0.5.3)
       io-console (~> 0.5)
     rexml (3.2.6)
     rubocop (1.63.3)
@@ -236,9 +236,9 @@ GEM
       parser (>= 3.3.0.4)
     rubocop-shopify (2.15.1)
       rubocop (~> 1.51)
-    ruby-lsp (0.16.4)
+    ruby-lsp (0.16.6)
       language_server-protocol (~> 3.17.0)
-      prism (>= 0.22.0, < 0.25)
+      prism (>= 0.23.0, < 0.28)
       sorbet-runtime (>= 0.5.10782)
     ruby-lsp-rails (0.3.5)
       ruby-lsp (>= 0.16.0, < 0.17.0)
@@ -253,12 +253,12 @@ GEM
       sprockets (> 3.0)
       sprockets-rails
       tilt
-    selenium-webdriver (4.19.0)
+    selenium-webdriver (4.20.1)
       base64 (~> 0.2)
       rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 3.0)
       websocket (~> 1.0)
-    sorbet-runtime (0.5.11352)
+    sorbet-runtime (0.5.11358)
     sprockets (4.2.1)
       concurrent-ruby (~> 1.0)
       rack (>= 2.2.4, < 4)
@@ -320,7 +320,7 @@ DEPENDENCIES
   web-console
 
 RUBY VERSION
-   ruby 3.3.0p0
+   ruby 3.3.1p55
 
 BUNDLED WITH
    2.5.9
